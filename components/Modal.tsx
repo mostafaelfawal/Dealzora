@@ -13,7 +13,7 @@ export default function Modal({ title, closeModal, children }: ModalProps) {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-5"
         onClick={closeModal}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

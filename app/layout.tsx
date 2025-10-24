@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://dealzora.vercel.app/og-image.png",
+        url: "https://dealzora.vercel.app/favicon.png",
         width: 1200,
         height: 630,
         alt: "Dealzora – نظام إدارة المتاجر والمبيعات",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     creator: "@MostafaHam37654",
   },
   icons: {
-    icon: "/favicon.png",
+    icon: "/icon.png",
   },
 };
 

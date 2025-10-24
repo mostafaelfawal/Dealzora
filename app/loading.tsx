@@ -7,20 +7,23 @@ export default function Loading() {
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-linear-to-br from-blue-100 via-blue-300 to-blue-400 text-white overflow-hidden">
       {/* Logo */}
-      <motion.div
-        initial={{ opacity: 0, rotate: -50, scale: 0.9 }}
-        animate={{ opacity: 1, rotate: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative w-32 h-32 mb-10 drop-shadow-lg select-none"
-      >
-        <Image
-          src="/og-image.png"
-          alt="Dealzora logo"
-          className="object-contain rounded-full"
-          fill
-          priority
-        />
-      </motion.div>
+      <div className="flex flex-col items-center mb-10">
+        <motion.div
+          initial={{ opacity: 0, rotate: -50, scale: 0.9 }}
+          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="relative mr-5 w-32 h-32 select-none drop-shadow-lg"
+        >
+          <Image
+            src="/icon.png"
+            alt="Dealzora logo"
+            className="object-contain"
+            fill
+            priority
+          />
+        </motion.div>
+        <h1 className="text-3xl font-extrabold">Dealzora</h1>
+      </div>
 
       {/* Animated loader dots */}
       <div className="flex space-x-2 mb-16">
