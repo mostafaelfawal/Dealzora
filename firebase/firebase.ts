@@ -3,12 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCKELPJvUJVLTstKAkrzitB8SYfzmFU5xM",
-  authDomain: "Dealzora-a05dd.firebaseapp.com",
-  projectId: "Dealzora-a05dd",
-  storageBucket: "Dealzora-a05dd.firebasestorage.app",
-  messagingSenderId: "212863598015",
-  appId: "1:212863598015:web:decdf8bdd5c69c615af50a",
+  apiKey: "AIzaSyDW-Gp2N9AuRTXeLk-9vgEQTFg1PyHMMxE",
+  authDomain: "dealzora-3c8e3.firebaseapp.com",
+  projectId: "dealzora-3c8e3",
+  storageBucket: "dealzora-3c8e3.firebasestorage.app",
+  messagingSenderId: "245061792587",
+  appId: "1:245061792587:web:ee28be9c86b4d79db8aece",
 };
 
 // Initialize Firebase

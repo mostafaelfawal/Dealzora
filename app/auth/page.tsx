@@ -29,7 +29,7 @@ export default function AuthPage() {
         {/* Right Section */}
         <div className="hidden md:block flex-1 relative">
           <Image
-            src="/auth_image.png"
+            src="/auth_image.jpg"
             alt="Login Illustration"
             fill
             className="object-cover"
