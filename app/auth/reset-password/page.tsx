@@ -84,7 +84,7 @@ export default function ResetPasswordPage() {
         {/* شعار الموقع */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-600">Dealzora</h1>
-          <p className="text-sm text-gray-500 mt-1">نظام إدارة متاجر الملابس</p>
+          <p className="text-sm text-gray-500 mt-1">نظام إدارة المتاجر</p>
         </div>
 
         {/* أيقونة */}

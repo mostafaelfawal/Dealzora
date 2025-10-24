@@ -46,7 +46,7 @@ export default function UserInfo({
         alt="User"
         width={40}
         height={40}
-        className="rounded-full border border-white/30"
+        className="rounded-full border-2 border-blue-200"
       />
     </div>
   );
