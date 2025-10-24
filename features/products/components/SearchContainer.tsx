@@ -29,7 +29,7 @@ export default function SearchContainer() {
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 transition-shadow hover:shadow-md cursor-pointer w-full"
+        className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
       >
         <option value="">جميع الفئات</option>
         {categorys.map((c, i) => (
@@ -43,7 +43,7 @@ export default function SearchContainer() {
       <select
         value={status}
         onChange={(e) => setStatus(e.target.value)}
-        className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 transition-shadow hover:shadow-md cursor-pointer w-full"
+        className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
       >
         <option value="">جميع الحالات</option>
         <option value="موجود">موجود</option>

@@ -11,23 +11,18 @@ import Loading from "@/app/loading";
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthListener();
   const router = useRouter();
+  const path = usePathname()
   const dispatch = useDispatch<AppDispatch>();
-  const authPages = ["/auth/reset-password", "/auth"];
-  const currentPath = usePathname();
   const isUser = useSelector((state: RootState) => state.user.currentUser);
-  
+
   useEffect(() => {
     if (loading) return;
 
     if (user) {
       if (!isUser?.name) dispatch(fetchUser());
-      if (!authPages.includes(currentPath)) {
-        router.replace("/dealzora/dashboard");
-      }
+      router.replace(path);
     } else {
-      if (!authPages.includes(currentPath)) {
-        router.replace("/auth");
-      }
+      router.replace("/auth");
     }
   }, [user, loading, dispatch, router]);
 
