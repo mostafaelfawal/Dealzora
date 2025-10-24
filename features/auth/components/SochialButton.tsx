@@ -25,7 +25,7 @@ export default function SochialButton({
   const handleLogin = async (Provider: AuthProviderClass) => {
     const success = await loginWithProvider(Provider);
     if (success) {
-      toast.success("تم تسجيل الدخول بنجاح\n ابدأ ادارة متجرك مع StyleHub🔥!");
+      toast.success("تم تسجيل الدخول بنجاح\n ابدأ ادارة متجرك مع Dealzora🔥!");
       router.replace("/dashboard");
     } else if (providerError) {
       toast.error(providerError);

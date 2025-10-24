@@ -10,7 +10,7 @@ interface Props {
 const LoginHeader: FC<Props> = ({ isLogin, toggleLogin }) => (
   <div>
     <h2 className="text-3xl font-semibold text-gray-800">
-      {isLogin ? "مرحباً بعودتك!" : "ابدأ رحلتك مع StyleHub"}
+      {isLogin ? "مرحباً بعودتك!" : "ابدأ رحلتك مع Dealzora"}
     </h2>
     <p className="text-sm mt-2 text-gray-500">
       {isLogin ? "ليس لديك حساب بعد؟" : "هل لديك حساب بالفعل؟"}

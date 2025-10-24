@@ -7,7 +7,7 @@ import { FiLock } from "react-icons/fi";
 import { auth } from "@/firebase/firebase";
 import { verifyPasswordResetCode, confirmPasswordReset } from "firebase/auth";
 import toast from "react-hot-toast";
-import { useForm } from "react-hook-form"
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PasswordInput from "@/features/auth/components/PasswordInput";
 import {
@@ -83,7 +83,7 @@ export default function ResetPasswordPage() {
       >
         {/* شعار الموقع */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-600">StyleHub</h1>
+          <h1 className="text-3xl font-bold text-blue-600">Dealzora</h1>
           <p className="text-sm text-gray-500 mt-1">نظام إدارة متاجر الملابس</p>
         </div>
 

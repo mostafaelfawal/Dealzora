@@ -15,7 +15,7 @@ export default function Loading() {
       >
         <Image
           src="/og-image.png"
-          alt="StyleHub logo"
+          alt="Dealzora logo"
           className="object-contain rounded-full"
           fill
           priority

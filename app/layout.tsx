@@ -5,11 +5,11 @@ import { Toaster } from "react-hot-toast";
 import AuthGuard from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
-  title: "StyleHub | نظام ERP لإدارة جميع أنواع المتاجر",
+  title: "Dealzora | نظام ERP لإدارة جميع أنواع المتاجر",
   description:
-    "StyleHub هو نظام متكامل لإدارة المبيعات والمخزون والموظفين والعملاء لجميع أنواع المتاجر — من الملابس والإلكترونيات إلى المطاعم والصيدليات. واجهة سهلة، إدارة دقيقة، وتقارير فورية لتحقيق أقصى نمو لمتجرك.",
+    "Dealzora هو نظام متكامل لإدارة المبيعات والمخزون والموظفين والعملاء لجميع أنواع المتاجر — من الملابس والإلكترونيات إلى المطاعم والصيدليات. واجهة سهلة، إدارة دقيقة، وتقارير فورية لتحقيق أقصى نمو لمتجرك.",
   keywords: [
-    "StyleHub",
+    "Dealzora",
     "إدارة المتاجر",
     "نظام ERP",
     "نظام POS",
@@ -29,11 +29,11 @@ export const metadata: Metadata = {
   creator: "Mostafa Hamdi",
   metadataBase: new URL("https://0style-hub.vercel.app/"),
   openGraph: {
-    title: "StyleHub | نظام شامل لإدارة المتاجر والمبيعات",
+    title: "Dealzora | نظام شامل لإدارة المتاجر والمبيعات",
     description:
-      "منصة متقدمة لإدارة المبيعات والمخزون والعملاء في جميع أنواع المتاجر. تحكم في متجرك بذكاء باستخدام StyleHub المبني على Next.js وFirebase.",
+      "منصة متقدمة لإدارة المبيعات والمخزون والعملاء في جميع أنواع المتاجر. تحكم في متجرك بذكاء باستخدام Dealzora المبني على Next.js وFirebase.",
     url: "https://0style-hub.vercel.app/",
-    siteName: "StyleHub",
+    siteName: "Dealzora",
     locale: "ar_EG",
     type: "website",
     images: [
@@ -41,15 +41,15 @@ export const metadata: Metadata = {
         url: "https://0style-hub.vercel.app/og-image.png",
         width: 1200,
         height: 630,
-        alt: "StyleHub – نظام إدارة المتاجر والمبيعات",
+        alt: "Dealzora – نظام إدارة المتاجر والمبيعات",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "StyleHub | نظام ذكي لإدارة جميع أنواع المتاجر",
+    title: "Dealzora | نظام ذكي لإدارة جميع أنواع المتاجر",
     description:
-      "نظّم متجرك مع StyleHub — نظام ERP + POS متكامل لإدارة المبيعات والمخزون والموظفين والعملاء بسهولة واحترافية.",
+      "نظّم متجرك مع Dealzora — نظام ERP + POS متكامل لإدارة المبيعات والمخزون والموظفين والعملاء بسهولة واحترافية.",
     creator: "@MostafaHam37654",
   },
   icons: {

@@ -74,8 +74,8 @@ const LoginForm: FC<{ isLogin: boolean }> = ({ isLogin }) => {
 
     toast.success(
       isLogin
-        ? "اهلا بعودتك الى StyleHub👋 راجع متجرك👁"
-        : `اهلا ${fullName} في StyleHub لإدارة متجرك بسهولة👋🔥`
+        ? "اهلا بعودتك الى Dealzora👋 راجع متجرك👁"
+        : `اهلا ${fullName} في Dealzora لإدارة متجرك بسهولة👋🔥`
     );
 
     router.replace("/dashboard");
