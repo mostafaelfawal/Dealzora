@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { FaArrowLeft, FaArrowRight, FaEdit, FaTrash } from "react-icons/fa";
 import { ProductType } from "../types/ProductType";
 import Tooltip from "@/components/Tooltip";
 import { RxDotsVertical } from "react-icons/rx";
+import Modal from "@/components/Modal";
 
 export default function ProductTable() {
   const [products] = useState<ProductType[]>([
@@ -105,7 +106,7 @@ export default function ProductTable() {
   return (
     <div className="overflow-x-auto bg-white rounded-lg shadow-md p-4">
       <table className="w-full text-right">
-        <thead className="bg-blue-500 text-white text-sm uppercase">
+        <thead className="bg-linear-to-r from-blue-500 to-blue-700 text-white text-sm">
           <tr>
             <th className="py-3 px-4">اسم المنتج</th>
             <th className="hidden md:table-cell py-3 px-4">السعر</th>
@@ -143,56 +144,87 @@ export default function ProductTable() {
                   <p className="text-xs text-gray-400">كود: {p.code}</p>
                 </div>
 
-                {/* القائمة المنسدلة */}
-                <AnimatePresence>
-                  {openRow === p.code && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-10 right-0 z-10 block md:hidden bg-white border border-gray-200 shadow-lg rounded-lg p-3 w-48"
-                    >
-                      <p className="text-sm mb-1">
-                        <span className="font-semibold">السعر:</span> {p.price}{" "}
-                        ج.م
-                      </p>
-                      <p className="text-sm mb-1">
-                        <span className="font-semibold">الفئة:</span>{" "}
-                        {p.category}
-                      </p>
-                      <p className="text-sm mb-1">
-                        <span className="font-semibold">المخزون:</span>{" "}
-                        {p.stock}
-                      </p>
-                      <p className="text-sm mb-2">
-                        <span className="font-semibold">الحالة:</span>{" "}
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                            statusColors[p.status]
-                          }`}
-                        >
-                          {p.status}
-                        </span>
-                      </p>
+                {/* تفاصيل المنتج */}
+                {openRow === p.code && (
+                  <Modal
+                    closeModal={() => setOpenRow(null)}
+                    title="تفاصيل المنتج"
+                  >
+                    <div className="bg-white rounded-2xl p-5 w-full max-w-sm mx-auto">
+                      {/* صورة المنتج */}
+                      <div className="flex flex-col items-center mb-4">
+                        <div className="relative w-24 h-24 rounded-xl overflow-hidden mb-3 shadow">
+                          <Image
+                            src={p.image}
+                            alt={p.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <p className="text-lg font-semibold text-gray-800">
+                          {p.name}
+                        </p>
+                        <p className="text-xs text-gray-400">كود: {p.code}</p>
+                      </div>
 
-                      <div className="flex gap-2 pt-2">
-                        <button className="flex-1 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs flex items-center justify-center gap-1">
+                      {/* التفاصيل */}
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-gray-600">
+                            السعر:
+                          </span>
+                          <span>{p.price} ج.م</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-gray-600">
+                            الفئة:
+                          </span>
+                          <span>{p.category}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-gray-600">
+                            المخزون:
+                          </span>
+                          <span>{p.stock}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-gray-600">
+                            الحالة:
+                          </span>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              statusColors[p.status]
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* الأزرار */}
+                      <div className="flex gap-3 pt-5">
+                        <button className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm font-medium shadow-sm">
                           <FaEdit /> تعديل
                         </button>
-                        <button className="flex-1 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex items-center justify-center gap-1">
+                        <button className="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2 text-sm font-medium shadow-sm">
                           <FaTrash /> حذف
                         </button>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
+                  </Modal>
+                )}
               </td>
 
-              <td className="hidden md:table-cell py-3 px-4">{p.price} ج.م</td>
-              <td className="hidden md:table-cell py-3 px-4">{p.category}</td>
-              <td className="hidden md:table-cell py-3 px-4">{p.stock}</td>
-              <td className="hidden md:table-cell py-3 px-4">
+              <td className="hidden md:table-cell py-3 px-4 text-sm md:text-base">
+                {p.price} ج.م
+              </td>
+              <td className="hidden md:table-cell py-3 px-4 text-sm md:text-base">
+                {p.category}
+              </td>
+              <td className="hidden md:table-cell py-3 px-4 text-sm md:text-base">
+                {p.stock}
+              </td>
+              <td className="hidden md:table-cell py-3 px-4 text-sm md:text-base">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-semibold ${
                     statusColors[p.status]
