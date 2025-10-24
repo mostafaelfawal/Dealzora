@@ -21,7 +21,7 @@ const PasswordInput: FC<Props> = ({ error, ...props }) => {
       />
       <button
         type="button"
-        className="absolute top-4 left-3 text-gray-500 hover:text-blue-500 transition-colors duration-200"
+        className="absolute top-5 left-3 text-gray-500 hover:text-blue-500 transition-colors duration-200"
         onClick={() => setShowPassword(!showPassword)}
       >
         {showPassword ? <FaEyeSlash /> : <FaEye />}

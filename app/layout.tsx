@@ -27,18 +27,18 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Mostafa Hamdi" }],
   creator: "Mostafa Hamdi",
-  metadataBase: new URL("https://0style-hub.vercel.app/"),
+  metadataBase: new URL("https://dealzora.vercel.app/"),
   openGraph: {
     title: "Dealzora | نظام شامل لإدارة المتاجر والمبيعات",
     description:
       "منصة متقدمة لإدارة المبيعات والمخزون والعملاء في جميع أنواع المتاجر. تحكم في متجرك بذكاء باستخدام Dealzora المبني على Next.js وFirebase.",
-    url: "https://0style-hub.vercel.app/",
+    url: "https://dealzora.vercel.app/",
     siteName: "Dealzora",
     locale: "ar_EG",
     type: "website",
     images: [
       {
-        url: "https://0style-hub.vercel.app/og-image.png",
+        url: "https://dealzora.vercel.app/og-image.png",
         width: 1200,
         height: 630,
         alt: "Dealzora – نظام إدارة المتاجر والمبيعات",
