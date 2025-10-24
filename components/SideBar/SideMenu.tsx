@@ -79,7 +79,7 @@ export default function SideMenu() {
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`overflow-auto hidden md:flex fixed top-0 right-0 h-full bg-blue-600 text-white flex-col justify-between shadow-xl transition-all duration-300 ${
+        className={`z-3 overflow-auto hidden md:flex fixed top-0 right-0 h-full bg-blue-600 text-white flex-col justify-between shadow-xl transition-all duration-300 ${
           hovered ? "w-64" : "w-20"
         }`}
       >

@@ -25,8 +25,8 @@ export default function MenuLinks({
             !hovered && "justify-center"
           }`}
         >
-          {hovered && <span>{item.name}</span>}
           {item.icon}
+          {hovered && <span>{item.name}</span>}
         </Link>
       ))}
     </nav>

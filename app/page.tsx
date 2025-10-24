@@ -7,11 +7,11 @@ import Loading from "./loading";
 
 export default function Home() {
   const router = useRouter();
-  const { loading } = useAuthListener();
+  const { user, loading } = useAuthListener();
 
   useEffect(() => {
     if (loading) return;
-    router.replace("/dealzora/dashboard");
+    router.replace(user ? "/dealzora/dashboard" : "/auth");
   }, [loading, router]);
 
   return <Loading />;

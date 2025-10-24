@@ -6,7 +6,9 @@ export default function DealzoraLayout({ children }: { children: ReactNode }) {
   return (
     <AuthGuard>
       <SideMenu />
-      <main className="min-h-screen bg-gray-200 px-22">{children}</main>
+      <main className="min-h-screen bg-gray-200 py-7 pl-2 pr-15 md:pr-22">
+        {children}
+      </main>
     </AuthGuard>
   );
 }
