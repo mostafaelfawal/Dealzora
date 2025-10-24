@@ -27,18 +27,18 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Mostafa Hamdi" }],
   creator: "Mostafa Hamdi",
-  metadataBase: new URL("https://dealzora.vercel.app/"),
+  metadataBase: new URL("https:/dealzora.vercel.app/"),
   openGraph: {
     title: "Dealzora | نظام شامل لإدارة المتاجر والمبيعات",
     description:
       "منصة متقدمة لإدارة المبيعات والمخزون والعملاء في جميع أنواع المتاجر. تحكم في متجرك بذكاء باستخدام Dealzora المبني على Next.js وFirebase.",
-    url: "https://dealzora.vercel.app/",
+    url: "https:/dealzora.vercel.app/",
     siteName: "Dealzora",
     locale: "ar_EG",
     type: "website",
     images: [
       {
-        url: "https://dealzora.vercel.app/favicon.png",
+        url: "https:/dealzora.vercel.app/favicon.png",
         width: 1200,
         height: 630,
         alt: "Dealzora – نظام إدارة المتاجر والمبيعات",
@@ -59,14 +59,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="ar" dir="rtl">
       <body className="antialiased">
         <Provider>
-          <AuthGuard>{children}</AuthGuard>
+          {children}
           <Toaster position="bottom-left" />
         </Provider>
       </body>

@@ -22,7 +22,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     if (user) {
       if (!isUser?.name) dispatch(fetchUser());
       if (!authPages.includes(currentPath)) {
-        router.replace("/dashboard");
+        router.replace("/dealzora/dashboard");
       }
     } else {
       if (!authPages.includes(currentPath)) {

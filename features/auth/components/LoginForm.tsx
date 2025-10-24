@@ -78,7 +78,7 @@ const LoginForm: FC<{ isLogin: boolean }> = ({ isLogin }) => {
         : `اهلا ${fullName} في Dealzora لإدارة متجرك بسهولة👋🔥`
     );
 
-    router.replace("/dashboard");
+    router.replace("dealzora/dashboard");
   };
 
   // ✅ إرسال رابط إعادة كلمة السر

@@ -26,7 +26,7 @@ export default function SochialButton({
     const success = await loginWithProvider(Provider);
     if (success) {
       toast.success("تم تسجيل الدخول بنجاح\n ابدأ ادارة متجرك مع Dealzora🔥!");
-      router.replace("/dashboard");
+      router.replace("dealzora/dashboard");
     } else if (providerError) {
       toast.error(providerError);
     }
