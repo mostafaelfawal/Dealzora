@@ -12,11 +12,11 @@ interface Props {
 export default function ProductModal({ product, closeModal }: Props) {
   return (
     <Modal title="تفاصيل المنتج" closeModal={closeModal}>
-      <div className="bg-white rounded-2xl p-5 w-full max-w-sm mx-auto">
+      <form className="bg-white rounded-2xl p-5 w-full max-w-sm mx-auto">
         <div className="flex flex-col items-center mb-4">
           <div className="relative w-24 h-24 rounded-xl overflow-hidden mb-3 shadow">
             <Image
-              src={product.image}
+              src={product.image ?? "/default_product.png"}
               alt={product.name}
               fill
               className="object-cover"
@@ -41,7 +41,7 @@ export default function ProductModal({ product, closeModal }: Props) {
           </div>
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-600">الحالة:</span>
-            <ProductStatusBadge status={product.status} />
+            <ProductStatusBadge status={product.status!} />
           </div>
         </div>
 
@@ -53,7 +53,7 @@ export default function ProductModal({ product, closeModal }: Props) {
             <FaTrash /> حذف
           </button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }

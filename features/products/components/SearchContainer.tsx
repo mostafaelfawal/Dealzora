@@ -1,11 +1,13 @@
 "use client";
 import { FaPlus, FaSearch } from "react-icons/fa";
 import { useState } from "react";
+import AddProductModal from "./AddProductModal/AddProductModal";
 
 export default function SearchContainer() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [status, setStatus] = useState<string>("");
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [categorys, setCategorys] = useState<string[]>([
     "الكترونيات",
     "ملابس",
@@ -48,14 +50,20 @@ export default function SearchContainer() {
         <option value="">جميع الحالات</option>
         <option value="موجود">موجود</option>
         <option value="منتهي">منتهي</option>
-        <option value="اقترب من النفاذ">اقترب من النفاذ</option>
+        <option value="قليل">قليل</option>
       </select>
 
       {/* Add Product Button */}
-      <button className="flex gap-2 items-center justify-center px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 hover:scale-105 transition-all w-full shadow-sm hover:shadow-md">
+      <button
+        onClick={() => setModalIsOpen(true)}
+        className="flex gap-2 items-center justify-center px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 hover:scale-105 transition-all w-full shadow-sm hover:shadow-md"
+      >
         <FaPlus />
         اضف منتج
       </button>
+      {modalIsOpen && (
+        <AddProductModal closeModal={() => setModalIsOpen(false)} />
+      )}
     </div>
   );
 }

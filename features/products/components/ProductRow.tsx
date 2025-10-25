@@ -26,7 +26,7 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
 
         <div className="relative w-12 h-12 rounded-lg overflow-hidden">
           <Image
-            src={product.image}
+            src={product.image ?? "/default_product.png"}
             alt={product.name}
             fill
             className="object-cover"
@@ -46,7 +46,7 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
       <td className="hidden md:table-cell py-3 px-4">{product.category}</td>
       <td className="hidden md:table-cell py-3 px-4">{product.stock}</td>
       <td className="hidden md:table-cell py-3 px-4">
-        <ProductStatusBadge status={product.status} />
+        <ProductStatusBadge status={product.status!} />
       </td>
 
       <td className="hidden md:table-cell py-3 px-4">
