@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "@/components/Modal";
-import { ProductType } from "../types/ProductType";
+import { ProductType } from "../../types/ProductType";
 import ProductStatusBadge from "./ProductStatusBadge";
 
 interface Props {

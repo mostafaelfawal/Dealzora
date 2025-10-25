@@ -1,6 +1,6 @@
 import { auth, db } from "@/firebase/firebase";
 import { addDoc, collection } from "firebase/firestore";
-import { ProductType } from "../types/ProductType";
+import { ProductType } from "../../types/ProductType";
 import { useState } from "react";
 
 export default function useAddProduct() {

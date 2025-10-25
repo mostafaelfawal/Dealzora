@@ -4,7 +4,7 @@ import Modal from "@/components/Modal";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
-import useAddProduct from "../../hooks/useAddProduct";
+import useAddProduct from "../../hooks/CRUD/useAddProduct";
 import { ProductType } from "../../types/ProductType";
 import ProductImageUploader from "./ProductImageUploader";
 import ProductInput from "./ProductInput";
@@ -94,7 +94,7 @@ export default function AddProductModal({
         <ProductFormButtons
           loading={loading}
           onSave={addProductHandler}
-          onDraft={() => toast("تم حفظ المسودة (قريبًا)")}
+          onDraft={() => toast.success("تم حفظ المسودة (قريبًا)")}
         />
       </motion.div>
     </Modal>

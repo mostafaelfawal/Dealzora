@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { RxDotsVertical } from "react-icons/rx";
-import { ProductType } from "../types/ProductType";
+import { ProductType } from "../../types/ProductType";
 import ProductStatusBadge from "./ProductStatusBadge";
 import ProductModal from "./ProductModal";
 

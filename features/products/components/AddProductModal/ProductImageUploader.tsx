@@ -39,7 +39,7 @@ export default function ProductImageUploader({
           <div className="relative w-40 h-40">
             <button
               onClick={handleDeleteImage}
-              className="absolute top-0 left-0 z-6 rounded-full flex justify-center items-center size-5 bg-red-500 text-white hover:bg-red-700 duration-200 transition-colors"
+              className="absolute -top-1 -left-3 z-10 rounded-full flex justify-center items-center size-6 bg-red-500 text-white hover:bg-red-700 duration-200 transition-colors"
             >
               <CgClose />
             </button>

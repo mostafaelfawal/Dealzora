@@ -13,10 +13,11 @@ export default function ProductNumberInput({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="font-medium text-gray-700">
+      <label htmlFor={label} className="font-medium text-gray-700">
         {label} {required && <RequiredMark />}
       </label>
       <input
+        id={label}
         type="number"
         className="transition-shadow duration-200 rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400"
         value={value}

@@ -1,5 +1,5 @@
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import { ProductPaginationProps } from "../types/ProductPaginationProps";
+import { ProductPaginationProps } from "../../types/ProductPaginationProps";
 
 export default function ProductPagination({
   currentPage,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ProductType } from "../types/ProductType";
+import { ProductType } from "../../types/ProductType";
 import ProductRow from "./ProductRow";
 import ProductPagination from "./ProductPagination";
 
