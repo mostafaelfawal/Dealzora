@@ -26,7 +26,7 @@ export default function Modal({ title, closeModal, children }: ModalProps) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4 relative"
+          className="overflow-y-auto max-h-screen bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4 relative"
         >
           {/* رأس المودال */}
           <div className="flex justify-between items-center mb-6  pb-2 border-b border-b-gray-300">
