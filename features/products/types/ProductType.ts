@@ -3,7 +3,7 @@ export type ProductType = {
   name: string;
   price: number;
   category: string;
-  stock: number;
+  stock?: number;
   code: string;
   status?: "موجود" | "منتهي" | "قليل";
   stockAlert?: number;

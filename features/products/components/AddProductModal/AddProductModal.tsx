@@ -29,8 +29,8 @@ export default function AddProductModal({
 
   const addProductHandler = async (data: productSchemaType) => {
     const success = await addProduct(data);
+    toast.success("تم إضافة المنتج بنجاح");
     if (success) {
-      toast.success("تم إضافة المنتج بنجاح");
       closeModal();
     }
   };
