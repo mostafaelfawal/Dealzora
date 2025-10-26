@@ -91,6 +91,13 @@ export default function AddProductModal({
           />
         </div>
 
+        <ProductInput
+          label="الكود"
+          value={product.code}
+          onChange={(v) => setProduct({ ...product, code: v })}
+          required
+        />
+
         <ProductFormButtons
           loading={loading}
           onSave={addProductHandler}

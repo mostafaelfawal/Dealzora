@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FaBox, FaChartBar, FaHome, FaUsers } from "react-icons/fa";
 
 export default function MenuLinks({
@@ -14,6 +15,7 @@ export default function MenuLinks({
     { name: "العملاء", icon: <FaUsers />, href: "/customers" },
     { name: "التقارير", icon: <FaChartBar />, href: "/reports" },
   ];
+  const path = usePathname();
   return (
     <nav className="flex-1 flex flex-col gap-2 p-3 text-sm text-right">
       {menuItems.map((item) => (
@@ -21,9 +23,9 @@ export default function MenuLinks({
           key={item.href}
           href={item.href}
           onClick={onClick}
-          className={`flex items-center gap-3 p-3 rounded-lg hover:bg-blue-500 transition ${
-            !hovered && "justify-center"
-          }`}
+          className={`flex items-center gap-3 p-3 rounded-lg ${
+            path === item.href ? "bg-blue-500" : "hover:bg-blue-500"
+          } transition ${!hovered && "justify-center"}`}
         >
           {item.icon}
           {hovered && <span>{item.name}</span>}
