@@ -1,16 +1,14 @@
 export default function ProductFormButtons({
   loading,
-  onSave,
   onDraft,
 }: {
   loading: boolean;
-  onSave: VoidFunction;
   onDraft: VoidFunction;
 }) {
   return (
     <div className="flex gap-3 pt-3">
       <button
-        onClick={onSave}
+        type="submit"
         disabled={loading}
         className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50"
       >

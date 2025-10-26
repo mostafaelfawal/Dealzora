@@ -5,11 +5,13 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import useAddProduct from "../../hooks/CRUD/useAddProduct";
-import { ProductType } from "../../types/ProductType";
 import ProductImageUploader from "./ProductImageUploader";
 import ProductInput from "./ProductInput";
 import ProductNumberInput from "./ProductNumberInput";
 import ProductFormButtons from "./ProductFormButtons";
+import { useForm } from "react-hook-form";
+import { addProductSchema, productSchemaType } from "../../schemas/addProductSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function AddProductModal({
   closeModal,
@@ -17,17 +19,7 @@ export default function AddProductModal({
   closeModal: VoidFunction;
 }) {
   const { addProduct, loading, error } = useAddProduct();
-
-  const [product, setProduct] = useState<ProductType>({
-    image: "",
-    name: "",
-    code: "",
-    price: 0,
-    category: "",
-    stock: 0,
-    stockAlert: 0,
-  });
-
+  const [productImage, setProductImage] = useState("");
   useEffect(() => {
     if (error) {
       toast.dismiss();
@@ -35,45 +27,61 @@ export default function AddProductModal({
     }
   }, [error]);
 
-  const addProductHandler = async () => {
-    const success = await addProduct(product);
+  const addProductHandler = async (data: productSchemaType) => {
+    const success = await addProduct(data);
     if (success) {
       toast.success("تم إضافة المنتج بنجاح");
       closeModal();
     }
   };
 
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(addProductSchema),
+  });
+
   return (
     <Modal closeModal={closeModal} title="إضافة منتج جديد">
-      <motion.div
+      <motion.form
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        onSubmit={handleSubmit(addProductHandler)}
         className="space-y-4"
       >
         <ProductImageUploader
-          image={product.image!}
-          onImageChange={(url) => setProduct({ ...product, image: url })}
+          image={productImage}
+          onImageChange={(url) => setProductImage(url)}
         />
 
         <ProductInput
           label="اسم المنتج"
-          value={product.name}
-          onChange={(v) => setProduct({ ...product, name: v })}
+          errors={errors}
+          register={register("name")}
+          required
+        />
+
+        <ProductInput
+          label="الكود"
+          errors={errors}
+          register={register("code")}
           required
         />
 
         <div className="grid grid-cols-2 gap-3">
           <ProductNumberInput
             label="السعر"
-            value={product.price}
-            onChange={(v) => setProduct({ ...product, price: v })}
+            register={register("price")}
+            errors={errors}
             required
           />
-          <ProductInput
+          <ProductNumberInput
             label="الفئة"
-            value={product.category}
-            onChange={(v) => setProduct({ ...product, category: v })}
+            register={register("category")}
+            errors={errors}
             required
           />
         </div>
@@ -81,29 +89,21 @@ export default function AddProductModal({
         <div className="grid grid-cols-2 gap-3">
           <ProductNumberInput
             label="الكمية في المخزون"
-            value={product.stock}
-            onChange={(v) => setProduct({ ...product, stock: v })}
+            register={register("stock")}
+            errors={errors}
           />
           <ProductNumberInput
             label="حد التنبيه"
-            value={product.stockAlert!}
-            onChange={(v) => setProduct({ ...product, stockAlert: v })}
+            register={register("stockAlert")}
+            errors={errors}
           />
         </div>
 
-        <ProductInput
-          label="الكود"
-          value={product.code}
-          onChange={(v) => setProduct({ ...product, code: v })}
-          required
-        />
-
         <ProductFormButtons
           loading={loading}
-          onSave={addProductHandler}
           onDraft={() => toast.success("تم حفظ المسودة (قريبًا)")}
         />
-      </motion.div>
+      </motion.form>
     </Modal>
   );
 }

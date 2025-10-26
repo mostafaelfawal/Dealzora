@@ -53,7 +53,10 @@ export default function SideMenu() {
               transition={{ type: "spring", stiffness: 100, damping: 20 }}
             >
               <div className="flex items-center gap-3 p-5 border-b border-blue-500">
-                <div className="relative w-10 h-10 rounded-lg overflow-hidden">
+                <div
+                  onClick={() => (location.href = "/")}
+                  className="relative w-10 h-10 rounded-lg overflow-hidden"
+                >
                   <Image
                     src="/icon.png"
                     alt="Logo"
@@ -84,7 +87,10 @@ export default function SideMenu() {
         }`}
       >
         <div className="flex items-center gap-3 p-5 border-b border-blue-500">
-          <div className="relative w-10 h-10 rounded-lg overflow-hidden">
+          <div
+            onClick={() => (location.href = "/")}
+            className="relative w-10 h-10 rounded-lg overflow-hidden"
+          >
             <Image
               src="/icon.png"
               alt="Logo"
