@@ -8,9 +8,12 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { motion } from "framer-motion";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 export default function ProductTable() {
   const { products, error, loading } = useFetchProducts();
+  const isSearch = useSelector((state: RootState) => state.search.searchQuery);
 
   useEffect(() => {
     if (error) {
@@ -67,15 +70,30 @@ export default function ProductTable() {
                   animate={{ y: 0, opacity: 1 }}
                   className="mb-3 relative w-full h-50"
                 >
-                  <Image
-                    src="/products-undefined.svg"
-                    alt="not-found products"
-                    fill
-                    className="select-none"
-                  />
+                  {isSearch ? (
+                    <Image
+                      src="/search not-found.svg"
+                      alt="not-found search"
+                      fill
+                      className="select-none"
+                    />
+                  ) : (
+                    <Image
+                      src="/products-undefined.svg"
+                      alt="not-found products"
+                      fill
+                      className="select-none"
+                    />
+                  )}
                 </motion.div>
-                <p className="mb-1 font-semibold">لم تضف اي منتجات بعد.</p>
-                <p className="text-gray-500">اضف اول منتج لك</p>
+                <p className="mb-1 font-semibold">
+                  {isSearch
+                    ? "لم يتم العثور على المنتج"
+                    : "لم تضف اي منتجات بعد."}
+                </p>
+                <p className="text-gray-500">
+                  {isSearch ? `"${isSearch}"` : "اضف اول منتج لك"}
+                </p>
               </td>
             </tr>
           )}

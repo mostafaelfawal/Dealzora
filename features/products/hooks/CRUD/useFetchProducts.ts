@@ -2,11 +2,18 @@ import { auth, db } from "@/firebase/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ProductType } from "../../types/ProductType";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 export default function useFetchProducts() {
   const [products, setProducts] = useState<ProductType[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const searchQuery = useSelector(
+    (state: RootState) => state.search.searchQuery
+  );
 
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -16,10 +23,8 @@ export default function useFetchProducts() {
       return;
     }
 
-    // 🔹 المرجع إلى مجموعة المنتجات
     const productsRef = collection(db, `users/${uid}/products`);
 
-    // ✅ استماع لحظي للتغييرات
     const unsubscribe = onSnapshot(
       productsRef,
       (snapshot) => {
@@ -38,9 +43,22 @@ export default function useFetchProducts() {
       }
     );
 
-    // 🧹 إلغاء الاشتراك عند إزالة الكومبوننت
     return () => unsubscribe();
   }, []);
 
-  return { products, loading, error };
+  // 🔎 فلترة المنتجات بناءً على البحث
+  useEffect(() => {
+    const queryLower = searchQuery.toLowerCase().trim();
+    if (!queryLower) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const filtered = products.filter((p) =>
+      p.name?.toLowerCase().includes(queryLower)
+    );
+    setFilteredProducts(filtered);
+  }, [searchQuery, products]);
+
+  return { products: filteredProducts, loading, error };
 }
