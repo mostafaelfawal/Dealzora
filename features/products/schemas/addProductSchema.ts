@@ -29,6 +29,7 @@ export const addProductSchema = z.object({
     .min(0, "حد التنبيه لا يمكن أن يكون سالبًا")
     .max(10000000000, "حد التنبيه أكبر من اللازم")
     .optional(),
+  image: z.string().optional(),
 });
 
 export type productSchemaType = z.infer<typeof addProductSchema>;

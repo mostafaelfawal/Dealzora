@@ -33,11 +33,18 @@ export function useProductImage() {
   };
 
   // رفع الصورة إلى ImgBB
-  const handleUploadImgBB = async (): Promise<string | null> => {
-    if (!file) return null;
+  const handleUploadImgBB = async (
+    fileToUpload: File | null
+  ): Promise<string | null> => {
+    const uploadFile = fileToUpload || file;
+
+    if (!uploadFile) {
+      return null;
+    }
+
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", uploadFile);
 
       const response = await axios.post(
         "https://api.imgbb.com/1/upload?key=eae8a44e90f6075a5fc2f3e096d89a58",
@@ -45,10 +52,10 @@ export function useProductImage() {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      const uploadedUrl = response.data.url;
-      setPreviewImage(uploadedUrl);
+      const uploadedUrl = response.data.data.url;
       return uploadedUrl;
     } catch (error) {
+      console.error(error);
       toast.error("فشل رفع الصورة");
       return null;
     }
@@ -79,5 +86,7 @@ export function useProductImage() {
     handleDragOver,
     handleDragLeave,
     handleDrop,
+    setFile,
+    setPreviewImage,
   };
 }

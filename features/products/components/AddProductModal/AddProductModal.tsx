@@ -14,7 +14,7 @@ import {
   productSchemaType,
 } from "../../schemas/addProductSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useProductImage } from "../../hooks/useProductImage";
 
 export default function AddProductModal({
   closeModal,
@@ -22,15 +22,32 @@ export default function AddProductModal({
   closeModal: VoidFunction;
 }) {
   const { addProduct, error } = useAddProduct();
-  const [imageURL] = useState<string>("/default_product.png");
 
-  const addProductHandler = (data: productSchemaType) => {
+  const {
+    previewImage,
+    file,
+    isDragging,
+    handleUploadImgBB,
+    handleImageChange,
+    handleDeleteImage,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useProductImage();
+
+  const addProductHandler = async (data: productSchemaType) => {
+    // ارفع الصورة أولاً
     closeModal();
-    toast.promise(addProduct({ ...data, image: imageURL }), {
-      loading: "جاري اضافة المنتج...",
-      success: "تم اضافة المنتج بنجاح",
-      error: error || "حدث خطأ أثناء اضافة المنتج",
-    });
+    const imageURL = await handleUploadImgBB(file);
+
+    toast.promise(
+      addProduct({ ...data, image: imageURL ?? "/default_product.png" }),
+      {
+        loading: "جاري اضافة المنتج...",
+        success: "تم اضافة المنتج بنجاح",
+        error: error || "حدث خطأ أثناء اضافة المنتج",
+      }
+    );
   };
 
   const {
@@ -50,7 +67,15 @@ export default function AddProductModal({
         onSubmit={handleSubmit(addProductHandler)}
         className="space-y-4"
       >
-        <ProductImageUploader />
+        <ProductImageUploader
+          previewImage={previewImage}
+          isDragging={isDragging}
+          handleDragOver={handleDragOver}
+          handleDragLeave={handleDragLeave}
+          handleDrop={handleDrop}
+          handleDeleteImage={handleDeleteImage}
+          handleImageChange={handleImageChange}
+        />
 
         <ProductInput
           label="اسم المنتج"

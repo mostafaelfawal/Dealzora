@@ -86,35 +86,37 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
         </div>
       </td>
       {deleteModal && (
-        <Modal closeModal={() => setDeleteModal(false)} title="حذف المنتج">
-          <div className="flex flex-col items-center text-center space-y-5">
-            {/* دائرة الأيقونة */}
-            <div className="size-20 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-5xl shadow-inner">
-              <FaTrash />
-            </div>
+        <td>
+          <Modal closeModal={() => setDeleteModal(false)} title="حذف المنتج">
+            <div className="flex flex-col items-center text-center space-y-5">
+              {/* دائرة الأيقونة */}
+              <div className="size-20 flex items-center justify-center rounded-full bg-red-100 text-red-600 text-5xl shadow-inner">
+                <FaTrash />
+              </div>
 
-            {/* النص */}
-            <p className="text-gray-600 text-lg font-medium">
-              هل أنت متأكد أنك تريد حذف هذا المنتج؟
-            </p>
+              {/* النص */}
+              <p className="text-gray-600 text-lg font-medium">
+                هل أنت متأكد أنك تريد حذف هذا المنتج؟
+              </p>
 
-            {/* أزرار الإجراءات */}
-            <div className="flex gap-3 w-full mt-4">
-              <button
-                onClick={handleDeleteProduct}
-                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                نعم، احذف
-              </button>
-              <button
-                onClick={() => setDeleteModal(false)}
-                className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
-              >
-                إلغاء
-              </button>
+              {/* أزرار الإجراءات */}
+              <div className="flex gap-3 w-full mt-4">
+                <button
+                  onClick={handleDeleteProduct}
+                  className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  نعم، احذف
+                </button>
+                <button
+                  onClick={() => setDeleteModal(false)}
+                  className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
+                >
+                  إلغاء
+                </button>
+              </div>
             </div>
-          </div>
-        </Modal>
+          </Modal>
+        </td>
       )}
     </tr>
   );
