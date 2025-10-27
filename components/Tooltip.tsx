@@ -28,7 +28,7 @@ export default function Tooltip({
             side={side}
             align="center"
             sideOffset={5}
-            className="z-4 bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100 
+            className="z-6 bg-gray-800 dark:bg-gray-700 text-white dark:text-gray-100 
                        text-sm px-3 py-1.5 rounded-md shadow-lg select-none 
                        animate-fadeIn"
           >

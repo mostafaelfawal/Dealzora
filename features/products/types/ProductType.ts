@@ -1,10 +1,10 @@
 export type ProductType = {
-  image?: string;
+  id?: string;
+  image: string;
   name: string;
   price: number;
   category: string;
-  stock?: number;
   code: string;
-  status?: "موجود" | "منتهي" | "قليل";
-  stockAlert?: number;
+  stock?: number | undefined;
+  stockAlert?: number | undefined;
 };

@@ -3,6 +3,8 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "@/components/Modal";
 import { ProductType } from "../../types/ProductType";
 import ProductStatusBadge from "./ProductStatusBadge";
+import toast from "react-hot-toast";
+import useDeleteProduct from "../../hooks/CRUD/useDeleteProduct";
 
 interface Props {
   product: ProductType;
@@ -10,13 +12,22 @@ interface Props {
 }
 
 export default function ProductModal({ product, closeModal }: Props) {
+  const { deleteProduct, error } = useDeleteProduct();
+
+  const handleDeleteProduct = async () => {
+    toast.promise(deleteProduct(product.id!), {
+      loading: "جاري حذف المنتج...",
+      success: "تم حذف المنتج بنجاح",
+      error: error || "حدث خطأ أثناء حذف المنتج",
+    });
+  };
   return (
     <Modal title="تفاصيل المنتج" closeModal={closeModal}>
       <form className="bg-white rounded-2xl p-5 w-full max-w-sm mx-auto">
         <div className="flex flex-col items-center mb-4">
           <div className="relative w-24 h-24 rounded-xl overflow-hidden mb-3 shadow">
             <Image
-              src={product.image ?? "/default_product.png"}
+              src={product.image}
               alt={product.name}
               fill
               className="object-cover"
@@ -41,7 +52,10 @@ export default function ProductModal({ product, closeModal }: Props) {
           </div>
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-600">الحالة:</span>
-            <ProductStatusBadge status={product.status!} />
+            <ProductStatusBadge
+              stockAlert={product.stockAlert}
+              stock={product.stock}
+            />
           </div>
         </div>
 
@@ -49,7 +63,10 @@ export default function ProductModal({ product, closeModal }: Props) {
           <button className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
             <FaEdit /> تعديل
           </button>
-          <button className="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center gap-2">
+          <button
+            onClick={handleDeleteProduct}
+            className="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center gap-2"
+          >
             <FaTrash /> حذف
           </button>
         </div>

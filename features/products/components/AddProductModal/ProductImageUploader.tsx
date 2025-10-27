@@ -4,14 +4,9 @@ import { FaImage } from "react-icons/fa";
 import Image from "next/image";
 import { useProductImage } from "../../hooks/useProductImage";
 import { CgClose } from "react-icons/cg";
+import Tooltip from "@/components/Tooltip";
 
-export default function ProductImageUploader({
-  image,
-  onImageChange,
-}: {
-  image: string;
-  onImageChange: (url: string) => void;
-}) {
+export default function ProductImageUploader() {
   const {
     previewImage,
     isDragging,
@@ -19,9 +14,8 @@ export default function ProductImageUploader({
     handleDragLeave,
     handleDrop,
     handleDeleteImage,
-    handleImageChange,
-  } = useProductImage(onImageChange, image);
-
+    handleImageChange
+  } = useProductImage();
   return (
     <>
       <label
@@ -37,12 +31,14 @@ export default function ProductImageUploader({
       >
         {previewImage ? (
           <div className="relative w-40 h-40">
-            <button
-              onClick={handleDeleteImage}
-              className="absolute -top-1 -left-3 z-10 rounded-full flex justify-center items-center size-6 bg-red-500 text-white hover:bg-red-700 duration-200 transition-colors"
-            >
-              <CgClose />
-            </button>
+            <Tooltip message="مسح الصوره">
+              <button
+                onClick={handleDeleteImage}
+                className="absolute -top-1 -left-3 z-3 rounded-full flex justify-center items-center size-6 bg-red-500 text-white hover:bg-red-700 duration-200 transition-colors"
+              >
+                <CgClose />
+              </button>
+            </Tooltip>
             <Image
               src={previewImage}
               alt="Preview"

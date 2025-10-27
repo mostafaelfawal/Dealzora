@@ -18,7 +18,7 @@ export default function ProductPagination({
   for (let i = startPage; i <= endPage; i++) {
     pages.push(i);
   }
-
+  if (totalProducts === 0) return null; // If no
   return (
     <tr>
       <td

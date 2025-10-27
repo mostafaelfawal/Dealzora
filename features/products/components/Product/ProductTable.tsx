@@ -1,85 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { ProductType } from "../../types/ProductType";
+import { useEffect, useState } from "react";
 import ProductRow from "./ProductRow";
 import ProductPagination from "./ProductPagination";
+import useFetchProducts from "../../hooks/CRUD/useFetchProducts";
+import Image from "next/image";
+import toast from "react-hot-toast";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { motion } from "framer-motion";
 
 export default function ProductTable() {
-  const [products] = useState<ProductType[]>([
-    {
-      image: "/productImages/Antipasto Salad.jpeg",
-      name: "Antipasto Salad",
-      code: "SKU-234135",
-      price: 200,
-      category: "أطعمة",
-      stock: 20,
-      status: "موجود",
-    },
-    {
-      image: "/productImages/Lenovo ThinkPad X1.webp",
-      name: "Lenovo ThinkPad X1",
-      code: "SKU-981245",
-      price: 24500,
-      category: "إلكترونيات",
-      stock: 8,
-      status: "قليل",
-    },
-    {
-      image: "/productImages/Cotton T-Shirt.webp",
-      name: "Cotton T-Shirt",
-      code: "SKU-712534",
-      price: 350,
-      category: "ملابس",
-      stock: 0,
-      status: "منتهي",
-    },
-    {
-      image: "/productImages/Philips Coffee Maker.webp",
-      name: "Philips Coffee Maker",
-      code: "SKU-551231",
-      price: 1800,
-      category: "أدوات منزلية",
-      stock: 14,
-      status: "موجود",
-    },
-    {
-      image: "/productImages/Sony WH-1000XM5.webp",
-      name: "Sony WH-1000XM5",
-      code: "SKU-998812",
-      price: 12000,
-      category: "إلكترونيات",
-      stock: 5,
-      status: "قليل",
-    },
-    {
-      image: "/productImages/Nike Air Zoom.webp",
-      name: "Nike Air Zoom",
-      code: "SKU-331289",
-      price: 2500,
-      category: "ملابس",
-      stock: 30,
-      status: "موجود",
-    },
-    {
-      image: "/productImages/Apple Watch Series 9.png",
-      name: "Apple Watch Series 9",
-      code: "SKU-456712",
-      price: 18500,
-      category: "إلكترونيات",
-      stock: 0,
-      status: "منتهي",
-    },
-    {
-      image: "/productImages/Natural Mango Juice.jpg",
-      name: "Natural Mango Juice",
-      code: "SKU-771245",
-      price: 25,
-      category: "مشروبات",
-      stock: 50,
-      status: "موجود",
-    },
-  ]);
+  const { products, error, loading } = useFetchProducts();
+
+  useEffect(() => {
+    if (error) {
+      toast.dismiss();
+      toast.error(error);
+    }
+  });
 
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -105,14 +43,42 @@ export default function ProductTable() {
         </thead>
 
         <tbody>
-          {currentProducts.map((product) => (
-            <ProductRow
-              key={product.code}
-              product={product}
-              openRow={openRow}
-              setOpenRow={setOpenRow}
-            />
-          ))}
+          {loading ? (
+            <tr>
+              <td colSpan={6} className="text-center p-4">
+                <LoadingSpinner />
+                <p className="animate-pulse">جاري تحميل منتجات...</p>
+              </td>
+            </tr>
+          ) : products.length ? (
+            currentProducts.map((product) => (
+              <ProductRow
+                key={product.code}
+                product={product}
+                openRow={openRow}
+                setOpenRow={setOpenRow}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6} className="text-center p-4">
+                <motion.div
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="mb-3 relative w-full h-50"
+                >
+                  <Image
+                    src="/products-undefined.svg"
+                    alt="not-found products"
+                    fill
+                    className="select-none"
+                  />
+                </motion.div>
+                <p className="mb-1 font-semibold">لم تضف اي منتجات بعد.</p>
+                <p className="text-gray-500">اضف اول منتج لك</p>
+              </td>
+            </tr>
+          )}
         </tbody>
 
         <tfoot>

@@ -4,7 +4,7 @@ export const addProductSchema = z.object({
   name: z
     .string()
     .min(1, "اسم المنتج مطلوب")
-    .max(50, "اسم المنتج أطول من اللازم"),
+    .max(43, "اسم المنتج أطول من اللازم"),
 
   price: z.coerce
     .number()

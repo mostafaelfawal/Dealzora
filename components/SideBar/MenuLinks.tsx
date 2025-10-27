@@ -12,8 +12,6 @@ export default function MenuLinks({
   const menuItems = [
     { name: "لوحة التحكم", icon: <FaHome />, href: "/dealzora/dashboard" },
     { name: "المنتجات", icon: <FaBox />, href: "/dealzora/products" },
-    { name: "العملاء", icon: <FaUsers />, href: "/customers" },
-    { name: "التقارير", icon: <FaChartBar />, href: "/reports" },
   ];
   const path = usePathname();
   return (

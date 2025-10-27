@@ -3,36 +3,34 @@
 import Modal from "@/components/Modal";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { useEffect, useState } from "react";
 import useAddProduct from "../../hooks/CRUD/useAddProduct";
 import ProductImageUploader from "./ProductImageUploader";
 import ProductInput from "./ProductInput";
 import ProductNumberInput from "./ProductNumberInput";
 import ProductFormButtons from "./ProductFormButtons";
 import { useForm } from "react-hook-form";
-import { addProductSchema, productSchemaType } from "../../schemas/addProductSchema";
+import {
+  addProductSchema,
+  productSchemaType,
+} from "../../schemas/addProductSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 
 export default function AddProductModal({
   closeModal,
 }: {
   closeModal: VoidFunction;
 }) {
-  const { addProduct, loading, error } = useAddProduct();
-  const [productImage, setProductImage] = useState("");
-  useEffect(() => {
-    if (error) {
-      toast.dismiss();
-      toast.error(error);
-    }
-  }, [error]);
+  const { addProduct, error } = useAddProduct();
+  const [imageURL] = useState<string>("/default_product.png");
 
-  const addProductHandler = async (data: productSchemaType) => {
-    const success = await addProduct(data);
-    toast.success("تم إضافة المنتج بنجاح");
-    if (success) {
-      closeModal();
-    }
+  const addProductHandler = (data: productSchemaType) => {
+    closeModal();
+    toast.promise(addProduct({ ...data, image: imageURL }), {
+      loading: "جاري اضافة المنتج...",
+      success: "تم اضافة المنتج بنجاح",
+      error: error || "حدث خطأ أثناء اضافة المنتج",
+    });
   };
 
   const {
@@ -52,10 +50,7 @@ export default function AddProductModal({
         onSubmit={handleSubmit(addProductHandler)}
         className="space-y-4"
       >
-        <ProductImageUploader
-          image={productImage}
-          onImageChange={(url) => setProductImage(url)}
-        />
+        <ProductImageUploader />
 
         <ProductInput
           label="اسم المنتج"
@@ -78,7 +73,7 @@ export default function AddProductModal({
             errors={errors}
             required
           />
-          <ProductNumberInput
+          <ProductInput
             label="الفئة"
             register={register("category")}
             errors={errors}
@@ -100,7 +95,6 @@ export default function AddProductModal({
         </div>
 
         <ProductFormButtons
-          loading={loading}
           onDraft={() => toast.success("تم حفظ المسودة (قريبًا)")}
         />
       </motion.form>
