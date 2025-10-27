@@ -1,26 +1,21 @@
+"use client";
 import Image from "next/image";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "@/components/Modal";
 import { ProductType } from "../../types/ProductType";
 import ProductStatusBadge from "./ProductStatusBadge";
-import toast from "react-hot-toast";
-import useDeleteProduct from "../../hooks/CRUD/useDeleteProduct";
 
 interface Props {
   product: ProductType;
   closeModal: () => void;
+  openDeleteModal: () => void;
 }
 
-export default function ProductModal({ product, closeModal }: Props) {
-  const { deleteProduct, error } = useDeleteProduct();
-
-  const handleDeleteProduct = async () => {
-    toast.promise(deleteProduct(product.id!), {
-      loading: "جاري حذف المنتج...",
-      success: "تم حذف المنتج بنجاح",
-      error: error || "حدث خطأ أثناء حذف المنتج",
-    });
-  };
+export default function ProductModal({
+  product,
+  closeModal,
+  openDeleteModal,
+}: Props) {
   return (
     <Modal title="تفاصيل المنتج" closeModal={closeModal}>
       <form className="bg-white rounded-2xl p-5 w-full max-w-sm mx-auto">
@@ -60,11 +55,15 @@ export default function ProductModal({ product, closeModal }: Props) {
         </div>
 
         <div className="flex gap-3 pt-5">
-          <button className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
+          >
             <FaEdit /> تعديل
           </button>
           <button
-            onClick={handleDeleteProduct}
+            type="button"
+            onClick={openDeleteModal}
             className="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center gap-2"
           >
             <FaTrash /> حذف
