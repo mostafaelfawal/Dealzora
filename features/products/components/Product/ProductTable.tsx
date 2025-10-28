@@ -14,7 +14,9 @@ import { RootState } from "@/store/store";
 export default function ProductTable() {
   const { products, error, loading } = useFetchProducts();
   const isSearch = useSelector((state: RootState) => state.search.searchQuery);
-  const isCategorie = useSelector((state: RootState) => state.search.categoriesQuery);
+  const isCategorie = useSelector(
+    (state: RootState) => state.search.categoriesQuery
+  );
   const isState = useSelector((state: RootState) => state.search.stateQuery);
   const isSearchActive = isSearch || isCategorie || isState;
 
@@ -95,7 +97,9 @@ export default function ProductTable() {
                     : "لم تضف اي منتجات بعد."}
                 </p>
                 <p className="text-gray-500">
-                  {isSearchActive ? `"${isSearch ? isSearch : "غير موجود"}"` : "اضف اول منتج لك"}
+                  {isSearchActive
+                    ? `"${isSearch ? isSearch : "غير موجود"}"`
+                    : "اضف اول منتج لك"}
                 </p>
               </td>
             </tr>
@@ -103,14 +107,18 @@ export default function ProductTable() {
         </tbody>
 
         <tfoot>
-          <ProductPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalProducts={products.length}
-            indexOfFirst={indexOfFirst}
-            indexOfLast={indexOfLast}
-            handlePageChange={setCurrentPage}
-          />
+          <tr>
+            <td colSpan={6}>
+              <ProductPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalProducts={products.length}
+                indexOfFirst={indexOfFirst}
+                indexOfLast={indexOfLast}
+                handlePageChange={setCurrentPage}
+              />
+            </td>
+          </tr>
         </tfoot>
       </table>
     </div>
