@@ -84,13 +84,13 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setEditModal(true)}
-            className="flex items-center gap-1 px-3 py-1 text-white bg-blue-500 rounded hover:bg-blue-600 transition"
+            className="w-20 flex items-center gap-1 px-3 py-1 text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
           >
             <FaEdit /> تعديل
           </button>
           <button
             onClick={() => setDeleteModal(true)}
-            className="flex items-center gap-1 px-3 py-1 text-white bg-red-500 rounded hover:bg-red-600 transition"
+            className="w-20 flex items-center gap-1 px-3 py-1 text-white bg-red-500 rounded hover:bg-red-600 transition-colors"
           >
             <FaTrash /> حذف
           </button>

@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import useAddProduct from "../../hooks/CRUD/useAddProduct";
 import ProductImageUploader from "./ProductImageUploader";
 import ProductInput from "./ProductInput";
-import ProductNumberInput from "./ProductNumberInput";
 import ProductFormButtons from "./ProductFormButtons";
 import { useForm } from "react-hook-form";
 import {
@@ -17,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useProductImage } from "../../hooks/useProductImage";
 import useUpdateProduct from "../../hooks/CRUD/useUpdateProduct";
 import { ProductType } from "../../types/ProductType";
+import useFetchCategories from "../../hooks/useFetchCategories";
 
 export default function AddProductModal({
   closeModal,
@@ -28,6 +28,7 @@ export default function AddProductModal({
   isEdit?: boolean;
 }) {
   const { addProduct, error } = useAddProduct();
+  const { categories } = useFetchCategories();
   const { updateProduct, errorU } = useUpdateProduct();
   const {
     previewImage,
@@ -108,30 +109,41 @@ export default function AddProductModal({
         />
 
         <div className="grid grid-cols-2 gap-3">
-          <ProductNumberInput
+          {/* حقل السعر - نوع number */}
+          <ProductInput
             label="السعر"
             register={register("price")}
             errors={errors}
+            type="number"
             required
           />
+
+          {/* حقل الفئة - نوع category */}
           <ProductInput
             label="الفئة"
             register={register("categories")}
             errors={errors}
+            type="category"
             required
+            categories={categories}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <ProductNumberInput
+          {/* حقل الكمية - نوع number */}
+          <ProductInput
             label="الكمية في المخزون"
             register={register("stock")}
             errors={errors}
+            type="number"
           />
-          <ProductNumberInput
+
+          {/* حقل حد التنبيه - نوع number */}
+          <ProductInput
             label="حد التنبيه"
             register={register("stockAlert")}
             errors={errors}
+            type="number"
           />
         </div>
 
