@@ -5,8 +5,12 @@ import axios from "axios";
 import { validateImage } from "../utils/validateImage";
 import toast from "react-hot-toast";
 
-export function useProductImage() {
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+export function useProductImage({
+  defaultImage,
+}: { defaultImage?: string } = {}) {
+  const [previewImage, setPreviewImage] = useState<string | null>(
+    defaultImage || null
+  );
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 

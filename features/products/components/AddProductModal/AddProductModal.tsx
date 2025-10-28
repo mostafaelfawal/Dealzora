@@ -39,7 +39,7 @@ export default function AddProductModal({
     handleDragOver,
     handleDragLeave,
     handleDrop,
-  } = useProductImage();
+  } = useProductImage({defaultImage: defaultValues?.image});
 
   const handleSaveProduct = async (data: productSchemaType) => {
     closeModal();
