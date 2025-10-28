@@ -11,7 +11,7 @@ export const addProductSchema = z.object({
     .min(1, "السعر لا يمكن أن يكون 0")
     .max(10000000000, "السعر أكبر من اللازم"),
 
-  category: z
+  categories: z
     .string()
     .min(1, "اسم الفئة مطلوب")
     .max(30, "اسم الفئة أطول من اللازم"),

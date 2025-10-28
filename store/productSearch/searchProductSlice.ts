@@ -1,6 +1,16 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState: { searchQuery: string } = { searchQuery: "" };
+interface InitialState {
+  searchQuery: string;
+  categoriesQuery: string;
+  stateQuery: string;
+}
+
+const initialState: InitialState = {
+  searchQuery: "",
+  categoriesQuery: "",
+  stateQuery: "",
+};
 
 const searchProductSlice = createSlice({
   name: "searchProduct",
@@ -9,8 +19,15 @@ const searchProductSlice = createSlice({
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
+    setcategoriesQuery: (state, action: PayloadAction<string>) => {
+      state.categoriesQuery = action.payload;
+    },
+    setStateQuery: (state, action: PayloadAction<string>) => {
+      state.stateQuery = action.payload;
+    },
   },
 });
 
-export const { setSearchQuery } = searchProductSlice.actions;
+export const { setSearchQuery, setcategoriesQuery, setStateQuery } =
+  searchProductSlice.actions;
 export default searchProductSlice.reducer;

@@ -14,6 +14,9 @@ import { RootState } from "@/store/store";
 export default function ProductTable() {
   const { products, error, loading } = useFetchProducts();
   const isSearch = useSelector((state: RootState) => state.search.searchQuery);
+  const isCategorie = useSelector((state: RootState) => state.search.categoriesQuery);
+  const isState = useSelector((state: RootState) => state.search.stateQuery);
+  const isSearchActive = isSearch || isCategorie || isState;
 
   useEffect(() => {
     if (error) {
@@ -70,7 +73,7 @@ export default function ProductTable() {
                   animate={{ y: 0, opacity: 1 }}
                   className="mb-3 relative w-full h-50"
                 >
-                  {isSearch ? (
+                  {isSearchActive ? (
                     <Image
                       src="/search not-found.svg"
                       alt="not-found search"
@@ -87,12 +90,12 @@ export default function ProductTable() {
                   )}
                 </motion.div>
                 <p className="mb-1 font-semibold">
-                  {isSearch
+                  {isSearchActive
                     ? "لم يتم العثور على المنتج"
                     : "لم تضف اي منتجات بعد."}
                 </p>
                 <p className="text-gray-500">
-                  {isSearch ? `"${isSearch}"` : "اضف اول منتج لك"}
+                  {isSearchActive ? `"${isSearch ? isSearch : "غير موجود"}"` : "اضف اول منتج لك"}
                 </p>
               </td>
             </tr>

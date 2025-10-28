@@ -6,11 +6,13 @@ import toast from "react-hot-toast";
 import useFetchCategories from "../hooks/useFetchCategories";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { setSearchQuery } from "@/store/productSearch/searchProductSlice";
+import {
+  setSearchQuery,
+  setcategoriesQuery,
+  setStateQuery,
+} from "@/store/productSearch/searchProductSlice";
 
 export default function SearchContainer() {
-  const [category, setCategory] = useState<string>("");
-  const [status, setStatus] = useState<string>("");
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const { categories, error } = useFetchCategories();
   const dispatch = useDispatch<AppDispatch>();
@@ -34,10 +36,9 @@ export default function SearchContainer() {
         <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-blue-500" />
       </div>
 
-      {/* Category Filter */}
+      {/* categories Filter */}
       <select
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
+        onChange={(e) => dispatch(setcategoriesQuery(e.target.value))}
         className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
       >
         <option value="">جميع الفئات</option>
@@ -50,8 +51,7 @@ export default function SearchContainer() {
 
       {/* Status Filter */}
       <select
-        value={status}
-        onChange={(e) => setStatus(e.target.value)}
+        onChange={(e) => dispatch(setStateQuery(e.target.value))}
         className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
       >
         <option value="">جميع الحالات</option>

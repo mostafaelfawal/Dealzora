@@ -63,6 +63,7 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
         {openRow === product.code && (
           <ProductModal
             openDeleteModal={() => setDeleteModal(true)}
+            openUpdateModal={() => setEditModal(true)}
             product={product}
             closeModal={() => setOpenRow(null)}
           />
@@ -70,7 +71,7 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
       </td>
 
       <td className="hidden md:table-cell py-3 px-4">{product.price} ج.م</td>
-      <td className="hidden md:table-cell py-3 px-4">{product.category}</td>
+      <td className="hidden md:table-cell py-3 px-4">{product.categories}</td>
       <td className="hidden md:table-cell py-3 px-4">{product.stock ?? "—"}</td>
       <td className="hidden md:table-cell py-3 px-4">
         <ProductStatusBadge

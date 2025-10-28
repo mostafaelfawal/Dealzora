@@ -3,7 +3,7 @@ export type ProductType = {
   image: string;
   name: string;
   price: number;
-  category: string;
+  categories: string;
   code: string;
   stock?: number | undefined;
   stockAlert?: number | undefined;

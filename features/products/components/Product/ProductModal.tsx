@@ -9,12 +9,14 @@ interface Props {
   product: ProductType;
   closeModal: () => void;
   openDeleteModal: () => void;
+  openUpdateModal: () => void;
 }
 
 export default function ProductModal({
   product,
   closeModal,
   openDeleteModal,
+  openUpdateModal,
 }: Props) {
   return (
     <Modal title="تفاصيل المنتج" closeModal={closeModal}>
@@ -39,7 +41,7 @@ export default function ProductModal({
           </div>
           <div className="flex justify-between">
             <span className="font-semibold text-gray-600">الفئة:</span>
-            <span>{product.category}</span>
+            <span>{product.categories}</span>
           </div>
           <div className="flex justify-between">
             <span className="font-semibold text-gray-600">المخزون:</span>
@@ -57,13 +59,20 @@ export default function ProductModal({
         <div className="flex gap-3 pt-5">
           <button
             type="button"
+            onClick={() => {
+              openUpdateModal();
+              closeModal();
+            }}
             className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
           >
             <FaEdit /> تعديل
           </button>
           <button
             type="button"
-            onClick={openDeleteModal}
+            onClick={() => {
+              openDeleteModal();
+              closeModal();
+            }}
             className="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center gap-2"
           >
             <FaTrash /> حذف

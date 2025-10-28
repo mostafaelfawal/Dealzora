@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function useFetchCategories() {
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setcategories] = useState<string[]>([]);
 
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -20,16 +20,16 @@ export default function useFetchCategories() {
     const unsubscribe = onSnapshot(
       productsRef,
       (snapshot) => {
-        const uniqueCategories = new Set<string>();
+        const uniquecategories = new Set<string>();
 
         snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.category) {
-            uniqueCategories.add(data.category);
+          if (data.categories) {
+            uniquecategories.add(data.categories);
           }
         });
 
-        setCategories(Array.from(uniqueCategories));
+        setcategories(Array.from(uniquecategories));
       },
       (err) => {
         console.error(err);

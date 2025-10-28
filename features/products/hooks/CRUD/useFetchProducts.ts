@@ -11,10 +11,16 @@ export default function useFetchProducts() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 🟡 القيم المأخوذة من Redux
   const searchQuery = useSelector(
     (state: RootState) => state.search.searchQuery
   );
+  const categoriesQuery = useSelector(
+    (state: RootState) => state.search.categoriesQuery
+  );
+  const stateQuery = useSelector((state: RootState) => state.search.stateQuery);
 
+  // 📦 جلب المنتجات من Firestore
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) {
@@ -46,19 +52,36 @@ export default function useFetchProducts() {
     return () => unsubscribe();
   }, []);
 
-  // 🔎 فلترة المنتجات بناءً على البحث
+  // 🔎 فلترة المنتجات حسب البحث + الفئة + الحالة
   useEffect(() => {
+    let filtered = [...products];
+
+    // فلترة البحث
     const queryLower = searchQuery.toLowerCase().trim();
-    if (!queryLower) {
-      setFilteredProducts(products);
-      return;
+    if (queryLower) {
+      filtered = filtered.filter((p) =>
+        p.name?.toLowerCase().includes(queryLower)
+      );
     }
 
-    const filtered = products.filter((p) =>
-      p.name?.toLowerCase().includes(queryLower)
-    );
+    // فلترة الفئة
+    if (categoriesQuery && categoriesQuery !== "الكل") {
+      filtered = filtered.filter((p) => p.categories === categoriesQuery);
+    }
+
+    // ✅ فلترة الحالة
+    if (stateQuery && stateQuery !== "") {
+      filtered = filtered.filter((p) => {
+        if (stateQuery === "موجود") return p.stock! > p.stockAlert!; // كمية كافية
+        if (stateQuery === "قليل")
+          return p.stock! > 0 && p.stock! <= p.stockAlert!; // أقل من التحذير
+        if (stateQuery === "منتهي") return p.stock! <= 0; // غير متوفر
+        return true;
+      });
+    }
+
     setFilteredProducts(filtered);
-  }, [searchQuery, products]);
+  }, [searchQuery, categoriesQuery, stateQuery, products]);
 
   return { products: filteredProducts, loading, error };
 }

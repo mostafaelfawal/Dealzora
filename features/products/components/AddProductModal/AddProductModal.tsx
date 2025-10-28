@@ -39,7 +39,7 @@ export default function AddProductModal({
     handleDragOver,
     handleDragLeave,
     handleDrop,
-  } = useProductImage({defaultImage: defaultValues?.image});
+  } = useProductImage(defaultValues?.image);
 
   const handleSaveProduct = async (data: productSchemaType) => {
     closeModal();
@@ -116,7 +116,7 @@ export default function AddProductModal({
           />
           <ProductInput
             label="الفئة"
-            register={register("category")}
+            register={register("categories")}
             errors={errors}
             required
           />

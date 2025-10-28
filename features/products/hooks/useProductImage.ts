@@ -5,9 +5,7 @@ import axios from "axios";
 import { validateImage } from "../utils/validateImage";
 import toast from "react-hot-toast";
 
-export function useProductImage({
-  defaultImage,
-}: { defaultImage?: string } = {}) {
+export function useProductImage(defaultImage?: string) {
   const [previewImage, setPreviewImage] = useState<string | null>(
     defaultImage || null
   );
