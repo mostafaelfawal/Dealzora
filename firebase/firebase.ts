@@ -1,6 +1,10 @@
 import { initializeApp } from "firebase/app";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentSingleTabManager,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW-Gp2N9AuRTXeLk-9vgEQTFg1PyHMMxE",
@@ -11,8 +15,14 @@ const firebaseConfig = {
   appId: "1:245061792587:web:ee28be9c86b4d79db8aece",
 };
 
-// Initialize Firebase
+// تهيئة التطبيق
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentSingleTabManager({}),
+  }),
+});
+
+export default app;

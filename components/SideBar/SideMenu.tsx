@@ -55,7 +55,7 @@ export default function SideMenu() {
               <div className="flex items-center gap-3 p-5 border-b border-blue-500">
                 <div
                   onClick={() => (location.href = "/")}
-                  className="relative w-10 h-10 rounded-lg overflow-hidden"
+                  className="relative w-10 h-10 rounded-lg overflow-hidden cursor-pointer"
                 >
                   <Image
                     src="/icon.png"
@@ -89,7 +89,7 @@ export default function SideMenu() {
         <div className="flex items-center gap-3 p-5 border-b border-blue-500">
           <div
             onClick={() => (location.href = "/")}
-            className="relative w-10 h-10 rounded-lg overflow-hidden"
+            className="relative w-10 h-10 rounded-lg overflow-hidden cursor-pointer"
           >
             <Image
               src="/icon.png"

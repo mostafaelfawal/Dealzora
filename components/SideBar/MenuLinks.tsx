@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaBox, FaChartBar, FaHome, FaUsers } from "react-icons/fa";
+import { FaShoppingBag, FaHome, FaBoxes } from "react-icons/fa";
 
 export default function MenuLinks({
   hovered,
@@ -11,7 +11,8 @@ export default function MenuLinks({
 }) {
   const menuItems = [
     { name: "لوحة التحكم", icon: <FaHome />, href: "/dealzora/dashboard" },
-    { name: "المنتجات", icon: <FaBox />, href: "/dealzora/products" },
+    { name: "المنتجات", icon: <FaShoppingBag />, href: "/dealzora/products" },
+    { name: "المخزون", icon: <FaBoxes />, href: "/dealzora/inventory" },
   ];
   const path = usePathname();
   return (
