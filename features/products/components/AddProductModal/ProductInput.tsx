@@ -7,7 +7,7 @@ type ProductInputProps = {
   register: any;
   errors: FieldErrors;
   required?: boolean;
-  type?: "text" | "number" | "category";
+  type?: "text" | "category"; 
   categories?: string[];
 };
 
@@ -23,10 +23,8 @@ export default function ProductInput({
   const fieldError = errors[fieldName]?.message as string | undefined;
   const dataListId = `${fieldName}-list`;
 
-  // تحديد نوع الـ input بناءً على النوع
-  const inputType = type === "number" ? "number" : "text";
+  const inputType = "text";
 
-  // إضافة datalist إذا كان نوع category
   const inputProps = {
     id: label,
     type: inputType,

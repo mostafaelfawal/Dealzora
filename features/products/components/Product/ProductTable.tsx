@@ -61,7 +61,7 @@ export default function ProductTable() {
           ) : products.length ? (
             currentProducts.map((product) => (
               <ProductRow
-                key={product.code}
+                key={product.id}
                 product={product}
                 openRow={openRow}
                 setOpenRow={setOpenRow}

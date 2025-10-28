@@ -114,7 +114,6 @@ export default function AddProductModal({
             label="السعر"
             register={register("price")}
             errors={errors}
-            type="number"
             required
           />
 
@@ -135,7 +134,6 @@ export default function AddProductModal({
             label="الكمية في المخزون"
             register={register("stock")}
             errors={errors}
-            type="number"
           />
 
           {/* حقل حد التنبيه - نوع number */}
@@ -143,7 +141,6 @@ export default function AddProductModal({
             label="حد التنبيه"
             register={register("stockAlert")}
             errors={errors}
-            type="number"
           />
         </div>
 
