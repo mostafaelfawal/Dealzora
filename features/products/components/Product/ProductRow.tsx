@@ -9,6 +9,8 @@ import useDeleteProduct from "../../hooks/CRUD/useDeleteProduct";
 import toast from "react-hot-toast";
 import Modal from "@/components/Modal";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import AddProductModal from "../AddProductModal/AddProductModal";
 
 interface Props {
   product: ProductType;
@@ -19,6 +21,7 @@ interface Props {
 export default function ProductRow({ product, openRow, setOpenRow }: Props) {
   const { deleteProduct, error } = useDeleteProduct();
   const [deleteModal, setDeleteModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
 
   const handleDeleteProduct = async () => {
     setDeleteModal(false);
@@ -29,7 +32,11 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
     });
   };
   return (
-    <tr className="hover:bg-blue-50 transition-colors border-b border-gray-200">
+    <motion.tr
+      initial={{ y: -10, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="hover:bg-blue-50 transition-colors border-b border-gray-200"
+    >
       <td className="flex gap-3 py-3 px-4 items-center relative">
         <button
           onClick={() =>
@@ -74,7 +81,10 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
 
       <td className="hidden md:table-cell py-3 px-4">
         <div className="flex gap-2 flex-wrap">
-          <button className="flex items-center gap-1 px-3 py-1 text-white bg-blue-500 rounded hover:bg-blue-600 transition">
+          <button
+            onClick={() => setEditModal(true)}
+            className="flex items-center gap-1 px-3 py-1 text-white bg-blue-500 rounded hover:bg-blue-600 transition"
+          >
             <FaEdit /> تعديل
           </button>
           <button
@@ -118,6 +128,15 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
           </Modal>
         </td>
       )}
-    </tr>
+      {editModal && (
+        <td>
+          <AddProductModal
+            isEdit={true}
+            closeModal={() => setEditModal(false)}
+            defaultValues={product}
+          />
+        </td>
+      )}
+    </motion.tr>
   );
 }

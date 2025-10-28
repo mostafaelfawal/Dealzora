@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuthListener from "@/hooks/useAuthListener";
+import Loading from "./loading";
 
 export default function Home() {
   const router = useRouter();
@@ -13,5 +14,5 @@ export default function Home() {
     router.replace(user ? "/dealzora/dashboard" : "/auth");
   }, [loading, router]);
 
-  return null;
+  return <Loading />;
 }

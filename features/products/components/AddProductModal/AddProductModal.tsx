@@ -15,14 +15,20 @@ import {
 } from "../../schemas/addProductSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProductImage } from "../../hooks/useProductImage";
+import useUpdateProduct from "../../hooks/CRUD/useUpdateProduct";
+import { ProductType } from "../../types/ProductType";
 
 export default function AddProductModal({
   closeModal,
+  defaultValues,
+  isEdit = false,
 }: {
   closeModal: VoidFunction;
+  defaultValues?: ProductType;
+  isEdit?: boolean;
 }) {
   const { addProduct, error } = useAddProduct();
-
+  const { updateProduct, errorU } = useUpdateProduct();
   const {
     previewImage,
     file,
@@ -35,19 +41,25 @@ export default function AddProductModal({
     handleDrop,
   } = useProductImage();
 
-  const addProductHandler = async (data: productSchemaType) => {
-    // ارفع الصورة أولاً
+  const handleSaveProduct = async (data: productSchemaType) => {
     closeModal();
-    const imageURL = await handleUploadImgBB(file);
 
-    toast.promise(
-      addProduct({ ...data, image: imageURL ?? "/default_product.png" }),
-      {
+    const imageURL = await handleUploadImgBB(file);
+    const finalData = { ...data, image: imageURL ?? "/default_product.png" };
+
+    if (isEdit) {
+      toast.promise(updateProduct(finalData, defaultValues?.id!), {
+        loading: "جاري تحديث المنتج...",
+        success: "تم تحديث المنتج بنجاح",
+        error: errorU || "حدث خطأ أثناء تحديث المنتج",
+      });
+    } else {
+      toast.promise(addProduct(finalData), {
         loading: "جاري اضافة المنتج...",
         success: "تم اضافة المنتج بنجاح",
         error: error || "حدث خطأ أثناء اضافة المنتج",
-      }
-    );
+      });
+    }
   };
 
   const {
@@ -56,15 +68,19 @@ export default function AddProductModal({
     formState: { errors },
   } = useForm({
     resolver: zodResolver(addProductSchema),
+    defaultValues: defaultValues,
   });
 
   return (
-    <Modal closeModal={closeModal} title="إضافة منتج جديد">
+    <Modal
+      closeModal={closeModal}
+      title={isEdit ? "تعديل المنتج" : "إضافة منتج جديد"}
+    >
       <motion.form
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        onSubmit={handleSubmit(addProductHandler)}
+        onSubmit={handleSubmit(handleSaveProduct)}
         className="space-y-4"
       >
         <ProductImageUploader
@@ -120,6 +136,7 @@ export default function AddProductModal({
         </div>
 
         <ProductFormButtons
+          isEdit={isEdit}
           onDraft={() => toast.success("تم حفظ المسودة (قريبًا)")}
         />
       </motion.form>

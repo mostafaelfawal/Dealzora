@@ -1,7 +1,9 @@
 export default function ProductFormButtons({
   onDraft,
+  isEdit = false,
 }: {
   onDraft: VoidFunction;
+  isEdit?: boolean;
 }) {
   return (
     <div className="flex gap-3 pt-3">
@@ -9,7 +11,7 @@ export default function ProductFormButtons({
         type="submit"
         className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50"
       >
-        إضافة المنتج
+        {isEdit ? "حفظ التغيرات" : "إضافة المنتج"}
       </button>
       <button
         type="button"

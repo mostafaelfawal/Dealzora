@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import useFetchCategories from "../hooks/useFetchCategories";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { setSearchQuery } from "@/store/search/searchProductSlice";
+import { setSearchQuery } from "@/store/productSearch/searchProductSlice";
 
 export default function SearchContainer() {
   const [category, setCategory] = useState<string>("");
