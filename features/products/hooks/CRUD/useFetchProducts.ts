@@ -1,17 +1,15 @@
 import { auth, db } from "@/firebase/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ProductType } from "../../types/ProductType";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 
 export default function useFetchProducts() {
   const [products, setProducts] = useState<ProductType[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ProductType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 🟡 القيم المأخوذة من Redux
   const searchQuery = useSelector(
     (state: RootState) => state.search.searchQuery
   );
@@ -20,7 +18,7 @@ export default function useFetchProducts() {
   );
   const stateQuery = useSelector((state: RootState) => state.search.stateQuery);
 
-  // 📦 جلب المنتجات من Firestore
+  // جلب البيانات من Firestore
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) {
@@ -52,36 +50,36 @@ export default function useFetchProducts() {
     return () => unsubscribe();
   }, []);
 
-  // 🔎 فلترة المنتجات حسب البحث + الفئة + الحالة
-  useEffect(() => {
-    let filtered = [...products];
+  // دالة لتطبيق الفلترة (نظيفة ومنفصلة)
+  const filterProducts = useCallback(
+    (items: ProductType[]) => {
+      return items.filter((p) => {
+        const matchesSearch =
+          !searchQuery ||
+          p.name?.toLowerCase().includes(searchQuery.toLowerCase().trim());
 
-    // فلترة البحث
-    const queryLower = searchQuery.toLowerCase().trim();
-    if (queryLower) {
-      filtered = filtered.filter((p) =>
-        p.name?.toLowerCase().includes(queryLower)
-      );
-    }
+        const matchesCategory =
+          !categoriesQuery ||
+          categoriesQuery === "" ||
+          p.categories === categoriesQuery;
 
-    // فلترة الفئة
-    if (categoriesQuery && categoriesQuery !== "الكل") {
-      filtered = filtered.filter((p) => p.categories === categoriesQuery);
-    }
+        const matchesState =
+          !stateQuery ||
+          stateQuery === "" ||
+          (stateQuery === "موجود" && p.stock! > p.stockAlert!) ||
+          (stateQuery === "قليل" &&
+            p.stock! > 0 &&
+            p.stock! <= p.stockAlert!) ||
+          (stateQuery === "منتهي" && p.stock! <= 0);
 
-    // ✅ فلترة الحالة
-    if (stateQuery && stateQuery !== "") {
-      filtered = filtered.filter((p) => {
-        if (stateQuery === "موجود") return p.stock! > p.stockAlert!; // كمية كافية
-        if (stateQuery === "قليل")
-          return p.stock! > 0 && p.stock! <= p.stockAlert!; // أقل من التحذير
-        if (stateQuery === "منتهي") return p.stock! <= 0; // غير متوفر
-        return true;
+        return matchesSearch && matchesCategory && matchesState;
       });
-    }
+    },
+    [searchQuery, categoriesQuery, stateQuery]
+  );
 
-    setFilteredProducts(filtered);
-  }, [searchQuery, categoriesQuery, stateQuery, products]);
+  // المنتجات المفلترة
+  const filteredProducts = filterProducts(products);
 
   return { products: filteredProducts, loading, error };
 }
