@@ -7,7 +7,7 @@ export const fetchProducts = createAsyncThunk<
   ProductType[],
   void,
   { rejectValue: string }
->("products/fetchProducts", async () => {
+>("", async () => {
   return new Promise<ProductType[]>((resolve, reject) => {
     const uid = auth.currentUser?.uid;
     if (!uid) {
@@ -29,7 +29,7 @@ export const fetchProducts = createAsyncThunk<
               } as ProductType)
           );
           resolve(fetchedProducts);
-          unsubscribe(); // نلغي الاشتراك بعد أول جلب (يمكنك إبقاءه لو تريد التحديث المباشر)
+          unsubscribe();
         },
         (error) => {
           console.error("Firestore Error:", error);
