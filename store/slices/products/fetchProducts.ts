@@ -7,7 +7,7 @@ export const fetchProducts = createAsyncThunk<
   ProductType[],
   void,
   { rejectValue: string }
->("products/fetchProducts", async (_, thunkAPI) => {
+>("products/fetchProducts", async (_) => {
   return new Promise<ProductType[]>((resolve, reject) => {
     const uid = auth.currentUser?.uid;
     if (!uid) {

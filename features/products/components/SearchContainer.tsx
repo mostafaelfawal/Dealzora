@@ -34,19 +34,23 @@ export default function SearchContainer() {
         <input
           onChange={(e) => dispatch(setSearchQuery(e.target.value))}
           placeholder="ابحث عن منتج..."
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-shadow hover:shadow-md"
+          className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 pl-10 text-gray-700 shadow-sm 
+          focus:ring-2 focus:border-none focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 
+          hover:shadow-md placeholder:text-gray-400"
         />
-        <FaSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-blue-500" />
+        <FaSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
       </div>
 
       {/* categories Filter */}
       <select
         value={categoryValue}
         onChange={(e) => dispatch(setcategoriesQuery(e.target.value))}
-        className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
+        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-gray-700 shadow-sm 
+          focus:ring-2 focus:border-none focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 
+          hover:shadow-md cursor-pointer"
       >
         <option value="">جميع الفئات</option>
-        {categories.map((c, i) => (
+        {categories.map((c: string, i: number) => (
           <option key={i} value={c}>
             {c}
           </option>
@@ -57,12 +61,20 @@ export default function SearchContainer() {
       <select
         value={stateValue}
         onChange={(e) => dispatch(setStateQuery(e.target.value))}
-        className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
+        className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-gray-700 shadow-sm 
+          focus:ring-2 focus:border-none focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 
+          hover:shadow-md cursor-pointer"
       >
         <option value="">جميع الحالات</option>
-        <option value="موجود">موجود</option>
-        <option value="منتهي">منتهي</option>
-        <option value="قليل">قليل</option>
+        <option value="موجود" className="text-green-600 font-semibold">
+          🟢 موجود
+        </option>
+        <option value="قليل" className="text-yellow-600 font-semibold">
+          🟡 قليل
+        </option>
+        <option value="منتهي" className="text-red-600 font-semibold">
+          🔴 منتهي
+        </option>
       </select>
 
       {/* Add Product Button */}
