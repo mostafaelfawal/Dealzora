@@ -10,7 +10,7 @@ import {
   setSearchQuery,
   setcategoriesQuery,
   setStateQuery,
-} from "@/store/productSearch/searchProductSlice";
+} from "@/store/slices/searchProductSlice";
 
 export default function SearchContainer() {
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);

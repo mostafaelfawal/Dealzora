@@ -13,6 +13,7 @@ import { RootState } from "@/store/store";
 
 export default function ProductTable() {
   const { products, error, loading } = useFetchProducts();
+
   const isSearch = useSelector((state: RootState) => state.search.searchQuery);
   const isCategorie = useSelector(
     (state: RootState) => state.search.categoriesQuery
@@ -25,7 +26,7 @@ export default function ProductTable() {
       toast.dismiss();
       toast.error(error);
     }
-  });
+  }, [error]);
 
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -94,12 +95,12 @@ export default function ProductTable() {
                 <p className="mb-1 font-semibold">
                   {isSearchActive
                     ? "لم يتم العثور على المنتج"
-                    : "لم تضف اي منتجات بعد."}
+                    : "لم تضف أي منتجات بعد."}
                 </p>
                 <p className="text-gray-500">
                   {isSearchActive
                     ? `"${isSearch ? isSearch : "غير موجود"}"`
-                    : "اضف اول منتج لك"}
+                    : "أضف أول منتج لك"}
                 </p>
               </td>
             </tr>

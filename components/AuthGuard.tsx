@@ -4,14 +4,14 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchUser } from "@/store/user/fetchUser";
+import { fetchUser } from "@/store/slices/user/fetchUser";
 import useAuthListener from "@/hooks/useAuthListener";
 import Loading from "@/app/loading";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthListener();
   const router = useRouter();
-  const path = usePathname()
+  const path = usePathname();
   const dispatch = useDispatch<AppDispatch>();
   const isUser = useSelector((state: RootState) => state.user.currentUser);
 

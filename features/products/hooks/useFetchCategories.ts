@@ -1,45 +1,35 @@
-import { auth, db } from "@/firebase/firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+"use client";
+
+import { RootState } from "@/store/store";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 export default function useFetchCategories() {
+  const [categories, setCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setcategories] = useState<string[]>([]);
+
+  const products = useSelector((state: RootState) => state.products.items);
 
   useEffect(() => {
-    const uid = auth.currentUser?.uid;
-    if (!uid) {
-      setError("لم يتم تسجيل الدخول");
-      return;
-    }
-
-    // 🔹 المرجع إلى مجموعة المنتجات
-    const productsRef = collection(db, `users/${uid}/products`);
-
-    // 🔹 الاشتراك في التحديثات اللحظية
-    const unsubscribe = onSnapshot(
-      productsRef,
-      (snapshot) => {
-        const uniquecategories = new Set<string>();
-
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.categories) {
-            uniquecategories.add(data.categories);
-          }
-        });
-
-        setcategories(Array.from(uniquecategories));
-      },
-      (err) => {
-        console.error(err);
-        setError("حدث خطأ أثناء تحميل الفئات");
+    try {
+      if (!products || products.length === 0) {
+        setCategories([]);
+        return;
       }
-    );
 
-    // 🔹 تنظيف الاشتراك عند إلغاء التثبيت
-    return () => unsubscribe();
-  }, []);
+      const uniqueCategories = new Set<string>();
+      products.forEach((product: any) => {
+        if (product.categories) {
+          uniqueCategories.add(product.categories);
+        }
+      });
+
+      setCategories(Array.from(uniqueCategories));
+    } catch (err) {
+      console.error(err);
+      setError("حدث خطأ أثناء استخراج الفئات من المنتجات");
+    }
+  }, [products]);
 
   return { categories, error };
 }
