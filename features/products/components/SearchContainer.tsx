@@ -60,8 +60,8 @@ export default function SearchContainer() {
             value={categoryValue}
             onChange={(e) => dispatch(setcategoriesQuery(e.target.value))}
             className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-gray-700 shadow-sm 
-        focus:ring-2 focus:border-none focus:ring-blue-500 outline-none transition-all duration-200 
-        hover:shadow-md cursor-pointer"
+            focus:ring-2 focus:border-none focus:ring-blue-500 outline-none transition-all duration-200 
+            hover:shadow-md cursor-pointer"
           >
             <option value="">جميع الفئات</option>
             {categories.map((c: string, i: number) => (
@@ -78,8 +78,8 @@ export default function SearchContainer() {
             value={stateValue}
             onChange={(e) => dispatch(setStateQuery(e.target.value))}
             className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-gray-700 shadow-sm 
-        focus:ring-2 focus:border-none focus:ring-blue-500 outline-none transition-all duration-200 
-        hover:shadow-md cursor-pointer"
+            focus:ring-2 focus:border-none focus:ring-blue-500 outline-none transition-all duration-200 
+            hover:shadow-md cursor-pointer"
           >
             <option value="">جميع الحالات</option>
             <option value="موجود" className="text-green-600 font-semibold">
