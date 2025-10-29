@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
-import { fetchProducts } from "@/store/slices/products/fetchProducts";
+import { fetchProducts } from "@/features/products/slices/fetchProducts";
 import { ProductType } from "../../types/ProductType";
 import useRealtimeProducts from "../useRealtimeProducts";
 

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { collection, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/firebase/firebase";
-import { setProducts } from "@/store/slices/products/productsSlice";
+import { setProducts } from "@/features/products/slices/productsSlice";
 import { ProductType } from "../types/ProductType";
 import { AppDispatch } from "@/store/store";
 
