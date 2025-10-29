@@ -12,7 +12,7 @@ export default function useFetchCategories() {
 
   useEffect(() => {
     try {
-      if (!products || products.length === 0) {
+      if (!products) {
         setCategories([]);
         return;
       }

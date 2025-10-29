@@ -32,6 +32,10 @@ export default function ProductTable() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const productsPerPage = 5;
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [products.length]);
+
   const totalPages = Math.ceil(products.length / productsPerPage);
   const indexOfLast = currentPage * productsPerPage;
   const indexOfFirst = indexOfLast - productsPerPage;
