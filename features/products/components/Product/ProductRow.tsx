@@ -129,6 +129,8 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
             حذف
           </button>
         </div>
+      </td>
+      <td>
         {/* Delete Modal */}
         {deleteModal && (
           <Modal closeModal={() => setDeleteModal(false)} title="حذف المنتج">
@@ -162,7 +164,6 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
             </div>
           </Modal>
         )}
-
         {/* Edit Modal */}
         {editModal && (
           <AddProductModal

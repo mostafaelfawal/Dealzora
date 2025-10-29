@@ -7,9 +7,9 @@ import ProductStatusBadge from "./ProductStatusBadge";
 
 interface Props {
   product: ProductType;
-  closeModal: () => void;
-  openDeleteModal: () => void;
-  openUpdateModal: () => void;
+  closeModal: VoidFunction;
+  openDeleteModal: VoidFunction;
+  openUpdateModal: VoidFunction;
 }
 
 export default function ProductModal({
@@ -60,8 +60,8 @@ export default function ProductModal({
           <button
             type="button"
             onClick={() => {
-              openUpdateModal();
               closeModal();
+              openUpdateModal();
             }}
             className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
           >
@@ -70,8 +70,8 @@ export default function ProductModal({
           <button
             type="button"
             onClick={() => {
-              openDeleteModal();
               closeModal();
+              openDeleteModal();
             }}
             className="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center gap-2"
           >

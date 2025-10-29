@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import AddProductModal from "./AddProductModal/AddProductModal";
 import toast from "react-hot-toast";
 import useFetchCategories from "../hooks/useFetchCategories";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
 import {
   setSearchQuery,
   setcategoriesQuery,
@@ -16,7 +16,10 @@ export default function SearchContainer() {
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const { categories, error } = useFetchCategories();
   const dispatch = useDispatch<AppDispatch>();
-
+  const categoryValue = useSelector(
+    (state: RootState) => state.search.categoriesQuery
+  );
+  const stateValue = useSelector((state: RootState) => state.search.stateQuery);
   useEffect(() => {
     if (error) {
       toast.dismiss();
@@ -38,6 +41,7 @@ export default function SearchContainer() {
 
       {/* categories Filter */}
       <select
+        value={categoryValue}
         onChange={(e) => dispatch(setcategoriesQuery(e.target.value))}
         className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
       >
@@ -51,6 +55,7 @@ export default function SearchContainer() {
 
       {/* Status Filter */}
       <select
+        value={stateValue}
         onChange={(e) => dispatch(setStateQuery(e.target.value))}
         className="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-shadow hover:shadow-md cursor-pointer w-full"
       >

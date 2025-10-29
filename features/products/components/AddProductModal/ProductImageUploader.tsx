@@ -11,7 +11,7 @@ interface ProductImageUploaderProps {
   handleDragOver: (event: React.DragEvent<HTMLLabelElement>) => void;
   handleDragLeave: (event: React.DragEvent<HTMLLabelElement>) => void;
   handleDrop: (event: React.DragEvent<HTMLLabelElement>) => void;
-  handleDeleteImage: () => void;
+  handleDeleteImage: VoidFunction;
   handleImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 

@@ -7,7 +7,7 @@ export default function MenuLinks({
   onClick,
 }: {
   hovered: boolean;
-  onClick?: () => void;
+  onClick?: VoidFunction;
 }) {
   const menuItems = [
     { name: "لوحة التحكم", icon: <FaHome />, href: "/dealzora/dashboard" },
