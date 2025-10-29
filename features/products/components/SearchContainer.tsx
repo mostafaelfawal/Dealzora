@@ -48,8 +48,8 @@ export default function SearchContainer() {
             onChange={(e) => dispatch(setSearchQuery(e.target.value))}
             placeholder="ابحث عن منتج..."
             className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 pl-10 text-gray-700 shadow-sm 
-          focus:ring-2 focus:border-none focus:ring-blue-500 outline-none transition-all duration-200 
-          hover:shadow-md placeholder:text-gray-400"
+            focus:ring-2 focus:border-none focus:ring-blue-500 outline-none transition-all duration-200 
+            hover:shadow-md placeholder:text-gray-400"
           />
           <FaSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
         </div>
