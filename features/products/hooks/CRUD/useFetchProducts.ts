@@ -1,10 +1,9 @@
-// features/products/hooks/CRUD/useFetchProducts.ts
-import { useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { fetchProducts } from "@/store/slices/products/fetchProducts";
-import { useEffect } from "react";
 import { ProductType } from "../../types/ProductType";
+import useRealtimeProducts from "../useRealtimeProducts";
 
 export default function useFetchProducts() {
   const dispatch = useDispatch<AppDispatch>();
@@ -19,12 +18,15 @@ export default function useFetchProducts() {
     (state: RootState) => state.search
   );
 
-  /** 🚀 جلب المنتجات عند أول تحميل */
+  // 🧠 تشغيل التحديث اللحظي
+  useRealtimeProducts();
+
+  // 🚀 تحميل أولي فقط لو فارغ
   useEffect(() => {
     if (allProducts.length === 0) dispatch(fetchProducts());
   }, [dispatch]);
 
-  /** 🧮 فلترة المنتجات */
+  // 🧮 الفلترة
   const filterProducts = useCallback(
     (products: ProductType[]) => {
       const query = searchQuery?.toLowerCase().trim() || "";
@@ -55,7 +57,6 @@ export default function useFetchProducts() {
     [searchQuery, categoriesQuery, stateQuery]
   );
 
-  /** ⚙️ Memoized Filtering */
   const filteredProducts = useMemo(
     () => filterProducts(allProducts),
     [allProducts, filterProducts]
