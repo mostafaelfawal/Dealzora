@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { SupplierType } from "../types/SupplierType";
 import { fetchSuppliers } from "./fetchSuppliers";
+import { addSupplier } from "./addSupplier";
 
 type SuppliersState = {
   suppliers: SupplierType[];
@@ -31,6 +32,19 @@ const suppliersSlice = createSlice({
       .addCase(fetchSuppliers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "حدث خطأ غير معروف";
+      })
+      // إضافة حالات addSupplier
+      .addCase(addSupplier.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addSupplier.fulfilled, (state, action) => {
+        state.loading = false;
+        state.suppliers.push(action.payload);
+      })
+      .addCase(addSupplier.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
