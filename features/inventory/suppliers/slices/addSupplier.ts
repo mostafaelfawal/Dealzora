@@ -6,7 +6,7 @@ import { addDoc, collection } from "firebase/firestore";
 
 export const addSupplier = createAsyncThunk<
   SupplierType,
-  SupplierType, // استخدم SupplierType مباشرة بدون Omit
+  SupplierType,
   { rejectValue: string }
 >("suppliers/addSupplier", async (supplierData, { rejectWithValue }) => {
   const uid = auth.currentUser?.uid;
