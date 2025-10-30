@@ -1,5 +1,5 @@
 "use client";
-import { FaSearch, FaTruck } from "react-icons/fa";
+import { FaSearch, FaUserPlus } from "react-icons/fa";
 
 export default function SearchContainer() {
   return (
@@ -17,7 +17,7 @@ export default function SearchContainer() {
 
       {/* Add Supplier Button */}
       <button className="flex gap-2 items-center justify-center px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 hover:scale-105 transition-all w-full shadow-sm hover:shadow-md">
-        <FaTruck />
+        <FaUserPlus />
         اضف مورد
       </button>
     </div>

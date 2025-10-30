@@ -20,6 +20,7 @@ import {
 import { exportToExcel } from "../utils/exportToExcel";
 import { exportToPDF } from "../utils/exportToPDF";
 import HeaderPage from "@/components/HeaderPage";
+import Tooltip from "@/components/Tooltip";
 
 export default function SearchContainer() {
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
@@ -105,20 +106,24 @@ export default function SearchContainer() {
 
         {/* Export Buttons */}
         <div className="flex gap-2 col-span-2 md:col-span-2 lg:col-span-2">
-          <button
-            onClick={() => exportToExcel(products)}
-            className="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white bg-green-500 rounded-lg hover:bg-green-600 hover:scale-105 transition-all shadow-sm hover:shadow-md"
-          >
-            <FaFileExcel />
-            Excel
-          </button>
-          <button
-            onClick={() => exportToPDF(products)}
-            className="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 hover:scale-105 transition-all shadow-sm hover:shadow-md"
-          >
-            <FaFilePdf />
-            PDF
-          </button>
+          <Tooltip side="bottom" message="تصدير المنتجات الى ملف Excel">
+            <button
+              onClick={() => exportToExcel(products)}
+              className="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white bg-green-500 rounded-lg hover:bg-green-600 hover:scale-105 transition-all shadow-sm hover:shadow-md"
+            >
+              <FaFileExcel />
+              Excel
+            </button>
+          </Tooltip>
+          <Tooltip side="bottom" message="تصدير المنتجات الى ملف PDF">
+            <button
+              onClick={() => exportToPDF(products)}
+              className="flex-1 flex gap-2 items-center justify-center px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 hover:scale-105 transition-all shadow-sm hover:shadow-md"
+            >
+              <FaFilePdf />
+              PDF
+            </button>
+          </Tooltip>
         </div>
 
         {modalIsOpen && (
