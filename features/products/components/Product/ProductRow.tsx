@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { RxDotsVertical } from "react-icons/rx";
 import { ProductType } from "../../types/ProductType";
 import ProductStatusBadge from "./ProductStatusBadge";
@@ -11,6 +11,7 @@ import Modal from "@/components/Modal";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import AddProductModal from "../AddProductModal/AddProductModal";
+import Tooltip from "@/components/Tooltip";
 
 interface Props {
   product: ProductType;
@@ -114,20 +115,27 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
       {/* Actions */}
       <td className="hidden md:table-cell py-3 px-4">
         <div className="flex gap-2">
-          <button
-            onClick={() => setEditModal(true)}
-            className="flex items-center gap-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
-          >
-            <FaEdit size={14} />
-            تعديل
-          </button>
-          <button
-            onClick={() => setDeleteModal(true)}
-            className="flex items-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
-          >
-            <FaTrash size={14} />
-            حذف
-          </button>
+          <Tooltip message="تعديل المنتج" side="bottom">
+            <button
+              onClick={() => setEditModal(true)}
+              className="flex items-center gap-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
+            >
+              <FaEdit size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip message="حذف المنتج" side="bottom">
+            <button
+              onClick={() => setDeleteModal(true)}
+              className="flex items-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
+            >
+              <FaTrash size={14} />
+            </button>
+          </Tooltip>
+          <Tooltip message="عرض المنتج" side="bottom">
+            <button className="flex items-center gap-1 px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm">
+              <FaEye size={14} />
+            </button>
+          </Tooltip>
         </div>
       </td>
       <td>

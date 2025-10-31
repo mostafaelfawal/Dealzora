@@ -63,7 +63,7 @@ export default function SearchContainer() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <FaSearch className="text-gray-400" />
+                  <FaSearch className="search-icon" />
                 </InputAdornment>
               ),
               sx: {
@@ -79,9 +79,15 @@ export default function SearchContainer() {
                   borderColor: "#3b82f6",
                   borderWidth: "2px",
                 },
+                "&.Mui-focused .search-icon": {
+                  color: "#3b82f6",
+                },
+                "& .search-icon": {
+                  color: "#9ca3af",
+                  transition: "color 0.2s ease",
+                },
               },
             }}
-            variant="outlined"
             size="small"
           />
         </div>

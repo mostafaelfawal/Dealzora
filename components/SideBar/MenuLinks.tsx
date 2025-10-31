@@ -8,9 +8,11 @@ import {
   FaBoxes,
   FaTruck,
   FaFileInvoice,
-  FaExchangeAlt,
-  FaWarehouse,
   FaChevronDown,
+  FaUsers,
+  FaChartBar,
+  FaCog,
+  FaCashRegister,
 } from "react-icons/fa";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,30 +38,39 @@ export default function MenuLinks({
     { name: "لوحة التحكم", icon: <FaHome />, href: "/dealzora/dashboard" },
     { name: "المنتجات", icon: <FaShoppingBag />, href: "/dealzora/products" },
     {
-      name: "المخزون",
+      name: "الموردين",
+      icon: <FaTruck />,
+      href: "/dealzora/suppliers",
+    },
+    {
+      name: "المشتريات",
+      icon: <FaFileInvoice />,
+      href: "/dealzora/purchases",
+    },
+    {
+      name: "إدارة المخزون",
       icon: <FaBoxes />,
-      submenu: [
-        {
-          name: "الموردين",
-          icon: <FaTruck />,
-          href: "/dealzora/inventory/suppliers",
-        },
-        {
-          name: "المشتريات",
-          icon: <FaFileInvoice />,
-          href: "/dealzora/inventory/purchases",
-        },
-        {
-          name: "حركات المخزون",
-          icon: <FaExchangeAlt />,
-          href: "/dealzora/inventory/movements",
-        },
-        {
-          name: "المخازن",
-          icon: <FaWarehouse />,
-          href: "/dealzora/inventory/warehouses",
-        },
-      ],
+      href: "/dealzora/stock",
+    },
+    {
+      name: "نقطة البيع (POS)",
+      icon: <FaCashRegister />,
+      href: "/dealzora/sales",
+    },
+    {
+      name: "العملاء",
+      icon: <FaUsers />,
+      href: "/dealzora/customers",
+    },
+    {
+      name: "التقارير",
+      icon: <FaChartBar />,
+      href: "/dealzora/reports",
+    },
+    {
+      name: "الإعدادات",
+      icon: <FaCog />,
+      href: "/dealzora/settings",
     },
   ];
 
