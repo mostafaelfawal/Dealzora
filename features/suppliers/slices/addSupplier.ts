@@ -8,7 +8,7 @@ export const addSupplier = createAsyncThunk<
   SupplierType,
   SupplierType,
   { rejectValue: string }
->("suppliers/addSupplier", async (supplierData, { rejectWithValue }) => {
+>("", async (supplierData, { rejectWithValue }) => {
   const uid = auth.currentUser?.uid;
 
   if (!uid) {

@@ -12,6 +12,7 @@ import {
 import { useState, useEffect } from "react";
 import { FaUserPlus } from "react-icons/fa";
 import Tooltip from "@/components/Tooltip";
+import Link from "next/link";
 
 type ProductInputProps = {
   label: string;
@@ -129,15 +130,6 @@ export default function ProductInput({
                       </div>
                     )}
                   </div>
-                  {supplier.isActive ? (
-                    <span className="text-xs text-green-500 bg-green-100 px-2 py-1 rounded">
-                      نشط
-                    </span>
-                  ) : (
-                    <span className="text-xs text-red-500 bg-red-100 px-2 py-1 rounded">
-                      غير نشط
-                    </span>
-                  )}
                 </MenuItem>
               ))}
             </Select>
@@ -145,12 +137,13 @@ export default function ProductInput({
 
           {/* زر إضافة مورد جديد */}
           <Tooltip message="إضافة مورد جديد" side="bottom">
-            <button
+            <Link
+              href="/dealzora/suppliers/add-supplier"
               type="button"
               className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition-colors duration-200"
             >
               <FaUserPlus className="text-lg" />
-            </button>
+            </Link>
           </Tooltip>
         </div>
       ) : (

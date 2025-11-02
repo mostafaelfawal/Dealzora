@@ -7,7 +7,7 @@ export const signinSchema = z
     email: z
       .string()
       .email("ادخل بريد إلكتروني صالح")
-      .max(30, "البريد الإلكتروني طويل"),
+      .max(100, "البريد الإلكتروني طويل"),
     password: z
       .string()
       .min(6, "ادخل على الأقل 6 أحرف")

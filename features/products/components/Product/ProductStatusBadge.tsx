@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 
 interface Props {
-  stock?: number;
-  stockAlert?: number;
+  stock?: number | unknown;
+  stockAlert?: number | unknown;
 }
 
 export default function ProductStatusBadge({ stock, stockAlert }: Props) {

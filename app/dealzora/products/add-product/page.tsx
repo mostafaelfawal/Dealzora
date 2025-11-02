@@ -28,8 +28,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { FaUser } from "react-icons/fa";
 import { useEffect } from "react";
-import { fetchSuppliers } from "@/features/suppliers/slices/fetchSuppliers";
 import ProductStatusBadge from "@/features/products/components/Product/ProductStatusBadge";
+import {
+  startListeningToSuppliers,
+  stopListeningToSuppliers,
+} from "@/features/suppliers/slices/Listener";
 
 export default function AddProductPage() {
   const router = useRouter();
@@ -39,8 +42,13 @@ export default function AddProductPage() {
   const suppliers = useSelector(
     (state: RootState) => state.suppliers.suppliers
   );
+
   useEffect(() => {
-    dispatch(fetchSuppliers());
+    startListeningToSuppliers(dispatch);
+
+    return () => {
+      stopListeningToSuppliers();
+    };
   }, [dispatch]);
 
   const {
@@ -73,9 +81,13 @@ export default function AddProductPage() {
     handleSubmit,
     register,
     formState: { errors },
+    watch,
   } = useForm({
     resolver: zodResolver(addProductSchema),
   });
+  // لتتبع حالة المخزون بمجرد تغيير المخزون
+  const stock = watch("stock");
+  const stockAlert = watch("stockAlert");
 
   return (
     <div>
@@ -240,7 +252,10 @@ export default function AddProductPage() {
                 </p>
                 <div className="flex flex-col gap-2 bg-blue-100 p-2 rounded">
                   حالة المخزون
-                  <ProductStatusBadge stock={20} stockAlert={4} />
+                  <ProductStatusBadge
+                    stock={Number(stock)}
+                    stockAlert={Number(stockAlert)}
+                  />
                 </div>
               </motion.div>
             </div>

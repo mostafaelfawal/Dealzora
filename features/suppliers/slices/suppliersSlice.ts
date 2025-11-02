@@ -1,7 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { SupplierType } from "../types/SupplierType";
-import { fetchSuppliers } from "./fetchSuppliers";
-import { addSupplier } from "./addSupplier";
 
 type SuppliersState = {
   suppliers: SupplierType[];
@@ -18,35 +16,20 @@ const initialState: SuppliersState = {
 const suppliersSlice = createSlice({
   name: "suppliers",
   initialState,
-  reducers: {},
-  extraReducers(builder) {
-    builder
-      .addCase(fetchSuppliers.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchSuppliers.fulfilled, (state, action) => {
-        state.loading = false;
-        state.suppliers = action.payload;
-      })
-      .addCase(fetchSuppliers.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "حدث خطأ غير معروف";
-      })
-      // إضافة حالات addSupplier
-      .addCase(addSupplier.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(addSupplier.fulfilled, (state, action) => {
-        state.loading = false;
-        state.suppliers.push(action.payload);
-      })
-      .addCase(addSupplier.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+  reducers: {
+    setSuppliers(state, action: PayloadAction<SupplierType[]>) {
+      state.suppliers = action.payload;
+      state.loading = false;
+    },
+    setLoading(state) {
+      state.loading = true;
+    },
+    setError(state, action: PayloadAction<string>) {
+      state.error = action.payload;
+      state.loading = false;
+    },
   },
 });
 
+export const { setSuppliers, setLoading, setError } = suppliersSlice.actions;
 export default suppliersSlice.reducer;
