@@ -1,3 +1,5 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import toast from "react-hot-toast";
 import { ProductType } from "../types/ProductType";
 
@@ -7,55 +9,55 @@ export const exportToPDF = async (products: ProductType[]) => {
     return;
   }
 
-  //  تحميل pdfmake بشكل ديناميكي
-  const pdfMake = (await import("pdfmake/build/pdfmake.js")).default;
-  const pdfFonts = await import("pdfmake/build/vfs_fonts.js");
-  pdfMake.vfs = pdfFonts.vfs;
+  // إنشاء ملف PDF
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "pt",
+    format: "a4",
+  });
 
-  const tableBody = [
-    [
-      { text: "الكود", bold: true },
-      { text: "الاسم", bold: true },
-      { text: "الفئة", bold: true },
-      { text: "السعر", bold: true },
-      { text: "المخزون", bold: true },
-      { text: "تنبيه المخزون", bold: true },
-    ],
-    ...products.map((p: any) => [
-      p.code,
-      p.name,
-      p.categories,
-      p.price.toString(),
-      p.stock?.toString() ?? "—",
-      p.stockAlert?.toString() ?? "—",
-    ]),
+  // العنوان
+  doc.setFontSize(18);
+  doc.text("Product List", doc.internal.pageSize.getWidth() / 2, 40, {
+    align: "center",
+  });
+
+  // إعداد رأس الجدول
+  const headers = [
+    ["Code", "Name", "Category", "Price", "Stock", "Stock Alert"],
   ];
 
-  const docDefinition: any = {
-    pageOrientation: "landscape",
-    content: [
-      { text: "قائمة المنتجات", style: "header", alignment: "center" },
-      {
-        table: {
-          headerRows: 1,
-          widths: ["auto", "*", "*", "auto", "auto", "auto"],
-          body: tableBody,
-        },
-      },
-    ],
-    defaultStyle: {
-      font: "Roboto",
-      alignment: "right",
-    },
-    styles: {
-      header: {
-        fontSize: 18,
-        bold: true,
-        margin: [0, 0, 0, 10],
-      },
-    },
-  };
+  // البيانات من المنتجات
+  const data = products.map((p) => [
+    p.code,
+    p.name,
+    p.categories,
+    p.price?.toString() ?? "—",
+    p.stock?.toString() ?? "—",
+    p.stockAlert?.toString() ?? "—",
+  ]);
 
-  pdfMake.createPdf(docDefinition).download("المنتجات.pdf");
+  // إنشاء الجدول باستخدام autoTable
+  autoTable(doc, {
+    head: headers,
+    body: data,
+    styles: {
+      font: "helvetica",
+      fontSize: 12,
+      halign: "left",
+      textColor: "black",
+    },
+    headStyles: {
+      fillColor: [230, 230, 230],
+      fontStyle: "bold",
+    },
+    startY: 60,
+  });
+
+  // حفظ الملف
+  doc.save("products.pdf");
   toast.success("تم استخراج ملف PDF بنجاح!");
+  toast.error(
+    "الPDF لا يدعم العربية الأن (سيتم حل المشكله في الأصدار القادم ان شاء الله)"
+  );
 };
