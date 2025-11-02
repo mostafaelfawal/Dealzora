@@ -31,6 +31,7 @@ import {
   InputLabel,
   InputAdornment,
 } from "@mui/material";
+import Link from "next/link";
 
 export default function SearchContainer() {
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
@@ -179,13 +180,13 @@ export default function SearchContainer() {
         </div>
 
         {/* Add Product Button - باقي كما هو */}
-        <button
-          onClick={() => setModalIsOpen(true)}
+        <Link
+          href="products/add-product"
           className="flex gap-2 items-center justify-center px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 hover:scale-105 transition-all w-full shadow-sm hover:shadow-md"
         >
           <FaPlus />
           اضف منتج
-        </button>
+        </Link>
 
         {/* Export Buttons - باقي كما هو */}
         <div className="flex gap-2 col-span-2 md:col-span-2 lg:col-span-2">

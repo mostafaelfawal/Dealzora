@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import {
   addProductSchema,
   productSchemaType,
-} from "../../schemas/addProductSchema";
+} from "../../add-product/schemas/addProductSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProductImage } from "../../hooks/useProductImage";
 import useUpdateProduct from "../../hooks/CRUD/useUpdateProduct";

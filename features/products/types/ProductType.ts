@@ -7,4 +7,5 @@ export interface ProductType {
   code: string;
   stock?: number | undefined;
   stockAlert?: number | undefined;
-};
+  supplierId?: string;
+}

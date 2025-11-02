@@ -24,7 +24,7 @@ export default function useFetchProducts() {
   // 🚀 تحميل أولي فقط لو فارغ
   useEffect(() => {
     if (allProducts.length === 0) dispatch(fetchProducts());
-  }, [dispatch]);
+  }, [dispatch, allProducts.length]);
 
   // 🧮 الفلترة
   const filterProducts = useCallback(

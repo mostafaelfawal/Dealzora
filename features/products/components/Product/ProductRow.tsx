@@ -88,14 +88,9 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
       {/* Categories */}
       <td className="hidden md:table-cell py-3 px-4">
         <div className="flex flex-wrap gap-1">
-          {product.categories.split(",").map((category, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
-            >
-              {category.trim()}
-            </span>
-          ))}
+          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+            {product.categories}
+          </span>
         </div>
       </td>
 
