@@ -7,7 +7,7 @@ export const exportToPDF = async (products: ProductType[]) => {
     return;
   }
 
-  // ✅ تحميل pdfmake بشكل ديناميكي
+  //  تحميل pdfmake بشكل ديناميكي
   const pdfMake = (await import("pdfmake/build/pdfmake.js")).default;
   const pdfFonts = await import("pdfmake/build/vfs_fonts.js");
   pdfMake.vfs = pdfFonts.vfs;
@@ -58,5 +58,4 @@ export const exportToPDF = async (products: ProductType[]) => {
 
   pdfMake.createPdf(docDefinition).download("المنتجات.pdf");
   toast.success("تم استخراج ملف PDF بنجاح!");
-  
 };

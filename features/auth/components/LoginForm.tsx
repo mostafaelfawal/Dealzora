@@ -81,7 +81,7 @@ const LoginForm: FC<{ isLogin: boolean }> = ({ isLogin }) => {
     router.replace("dealzora/dashboard");
   };
 
-  // ✅ إرسال رابط إعادة كلمة السر
+  //  إرسال رابط إعادة كلمة السر
   const handleForgotPassword = async () => {
     if (!emailForReset.trim()) {
       toast.error("يرجى إدخال بريدك الإلكتروني أولاً");
@@ -92,7 +92,7 @@ const LoginForm: FC<{ isLogin: boolean }> = ({ isLogin }) => {
 
     toast.promise(resetPassword(emailForReset.trim()), {
       loading: "جاري إرسال الرابط...",
-      success: "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني ✅",
+      success: "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني ",
       error: "حدث خطأ أثناء إرسال الرابط ❌",
     });
 
@@ -184,7 +184,7 @@ const LoginForm: FC<{ isLogin: boolean }> = ({ isLogin }) => {
 
       <SocialLogin />
 
-      {/* ✅ المودال */}
+      {/*  المودال */}
       {openModal && (
         <Modal title="نسيت كلمة السر" closeModal={() => setOpenModal(false)}>
           <p className="text-gray-600 mb-4">

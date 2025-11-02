@@ -14,7 +14,7 @@ export default async function saveUserToFirebase({
 
     const userRef = doc(db, "users", uid);
 
-    // ✅ إزالة القيم الفارغة تلقائيًا
+    //  إزالة القيم الفارغة تلقائيًا
     const filteredData = Object.fromEntries(
       Object.entries({ name, avatar, email }).filter(([, value]) => value)
     );

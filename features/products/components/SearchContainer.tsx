@@ -1,13 +1,6 @@
 "use client";
-import {
-  FaPlus,
-  FaSearch,
-  FaFileExcel,
-  FaFilePdf,
-  FaShoppingBag,
-} from "react-icons/fa";
+import { FaPlus, FaFileExcel, FaFilePdf, FaShoppingBag } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import AddProductModal from "./AddProductModal/AddProductModal";
 import toast from "react-hot-toast";
 import useFetchCategories from "../hooks/useFetchCategories";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,27 +15,17 @@ import { exportToPDF } from "../utils/exportToPDF";
 import HeaderPage from "@/components/HeaderPage";
 import Tooltip from "@/components/Tooltip";
 
-// استيراد مكونات MUI للعناصر المطلوبة فقط
-import {
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  InputAdornment,
-} from "@mui/material";
+import { MenuItem, Select, FormControl, InputLabel } from "@mui/material";
 import Link from "next/link";
+import SearchInput from "@/components/SearchInput";
 
 export default function SearchContainer() {
-  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const { categories, error } = useFetchCategories();
-  const products = useSelector((state: RootState) => state.products.items);
+  const products = useSelector((state: RootState) => state.products.products);
   const dispatch = useDispatch<AppDispatch>();
-  const categoryValue = useSelector(
-    (state: RootState) => state.search.categoriesQuery
+  const { categoriesQuery, stateQuery, searchQuery } = useSelector(
+    (state: RootState) => state.search
   );
-  const stateValue = useSelector((state: RootState) => state.search.stateQuery);
-
   useEffect(() => {
     if (error) {
       toast.dismiss();
@@ -57,39 +40,10 @@ export default function SearchContainer() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 items-center">
         {/* Search Input - MUI TextField */}
         <div className="relative w-full sm:col-span-2 md:col-span-2 lg:col-span-2">
-          <TextField
-            fullWidth
-            placeholder="ابحث عن منتج..."
-            onChange={(e) => dispatch(setSearchQuery(e.target.value))}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <FaSearch className="search-icon" />
-                </InputAdornment>
-              ),
-              sx: {
-                borderRadius: "16px",
-                backgroundColor: "white",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#e5e7eb",
-                },
-                "&:hover .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#d1d5db",
-                },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "#3b82f6",
-                  borderWidth: "2px",
-                },
-                "&.Mui-focused .search-icon": {
-                  color: "#3b82f6",
-                },
-                "& .search-icon": {
-                  color: "#9ca3af",
-                  transition: "color 0.2s ease",
-                },
-              },
-            }}
-            size="small"
+          <SearchInput
+            change={(v) => dispatch(setSearchQuery(v))}
+            label="منتج"
+            value={searchQuery}
           />
         </div>
 
@@ -108,7 +62,7 @@ export default function SearchContainer() {
               الفئة
             </InputLabel>
             <Select
-              value={categoryValue}
+              value={categoriesQuery}
               label="الفئة"
               onChange={(e) => dispatch(setcategoriesQuery(e.target.value))}
               sx={{
@@ -149,7 +103,7 @@ export default function SearchContainer() {
               الحالة
             </InputLabel>
             <Select
-              value={stateValue}
+              value={stateQuery}
               label="الحالة"
               onChange={(e) => dispatch(setStateQuery(e.target.value))}
               sx={{
@@ -165,14 +119,14 @@ export default function SearchContainer() {
                 },
               }}
             >
-              <MenuItem value="">جميع الحالات</MenuItem>
-              <MenuItem value="موجود">
+              <MenuItem value="all">جميع الحالات</MenuItem>
+              <MenuItem value="in">
                 <span className="text-green-600 font-semibold">🟢 موجود</span>
               </MenuItem>
-              <MenuItem value="قليل">
+              <MenuItem value="low">
                 <span className="text-yellow-600 font-semibold">🟡 قليل</span>
               </MenuItem>
-              <MenuItem value="منتهي">
+              <MenuItem value="out">
                 <span className="text-red-600 font-semibold">🔴 منتهي</span>
               </MenuItem>
             </Select>
@@ -209,10 +163,6 @@ export default function SearchContainer() {
             </button>
           </Tooltip>
         </div>
-
-        {modalIsOpen && (
-          <AddProductModal closeModal={() => setModalIsOpen(false)} />
-        )}
       </div>
     </div>
   );

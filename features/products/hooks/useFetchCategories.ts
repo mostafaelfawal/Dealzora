@@ -8,7 +8,7 @@ export default function useFetchCategories() {
   const [categories, setCategories] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const products = useSelector((state: RootState) => state.products.items);
+  const products = useSelector((state: RootState) => state.products.products);
 
   useEffect(() => {
     try {

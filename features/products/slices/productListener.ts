@@ -1,12 +1,13 @@
+// productsListener.ts
 import { collection, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/firebase/firebase";
 import { AppDispatch } from "@/store/store";
-import { setError, setLoading, setSuppliers } from "./suppliersSlice";
-import { SupplierType } from "../types/SupplierType";
+import { ProductType } from "../types/ProductType";
+import { setError, setLoading, setProducts } from "./productsSlice";
 
 let unsubscribeListener: null | (() => void) = null;
 
-export const startListeningToSuppliers = (dispatch: AppDispatch) => {
+export const startListeningToProducts = (dispatch: AppDispatch) => {
   const uid = auth.currentUser?.uid;
   if (!uid) {
     dispatch(setError("لم يتم تسجيل الدخول"));
@@ -16,28 +17,21 @@ export const startListeningToSuppliers = (dispatch: AppDispatch) => {
   if (unsubscribeListener) return;
 
   dispatch(setLoading());
+  const productsRef = collection(db, `users/${uid}/products`);
 
-  const suppliersRef = collection(db, `users/${uid}/suppliers`);
   unsubscribeListener = onSnapshot(
-    suppliersRef,
+    productsRef,
     (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
+      const products = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as SupplierType[];
+      })) as ProductType[];
 
-      dispatch(setSuppliers(data));
+      dispatch(setProducts(products));
     },
     (error) => {
       console.error(error);
       dispatch(setError("فشل في جلب البيانات"));
     }
   );
-};
-
-export const stopListeningToSuppliers = () => {
-  if (unsubscribeListener) {
-    unsubscribeListener();
-    unsubscribeListener = null;
-  }
 };

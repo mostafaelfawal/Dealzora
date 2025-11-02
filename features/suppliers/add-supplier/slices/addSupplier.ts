@@ -1,8 +1,8 @@
 // addSupplier.ts
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { SupplierType } from "../types/SupplierType";
 import { auth, db } from "@/firebase/firebase";
 import { addDoc, collection } from "firebase/firestore";
+import { SupplierType } from "../../types/SupplierType";
 
 export const addSupplier = createAsyncThunk<
   SupplierType,

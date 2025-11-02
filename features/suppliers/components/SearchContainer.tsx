@@ -1,29 +1,10 @@
 "use client";
 import HeaderPage from "@/components/HeaderPage";
 import SearchInput from "@/components/SearchInput";
-import { AppDispatch } from "@/store/store";
 import { FaTruck, FaUserPlus } from "react-icons/fa";
-import { useDispatch } from "react-redux";
-import { addSupplier } from "../slices/addSupplier";
 import Link from "next/link";
 
 export default function SearchContainer() {
-  const dispatch = useDispatch<AppDispatch>();
-  // const handleAddSupplier = async () => {
-  //   await dispatch(
-  //     addSupplier({
-  //       isActive: false,
-  //       name: "Mostafa Hamdi",
-  //       phoneNumber: "01151083509",
-  //       address: "شارع التقسييم",
-  //       altPhoneNumber: "01061262424",
-  //       city: "فوه",
-  //       companyName: "آدم",
-  //       email: "armostafa982@gmail.com",
-  //       notes: "موردي المفضل",
-  //     })
-  //   );
-  // };
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
       <HeaderPage title="ادارة الموردين" Icon={FaTruck} />

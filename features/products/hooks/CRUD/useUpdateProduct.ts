@@ -11,7 +11,7 @@ export default function useUpdateProduct() {
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) setError("لم يتم تسجيل الدخول");
-      // ✅ بعد كده نحدث البيانات من Firebase
+      //  بعد كده نحدث البيانات من Firebase
       const productRef = doc(db, `users/${uid}/products`, productId);
       await setDoc(productRef, productData, { merge: true });
       return true;

@@ -5,6 +5,7 @@ export default function page() {
   const ProductTable = dynamic(
     () => import("@/features/products/components/Product/ProductTable")
   );
+
   return (
     <>
       <SearchContainer />

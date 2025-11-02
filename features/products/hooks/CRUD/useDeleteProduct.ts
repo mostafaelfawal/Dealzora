@@ -10,7 +10,7 @@ export default function useDeleteProduct() {
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) setError("لم يتم تسجيل الدخول");
-      // ✅ بعد كده نحذف البيانات من Firebase
+      //  بعد كده نحذف البيانات من Firebase
       const productRef = doc(db, `users/${uid}/products/${id}`);
       await deleteDoc(productRef);
       return true;

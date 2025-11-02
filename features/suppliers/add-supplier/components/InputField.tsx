@@ -10,7 +10,7 @@ type InputProps = {
   required?: boolean;
 };
 
-export default function SupplierInput({
+export default function InputField({
   label,
   icon,
   register,
@@ -20,7 +20,10 @@ export default function SupplierInput({
   return (
     <div className="w-full">
       {/* Label */}
-      <label className="block mb-1 text-sm font-medium text-gray-700">
+      <label
+        htmlFor={label}
+        className="block mb-1 text-sm font-medium text-gray-700"
+      >
         {label} {required && <RequiredMark />}
       </label>
 
@@ -34,6 +37,7 @@ export default function SupplierInput({
       >
         <span className="absolute right-3 text-gray-400">{icon}</span>
         <input
+          id={label}
           {...register}
           placeholder={`ادخل ${label}`}
           className="w-full pr-10 pl-3 py-2 bg-transparent rounded-lg focus:outline-none text-gray-700"

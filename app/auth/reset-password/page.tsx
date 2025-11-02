@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ تحقق من صلاحية الكود
+  //  تحقق من صلاحية الكود
   useEffect(() => {
     const checkCode = async () => {
       if (!oobCode) {
@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
     checkCode();
   }, [oobCode, router]);
 
-  // ✅ react-hook-form setup
+  //  react-hook-form setup
   const {
     register,
     handleSubmit,
@@ -54,11 +54,11 @@ export default function ResetPasswordPage() {
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  // ✅ تنفيذ إعادة التعيين
+  //  تنفيذ إعادة التعيين
   const onSubmit = async (data: ResetPasswordSchema) => {
     try {
       await confirmPasswordReset(auth, oobCode!, data.password);
-      toast.success("تمت إعادة تعيين كلمة المرور بنجاح ✅");
+      toast.success("تمت إعادة تعيين كلمة المرور بنجاح ");
       router.replace("/auth");
     } catch {
       toast.error("حدث خطأ أثناء إعادة التعيين ❌");

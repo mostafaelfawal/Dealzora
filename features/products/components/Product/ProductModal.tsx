@@ -4,19 +4,18 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "@/components/Modal";
 import { ProductType } from "../../types/ProductType";
 import ProductStatusBadge from "./ProductStatusBadge";
+import Link from "next/link";
 
 interface Props {
   product: ProductType;
   closeModal: VoidFunction;
   openDeleteModal: VoidFunction;
-  openUpdateModal: VoidFunction;
 }
 
 export default function ProductModal({
   product,
   closeModal,
   openDeleteModal,
-  openUpdateModal,
 }: Props) {
   return (
     <Modal title="تفاصيل المنتج" closeModal={closeModal}>
@@ -57,16 +56,15 @@ export default function ProductModal({
         </div>
 
         <div className="flex gap-3 pt-5">
-          <button
-            type="button"
+          <Link
+            href="/dealzora/products/add-product"
             onClick={() => {
               closeModal();
-              openUpdateModal();
             }}
             className="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2"
           >
             <FaEdit /> تعديل
-          </button>
+          </Link>
           <button
             type="button"
             onClick={() => {

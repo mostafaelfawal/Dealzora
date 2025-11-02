@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import { RxDotsVertical } from "react-icons/rx";
 import { ProductType } from "../../types/ProductType";
 import ProductStatusBadge from "./ProductStatusBadge";
@@ -10,8 +10,8 @@ import toast from "react-hot-toast";
 import Modal from "@/components/Modal";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import AddProductModal from "../AddProductModal/AddProductModal";
 import Tooltip from "@/components/Tooltip";
+import Link from "next/link";
 
 interface Props {
   product: ProductType;
@@ -22,7 +22,6 @@ interface Props {
 export default function ProductRow({ product, openRow, setOpenRow }: Props) {
   const { deleteProduct, error } = useDeleteProduct();
   const [deleteModal, setDeleteModal] = useState(false);
-  const [editModal, setEditModal] = useState(false);
 
   const handleDeleteProduct = async () => {
     setDeleteModal(false);
@@ -72,7 +71,6 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
           {openRow === product.code && (
             <ProductModal
               openDeleteModal={() => setDeleteModal(true)}
-              openUpdateModal={() => setEditModal(true)}
               product={product}
               closeModal={() => setOpenRow(null)}
             />
@@ -111,12 +109,12 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
       <td className="hidden md:table-cell py-3 px-4">
         <div className="flex gap-2">
           <Tooltip message="تعديل المنتج" side="bottom">
-            <button
-              onClick={() => setEditModal(true)}
+            <Link
+              href="/dealzora/products/add-product"
               className="flex items-center gap-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
             >
               <FaEdit size={14} />
-            </button>
+            </Link>
           </Tooltip>
           <Tooltip message="حذف المنتج" side="bottom">
             <button
@@ -124,11 +122,6 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
               className="flex items-center gap-1 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
             >
               <FaTrash size={14} />
-            </button>
-          </Tooltip>
-          <Tooltip message="عرض المنتج" side="bottom">
-            <button className="flex items-center gap-1 px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm">
-              <FaEye size={14} />
             </button>
           </Tooltip>
         </div>
@@ -166,14 +159,6 @@ export default function ProductRow({ product, openRow, setOpenRow }: Props) {
               </div>
             </div>
           </Modal>
-        )}
-        {/* Edit Modal */}
-        {editModal && (
-          <AddProductModal
-            isEdit={true}
-            closeModal={() => setEditModal(false)}
-            defaultValues={product}
-          />
         )}
       </td>
     </motion.tr>

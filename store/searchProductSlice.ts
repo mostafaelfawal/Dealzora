@@ -1,15 +1,17 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+export type stateType = "all" | "in" | "low" | "out";
+
 interface InitialState {
   searchQuery: string;
   categoriesQuery: string;
-  stateQuery: string;
+  stateQuery: stateType;
 }
 
 const initialState: InitialState = {
   searchQuery: "",
   categoriesQuery: "",
-  stateQuery: "",
+  stateQuery: "all",
 };
 
 const searchProductSlice = createSlice({
@@ -22,7 +24,7 @@ const searchProductSlice = createSlice({
     setcategoriesQuery: (state, action: PayloadAction<string>) => {
       state.categoriesQuery = action.payload;
     },
-    setStateQuery: (state, action: PayloadAction<string>) => {
+    setStateQuery: (state, action: PayloadAction<stateType>) => {
       state.stateQuery = action.payload;
     },
   },

@@ -3,30 +3,19 @@
 import { useEffect, useState } from "react";
 import ProductRow from "./ProductRow";
 import ProductPagination from "./ProductPagination";
-import useFetchProducts from "../../hooks/CRUD/useFetchProducts";
 import Image from "next/image";
-import toast from "react-hot-toast";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { useFilteredProducts } from "../../hooks/useFilteredProducts";
 
 export default function ProductTable() {
-  const { products, error, loading } = useFetchProducts();
+  const filteredProducts = useFilteredProducts();
 
-  const isSearch = useSelector((state: RootState) => state.search.searchQuery);
-  const isCategorie = useSelector(
-    (state: RootState) => state.search.categoriesQuery
+  const { searchQuery, categoriesQuery, stateQuery } = useSelector(
+    (state: RootState) => state.search
   );
-  const isState = useSelector((state: RootState) => state.search.stateQuery);
-  const isSearchActive = isSearch || isCategorie || isState;
-
-  useEffect(() => {
-    if (error) {
-      toast.dismiss();
-      toast.error(error);
-    }
-  }, [error]);
+  const isSearchActive = searchQuery || categoriesQuery || stateQuery;
 
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -36,10 +25,10 @@ export default function ProductTable() {
     setCurrentPage(1);
   }, [isSearchActive]);
 
-  const totalPages = Math.ceil(products.length / productsPerPage);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
   const indexOfLast = currentPage * productsPerPage;
   const indexOfFirst = indexOfLast - productsPerPage;
-  const currentProducts = products.slice(indexOfFirst, indexOfLast);
+  const currentProducts = filteredProducts.slice(indexOfFirst, indexOfLast);
 
   return (
     <div className="overflow-x-auto bg-white rounded-lg shadow-md p-4">
@@ -56,14 +45,7 @@ export default function ProductTable() {
         </thead>
 
         <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan={6} className="text-center p-4">
-                <LoadingSpinner />
-                <p className="animate-pulse">جاري تحميل منتجات...</p>
-              </td>
-            </tr>
-          ) : products.length ? (
+          {filteredProducts.length ? (
             currentProducts.map((product) => (
               <ProductRow
                 key={product.id}
@@ -103,7 +85,7 @@ export default function ProductTable() {
                 </p>
                 <p className="text-gray-500">
                   {isSearchActive
-                    ? `"${isSearch ? isSearch : "غير موجود"}"`
+                    ? `"${searchQuery ? searchQuery : "غير موجود"}"`
                     : "أضف أول منتج لك"}
                 </p>
               </td>
@@ -117,7 +99,7 @@ export default function ProductTable() {
               <ProductPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                totalProducts={products.length}
+                totalProducts={filteredProducts.length}
                 indexOfFirst={indexOfFirst}
                 indexOfLast={indexOfLast}
                 handlePageChange={setCurrentPage}

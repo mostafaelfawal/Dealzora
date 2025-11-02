@@ -1,11 +1,14 @@
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useRouter } from "next/navigation";
 
 export default function ProductFormButtons({
   onDraft,
   isEdit = false,
+  loading,
 }: {
   onDraft: VoidFunction;
   isEdit?: boolean;
+  loading: boolean;
 }) {
   const router = useRouter();
 
@@ -29,9 +32,11 @@ export default function ProductFormButtons({
 
       <button
         type="submit"
-        className="px-6 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50"
+        disabled={loading}
+        className="flex gap-2 items-center px-6 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50"
       >
         {isEdit ? "حفظ التغيرات" : "إضافة المنتج"}
+        {loading && <LoadingSpinner />}
       </button>
     </div>
   );

@@ -6,8 +6,7 @@ import { RootState, AppDispatch } from "@/store/store";
 import SearchContainer from "@/features/suppliers/components/SearchContainer";
 import {
   startListeningToSuppliers,
-  stopListeningToSuppliers,
-} from "@/features/suppliers/slices/Listener";
+} from "@/features/suppliers/slices/supplierListener";
 
 export default function InventoryPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -17,10 +16,6 @@ export default function InventoryPage() {
 
   useEffect(() => {
     startListeningToSuppliers(dispatch);
-
-    return () => {
-      stopListeningToSuppliers();
-    };
   }, [dispatch]);
 
   return (
@@ -31,7 +26,6 @@ export default function InventoryPage() {
           <li key={i}>{s.name}</li>
         ))}
       </ul>
-      
     </>
   );
 }

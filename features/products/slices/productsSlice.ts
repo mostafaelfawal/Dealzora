@@ -1,15 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ProductType } from "@/features/products/types/ProductType";
-import { fetchProducts } from "./fetchProducts";
+import { ProductType } from "../types/ProductType";
 
-interface ProductsState {
-  items: ProductType[];
+type ProductsState = {
+  products: ProductType[];
   loading: boolean;
   error: string | null;
-}
+};
 
 const initialState: ProductsState = {
-  items: [],
+  products: [],
   loading: false,
   error: null,
 };
@@ -18,29 +17,19 @@ const productsSlice = createSlice({
   name: "products",
   initialState,
   reducers: {
-    setProducts: (state, action: PayloadAction<ProductType[]>) => {
-      state.items = action.payload;
+    setProducts(state, action: PayloadAction<ProductType[]>) {
+      state.products = action.payload;
+      state.loading = false;
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(
-        fetchProducts.fulfilled,
-        (state, action: PayloadAction<ProductType[]>) => {
-          state.loading = false;
-          state.items = action.payload;
-        }
-      )
-      .addCase(fetchProducts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "حدث خطأ أثناء تحميل المنتجات";
-      });
+    setLoading(state) {
+      state.loading = true;
+    },
+    setError(state, action: PayloadAction<string>) {
+      state.error = action.payload;
+      state.loading = false;
+    },
   },
 });
 
-export const { setProducts } = productsSlice.actions;
+export const { setProducts, setLoading, setError } = productsSlice.actions;
 export default productsSlice.reducer;

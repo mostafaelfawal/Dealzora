@@ -11,7 +11,7 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 import { useRouter } from "next/navigation";
-import SupplierInput from "@/features/suppliers/add-supplier/components/SupplierInput";
+import InputField from "@/features/suppliers/add-supplier/components/InputField";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   supplierSchema,
@@ -20,7 +20,7 @@ import {
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { addSupplier } from "@/features/suppliers/slices/addSupplier";
+import { addSupplier } from "@/features/suppliers/add-supplier/slices/addSupplier";
 import { useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -83,14 +83,14 @@ export default function AddSupplierPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SupplierInput
+              <InputField
                 label="اسم المورد"
                 icon={<FaUser />}
                 required
                 register={register("name")}
-                error={errors.name?.message as string}
+                error={errors.name?.message}
               />
-              <SupplierInput
+              <InputField
                 label="اسم الشركة"
                 icon={<FaRegAddressCard />}
                 register={register("companyName")}
@@ -106,19 +106,19 @@ export default function AddSupplierPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SupplierInput
+              <InputField
                 label="رقم الهاتف"
                 icon={<FiPhone />}
                 required
                 register={register("phoneNumber")}
-                error={errors.phoneNumber?.message as string}
+                error={errors.phoneNumber?.message}
               />
-              <SupplierInput
+              <InputField
                 label="رقم بديل"
                 icon={<FiPhone />}
                 register={register("altPhoneNumber")}
               />
-              <SupplierInput
+              <InputField
                 label="البريد الإلكتروني"
                 icon={<FiMail />}
                 register={register("email")}
@@ -134,12 +134,12 @@ export default function AddSupplierPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <SupplierInput
+              <InputField
                 label="المدينة"
                 icon={<FiMapPin />}
                 register={register("city")}
               />
-              <SupplierInput
+              <InputField
                 label="العنوان"
                 icon={<FiHome />}
                 register={register("address")}

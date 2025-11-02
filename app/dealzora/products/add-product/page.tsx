@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import useAddProduct from "@/features/products/hooks/CRUD/useAddProduct";
 import useFetchCategories from "@/features/products/hooks/useFetchCategories";
 import { useProductImage } from "@/features/products/hooks/useProductImage";
 import {
@@ -27,16 +26,15 @@ import { BiCategory } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { FaUser } from "react-icons/fa";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ProductStatusBadge from "@/features/products/components/Product/ProductStatusBadge";
-import {
-  startListeningToSuppliers,
-  stopListeningToSuppliers,
-} from "@/features/suppliers/slices/Listener";
+import { startListeningToSuppliers } from "@/features/suppliers/slices/supplierListener";
+import InputField from "@/features/suppliers/add-supplier/components/InputField";
+import { addProduct } from "@/features/products/add-product/slices/addProduct";
 
 export default function AddProductPage() {
   const router = useRouter();
-  const { addProduct, error } = useAddProduct();
+  const [loading, setLoading] = useState<boolean>(false);
   const { categories } = useFetchCategories();
   const dispatch = useDispatch<AppDispatch>();
   const suppliers = useSelector(
@@ -45,10 +43,6 @@ export default function AddProductPage() {
 
   useEffect(() => {
     startListeningToSuppliers(dispatch);
-
-    return () => {
-      stopListeningToSuppliers();
-    };
   }, [dispatch]);
 
   const {
@@ -64,17 +58,18 @@ export default function AddProductPage() {
   } = useProductImage();
 
   const handleSaveProduct = async (data: productSchemaType) => {
+    setLoading(true);
     const imageURL = await handleUploadImgBB(file);
-    const finalData = { ...data, image: imageURL ?? "/default_product.png" };
-    router.replace("/dealzora/products");
-
-    toast.promise(addProduct(finalData), {
-      loading: "جاري اضافة المنتج...",
-      success: () => {
-        return "تم اضافة المنتج بنجاح";
-      },
-      error: error || "حدث خطأ أثناء اضافة المنتج",
-    });
+    const finalData = { ...data, image: imageURL ?? "/default_product" };
+    try {
+      await dispatch(addProduct(finalData)).unwrap();
+      router.back();
+      toast.success("تم إضافة المورد بنجاح");
+    } catch (error: any) {
+      toast.error(error || "حدث خطأ أثناء إضافة المورد");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const {
@@ -167,29 +162,29 @@ export default function AddProductPage() {
               </div>
 
               <div className="space-y-4">
-                <ProductInput
+                <InputField
                   label="اسم المنتج"
-                  errors={errors}
+                  error={errors.name?.message}
                   register={register("name")}
                   required
                   icon={<FiPackage className="text-gray-400" />}
                 />
 
-                <ProductInput
+                <InputField
                   label="الكود"
-                  errors={errors}
+                  error={errors.code?.message}
                   register={register("code")}
                   required
-                  icon={<FiHash className="text-gray-400" />}
+                  icon={<FiHash />}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <ProductInput
+                  <InputField
                     label="السعر"
                     register={register("price")}
-                    errors={errors}
+                    error={errors.price?.message}
                     required
-                    icon={<FiDollarSign className="text-gray-400" />}
+                    icon={<FiDollarSign />}
                   />
 
                   <ProductInput
@@ -199,7 +194,7 @@ export default function AddProductPage() {
                     type="category"
                     required
                     categories={categories}
-                    icon={<BiCategory className="text-gray-400" />}
+                    icon={<BiCategory />}
                   />
                 </div>
               </div>
@@ -217,18 +212,18 @@ export default function AddProductPage() {
               </div>
 
               <div className="space-y-4">
-                <ProductInput
+                <InputField
                   label="الكمية في المخزون"
                   register={register("stock")}
-                  errors={errors}
-                  icon={<FiBox className="text-gray-400" />}
+                  error={errors.stock?.message}
+                  icon={<FiBox />}
                 />
 
-                <ProductInput
+                <InputField
                   label="حد التنبيه"
                   register={register("stockAlert")}
-                  errors={errors}
-                  icon={<FiAlertCircle className="text-gray-400" />}
+                  error={errors.stockAlert?.message}
+                  icon={<FiAlertCircle />}
                 />
                 <ProductInput
                   label="اختر مورد"
@@ -263,7 +258,7 @@ export default function AddProductPage() {
             {/* الأزرار */}
             <div className="border-t border-gray-200 bg-gray-50 p-6">
               <ProductFormButtons
-                isEdit={false}
+                loading={loading}
                 onDraft={() => toast.success("تم حفظ المسودة (قريبًا)")}
               />
             </div>

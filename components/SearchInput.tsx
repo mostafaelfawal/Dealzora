@@ -4,15 +4,18 @@ import { FaSearch } from "react-icons/fa";
 export default function SearchInput({
   label,
   change,
+  value,
 }: {
   label: string;
   change: (value: string) => void;
+  value?: string;
 }) {
   return (
     <TextField
       fullWidth
       placeholder={`ابحث عن ${label}...`}
       onChange={(e) => change(e.target.value)}
+      value={value ?? ""}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">
@@ -21,7 +24,7 @@ export default function SearchInput({
                 color: "grey.400",
                 ".Mui-focused &": {
                   color: "primary.main",
-                }
+                },
               }}
             >
               <FaSearch />
@@ -41,13 +44,11 @@ export default function SearchInput({
             borderColor: "#3b82f6",
             borderWidth: "2px",
           },
-          // إضافة transition للون
           "& .MuiInputAdornment-root svg": {
             transition: "color 0.2s ease-in-out",
           },
         },
       }}
-      variant="outlined"
       size="small"
     />
   );
