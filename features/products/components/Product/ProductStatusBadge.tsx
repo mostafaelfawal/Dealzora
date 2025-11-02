@@ -14,7 +14,7 @@ export default function ProductStatusBadge({ stock, stockAlert }: Props) {
     قليل: "bg-yellow-100 text-yellow-700",
   };
   const result = useMemo(() => {
-    if (stock == null || stock <= 0) return "منتهي";
+    if (stock == null || Number(stock) <= 0) return "منتهي";
     if (stockAlert != null && stock <= stockAlert) return "قليل";
     return "موجود";
   }, [stock, stockAlert]);
