@@ -11,7 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import type { PosCustomer } from "@/types/pos";
+import type { PosCustomer } from "../types/pos";
 
 interface PosCustomerDialogProps {
   open: boolean;
