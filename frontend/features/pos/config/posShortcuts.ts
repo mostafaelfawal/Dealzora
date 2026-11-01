@@ -11,11 +11,21 @@ const plainKey = (key: string) => (event: KeyboardEvent) =>
   !event.metaKey &&
   !event.shiftKey;
 
-/** اختصارات شاشة الكاشير (شغّالة وإنت واقف في خانة الباركود). */
+/**
+ * Ctrl/⌘ + حرف، مع مطابقة `event.code` (وليس `event.key`)
+ * لتعمل الاختصارات حتى مع لوحة المفاتيح العربية.
+ */
+const ctrlCode = (code: string, shift: boolean) => (event: KeyboardEvent) =>
+  (event.ctrlKey || event.metaKey) &&
+  !event.altKey &&
+  event.shiftKey === shift &&
+  event.code === code;
+
+/** اختصارات شاشة الكاشير (تعمل وأنت في خانة الباركود). */
 export const POS_SHORTCUTS = {
   focusSearch: {
     label: "F2",
-    description: "الرجوع لخانة الباركود والبحث",
+    description: "الرجوع إلى خانة الباركود والبحث",
     match: plainKey("F2"),
   },
   heldList: {
@@ -48,6 +58,17 @@ export const POS_SHORTCUTS = {
     description: "الدفع",
     match: plainKey("F9"),
   },
+  undo: {
+    label: "Ctrl+Z",
+    description: "التراجع عن آخر تعديل في الفاتورة",
+    match: ctrlCode("KeyZ", false),
+  },
+  redo: {
+    label: "Ctrl+Y",
+    description: "إعادة التعديل الذي تم التراجع عنه",
+    match: (event: KeyboardEvent) =>
+      ctrlCode("KeyZ", true)(event) || ctrlCode("KeyY", false)(event),
+  },
   help: {
     label: "Ctrl+/",
     description: "قائمة الاختصارات",
@@ -61,23 +82,24 @@ export interface PosKeyHint {
   description: string;
 }
 
-/** مفاتيح بتشتغل جوه خانة الباركود (مش اختصارات عامة). */
+/** مفاتيح تعمل داخل خانة الباركود (وليست اختصارات عامة). */
 export const POS_SEARCH_KEYS: PosKeyHint[] = [
   {
     keys: "Enter",
     description: "إضافة الصنف (باركود مطابق أو النتيجة المظللة)",
   },
-  { keys: "Enter (خانة فاضية)", description: "فتح الدفع" },
+  { keys: "Enter (خانة فارغة)", description: "فتح الدفع" },
   {
     keys: "↑ ↓",
-    description: "التنقل بين النتائج، أو بين أصناف الفاتورة لو الخانة فاضية",
+    description:
+      "التنقل بين النتائج، أو بين أصناف الفاتورة إذا كانت الخانة فارغة",
   },
   {
     keys: "+ / -",
-    description: "زيادة أو تقليل كمية الصنف المحدد (الخانة فاضية)",
+    description: "زيادة أو تقليل كمية الصنف المحدد (والخانة فارغة)",
   },
-  { keys: "Delete", description: "حذف الصنف المحدد (فيه تراجع)" },
-  { keys: "3*باركود", description: "إضافة 3 قطع مرة واحدة" },
+  { keys: "Delete", description: "حذف الصنف المحدد (مع إمكانية التراجع)" },
+  { keys: "3*باركود", description: "إضافة 3 قطع دفعة واحدة" },
   { keys: "5* ثم Enter", description: "ضبط كمية الصنف المحدد على 5" },
   { keys: "Esc", description: "مسح الخانة" },
 ];
@@ -86,5 +108,5 @@ export const POS_PAYMENT_KEYS: PosKeyHint[] = [
   { keys: "F1 / F2 / F3", description: "كاش / آجل / مختلط" },
   { keys: "F6", description: "اختيار العميل" },
   { keys: "Enter", description: "تأكيد الدفع" },
-  { keys: "Esc", description: "رجوع للفاتورة" },
+  { keys: "Esc", description: "رجوع إلى الفاتورة" },
 ];

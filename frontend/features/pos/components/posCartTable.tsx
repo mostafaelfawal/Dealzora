@@ -10,6 +10,7 @@ import { cn } from "cn";
 import type { CartLine } from "../types/pos";
 
 import { PosQtyField } from "./posQtyField";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface PosCartTableProps {
   lines: CartLine[];
@@ -25,7 +26,7 @@ const th = "h-8 px-2 text-start text-xs font-normal text-muted-foreground";
 
 /**
  * جدول الفاتورة.
- * عمداً <table> عادي مش shadcn Table: الـ container بتاع Table بيكسر sticky header.
+ * عمداً <table> عادي وليس shadcn Table: لأن حاوية Table تكسر الترويسة الثابتة (sticky header).
  */
 export function PosCartTable({
   lines,
@@ -45,10 +46,10 @@ export function PosCartTable({
 
   if (lines.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col justify-center gap-2 p-6 text-xs text-muted-foreground">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-6 text-xs text-muted-foreground">
         <IconBarcode className="size-8" />
-        <p className="text-sm font-medium text-foreground">الفاتورة فاضية</p>
-        <p>امسح باركود أو اكتب اسم صنف، أو اضغط على كارت صنف.</p>
+        <p className="text-sm font-medium text-foreground">الفاتورة فارغة</p>
+        <p>امسح باركود أو اكتب اسم صنف، أو اضغط على بطاقة صنف.</p>
       </div>
     );
   }
@@ -117,7 +118,7 @@ export function PosCartTable({
                     {overStock && (
                       <span className="inline-flex items-center gap-1 text-warning">
                         <IconAlertTriangle className="size-3" />
-                        أكتر من المتاح ({formatQty(line.stock)})
+                        أكثر من المتاح ({formatQty(line.stock)})
                       </span>
                     )}
                   </span>
@@ -137,19 +138,21 @@ export function PosCartTable({
                   <Money amount={lineTotal(line)} className="text-sm" />
                 </td>
                 <td className="pe-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`حذف ${line.name}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onRemove(line.productId);
-                    }}
-                    className="size-9 lg:size-7"
-                  >
-                    <IconX />
-                  </Button>
+                  <AppTooltip message={`حذف ${line.name}`} side="right">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`حذف ${line.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onRemove(line.productId);
+                      }}
+                      className="size-9 lg:size-7"
+                    >
+                      <IconX />
+                    </Button>
+                  </AppTooltip>
                 </td>
               </tr>
             );

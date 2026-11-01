@@ -52,7 +52,7 @@ export function PosDiscountDialog({
         <DialogHeader className="text-start">
           <DialogTitle>خصم على الفاتورة</DialogTitle>
           <DialogDescription>
-            الخصم بيتحسب على مجموع الفاتورة كلها.
+            يُحتسب الخصم على مجموع الفاتورة بأكملها.
           </DialogDescription>
         </DialogHeader>
         <DiscountForm
@@ -86,7 +86,7 @@ function DiscountForm({
   let error: string | null = null;
 
   if (mode === "percent") {
-    if (value > 100) error = "النسبة لازم تكون بين 1 و100.";
+    if (value > 100) error = "يجب أن تكون النسبة بين 1 و100.";
     discountAmount = round2((subtotal * Math.min(value, 100)) / 100);
   } else if (mode === "amount") {
     if (value > subtotal)

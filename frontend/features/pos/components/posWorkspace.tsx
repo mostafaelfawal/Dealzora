@@ -35,13 +35,20 @@ type DialogName =
 
 type MobileView = "products" | "cart";
 
-/** الفوكس التلقائي على الباركود للماوس والكيبورد بس. على التاتش بيفتح الكيبورد الافتراضي فنتجنبه. */
+/** التركيز التلقائي على الباركود للفأرة ولوحة المفاتيح فقط. على اللمس يفتح لوحة المفاتيح الافتراضية فنتجنبه. */
 const hasFinePointer = () => window.matchMedia("(pointer: fine)").matches;
 
 export function PosWorkspace() {
   const cart = usePosCart();
   const { invoice, totals, selectedId } = cart;
   const isEmpty = invoice.lines.length === 0;
+  const cartQtyById = useMemo(
+    () =>
+      Object.fromEntries(
+        invoice.lines.map((l) => [l.productId, l.qty]),
+      ) as Record<string, number>,
+    [invoice.lines],
+  );
 
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -61,21 +68,21 @@ export function PosWorkspace() {
   const searching = entry.term !== "";
   const safeIndex = Math.min(activeIndex, Math.max(results.length - 1, 0));
 
-  /* ---------- الفوكس ---------- */
+  /* ---------- التركيز ---------- */
 
   function focusSearch(force = false) {
     if (!force && !hasFinePointer()) return;
     searchRef.current?.focus();
   }
 
-  // أول تحميل وبعد قفل أي نافذة: الفوكس يرجع لخانة الباركود.
+  // عند أول تحميل وبعد إغلاق أي نافذة: يعود التركيز إلى خانة الباركود.
   useEffect(() => {
     if (dialog !== null || !hasFinePointer()) return;
     const id = window.setTimeout(() => searchRef.current?.focus(), 30);
     return () => window.clearTimeout(id);
   }, [dialog]);
 
-  // قارئ الباركود بيكتب أرقام: لو الفوكس مش في خانة إدخال، نرجّعه للباركود قبل ما الحرف يضيع.
+  // قارئ الباركود يكتب أرقاماً: إذا لم يكن التركيز في خانة إدخال، نعيده إلى الباركود قبل أن يضيع الحرف.
   useEffect(() => {
     if (dialog !== null) return;
     function onKeyDown(event: globalThis.KeyboardEvent) {
@@ -122,7 +129,7 @@ export function PosWorkspace() {
       return;
     }
 
-    // "5*" لوحدها: ضبط كمية الصنف المحدد.
+    // "5*" وحدها: ضبط كمية الصنف المحدد.
     if (entry.term === "") {
       if (entry.qty !== null && selectedId) cart.setQty(selectedId, entry.qty);
       changeQuery("");
@@ -132,7 +139,7 @@ export function PosWorkspace() {
     const exact = POS_PRODUCTS.find((p) => p.barcode === entry.term);
     const product = exact ?? results[safeIndex];
     if (!product) {
-      setNotFound(`مفيش صنف مطابق لـ «${entry.term}»`);
+      setNotFound(`لا يوجد صنف مطابق لـ «${entry.term}»`);
       searchRef.current?.select();
       return;
     }
@@ -142,7 +149,7 @@ export function PosWorkspace() {
   function handleRemove(id: string) {
     const line = cart.removeLine(id);
     if (!line) return;
-    toast(`اتشال «${line.name}»`, {
+    toast(`أُزيل «${line.name}»`, {
       action: { label: "تراجع", onClick: cart.undoRemove },
       duration: 5000,
     });
@@ -209,8 +216,8 @@ export function PosWorkspace() {
     cart.holdInvoice();
     changeQuery("");
     setMobileView("products");
-    toast.success("اتعلّقت الفاتورة", {
-      description: `${itemCount} صنف · ${formatMoneyText(total)}. هتلاقيها في المعلّقة (${POS_SHORTCUTS.heldList.label}).`,
+    toast.success("عُلّقت الفاتورة", {
+      description: `${itemCount} صنف · ${formatMoneyText(total)}. ستجدها في المعلّقة (${POS_SHORTCUTS.heldList.label}).`,
     });
   }
 
@@ -218,7 +225,7 @@ export function PosWorkspace() {
     const result = cart.recallHeld(id);
     setDialog(null);
     setMobileView("cart");
-    if (result?.swapped) toast.info("اتعلّقت الفاتورة الحالية تلقائي");
+    if (result?.swapped) toast.info("عُلّقت الفاتورة الحالية تلقائياً");
   }
 
   function handleCancelConfirm() {
@@ -226,7 +233,7 @@ export function PosWorkspace() {
     changeQuery("");
     setDialog(null);
     setMobileView("products");
-    toast("اتلغت الفاتورة");
+    toast("أُلغيت الفاتورة");
   }
 
   function handleDiscountApply(discount: InvoiceDiscount) {
@@ -274,7 +281,7 @@ export function PosWorkspace() {
       description,
       duration: result.change > 0 ? 10_000 : 4000,
     });
-    // TODO: ابعت الفاتورة للـ API، وشغّل الطباعة لو result.print.
+    // TODO: أرسل الفاتورة إلى الـ API، وشغّل الطباعة إن كانت result.print مفعّلة.
   }
 
   /* ---------- الاختصارات ---------- */
@@ -317,6 +324,52 @@ export function PosWorkspace() {
     whenIdle(() => setDialog("shortcuts")),
   );
 
+  // التراجع/الإعادة على الفاتورة: Ctrl+Z و Ctrl+Shift+Z (أو Ctrl+Y).
+  // نستمع مباشرة (وليس عبر useHotkey) لنفحص الحقل المركَّز قبل منع السلوك الافتراضي.
+  const { canUndo, canRedo, undo, redo } = cart;
+  useEffect(() => {
+    if (dialog !== null) return;
+    function onKeyDown(event: globalThis.KeyboardEvent) {
+      const isUndo = POS_SHORTCUTS.undo.match(event);
+      const isRedo = !isUndo && POS_SHORTCUTS.redo.match(event);
+      if (!isUndo && !isRedo) return;
+
+      // داخل حقل فيه نص نترك التراجع الأصلي للمتصفح (تراجع الكتابة).
+      const target = event.target as HTMLElement | null;
+      if (
+        (target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement) &&
+        target.value !== ""
+      )
+        return;
+
+      event.preventDefault();
+      if (isUndo) {
+        if (!canUndo) {
+          toast("لا يوجد ما يمكن التراجع عنه", {
+            id: "pos-history",
+            duration: 1500,
+          });
+          return;
+        }
+        undo();
+        toast("تم التراجع عن آخر تعديل", { id: "pos-history", duration: 1500 });
+      } else {
+        if (!canRedo) {
+          toast("لا يوجد ما يمكن إعادته", {
+            id: "pos-history",
+            duration: 1500,
+          });
+          return;
+        }
+        redo();
+        toast("تمت إعادة التعديل", { id: "pos-history", duration: 1500 });
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [dialog, canUndo, canRedo, undo, redo]);
+
   return (
     <div
       onClick={handleRootClick}
@@ -346,6 +399,7 @@ export function PosWorkspace() {
           category={category}
           onCategoryChange={setCategory}
           onAdd={(product) => handleAdd(product)}
+          cartQtyById={cartQtyById}
         />
 
         <PosCartPanel

@@ -25,7 +25,7 @@ interface PosSearchInputProps {
   pendingQty: number | null;
 }
 
-/** خانة الباركود والبحث: دايماً فوكس، وبتفهم 3*باركود. */
+/** خانة الباركود والبحث: عليها التركيز دائماً، وتفهم صيغة 3*باركود. */
 export function PosSearchInput({
   inputRef,
   value,
@@ -40,7 +40,7 @@ export function PosSearchInput({
     <div className="space-y-1.5">
       <InputGroup className="h-11">
         <InputGroupAddon>
-          <IconSearch className="size-5" />
+          <IconSearch className="mr-2 size-5" />
         </InputGroupAddon>
         <InputGroupInput
           ref={inputRef}
@@ -66,13 +66,14 @@ export function PosSearchInput({
               type="button"
               variant="ghost"
               size="icon-xs"
+              className="ml-2"
               aria-label="مسح الخانة"
               onClick={() => onChange("")}
             >
               <IconX />
             </Button>
           ) : (
-            <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+            <ShortcutBadge className="hidden rounded-none ml-2 lg:inline-flex">
               {POS_SHORTCUTS.focusSearch.label}
             </ShortcutBadge>
           )}
@@ -94,12 +95,11 @@ export function PosSearchInput({
             <span dir="ltr" className="font-mono tabular-nums">
               {formatQty(pendingQty)}
             </span>{" "}
-            · اكتب الباركود أو الاسم بعدها
+            · ثم اكتب الباركود أو الاسم
           </span>
         ) : (
           <span className="text-muted-foreground">
-            Enter للإضافة · Enter على خانة فاضية = دفع ·{" "}
-            <bdi className="font-mono">3*باركود</bdi> لكمية
+            Enter للإضافة · Enter على خانة فارغة = دفع · 3*باركود لتحديد الكمية
           </span>
         )}
       </p>

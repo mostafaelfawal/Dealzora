@@ -18,7 +18,7 @@ interface PosSearchResultsProps {
   onAdd: (product: PosProduct) => void;
 }
 
-/** نتايج البحث كقائمة (listbox). التنقل بالأسهم من خانة البحث نفسها. */
+/** نتائج البحث كقائمة (listbox). التنقل بالأسهم من خانة البحث نفسها. */
 export function PosSearchResults({
   term,
   results,
@@ -39,9 +39,9 @@ export function PosSearchResults({
   if (results.length === 0) {
     return (
       <div className="space-y-1 py-6 text-xs">
-        <p className="text-sm font-medium">مفيش صنف مطابق لـ «{term}»</p>
+        <p className="text-sm font-medium">لا يوجد صنف مطابق لـ «{term}»</p>
         <p className="text-muted-foreground">
-          جرّب جزء من الاسم، أو آخر أرقام الباركود.
+          جرّب جزءاً من الاسم، أو آخر أرقام الباركود.
         </p>
       </div>
     );

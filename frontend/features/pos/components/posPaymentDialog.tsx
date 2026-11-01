@@ -50,7 +50,7 @@ interface PosPaymentDialogProps {
   onConfirm: (result: PaymentResult) => void;
 }
 
-/** الدفع: فتح (F9) ثم Enter. الكاش متعبّي بالإجمالي، فلو مفيش باقي يبقى خطوتين بس. */
+/** الدفع: فتح (F9) ثم Enter. الكاش معبّأ بالإجمالي، فإذا لم يكن هناك باقٍ فالعملية خطوتان فقط. */
 export function PosPaymentDialog({
   open,
   onOpenChange,
@@ -68,7 +68,7 @@ export function PosPaymentDialog({
         <DialogHeader className="text-start">
           <DialogTitle>الدفع</DialogTitle>
           <DialogDescription>
-            راجع المبلغ واضغط Enter للتأكيد.
+            راجع المبلغ ثم اضغط Enter للتأكيد.
           </DialogDescription>
         </DialogHeader>
         <PaymentForm
@@ -106,7 +106,7 @@ function PaymentForm({
   const submitRef = useRef<HTMLButtonElement>(null);
   const firstRender = useRef(true);
 
-  // بعد تغيير الطريقة: فوكس على خانة المبلغ (أو زر التأكيد في الآجل).
+  // بعد تغيير الطريقة: نقل التركيز إلى خانة المبلغ (أو زر التأكيد في الآجل).
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
@@ -140,14 +140,15 @@ function PaymentForm({
       error = `المبلغ ناقص ${formatMoneyText(round2(total - cash))}`;
   } else if (!customer) {
     needsCustomer = true;
-    error = "اختار عميل الأول عشان تبيع آجل.";
+    error = "اختر عميلاً أولاً للبيع الآجل.";
   } else if (method === "mixed" && !(cash > 0 && cash < total)) {
-    error = "في المختلط المدفوع كاش لازم يكون أكتر من صفر وأقل من الإجمالي.";
+    error =
+      "في الدفع المختلط يجب أن يكون المدفوع كاشاً أكبر من صفر وأقل من الإجمالي.";
   } else if (credit > available) {
     error =
       customer.creditLimit === 0
-        ? `${customer.name} مش مسموح له بالبيع الآجل.`
-        : `الآجل ${formatMoneyText(credit)} أكبر من المتاح للعميل (${formatMoneyText(available)}).`;
+        ? `${customer.name} غير مسموح له بالبيع الآجل.`
+        : `المبلغ الآجل ${formatMoneyText(credit)} أكبر من المتاح للعميل (${formatMoneyText(available)}).`;
   }
 
   function confirm() {

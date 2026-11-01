@@ -10,15 +10,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-/** مفيش وردية مفتوحة = مفيش بيع. بنقفل الشاشة بدل ما نسيب الكاشير يبيع وبعدين يتفاجئ. */
+/** لا وردية مفتوحة = لا بيع. نقفل الشاشة بدلاً من ترك الكاشير يبيع ثم يتفاجأ لاحقاً. */
 export function PosNoShift() {
   return (
     <main className="flex h-dvh items-start justify-center bg-background p-4 pt-[15dvh]">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>مفيش وردية مفتوحة</CardTitle>
+          <CardTitle>لا توجد وردية مفتوحة</CardTitle>
           <CardDescription>
-            افتح وردية الأول عشان تقدر تسجّل مبيعات وتتابع رصيد الدرج.
+            افتح وردية أولاً لتتمكن من تسجيل المبيعات ومتابعة رصيد الدرج.
           </CardDescription>
         </CardHeader>
         <CardContent />
@@ -36,7 +36,7 @@ export function PosNoShift() {
             nativeButton={false}
             render={<Link href="/main" />}
           >
-            رجوع للوحة التحكم
+            رجوع إلى لوحة التحكم
           </Button>
         </CardFooter>
       </Card>

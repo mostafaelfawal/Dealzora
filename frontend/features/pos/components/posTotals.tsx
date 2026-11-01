@@ -16,7 +16,7 @@ interface PosTotalsProps {
   onPay: () => void;
 }
 
-/** الإجمالي كبير وثابت تحت الجدول، ومعاه أزرار الإجراءات. */
+/** الإجمالي كبير وثابت أسفل الجدول، ومعه أزرار الإجراءات. */
 export function PosTotals({
   totals,
   discount,

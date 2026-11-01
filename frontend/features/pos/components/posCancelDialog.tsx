@@ -20,7 +20,7 @@ interface PosCancelDialogProps {
   onConfirm: () => void;
 }
 
-/** تأكيد الإلغاء: بيقول إيه اللي هيتمسح، والفوكس الافتراضي على "رجوع" (الأأمن). */
+/** تأكيد الإلغاء: يبيّن ما الذي سيُحذف، والتركيز الافتراضي على "رجوع" (الأكثر أماناً). */
 export function PosCancelDialog({
   open,
   onOpenChange,
@@ -41,12 +41,12 @@ export function PosCancelDialog({
           <DialogTitle>إلغاء الفاتورة؟</DialogTitle>
           <DialogDescription className="space-y-1">
             <span className="block">
-              هيتمسح {itemCount} صنف من الفاتورة الحالية بإجمالي{" "}
+              سيتم حذف {itemCount} صنف من الفاتورة الحالية بإجمالي{" "}
               <Money amount={total} className="inline-flex text-xs" />.
             </span>
             <span className="block">
-              مش هتتحفظ في أي مكان ومش هينفع تسترجعها. لو عايزها بعدين استخدم
-              تعليق (F4).
+              لن يتم حفظها في أي مكان ولا يمكن استرجاعها. إذا أردتها لاحقاً
+              فاستخدم التعليق (F4).
             </span>
           </DialogDescription>
         </DialogHeader>

@@ -58,7 +58,7 @@ export function PosShortcutsDialog({
         <DialogHeader className="text-start">
           <DialogTitle>اختصارات الكاشير</DialogTitle>
           <DialogDescription>
-            كلها شغّالة وإنت واقف في خانة الباركود.
+            جميعها تعمل وأنت في خانة الباركود.
           </DialogDescription>
         </DialogHeader>
         <Group title="الشاشة" items={GLOBAL_KEYS} />

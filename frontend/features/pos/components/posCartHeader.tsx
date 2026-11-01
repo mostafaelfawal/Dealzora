@@ -11,7 +11,7 @@ interface PosCartHeaderProps {
   itemCount: number;
   onCustomer: () => void;
   onCancel: () => void;
-  /** رجوع لقائمة الأصناف (موبايل فقط). */
+  /** رجوع إلى قائمة الأصناف (الجوال فقط). */
   onBack: () => void;
 }
 
@@ -29,7 +29,7 @@ export function PosCartHeader({
         variant="ghost"
         size="icon-lg"
         className="lg:hidden"
-        aria-label="رجوع للأصناف"
+        aria-label="رجوع إلى الأصناف"
         onClick={onBack}
       >
         <IconArrowRight className="size-5" />

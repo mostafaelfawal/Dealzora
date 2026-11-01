@@ -1,23 +1,10 @@
 "use client";
 
-import { ThemeProvider, useTheme } from "next-themes";
+import { ThemeProvider } from "next-themes";
 import { DirectionProvider } from "@base-ui/react";
-
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/sonner";
-
-function ThemedToaster() {
-  const { resolvedTheme } = useTheme();
-
-  return (
-    <Toaster
-      position="top-right"
-      richColors
-      dir="rtl"
-      theme={resolvedTheme === "dark" ? "dark" : "light"}
-    />
-  );
-}
+import StoreProvider from "./StoreProvider";
+import ThemedToaster from "./ThemedToaster";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -28,7 +15,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <TooltipProvider delay={200}>{children}</TooltipProvider>
+        <StoreProvider>
+          <TooltipProvider delay={200}>{children}</TooltipProvider>
+        </StoreProvider>
         <ThemedToaster />
       </ThemeProvider>
     </DirectionProvider>

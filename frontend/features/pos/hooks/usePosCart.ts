@@ -13,8 +13,10 @@ import type {
 } from "../types/pos";
 
 const STORAGE_KEY = "dealzora:pos:v1";
-/** TODO: الرقم الحقيقي بيجي من الـ API وقت الحفظ. */
+/** TODO: الرقم الحقيقي يأتي من الـ API وقت الحفظ. */
 const FIRST_INVOICE_NUMBER = 1043;
+/** أقصى عدد من خطوات التراجع المحفوظة. */
+const HISTORY_LIMIT = 50;
 
 const EMPTY_INVOICE: PosInvoice = { lines: [], customer: null, discount: null };
 
@@ -23,6 +25,25 @@ interface Persisted {
   held: HeldInvoice[];
   nextNumber: number;
 }
+
+/** سجل تعديلات الفاتورة الحالية (للتراجع والإعادة). */
+interface History {
+  past: PosInvoice[];
+  present: PosInvoice;
+  future: PosInvoice[];
+}
+
+const INITIAL_HISTORY: History = {
+  past: [],
+  present: EMPTY_INVOICE,
+  future: [],
+};
+
+const freshHistory = (invoice: PosInvoice): History => ({
+  past: [],
+  present: invoice,
+  future: [],
+});
 
 const newId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -42,15 +63,65 @@ function toLine(product: PosProduct, qty: number): CartLine {
 
 /**
  * حالة الفاتورة الحالية + المعلّقة.
- * بتتحفظ في localStorage عشان قطع الكهربا أو الريفريش ميضيّعوش فاتورة شغالة.
+ * تُحفظ في localStorage حتى لا يضيّع انقطاع الكهرباء أو تحديث الصفحة فاتورة قيد العمل.
+ *
+ * التراجع/الإعادة (undo/redo) يشمل تعديلات الفاتورة الحالية فقط
+ * (إضافة، كمية، حذف، عميل، خصم). أما التعليق والاسترجاع والإلغاء والدفع
+ * فتبدأ سجلاً جديداً، لأنها تنقل الفاتورة خارج الشاشة أو تُنهيها.
  */
 export function usePosCart() {
-  const [invoice, setInvoice] = useState<PosInvoice>(EMPTY_INVOICE);
+  const [history, setHistory] = useState<History>(INITIAL_HISTORY);
   const [held, setHeld] = useState<HeldInvoice[]>([]);
   const [nextNumber, setNextNumber] = useState(FIRST_INVOICE_NUMBER);
   const [rawSelectedId, setSelectedId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const lastRemoved = useRef<{ line: CartLine; index: number } | null>(null);
+
+  const invoice = history.present;
+  const canUndo = history.past.length > 0;
+  const canRedo = history.future.length > 0;
+
+  /* ---------- سجل التعديلات ---------- */
+
+  /** تعديل قابل للتراجع. إن لم يتغير شيء (نفس المرجع) لا يُسجَّل. */
+  const commit = useCallback((updater: (prev: PosInvoice) => PosInvoice) => {
+    setHistory((h) => {
+      const next = updater(h.present);
+      if (next === h.present) return h;
+      return {
+        past: [...h.past, h.present].slice(-HISTORY_LIMIT),
+        present: next,
+        future: [],
+      };
+    });
+  }, []);
+
+  /** استبدال الفاتورة وبدء سجل جديد (تعليق، استرجاع، إلغاء، دفع). */
+  const reset = useCallback((next: PosInvoice) => {
+    setHistory(freshHistory(next));
+  }, []);
+
+  const undo = useCallback(() => {
+    setHistory((h) => {
+      if (h.past.length === 0) return h;
+      return {
+        past: h.past.slice(0, -1),
+        present: h.past[h.past.length - 1],
+        future: [h.present, ...h.future],
+      };
+    });
+  }, []);
+
+  const redo = useCallback(() => {
+    setHistory((h) => {
+      if (h.future.length === 0) return h;
+      return {
+        past: [...h.past, h.present].slice(-HISTORY_LIMIT),
+        present: h.future[0],
+        future: h.future.slice(1),
+      };
+    });
+  }, []);
 
   /* ---------- تحميل وحفظ ---------- */
 
@@ -61,7 +132,7 @@ export function usePosCart() {
         const data = JSON.parse(raw) as Partial<Persisted>;
         if (data.invoice && Array.isArray(data.invoice.lines)) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setInvoice(data.invoice);
+          setHistory(freshHistory(data.invoice));
           setSelectedId(data.invoice.lines.at(-1)?.productId ?? null);
         }
         if (Array.isArray(data.held)) setHeld(data.held);
@@ -93,32 +164,44 @@ export function usePosCart() {
 
   /* ---------- الأصناف ---------- */
 
-  const addProduct = useCallback((product: PosProduct, qty = 1) => {
-    setInvoice((prev) => {
-      const exists = prev.lines.some((l) => l.productId === product.id);
-      const lines = exists
-        ? prev.lines.map((l) =>
-            l.productId === product.id
-              ? { ...l, qty: clampQty(l.qty + qty, l.allowDecimal) }
-              : l,
-          )
-        : [...prev.lines, toLine(product, qty)];
-      return { ...prev, lines };
-    });
-    setSelectedId(product.id);
-  }, []);
+  const addProduct = useCallback(
+    (product: PosProduct, qty = 1) => {
+      commit((prev) => {
+        const exists = prev.lines.some((l) => l.productId === product.id);
+        const lines = exists
+          ? prev.lines.map((l) =>
+              l.productId === product.id
+                ? { ...l, qty: clampQty(l.qty + qty, l.allowDecimal) }
+                : l,
+            )
+          : [...prev.lines, toLine(product, qty)];
+        return { ...prev, lines };
+      });
+      setSelectedId(product.id);
+    },
+    [commit],
+  );
 
-  const setQty = useCallback((id: string, qty: number) => {
-    setInvoice((prev) => ({
-      ...prev,
-      lines: prev.lines.map((l) =>
-        l.productId === id ? { ...l, qty: clampQty(qty, l.allowDecimal) } : l,
-      ),
-    }));
-    setSelectedId(id);
-  }, []);
+  const setQty = useCallback(
+    (id: string, qty: number) => {
+      commit((prev) => {
+        const target = prev.lines.find((l) => l.productId === id);
+        if (!target) return prev;
+        const next = clampQty(qty, target.allowDecimal);
+        if (next === target.qty) return prev;
+        return {
+          ...prev,
+          lines: prev.lines.map((l) =>
+            l.productId === id ? { ...l, qty: next } : l,
+          ),
+        };
+      });
+      setSelectedId(id);
+    },
+    [commit],
+  );
 
-  /** +/- : القطعة بخطوة 1، والوزن بخطوة 0.5. مبينزلش تحت الحد الأدنى. */
+  /** +/- : القطعة بخطوة 1، والوزن بخطوة 0.5. لا ينزل تحت الحد الأدنى. */
   const changeQty = useCallback(
     (id: string, direction: 1 | -1) => {
       const line = invoice.lines.find((l) => l.productId === id);
@@ -138,21 +221,22 @@ export function usePosCart() {
       const line = invoice.lines[index];
       const rest = invoice.lines.filter((l) => l.productId !== id);
       lastRemoved.current = { line, index };
-      setInvoice((prev) => ({
+      commit((prev) => ({
         ...prev,
         lines: prev.lines.filter((l) => l.productId !== id),
       }));
       setSelectedId(rest[Math.min(index, rest.length - 1)]?.productId ?? null);
       return line;
     },
-    [invoice.lines],
+    [invoice.lines, commit],
   );
 
+  /** زر «تراجع» في إشعار الحذف: يعيد الصنف المحذوف في مكانه. */
   const undoRemove = useCallback(() => {
     const removed = lastRemoved.current;
     if (!removed) return;
     lastRemoved.current = null;
-    setInvoice((prev) => {
+    commit((prev) => {
       if (prev.lines.some((l) => l.productId === removed.line.productId))
         return prev;
       const lines = [...prev.lines];
@@ -160,7 +244,7 @@ export function usePosCart() {
       return { ...prev, lines };
     });
     setSelectedId(removed.line.productId);
-  }, []);
+  }, [commit]);
 
   const moveSelection = useCallback(
     (direction: 1 | -1) => {
@@ -180,25 +264,45 @@ export function usePosCart() {
 
   /* ---------- بيانات الفاتورة ---------- */
 
-  const setCustomer = useCallback((customer: PosCustomer | null) => {
-    setInvoice((prev) => ({ ...prev, customer }));
-  }, []);
+  const setCustomer = useCallback(
+    (customer: PosCustomer | null) => {
+      commit((prev) =>
+        (prev.customer?.id ?? null) === (customer?.id ?? null)
+          ? prev
+          : { ...prev, customer },
+      );
+    },
+    [commit],
+  );
 
-  const setDiscount = useCallback((discount: InvoiceDiscount | null) => {
-    setInvoice((prev) => ({ ...prev, discount }));
-  }, []);
+  const setDiscount = useCallback(
+    (discount: InvoiceDiscount | null) => {
+      commit((prev) => {
+        if (prev.discount === null && discount === null) return prev;
+        if (
+          prev.discount &&
+          discount &&
+          prev.discount.type === discount.type &&
+          prev.discount.value === discount.value
+        )
+          return prev;
+        return { ...prev, discount };
+      });
+    },
+    [commit],
+  );
 
   /* ---------- تعليق / استرجاع / إنهاء ---------- */
 
   const holdInvoice = useCallback(() => {
     if (invoice.lines.length === 0) return false;
     setHeld((prev) => [{ id: newId(), heldAt: Date.now(), invoice }, ...prev]);
-    setInvoice(EMPTY_INVOICE);
+    reset(EMPTY_INVOICE);
     setSelectedId(null);
     return true;
-  }, [invoice]);
+  }, [invoice, reset]);
 
-  /** لو الفاتورة الحالية فيها أصناف بتتعلّق تلقائي بدل ما تتمسح. */
+  /** إذا كانت الفاتورة الحالية فيها أصناف فإنها تُعلَّق تلقائياً بدل أن تُمسح. */
   const recallHeld = useCallback(
     (id: string) => {
       const target = held.find((h) => h.id === id);
@@ -210,32 +314,36 @@ export function usePosCart() {
           ? [{ id: newId(), heldAt: Date.now(), invoice }, ...rest]
           : rest;
       });
-      setInvoice(target.invoice);
+      reset(target.invoice);
       setSelectedId(target.invoice.lines.at(-1)?.productId ?? null);
       return { swapped };
     },
-    [held, invoice],
+    [held, invoice, reset],
   );
 
   const cancelInvoice = useCallback(() => {
-    setInvoice(EMPTY_INVOICE);
+    reset(EMPTY_INVOICE);
     setSelectedId(null);
-  }, []);
+  }, [reset]);
 
-  /** يقفل الفاتورة بعد الدفع ويرجّع رقمها. TODO: استبدلها بحفظ حقيقي عبر الـ API. */
+  /** يُقفل الفاتورة بعد الدفع ويرجع رقمها. TODO: استبدلها بحفظ حقيقي عبر الـ API. */
   const completeInvoice = useCallback(() => {
     const number = nextNumber;
     setNextNumber(number + 1);
-    setInvoice(EMPTY_INVOICE);
+    reset(EMPTY_INVOICE);
     setSelectedId(null);
     return number;
-  }, [nextNumber]);
+  }, [nextNumber, reset]);
 
   return {
     invoice,
     totals,
     held,
     selectedId,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
     addProduct,
     setQty,
     changeQty,

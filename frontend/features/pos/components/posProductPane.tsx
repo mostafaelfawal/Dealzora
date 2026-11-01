@@ -27,9 +27,11 @@ interface PosProductPaneProps {
   category: string;
   onCategoryChange: (id: string) => void;
   onAdd: (product: PosProduct) => void;
+  /** الكميات الموجودة في الفاتورة حسب معرّف الصنف. */
+  cartQtyById: Record<string, number>;
 }
 
-/** العمود الأول: بحث + تصنيفات + كروت الأصناف (أو نتايج البحث). */
+/** العمود الأول: بحث + تصنيفات + بطاقات الأصناف (أو نتائج البحث). */
 export function PosProductPane({
   className,
   inputRef,
@@ -47,6 +49,7 @@ export function PosProductPane({
   category,
   onCategoryChange,
   onAdd,
+  cartQtyById,
 }: PosProductPaneProps) {
   const searching = searchTerm !== "";
   const visible =
@@ -115,6 +118,7 @@ export function PosProductPane({
                 key={product.id}
                 product={product}
                 onAdd={onAdd}
+                inCartQty={cartQtyById[product.id] ?? 0}
               />
             ))}
           </div>
