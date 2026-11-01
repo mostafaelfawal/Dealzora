@@ -25,10 +25,7 @@ export function AppHeader() {
         </div>
 
         <HeaderStatus className="hidden lg:flex" />
-        <Separator
-          orientation="vertical"
-          className="mx-1 hidden lg:block"
-        />
+        <Separator orientation="vertical" className="mx-1 hidden lg:block" />
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>

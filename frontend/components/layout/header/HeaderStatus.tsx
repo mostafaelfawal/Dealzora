@@ -15,7 +15,10 @@ interface HeaderStatusProps {
   className?: string;
 }
 
-export function HeaderStatus({ showLabels = false, className }: HeaderStatusProps) {
+export function HeaderStatus({
+  showLabels = false,
+  className,
+}: HeaderStatusProps) {
   const { user, shift, drawerBalance, sync, subscription } = useShellData();
   const canViewDrawerBalance = ROLE_PERMISSIONS[user.role].canViewDrawerBalance;
 

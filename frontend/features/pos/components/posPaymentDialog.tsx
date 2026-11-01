@@ -1,0 +1,376 @@
+"use client";
+
+import { IconAlertTriangle } from "@tabler/icons-react";
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent, KeyboardEvent, RefObject } from "react";
+
+import { Money } from "@/components/shared/Money";
+import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
+import { Separator } from "@/components/ui/separator";
+import {
+  formatMoneyText,
+  normalizeDigits,
+  round2,
+  suggestCashAmounts,
+} from "../lib/posCalc";
+import { cn } from "cn";
+import type { PaymentMethod, PaymentResult, PosCustomer } from "../types/pos";
+
+const METHODS: { id: PaymentMethod; label: string; key: string }[] = [
+  { id: "cash", label: "كاش", key: "F1" },
+  { id: "credit", label: "آجل", key: "F2" },
+  { id: "mixed", label: "مختلط", key: "F3" },
+];
+
+const initialCashText = (method: PaymentMethod, total: number) =>
+  method === "cash" ? String(total) : "";
+
+interface PosPaymentDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  total: number;
+  customer: PosCustomer | null;
+  initialMethod: PaymentMethod;
+  onPickCustomer: (method: PaymentMethod) => void;
+  onConfirm: (result: PaymentResult) => void;
+}
+
+/** الدفع: فتح (F9) ثم Enter. الكاش متعبّي بالإجمالي، فلو مفيش باقي يبقى خطوتين بس. */
+export function PosPaymentDialog({
+  open,
+  onOpenChange,
+  ...formProps
+}: PosPaymentDialogProps) {
+  const cashInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        initialFocus={cashInputRef}
+        className="gap-3 sm:max-w-md"
+      >
+        <DialogHeader className="text-start">
+          <DialogTitle>الدفع</DialogTitle>
+          <DialogDescription>
+            راجع المبلغ واضغط Enter للتأكيد.
+          </DialogDescription>
+        </DialogHeader>
+        <PaymentForm
+          {...formProps}
+          cashInputRef={cashInputRef}
+          onCancel={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface PaymentFormProps extends Omit<
+  PosPaymentDialogProps,
+  "open" | "onOpenChange"
+> {
+  cashInputRef: RefObject<HTMLInputElement | null>;
+  onCancel: () => void;
+}
+
+function PaymentForm({
+  total,
+  customer,
+  initialMethod,
+  onPickCustomer,
+  onConfirm,
+  onCancel,
+  cashInputRef,
+}: PaymentFormProps) {
+  const [method, setMethod] = useState<PaymentMethod>(initialMethod);
+  const [cashText, setCashText] = useState(() =>
+    initialCashText(initialMethod, total),
+  );
+  const [print, setPrint] = useState(true);
+  const submitRef = useRef<HTMLButtonElement>(null);
+  const firstRender = useRef(true);
+
+  // بعد تغيير الطريقة: فوكس على خانة المبلغ (أو زر التأكيد في الآجل).
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    if (method === "credit") submitRef.current?.focus();
+    else {
+      cashInputRef.current?.focus();
+      cashInputRef.current?.select();
+    }
+  }, [method, cashInputRef]);
+
+  function changeMethod(next: PaymentMethod) {
+    setMethod(next);
+    setCashText(initialCashText(next, total));
+  }
+
+  const typed = round2(Number(normalizeDigits(cashText)) || 0);
+  const cash = method === "credit" ? 0 : typed;
+  const applied = method === "cash" ? total : cash;
+  const credit = method === "cash" ? 0 : round2(total - applied);
+  const change = method === "cash" ? round2(Math.max(cash - total, 0)) : 0;
+  const available = customer
+    ? Math.max(customer.creditLimit - customer.balance, 0)
+    : 0;
+
+  let error: string | null = null;
+  let needsCustomer = false;
+  if (method === "cash") {
+    if (cash < total)
+      error = `المبلغ ناقص ${formatMoneyText(round2(total - cash))}`;
+  } else if (!customer) {
+    needsCustomer = true;
+    error = "اختار عميل الأول عشان تبيع آجل.";
+  } else if (method === "mixed" && !(cash > 0 && cash < total)) {
+    error = "في المختلط المدفوع كاش لازم يكون أكتر من صفر وأقل من الإجمالي.";
+  } else if (credit > available) {
+    error =
+      customer.creditLimit === 0
+        ? `${customer.name} مش مسموح له بالبيع الآجل.`
+        : `الآجل ${formatMoneyText(credit)} أكبر من المتاح للعميل (${formatMoneyText(available)}).`;
+  }
+
+  function confirm() {
+    if (error) return;
+    onConfirm({
+      method,
+      received: method === "cash" ? cash : applied,
+      cash: applied,
+      credit,
+      change,
+      print,
+    });
+  }
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    confirm();
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    const next = METHODS.find((m) => m.key === event.key);
+    if (next) {
+      event.preventDefault();
+      changeMethod(next.id);
+    } else if (event.key === "F6") {
+      event.preventDefault();
+      onPickCustomer(method);
+    }
+  }
+
+  const quickAmounts = suggestCashAmounts(total);
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
+      className="space-y-3"
+    >
+      <div className="flex items-end justify-between">
+        <span className="pb-1 text-sm text-muted-foreground">المطلوب</span>
+        <Money amount={total} className="text-4xl leading-none" />
+      </div>
+
+      <div
+        role="group"
+        aria-label="طريقة الدفع"
+        className="grid grid-cols-3 gap-2"
+      >
+        {METHODS.map((m) => (
+          <Button
+            key={m.id}
+            type="button"
+            size="lg"
+            variant={method === m.id ? "default" : "outline"}
+            aria-pressed={method === m.id}
+            onClick={() => changeMethod(m.id)}
+            className="gap-2 font-normal"
+          >
+            {m.label}
+            <ShortcutBadge
+              className={cn(
+                "rounded-none",
+                method === m.id &&
+                  "border-primary-foreground/30 text-primary-foreground/80",
+              )}
+            >
+              {m.key}
+            </ShortcutBadge>
+          </Button>
+        ))}
+      </div>
+
+      {method !== "credit" && (
+        <div className="space-y-2">
+          <label htmlFor="pos-cash" className="text-xs text-muted-foreground">
+            {method === "cash" ? "المبلغ المستلم" : "المدفوع كاش"}
+          </label>
+          <InputGroup className="h-12">
+            <InputGroupInput
+              id="pos-cash"
+              ref={cashInputRef}
+              dir="ltr"
+              inputMode="decimal"
+              autoComplete="off"
+              value={cashText}
+              onChange={(event) => setCashText(event.target.value)}
+              onFocus={(event) => event.currentTarget.select()}
+              aria-invalid={
+                method === "cash" && cash < total ? true : undefined
+              }
+              className="h-full text-center font-mono text-xl tabular-nums md:text-xl"
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupText>ج.م</InputGroupText>
+            </InputGroupAddon>
+          </InputGroup>
+
+          {method === "cash" && (
+            <div className="flex flex-wrap gap-1.5">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setCashText(String(total))}
+                className="font-normal"
+              >
+                بالضبط
+              </Button>
+              {quickAmounts.map((amount) => (
+                <Button
+                  key={amount}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCashText(String(amount))}
+                  className="font-mono font-normal tabular-nums"
+                >
+                  {amount}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <Separator />
+
+      <dl aria-live="polite" className="space-y-1.5 text-xs">
+        {method === "cash" && (
+          <div className="flex items-end justify-between">
+            <dt className="pb-0.5 text-sm font-medium">الباقي للعميل</dt>
+            <dd>
+              <Money
+                amount={error ? 0 : change}
+                className="text-3xl leading-none"
+              />
+            </dd>
+          </div>
+        )}
+        {method !== "cash" && (
+          <>
+            <div className="flex items-center justify-between">
+              <dt className="text-muted-foreground">كاش</dt>
+              <dd>
+                <Money amount={applied} />
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-muted-foreground">
+                آجل على {customer ? customer.name : "العميل"}
+              </dt>
+              <dd>
+                <Money amount={Math.max(credit, 0)} />
+              </dd>
+            </div>
+            {customer && (
+              <div className="flex items-center justify-between text-muted-foreground">
+                <dt>عليه حالياً · المتاح</dt>
+                <dd className="flex items-center gap-2">
+                  <Money amount={customer.balance} />
+                  <span aria-hidden>·</span>
+                  <Money amount={available} />
+                </dd>
+              </div>
+            )}
+          </>
+        )}
+      </dl>
+
+      {error && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center gap-2 text-xs text-destructive"
+        >
+          <IconAlertTriangle className="size-4 shrink-0" />
+          <span className="flex-1">{error}</span>
+          {needsCustomer && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onPickCustomer(method)}
+              className="gap-2 font-normal text-foreground"
+            >
+              اختيار عميل
+              <ShortcutBadge className="rounded-none">F6</ShortcutBadge>
+            </Button>
+          )}
+        </div>
+      )}
+
+      <label className="flex items-center gap-2 text-xs">
+        <Checkbox
+          checked={print}
+          onCheckedChange={(value) => setPrint(Boolean(value))}
+        />
+        طباعة الإيصال
+      </label>
+
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={onCancel}
+          className="gap-2 font-normal"
+        >
+          رجوع
+          <ShortcutBadge className="rounded-none">Esc</ShortcutBadge>
+        </Button>
+        <Button
+          ref={submitRef}
+          type="submit"
+          size="lg"
+          disabled={error !== null}
+          className="h-11 gap-2 px-5 text-sm"
+        >
+          تأكيد وحفظ الفاتورة
+          <ShortcutBadge className="rounded-none border-primary-foreground/30 text-primary-foreground/80">
+            Enter
+          </ShortcutBadge>
+        </Button>
+      </div>
+    </form>
+  );
+}

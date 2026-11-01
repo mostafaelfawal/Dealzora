@@ -1,0 +1,149 @@
+import { CURRENCY_LABEL, formatNumber } from "@/lib/format";
+import type {
+  CartLine,
+  InvoiceDiscount,
+  PosInvoice,
+  PosProduct,
+  StockLevel,
+} from "../types/pos";
+
+/** أقصى كمية للصنف في سطر واحد (حماية من غلطة كتابة). */
+export const MAX_QTY = 9999;
+
+export const round2 = (n: number) =>
+  Math.round((n + Number.EPSILON) * 100) / 100;
+const round3 = (n: number) => Math.round((n + Number.EPSILON) * 1000) / 1000;
+
+export function formatMoneyText(amount: number) {
+  return `${formatNumber(amount)} ${CURRENCY_LABEL}`;
+}
+
+export function formatQty(qty: number) {
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(
+    qty,
+  );
+}
+
+/** الأصناف بالقطعة أرقام صحيحة، والأصناف بالوزن لحد 3 كسور. */
+export function clampQty(qty: number, allowDecimal: boolean) {
+  if (!Number.isFinite(qty)) return allowDecimal ? 0.001 : 1;
+  const bounded = Math.min(qty, MAX_QTY);
+  return allowDecimal
+    ? Math.max(round3(bounded), 0.001)
+    : Math.max(Math.round(bounded), 1);
+}
+
+export function getStockLevel(
+  product: Pick<PosProduct, "stock" | "minStock">,
+): StockLevel {
+  if (product.stock <= 0) return "out";
+  if (product.stock <= product.minStock) return "low";
+  return "ok";
+}
+
+export const lineTotal = (line: CartLine) => round2(line.price * line.qty);
+
+export function calcDiscount(
+  subtotal: number,
+  discount: InvoiceDiscount | null,
+) {
+  if (!discount) return 0;
+  const raw =
+    discount.type === "percent"
+      ? (subtotal * discount.value) / 100
+      : discount.value;
+  return round2(Math.min(Math.max(raw, 0), subtotal));
+}
+
+export interface InvoiceTotals {
+  itemCount: number;
+  qtyCount: number;
+  subtotal: number;
+  discountAmount: number;
+  total: number;
+}
+
+export function calcTotals(invoice: PosInvoice): InvoiceTotals {
+  const subtotal = round2(
+    invoice.lines.reduce((sum, line) => sum + lineTotal(line), 0),
+  );
+  const discountAmount = calcDiscount(subtotal, invoice.discount);
+  return {
+    itemCount: invoice.lines.length,
+    qtyCount: round3(invoice.lines.reduce((sum, l) => sum + l.qty, 0)),
+    subtotal,
+    discountAmount,
+    total: round2(subtotal - discountAmount),
+  };
+}
+
+/* ---------- إدخال وبحث ---------- */
+
+/** يحوّل الأرقام العربية/الفارسية للاتينية (الكيبورد العربي بيكتبها كده أحياناً). */
+export function normalizeDigits(text: string) {
+  return text
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/٫/g, ".")
+    .replace(/×/g, "*");
+}
+
+export function normalizeSearch(text: string) {
+  return normalizeDigits(text)
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .trim();
+}
+
+/**
+ * يفهم صيغة "3*باركود": الكمية قبل النجمة.
+ * "3*" لوحدها = تعديل كمية الصنف المحدد.
+ */
+export function parseEntry(raw: string): { qty: number | null; term: string } {
+  const text = normalizeDigits(raw).trim();
+  const match = text.match(/^(\d+(?:\.\d+)?)\s*\*\s*(.*)$/);
+  if (!match) return { qty: null, term: text };
+  return { qty: Number(match[1]), term: match[2].trim() };
+}
+
+export function searchProducts(
+  products: PosProduct[],
+  term: string,
+  limit = 12,
+): PosProduct[] {
+  const query = normalizeSearch(term);
+  if (!query) return [];
+  const tokens = query.split(/\s+/);
+  const digitsOnly = /^\d+$/.test(query);
+
+  const scored: { product: PosProduct; score: number }[] = [];
+  for (const product of products) {
+    const name = normalizeSearch(product.name);
+    let score = -1;
+    if (product.barcode === query) score = 0;
+    else if (digitsOnly && product.barcode.includes(query)) score = 1;
+    else if (tokens.every((t) => name.includes(t)))
+      score = name.startsWith(query) ? 2 : 3;
+    if (score >= 0) scored.push({ product, score });
+  }
+
+  return scored
+    .sort(
+      (a, b) =>
+        a.score - b.score || a.product.name.localeCompare(b.product.name, "ar"),
+    )
+    .slice(0, limit)
+    .map((s) => s.product);
+}
+
+/** فئات الكاش الشائعة اللي العميل غالباً هيدفعها (أكبر من الإجمالي). */
+export function suggestCashAmounts(total: number, max = 3) {
+  const result = new Set<number>();
+  for (const d of [10, 20, 50, 100, 200, 500]) {
+    result.add((Math.floor(total / d) + 1) * d);
+  }
+  return [...result].sort((a, b) => a - b).slice(0, max);
+}
