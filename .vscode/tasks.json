@@ -8,7 +8,7 @@
       "options": { "cwd": "${workspaceFolder}/frontend" },
       "isBackground": true,
       "runOptions": { "runOn": "folderOpen" }
-    },
+    }
     // {
     //   "label": "Backend",
     //   "type": "shell",

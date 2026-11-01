@@ -4,7 +4,7 @@ import { IBM_Plex_Sans_Arabic, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
+import { AppProviders } from "@/providers/AppProviders";
 
 // ========================================
 // Constants
@@ -236,15 +236,7 @@ export default function RootLayout({
             __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
           }}
         />
-
-        {children}
-
-        <Toaster
-          position="top-right"
-          richColors
-          theme="system"
-          dir="rtl"
-        />
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
