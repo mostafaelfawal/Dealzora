@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -51,22 +51,7 @@ export function useProductsList() {
   );
   const total = productsQuery.data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / filters.pageSize));
-
-  // لو الصفحة الحالية اختفت (بعد حذف آخر صنف فيها مثلاً) نرجع لآخر صفحة.
-  useEffect(() => {
-    if (
-      productsQuery.data &&
-      !productsQuery.isPlaceholderData &&
-      filters.page > pageCount
-    ) {
-      setFilters((current) => ({ ...current, page: pageCount }));
-    }
-  }, [
-    productsQuery.data,
-    productsQuery.isPlaceholderData,
-    filters.page,
-    pageCount,
-  ]);
+  const page = Math.min(filters.page, pageCount);
 
   /** أي تغيير في الفلتر أو الترتيب أو حجم الصفحة يرجّعنا للصفحة الأولى. */
   const patchFilters = useCallback(
@@ -172,6 +157,7 @@ export function useProductsList() {
   return {
     products,
     total,
+    page,
     pageCount,
     summary: summaryQuery.data ?? EMPTY_SUMMARY,
     filters,

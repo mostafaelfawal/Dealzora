@@ -205,7 +205,7 @@ export function ProductsScreen() {
       {list.total > 0 && (
         <ProductsPagination
           total={list.total}
-          page={list.filters.page}
+          page={list.page}
           pageSize={list.filters.pageSize}
           onPageChange={(page) => list.patchFilters({ page })}
           onPageSizeChange={(pageSize) => list.patchFilters({ pageSize })}
