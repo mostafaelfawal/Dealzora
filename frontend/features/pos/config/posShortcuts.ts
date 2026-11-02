@@ -58,6 +58,11 @@ export const POS_SHORTCUTS = {
     description: "الدفع",
     match: plainKey("F9"),
   },
+  returns: {
+    label: "F10",
+    description: "مرتجع أو استبدال",
+    match: plainKey("F10"),
+  },
   undo: {
     label: "Ctrl+Z",
     description: "التراجع عن آخر تعديل في الفاتورة",

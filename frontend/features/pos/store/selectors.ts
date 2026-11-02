@@ -3,6 +3,7 @@ import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "@/lib/store";
 import { calcTotals, parseEntry, searchProducts } from "../lib/posCalc";
 import { resolveSelectedId } from "./cartSlice";
+import { calcSettlement, returnValue } from "../lib/returnCalc";
 
 /* ---------- الفاتورة ---------- */
 
@@ -54,4 +55,23 @@ export const selectSearchResults = createSelector(
 export const selectSafeIndex = createSelector(
   [(s: RootState) => s.posUi.activeIndex, selectSearchResults],
   (index, results) => Math.min(index, Math.max(results.length - 1, 0)),
+);
+
+/* ---------- الاستبدال / المرتجع ---------- */
+
+export const selectInvoices = (s: RootState) => s.catalog.invoices;
+export const selectExchange = (s: RootState) => s.exchange.draft;
+
+export const selectPendingInvoice = createSelector(
+  [selectInvoices, (s: RootState) => s.exchange.pendingInvoiceId],
+  (invoices, id) => invoices.find((i) => i.id === id) ?? null,
+);
+
+export const selectReturnTotal = createSelector([selectExchange], (draft) =>
+  draft ? returnValue(draft.lines, draft.discountRate) : 0,
+);
+
+export const selectSettlement = createSelector(
+  [selectTotals, selectReturnTotal],
+  (totals, returnTotal) => calcSettlement(totals.total, returnTotal),
 );

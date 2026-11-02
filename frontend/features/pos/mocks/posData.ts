@@ -1,4 +1,5 @@
 import type { PosCategory, PosCustomer, PosProduct } from "../types/pos";
+import type { CompletedInvoice, SoldLine } from "../types/pos";
 
 /** بيانات تجريبية للكاشير. هتتبدل بالـ API (المنتجات والعملاء). */
 
@@ -118,5 +119,61 @@ export const POS_CUSTOMERS: PosCustomer[] = [
     phone: "01155551234",
     balance: 300,
     creditLimit: 0,
+  },
+];
+
+const byId = new Map(POS_PRODUCTS.map((p) => [p.id, p]));
+
+function sold(id: string, qty: number, returnedQty = 0): SoldLine {
+  const p = byId.get(id)!;
+  return {
+    productId: p.id,
+    name: p.name,
+    barcode: p.barcode,
+    unit: p.unit,
+    price: p.price,
+    allowDecimal: p.allowDecimal,
+    qty,
+    returnedQty,
+  };
+}
+
+// وقت ثابت (وليس Date.now) حتى لا يشتكي Next أثناء الـ prerender.
+const BASE = new Date("2026-11-02T12:00:00").getTime();
+const H = 3_600_000;
+
+/** TODO: تأتي من الـ API (آخر فواتير الفرع). */
+export const POS_INVOICES: CompletedInvoice[] = [
+  {
+    id: "inv-1042",
+    number: 1042,
+    soldAt: BASE - 0.3 * H,
+    customer: null,
+    discountRate: 0,
+    lines: [sold("p08", 1), sold("p17", 2)],
+  },
+  {
+    id: "inv-1041",
+    number: 1041,
+    soldAt: BASE - 3 * H,
+    customer: POS_CUSTOMERS[2],
+    discountRate: 0.05,
+    lines: [sold("p12", 2), sold("p13", 6)],
+  },
+  {
+    id: "inv-1040",
+    number: 1040,
+    soldAt: BASE - 26 * H,
+    customer: null,
+    discountRate: 0,
+    lines: [sold("p01", 2, 1), sold("p05", 1)],
+  },
+  {
+    id: "inv-1030",
+    number: 1030,
+    soldAt: BASE - 20 * 24 * H,
+    customer: null,
+    discountRate: 0,
+    lines: [sold("p21", 1)],
   },
 ];

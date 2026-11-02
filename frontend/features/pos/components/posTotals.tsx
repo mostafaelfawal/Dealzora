@@ -14,21 +14,43 @@ import {
   requestDialog,
   requestPayment,
 } from "../store/posActions";
-import { selectInvoiceDiscount, selectTotals } from "../store/selectors";
+import {
+  selectExchange,
+  selectInvoiceDiscount,
+  selectReturnTotal,
+  selectSettlement,
+  selectTotals,
+} from "../store/selectors";
 
 /** الإجمالي كبير وثابت أسفل الجدول، ومعه أزرار الإجراءات. */
 export function PosTotals() {
   const dispatch = useAppDispatch();
   const totals = useAppSelector(selectTotals);
   const discount = useAppSelector(selectInvoiceDiscount);
+  const exchange = useAppSelector(selectExchange);
+  const returnTotal = useAppSelector(selectReturnTotal);
+  const { net, kind } = useAppSelector(selectSettlement);
 
-  const empty = totals.itemCount === 0;
+  const cartEmpty = totals.itemCount === 0;
+  const empty = cartEmpty && !exchange; // مسموح بالتسوية حتى لو السلة فاضية
+
   const discountLabel =
     discount?.type === "percent" ? `الخصم (${discount.value}%)` : "الخصم";
 
   return (
     <div className="shrink-0 border-t bg-background">
       <dl className="space-y-1 px-4 pt-3 text-xs">
+        {exchange && (
+          <div className="flex items-center justify-between">
+            <dt className="text-muted-foreground">
+              مرتجع من #{exchange.invoiceNumber}
+            </dt>
+            <dd className="flex items-baseline gap-1">
+              <span aria-hidden>−</span>
+              <Money amount={returnTotal} />
+            </dd>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">الأصناف</dt>
           <dd className="font-mono tabular-nums" dir="ltr">
@@ -68,9 +90,17 @@ export function PosTotals() {
         aria-atomic="true"
         className="flex items-end justify-between gap-3 px-4 pt-2 pb-3"
       >
-        <span className="pb-1 text-sm font-medium">الإجمالي</span>
+        <span className="pb-1 text-sm font-medium">
+          {!exchange
+            ? "الإجمالي"
+            : kind === "collect"
+              ? "المطلوب من العميل"
+              : kind === "refund"
+                ? "يُرد للعميل"
+                : "لا فرق"}
+        </span>
         <Money
-          amount={totals.total}
+          amount={exchange ? Math.abs(net) : totals.total}
           className="text-4xl leading-none sm:text-5xl"
         />
       </div>
@@ -80,7 +110,7 @@ export function PosTotals() {
           type="button"
           variant="outline"
           size="lg"
-          disabled={empty}
+          disabled={cartEmpty || !!exchange}
           onClick={() => dispatch(holdCurrentInvoice())}
           className="h-12 gap-2 font-normal lg:h-11"
         >
@@ -94,7 +124,7 @@ export function PosTotals() {
           type="button"
           variant="outline"
           size="lg"
-          disabled={empty}
+          disabled={cartEmpty}
           onClick={() => dispatch(requestDialog("discount"))}
           className="h-12 gap-2 font-normal lg:h-11"
         >
@@ -111,7 +141,7 @@ export function PosTotals() {
           onClick={() => dispatch(requestPayment())}
           className="h-12 gap-2 text-base lg:h-11"
         >
-          ادفع
+          {exchange ? "تسوية" : "ادفع"}
           <ShortcutBadge className="rounded-none border-primary-foreground/30 text-primary-foreground/80">
             {POS_SHORTCUTS.pay.label}
           </ShortcutBadge>

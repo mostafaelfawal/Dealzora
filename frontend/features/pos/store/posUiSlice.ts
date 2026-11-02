@@ -4,7 +4,15 @@ import type { PaymentMethod } from "../types/pos";
 import { cartActions } from "./cartSlice";
 
 export type PosDialog =
-  "payment" | "discount" | "customer" | "held" | "cancel" | "shortcuts";
+  | "payment"
+  | "discount"
+  | "customer"
+  | "held"
+  | "cancel"
+  | "shortcuts"
+  | "returnPicker"
+  | "return"
+  | "exchange";
 
 export type MobileView = "products" | "cart";
 

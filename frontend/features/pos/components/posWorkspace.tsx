@@ -21,6 +21,9 @@ import { PosProductPane } from "./posProductPane";
 import { PosShortcutsDialog } from "./posShortcutsDialog";
 import { PosTopBar } from "./posTopBar";
 import { IconInvoice } from "@tabler/icons-react";
+import { PosReturnPickerDialog } from "./posReturnPickerDialog";
+import { PosReturnDialog } from "./posReturnDialog";
+import { PosExchangeDialog } from "./posExchangeDialog";
 
 /** شريط الإجمالي السفلي على الموبايل (من شاشة الأصناف إلى الفاتورة). */
 function MobileCartBar() {
@@ -80,6 +83,9 @@ export function PosWorkspace() {
       <PosHeldDialog />
       <PosCancelDialog />
       <PosShortcutsDialog />
+      <PosReturnPickerDialog />
+      <PosReturnDialog />
+      <PosExchangeDialog />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
 import cartReducer from "@/features/pos/store/cartSlice";
 import catalogReducer from "@/features/pos/store/catalogSlice";
 import posUiReducer from "@/features/pos/store/posUiSlice";
+import exchangeReducer from "@/features/pos/store/exchangeSlice";
 
 const isServer = typeof window === "undefined";
 
@@ -16,6 +17,7 @@ export const makeStore = () =>
       cart: cartReducer,
       posUi: posUiReducer,
       catalog: catalogReducer,
+      exchange: exchangeReducer,
     },
     // فحوصات التطوير تستخدم Math.random()، وهذا ممنوع أثناء الـ prerender في السيرفر.
     middleware: (getDefaultMiddleware) =>

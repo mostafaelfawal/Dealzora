@@ -27,6 +27,10 @@ import {
   selectSelectedId,
   selectTotals,
 } from "./selectors";
+import { catalogActions } from "./catalogSlice";
+import { exchangeActions } from "./exchangeSlice";
+import type { ExchangeDraft } from "../types/pos";
+import { selectExchange, selectSettlement } from "./selectors";
 
 /*
  * الـ thunks هنا بتجمع أكتر من خطوة (قراءة state + dispatch + toast + تركيز).
@@ -67,7 +71,8 @@ export const submitEntry = (): AppThunk => (dispatch, getState) => {
 
   // خانة فاضية: ادفع.
   if (state.posUi.query.trim() === "") {
-    if (!selectIsEmpty(state)) dispatch(requestPayment());
+    if (!selectIsEmpty(state) || selectExchange(state))
+      dispatch(requestPayment());
     return;
   }
 
@@ -155,13 +160,23 @@ export const requestDialog =
 export const requestPayment =
   (method: PaymentMethod = "cash"): AppThunk =>
   (dispatch, getState) => {
-    if (!selectIsEmpty(getState())) dispatch(posUiActions.openPayment(method));
+    const state = getState();
+    // أثناء الاستبدال: التسوية بدل الدفع العادي.
+    if (selectExchange(state)) {
+      dispatch(posUiActions.openDialog("exchange"));
+      return;
+    }
+    if (!selectIsEmpty(state)) dispatch(posUiActions.openPayment(method));
   };
 
 /* ---------- تعليق / استرجاع / إلغاء ---------- */
 
 export const holdCurrentInvoice = (): AppThunk => (dispatch, getState) => {
   const state = getState();
+  if (selectExchange(state)) {
+    toast.error("أنهِ الاستبدال أو ألغِه أولاً");
+    return;
+  }
   if (selectIsEmpty(state)) return;
   const { itemCount, total } = selectTotals(state);
   dispatch(cartActions.holdInvoice());
@@ -170,10 +185,22 @@ export const holdCurrentInvoice = (): AppThunk => (dispatch, getState) => {
   });
 };
 
+export const requestReturn = (): AppThunk => (dispatch, getState) => {
+  if (selectExchange(getState())) {
+    toast.error("أنهِ الاستبدال الحالي أو ألغِه أولاً");
+    return;
+  }
+  dispatch(posUiActions.openDialog("returnPicker"))
+};
+
 export const recallHeldInvoice =
   (id: string): AppThunk =>
   (dispatch, getState) => {
     const state = getState();
+    if (selectExchange(state)) {
+      toast.error("أنهِ الاستبدال أو ألغِه أولاً");
+      return;
+    }
     if (!selectHeld(state).some((h) => h.id === id)) return;
     const swapped = !selectIsEmpty(state);
     dispatch(cartActions.recallHeld(id));
@@ -244,4 +271,75 @@ export const redoInvoice = (): AppThunk => (dispatch, getState) => {
   }
   dispatch(cartActions.redo());
   toast("تمت إعادة التعديل", HISTORY_TOAST);
+};
+/* ---------- الاستبدال / المرتجع ---------- */
+
+export const openReturn =
+  (invoiceId: string): AppThunk =>
+  (dispatch) => {
+    dispatch(exchangeActions.setPending(invoiceId));
+    dispatch(posUiActions.openDialog("return"));
+  };
+
+/**
+ * mode = "exchange": نقفل النافذة ونترك الكاشير يضيف الأصناف الجديدة.
+ * mode = "returnOnly": نفتح التسوية فوراً.
+ */
+export const startExchange =
+  (draft: ExchangeDraft, mode: "exchange" | "returnOnly"): AppThunk =>
+  (dispatch) => {
+    dispatch(exchangeActions.start(draft));
+    if (mode === "returnOnly") {
+      dispatch(posUiActions.openDialog("exchange"));
+      return;
+    }
+    dispatch(posUiActions.closeDialog());
+    dispatch(posUiActions.setMobileView("products"));
+    toast.info("أضف الأصناف الجديدة ثم اضغط تسوية", {
+      description: `استبدال من فاتورة #${draft.invoiceNumber}`,
+    });
+    focusSearch();
+  };
+
+export const cancelExchange = (): AppThunk => (dispatch) => {
+  dispatch(exchangeActions.clear());
+  toast("أُلغي الاستبدال");
+  focusSearch();
+};
+
+export const confirmExchange = (): AppThunk => (dispatch, getState) => {
+  const state = getState();
+  const draft = selectExchange(state);
+  if (!draft) return;
+
+  const { net, kind } = selectSettlement(state);
+  const hasNewItems = !selectIsEmpty(state);
+  const number = state.cart.nextNumber;
+
+  // TODO: إرسال (مرتجع + فاتورة جديدة + حركة المخزون + حركة الدرج) للـ API في معاملة واحدة.
+  dispatch(
+    catalogActions.applyReturn({
+      invoiceId: draft.invoiceId,
+      lines: draft.lines.map((l) => ({ productId: l.productId, qty: l.qty })),
+    }),
+  );
+  if (hasNewItems) dispatch(cartActions.completeInvoice());
+  else dispatch(posUiActions.closeDialog());
+  dispatch(exchangeActions.clear());
+
+  const amount = formatMoneyText(Math.abs(net));
+  toast.success(
+    hasNewItems
+      ? `تم الاستبدال (فاتورة #${number})`
+      : `تم تسجيل المرتجع من فاتورة #${draft.invoiceNumber}`,
+    {
+      description:
+        kind === "collect"
+          ? `استلم ${amount} من العميل`
+          : kind === "refund"
+            ? `رُدّ للعميل ${amount} من الدرج`
+            : "بدون فرق مالي",
+      duration: kind === "refund" ? 10_000 : 4000,
+    },
+  );
 };

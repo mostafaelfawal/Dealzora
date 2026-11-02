@@ -4,6 +4,7 @@ import {
   IconArrowRight,
   IconKeyboard,
   IconPlayerPause,
+  IconReceiptRefund,
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -22,6 +23,7 @@ import { POS_SHORTCUTS } from "../config/posShortcuts";
 import { posUiActions } from "../store/posUiSlice";
 import { selectHeld } from "../store/selectors";
 import { BRAND } from "@/config/brand";
+import { requestReturn } from "../store/posActions";
 
 export function PosTopBar() {
   const dispatch = useAppDispatch();
@@ -54,6 +56,24 @@ export function PosTopBar() {
       <SyncStatus sync={sync} />
 
       <div className="ms-auto flex items-center gap-1 sm:gap-2">
+        <AppTooltip
+          message={`مرتجع أو استبدال (${POS_SHORTCUTS.returns.label})`}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => dispatch(requestReturn())}
+            aria-label="مرتجع أو استبدال"
+            className="gap-2 font-normal"
+          >
+            <IconReceiptRefund className="size-4" />
+            <span className="hidden sm:inline">مرتجع</span>
+            <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+              {POS_SHORTCUTS.returns.label}
+            </ShortcutBadge>
+          </Button>
+        </AppTooltip>
         <Button
           type="button"
           variant="outline"

@@ -75,3 +75,50 @@ export interface PaymentResult {
   change: number;
   print: boolean;
 }
+
+/** صنف في فاتورة مكتملة (سعره وقت البيع، لا السعر الحالي). */
+export interface SoldLine {
+  productId: string;
+  name: string;
+  barcode: string;
+  unit: string;
+  price: number;
+  qty: number;
+  /** ما سبق إرجاعه من هذا السطر. */
+  returnedQty: number;
+  allowDecimal: boolean;
+}
+
+/** فاتورة مكتملة (للقراءة فقط، لا تُعدَّل أبداً). */
+export interface CompletedInvoice {
+  id: string;
+  number: number;
+  soldAt: number;
+  customer: PosCustomer | null;
+  /** نسبة خصم الفاتورة من 0 إلى 1، ليُحسب المرتجع بالسعر الفعلي المدفوع. */
+  discountRate: number;
+  lines: SoldLine[];
+}
+
+export type ReturnReason =
+  "wrong_item" | "defective" | "customer_changed" | "other";
+
+export interface ReturnLine {
+  productId: string;
+  name: string;
+  unit: string;
+  price: number;
+  qty: number;
+  allowDecimal: boolean;
+}
+
+/** مسودة الاستبدال/المرتجع المرتبطة بالفاتورة الأصلية. */
+export interface ExchangeDraft {
+  invoiceId: string;
+  invoiceNumber: number;
+  discountRate: number;
+  reason: ReturnReason;
+  lines: ReturnLine[];
+}
+
+export type SettlementKind = "collect" | "refund" | "even";

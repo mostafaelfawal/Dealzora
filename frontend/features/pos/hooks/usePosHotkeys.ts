@@ -11,6 +11,7 @@ import {
   redoInvoice,
   requestDialog,
   requestPayment,
+  requestReturn,
   undoInvoice,
 } from "../store/posActions";
 import { posUiActions } from "../store/posUiSlice";
@@ -58,6 +59,10 @@ export function usePosHotkeys() {
   useHotkey(
     POS_SHORTCUTS.help.match,
     whenIdle(() => dispatch(posUiActions.openDialog("shortcuts"))),
+  );
+  useHotkey(
+    POS_SHORTCUTS.returns.match,
+    whenIdle(() => dispatch(requestReturn())),
   );
 
   // التراجع/الإعادة: Ctrl+Z و Ctrl+Shift+Z (أو Ctrl+Y).
