@@ -10,8 +10,9 @@
 
 :root {
   /* Typography */
-  --font-sans: var(--font-ibm-plex-arabic);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ibm-plex-arabic), system-ui, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, "Cascadia Code", Consolas, monospace;
 
   /* Base */
   --background: oklch(1 0 0);
@@ -141,9 +142,10 @@
 
 @theme inline {
   /* Fonts */
-  --font-sans: var(--font-ibm-plex-arabic);
-  --font-heading: var(--font-ibm-plex-arabic);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ibm-plex-arabic), system-ui, sans-serif;
+  --font-heading: var(--font-ibm-plex-arabic), system-ui, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, "Cascadia Code", Consolas, monospace;
 
   /* Sidebar */
   --color-sidebar-ring: var(--sidebar-ring);

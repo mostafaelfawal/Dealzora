@@ -131,7 +131,6 @@ export function usePosCart() {
       if (raw) {
         const data = JSON.parse(raw) as Partial<Persisted>;
         if (data.invoice && Array.isArray(data.invoice.lines)) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setHistory(freshHistory(data.invoice));
           setSelectedId(data.invoice.lines.at(-1)?.productId ?? null);
         }

@@ -30,27 +30,27 @@ export const NAVIGATION: NavGroup[] = [
     items: [
       {
         title: "الرئيسية",
-        href: "/",
+        href: "main",
         icon: IconLayoutDashboard,
       },
-      { title: "الفواتير", href: "/sales", icon: IconReceipt },
-      { title: "المرتجعات", href: "/returns", icon: IconReceiptRefund },
-      { title: "الورديات", href: "/shifts", icon: IconClockHour4 },
+      { title: "الفواتير", href: "main/sales", icon: IconReceipt },
+      { title: "المرتجعات", href: "main/returns", icon: IconReceiptRefund },
+      { title: "الورديات", href: "main/shifts", icon: IconClockHour4 },
     ],
   },
   {
     id: "stock",
     label: "المخزن",
     items: [
-      { title: "المنتجات", href: "/products", icon: IconPackage },
+      { title: "المنتجات", href: "main/products", icon: IconPackage },
       {
         title: "المخزون",
-        href: "/inventory",
+        href: "main/inventory",
         icon: IconBuildingWarehouse,
       },
       {
         title: "المشتريات",
-        href: "/purchases",
+        href: "main/purchases",
         icon: IconTruckDelivery,
       },
     ],
@@ -59,25 +59,25 @@ export const NAVIGATION: NavGroup[] = [
     id: "accounts",
     label: "الحسابات",
     items: [
-      { title: "العملاء", href: "/customers", icon: IconUsers },
+      { title: "العملاء", href: "main/customers", icon: IconUsers },
       {
         title: "الموردين",
-        href: "/suppliers",
+        href: "main/suppliers",
         icon: IconBuildingStore,
       },
       {
         title: "المصروفات",
-        href: "/expenses",
+        href: "main/expenses",
         icon: IconCash,
       },
       {
         title: "الخزنة",
-        href: "/treasury",
+        href: "main/treasury",
         icon: IconBuildingBank,
       },
       {
         title: "التقارير",
-        href: "/reports",
+        href: "main/reports",
         icon: IconChartBar,
       },
     ],
@@ -88,17 +88,17 @@ export const NAVIGATION: NavGroup[] = [
     items: [
       {
         title: "المستخدمين",
-        href: "/users",
+        href: "main/users",
         icon: IconUserShield,
       },
       {
         title: "سجل العمليات",
-        href: "/audit-log",
+        href: "main/audit-log",
         icon: IconHistory,
       },
       {
         title: "الإعدادات",
-        href: "/settings",
+        href: "main/settings",
         icon: IconSettings,
       },
     ],

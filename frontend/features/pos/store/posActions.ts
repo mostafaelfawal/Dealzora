@@ -190,7 +190,7 @@ export const requestReturn = (): AppThunk => (dispatch, getState) => {
     toast.error("أنهِ الاستبدال الحالي أو ألغِه أولاً");
     return;
   }
-  dispatch(posUiActions.openDialog("returnPicker"))
+  dispatch(posUiActions.openDialog("returnPicker"));
 };
 
 export const recallHeldInvoice =
