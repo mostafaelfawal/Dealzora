@@ -8,6 +8,8 @@ import { useState } from "react";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
+import { extractErrorMessage } from "@/lib/errors";
+import { cn } from "@/lib/utils";
 
 import { PRODUCT_ROUTES } from "../config/productRoutes";
 import { PRODUCTS_SHORTCUTS } from "../config/productShortcuts";
@@ -16,6 +18,7 @@ import { useProductsView } from "../hooks/useProductsView";
 import { ImportExcelDialog } from "./importExcelDialog";
 import { ProductCard } from "./productCard";
 import { ProductsEmpty } from "./productsEmpty";
+import { ProductsPagination } from "./productsPagination";
 import { ProductsStats } from "./productsStats";
 import { ProductsTable } from "./productsTable";
 import { ProductsToolbar } from "./productsToolbar";
@@ -62,6 +65,59 @@ export function ProductsScreen() {
     onDuplicate: list.duplicate,
     onRemove: list.remove,
   };
+
+  function renderBody() {
+    if (list.isPending) {
+      return (
+        <p className="border border-dashed py-16 text-center text-sm text-muted-foreground">
+          جارٍ تحميل الأصناف…
+        </p>
+      );
+    }
+
+    if (list.isError) {
+      return (
+        <div className="flex flex-col items-center gap-3 border border-dashed py-16 text-center">
+          <p role="alert" className="text-sm text-destructive">
+            {extractErrorMessage(list.error, "تعذّر تحميل الأصناف")}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => list.refetch()}
+          >
+            إعادة المحاولة
+          </Button>
+        </div>
+      );
+    }
+
+    if (list.products.length === 0) {
+      return (
+        <ProductsEmpty
+          hasProducts={list.summary.total > 0}
+          onClearFilters={list.clearFilters}
+          onImport={() => setImportOpen(true)}
+        />
+      );
+    }
+
+    return view === "cards" ? (
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {list.products.map((product, index) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            index={index}
+            {...actions}
+          />
+        ))}
+      </div>
+    ) : (
+      <ProductsTable products={list.products} {...actions} />
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
@@ -116,11 +172,11 @@ export function ProductsScreen() {
       <p aria-live="polite" className="text-xs text-muted-foreground">
         عرض{" "}
         <bdi dir="ltr" className="font-mono">
-          {list.visible.length}
+          {list.products.length}
         </bdi>{" "}
         من{" "}
         <bdi dir="ltr" className="font-mono">
-          {list.products.length}
+          {list.total}
         </bdi>{" "}
         صنف
         {list.filtered && (
@@ -136,28 +192,23 @@ export function ProductsScreen() {
         )}
       </p>
 
-      {list.visible.length === 0 ? (
-        <ProductsEmpty
-          hasProducts={list.products.length > 0}
-          onClearFilters={list.clearFilters}
-          onImport={() => setImportOpen(true)}
-        />
-      ) : view === "cards" ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {list.visible.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              index={index}
-              {...actions}
-            />
-          ))}
-        </div>
-      ) : (
-        <ProductsTable
-          key={`${list.filters.query}|${list.filters.category}|${list.filters.stock}|${list.filters.sort}`}
-          products={list.visible}
-          {...actions}
+      <div
+        aria-busy={list.isFetching}
+        className={cn(
+          "transition-opacity",
+          list.isFetching && !list.isPending && "opacity-60",
+        )}
+      >
+        {renderBody()}
+      </div>
+
+      {list.total > 0 && (
+        <ProductsPagination
+          total={list.total}
+          page={list.filters.page}
+          pageSize={list.filters.pageSize}
+          onPageChange={(page) => list.patchFilters({ page })}
+          onPageSizeChange={(pageSize) => list.patchFilters({ pageSize })}
         />
       )}
 

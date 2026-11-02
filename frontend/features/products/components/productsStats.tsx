@@ -11,8 +11,7 @@ import type { ReactNode } from "react";
 import { Money } from "@/components/shared/Money";
 import { cn } from "@/lib/utils";
 
-import type { ProductsSummary } from "../lib/productList";
-import type { StockFilter } from "../types/product";
+import type { ProductsSummary, StockFilter } from "../types/product";
 
 interface StatProps {
   icon: ReactNode;
@@ -90,7 +89,11 @@ export function ProductsStats({
         </bdi>
       </Stat>
       <Stat icon={<IconBuildingWarehouse />} label="قيمة المخزون (بسعر الشراء)">
-        <Money amount={summary.stockValue} className="text-lg" />
+        {summary.stockValue === null ? (
+          "—"
+        ) : (
+          <Money amount={summary.stockValue} className="text-lg" />
+        )}
       </Stat>
       <Stat
         icon={<IconAlertTriangle />}

@@ -1,125 +1,190 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { newLocalId } from "../lib/productCalc";
-import {
-  applyFilters,
-  DEFAULT_FILTERS,
-  isFiltered,
-  summarize,
-} from "../lib/productList";
-import { PRODUCTS } from "../mocks/productsData";
-import type { Product, ProductFilters } from "../types/product";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { extractErrorMessage } from "@/lib/errors";
 
-/**
- * حالة صفحة المنتجات: القائمة والفلاتر والإجراءات السريعة.
- * TODO: استبدل PRODUCTS بقراءة من IndexedDB، وكل إجراء يكتب في الـ outbox.
- * الحذف هنا soft delete مع تراجع، وده نفس سلوك الـ backend (deleted_at).
- */
+import {
+  deleteProduct,
+  duplicateProduct,
+  toggleProductActive,
+} from "../api/products.api";
+import { productKeys } from "../config/productQueryKeys";
+import {
+  DEFAULT_FILTERS,
+  EMPTY_SUMMARY,
+  isFiltered,
+  toListParams,
+} from "../lib/productList";
+import type { Product, ProductFilters } from "../types/product";
+import useGetProducts from "./useGetProducts";
+import useGetProductsSummary from "./useGetProductsSummary";
+
+interface ToggleVars {
+  id: string;
+  version: number;
+  /** true = هذا تراجع، فلا نعرض زر تراجع آخر. */
+  isUndo?: boolean;
+}
+
+/** حالة صفحة المنتجات: الفلاتر + القراءة من الـ API + الإجراءات السريعة. */
 export function useProductsList() {
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ProductFilters>(DEFAULT_FILTERS);
 
-  const visible = useMemo(
-    () => applyFilters(products, filters),
-    [products, filters],
+  // البحث يُرسل للسيرفر بعد توقف الكتابة.
+  const debouncedQuery = useDebouncedValue(filters.query, 300);
+  const params = useMemo(
+    () => toListParams({ ...filters, query: debouncedQuery }),
+    [filters, debouncedQuery],
   );
-  const summary = useMemo(() => summarize(products), [products]);
 
+  const productsQuery = useGetProducts(params);
+  const summaryQuery = useGetProductsSummary();
+
+  const products = useMemo(
+    () => productsQuery.data?.items ?? [],
+    [productsQuery.data],
+  );
+  const total = productsQuery.data?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / filters.pageSize));
+
+  // لو الصفحة الحالية اختفت (بعد حذف آخر صنف فيها مثلاً) نرجع لآخر صفحة.
+  useEffect(() => {
+    if (
+      productsQuery.data &&
+      !productsQuery.isPlaceholderData &&
+      filters.page > pageCount
+    ) {
+      setFilters((current) => ({ ...current, page: pageCount }));
+    }
+  }, [
+    productsQuery.data,
+    productsQuery.isPlaceholderData,
+    filters.page,
+    pageCount,
+  ]);
+
+  /** أي تغيير في الفلتر أو الترتيب أو حجم الصفحة يرجّعنا للصفحة الأولى. */
   const patchFilters = useCallback(
     (partial: Partial<ProductFilters>) =>
-      setFilters((current) => ({ ...current, ...partial })),
+      setFilters((current) => ({
+        ...current,
+        ...partial,
+        page: partial.page ?? 1,
+      })),
     [],
   );
 
   const clearFilters = useCallback(
-    () => setFilters((current) => ({ ...DEFAULT_FILTERS, sort: current.sort })),
+    () =>
+      setFilters((current) => ({
+        ...DEFAULT_FILTERS,
+        sort: current.sort,
+        pageSize: current.pageSize,
+      })),
     [],
   );
 
-  const toggleActive = useCallback(
-    (id: string) => {
-      const target = products.find((p) => p.id === id);
-      if (!target) return;
-      const was = target.isActive;
-      const setActive = (isActive: boolean) =>
-        setProducts((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, isActive } : p)),
-        );
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: productKeys.all });
 
-      setActive(!was);
-      toast(was ? `عُطّل «${target.name}»` : `فُعّل «${target.name}»`, {
-        description: was ? "لن يظهر في الكاشير" : "أصبح متاحاً في الكاشير",
-        action: { label: "تراجع", onClick: () => setActive(was) },
-        duration: 4000,
-      });
-    },
-    [products],
-  );
-
-  const remove = useCallback(
-    (id: string) => {
-      const index = products.findIndex((p) => p.id === id);
-      if (index < 0) return;
-      const target = products[index];
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-      toast(`حُذف «${target.name}»`, {
-        action: {
-          label: "تراجع",
-          onClick: () =>
-            setProducts((prev) => {
-              const next = [...prev];
-              next.splice(Math.min(index, next.length), 0, target);
-              return next;
-            }),
+  /* ---------- الإجراءات ---------- */
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, version }: ToggleVars) =>
+      toggleProductActive(id, version),
+    onSuccess: (updated, vars) => {
+      if (vars.isUndo) {
+        toast.success("تم التراجع");
+        return;
+      }
+      toast(
+        updated.isActive
+          ? `فُعّل «${updated.name}»`
+          : `عُطّل «${updated.name}»`,
+        {
+          description: updated.isActive
+            ? "أصبح متاحاً في الكاشير"
+            : "لن يظهر في الكاشير",
+          action: {
+            label: "تراجع",
+            onClick: () =>
+              toggleMutation.mutate({
+                id: updated.id,
+                version: updated.version,
+                isUndo: true,
+              }),
+          },
+          duration: 4000,
         },
-        duration: 6000,
-      });
+      );
     },
-    [products],
-  );
+    onError: (error) => toast.error(extractErrorMessage(error)),
+    onSettled: refresh,
+  });
 
-  const duplicate = useCallback(
-    (id: string) => {
-      const index = products.findIndex((p) => p.id === id);
-      if (index < 0) return;
-      const source = products[index];
-      const copy: Product = {
-        ...source,
-        id: newLocalId(),
-        name: `${source.name} (نسخة)`,
-        barcode: "",
-        stock: 0,
-        extraUnits: source.extraUnits.map((u) => ({
-          ...u,
-          id: newLocalId(),
-          barcode: "",
-        })),
-      };
-      setProducts((prev) => {
-        const next = [...prev];
-        next.splice(index + 1, 0, copy);
-        return next;
-      });
-      toast.success(`تم تكرار «${source.name}»`, {
+  const duplicateMutation = useMutation({
+    mutationFn: ({ id }: { id: string; name: string }) => duplicateProduct(id),
+    onSuccess: (_copy, vars) =>
+      toast.success(`تم تكرار «${vars.name}»`, {
         description: "النسخة بدون باركود وبرصيد صفر، عدّلها كما تريد.",
-      });
-    },
-    [products],
-  );
+      }),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+    onSettled: refresh,
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: ({
+      id,
+      version,
+    }: {
+      id: string;
+      version: number;
+      name: string;
+    }) => deleteProduct(id, version),
+    onSuccess: (_data, vars) => toast.success(`حُذف «${vars.name}»`),
+    onError: (error) => toast.error(extractErrorMessage(error)),
+    onSettled: refresh,
+  });
+
+  const find = (id: string): Product | undefined =>
+    products.find((p) => p.id === id);
+
+  const toggleActive = (id: string) => {
+    const target = find(id);
+    if (target) toggleMutation.mutate({ id, version: target.version });
+  };
+
+  const duplicate = (id: string) => {
+    const target = find(id);
+    if (target) duplicateMutation.mutate({ id, name: target.name });
+  };
+
+  const remove = (id: string) => {
+    const target = find(id);
+    if (target)
+      removeMutation.mutate({ id, version: target.version, name: target.name });
+  };
 
   return {
     products,
-    visible,
-    summary,
+    total,
+    pageCount,
+    summary: summaryQuery.data ?? EMPTY_SUMMARY,
     filters,
     filtered: isFiltered(filters),
+    isPending: productsQuery.isPending,
+    isFetching: productsQuery.isFetching,
+    isError: productsQuery.isError,
+    error: productsQuery.error,
+    refetch: productsQuery.refetch,
     patchFilters,
     clearFilters,
     toggleActive,
-    remove,
     duplicate,
+    remove,
   };
 }

@@ -25,6 +25,7 @@ class SortKey(StrEnum):
     PRICE_DESC = "price_desc"
     STOCK_ASC = "stock_asc"
     STOCK_DESC = "stock_desc"
+    MARGIN_DESC = "margin_desc"
 
 
 class MovementType(StrEnum):

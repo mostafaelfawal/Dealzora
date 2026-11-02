@@ -1,4 +1,3 @@
-import { PRODUCTS } from "../mocks/productsData";
 import type { Product, ProductFormValues } from "../types/product";
 import { parseNumber } from "./productCalc";
 
@@ -46,7 +45,7 @@ export function toFormValues(product?: Product): ProductFormValues {
     category: product.category,
     unit: product.unit,
     allowDecimal: product.allowDecimal,
-    costPrice: String(product.costPrice),
+    costPrice: product.costPrice === null ? "" : String(product.costPrice),
     salePrice: String(product.salePrice),
     minStock: String(product.minStock),
     openingStock: "",
@@ -56,7 +55,7 @@ export function toFormValues(product?: Product): ProductFormValues {
       name: u.name,
       factor: String(u.factor),
       barcode: u.barcode,
-      salePrice: String(u.salePrice),
+      salePrice: u.salePrice === null ? "" : String(u.salePrice),
     })),
   };
 }
@@ -65,23 +64,11 @@ export function toFormValues(product?: Product): ProductFormValues {
 const isInvalidOptional = (text: string) =>
   text.trim() !== "" && !(parseNumber(text) >= 0);
 
-export function validateProduct(
-  values: ProductFormValues,
-  editingId?: string,
-): FormErrors {
+export function validateProduct(values: ProductFormValues): FormErrors {
   const errors: FormErrors = {};
 
   if (values.name.trim().length < 2)
     errors.name = "اكتب اسم الصنف (حرفين على الأقل).";
-
-  const barcode = values.barcode.trim();
-  if (barcode) {
-    // TODO: التحقق من التكرار يتم على قاعدة البيانات المحلية (unique على tenant + barcode).
-    const clash = PRODUCTS.find(
-      (p) => p.barcode === barcode && p.id !== editingId,
-    );
-    if (clash) errors.barcode = `هذا الباركود مستخدم في «${clash.name}».`;
-  }
 
   if (isInvalidOptional(values.costPrice))
     errors.costPrice = "سعر الشراء يجب أن يكون رقماً صحيحاً.";

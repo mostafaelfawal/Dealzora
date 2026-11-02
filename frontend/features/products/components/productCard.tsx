@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 
 import { PRODUCT_ROUTES } from "../config/productRoutes";
 import { stockRatio } from "../lib/productCalc";
-import { getCategoryLabel } from "../lib/productList";
 import type { Product } from "../types/product";
 import { ProductActionsMenu, type ProductActions } from "./productActionsMenu";
 import { ProductMarginBadge } from "./productMarginBadge";
@@ -83,7 +82,7 @@ export function ProductCard({ product, index, ...actions }: ProductCardProps) {
           </Badge>
         )}
         <Badge variant="outline" className="font-normal text-muted-foreground">
-          {getCategoryLabel(product.category)}
+          {product.categoryName ?? "بدون قسم"}
         </Badge>
         {product.allowDecimal && (
           <Badge
@@ -120,14 +119,21 @@ export function ProductCard({ product, index, ...actions }: ProductCardProps) {
               / {product.unit}
             </span>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            شراء{" "}
-            <bdi dir="ltr" className="font-mono">
-              {product.costPrice}
-            </bdi>
-          </p>
+          {product.costPrice !== null && (
+            <p className="text-[11px] text-muted-foreground">
+              شراء{" "}
+              <bdi dir="ltr" className="font-mono">
+                {product.costPrice}
+              </bdi>
+            </p>
+          )}
         </div>
-        <ProductMarginBadge cost={product.costPrice} sale={product.salePrice} />
+        {product.costPrice !== null && (
+          <ProductMarginBadge
+            cost={product.costPrice}
+            sale={product.salePrice}
+          />
+        )}
       </div>
 
       <div className="space-y-1.5">

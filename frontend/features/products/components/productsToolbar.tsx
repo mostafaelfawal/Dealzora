@@ -25,9 +25,9 @@ import {
 
 import { SORT_OPTIONS } from "../config/productOptions";
 import { PRODUCTS_SHORTCUTS } from "../config/productShortcuts";
-import { PRODUCT_CATEGORIES } from "../mocks/productsData";
 import type { ProductFilters, ProductsView, SortKey } from "../types/product";
 import { PRODUCTS_SEARCH_ID } from "./productsScreen";
+import useGetCategories from "../hooks/useGetCategories";
 
 interface ProductsToolbarProps {
   filters: ProductFilters;
@@ -42,7 +42,8 @@ export function ProductsToolbar({
   view,
   onViewChange,
 }: ProductsToolbarProps) {
-  const categories = [{ id: "all", label: "الكل" }, ...PRODUCT_CATEGORIES];
+  const { data: categoryList = [] } = useGetCategories();
+  const categories = [{ id: "all", label: "الكل" }, ...categoryList];
 
   return (
     <div className="space-y-2">

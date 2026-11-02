@@ -10,6 +10,7 @@ from .types import ProductFilters, ProductsSummary, SortKey, StockFilter
 
 _OUT = Product.stock_qty <= 0
 _LOW = and_(Product.stock_qty > 0, Product.min_stock > 0, Product.stock_qty <= Product.min_stock)
+_MARGIN = (Product.sale_price - Product.cost_price) * 1.0 / func.nullif(Product.sale_price, 0)
 
 _ORDER = {
     SortKey.NAME_ASC: (Product.name.asc(),),
@@ -18,6 +19,7 @@ _ORDER = {
     SortKey.PRICE_DESC: (Product.sale_price.desc(), Product.name.asc()),
     SortKey.STOCK_ASC: (Product.stock_qty.asc(), Product.name.asc()),
     SortKey.STOCK_DESC: (Product.stock_qty.desc(), Product.name.asc()),
+    SortKey.MARGIN_DESC: (_MARGIN.desc(), Product.name.asc()),
 }
 
 

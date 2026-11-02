@@ -1,11 +1,10 @@
-/** وحدة بيع إضافية للصنف (كرتونة، دستة...). المخزون يُحسب دائماً بالوحدة الأساسية. */
 export interface ProductUnit {
   id: string;
   name: string;
-  /** كم وحدة أساسية داخل هذه الوحدة (كرتونة = 12 قطعة). */
   factor: number;
   barcode: string;
-  salePrice: number;
+  /** null = يُحسب من سعر الوحدة الأساسية. */
+  salePrice: number | null;
 }
 
 export interface Product {
@@ -14,21 +13,62 @@ export interface Product {
   barcode: string;
   /** id القسم، وفارغ = بدون قسم. */
   category: string;
-  /** الوحدة الأساسية (قطعة، كجم...). */
+  categoryName: string | null;
   unit: string;
-  /** true للأصناف اللي بتتباع بكسور (وزن/طول). */
   allowDecimal: boolean;
-  costPrice: number;
+  /** null = المستخدم لا يملك صلاحية رؤية سعر الشراء (الكاشير). */
+  costPrice: number | null;
   salePrice: number;
+  marginPercent: number | null;
   stock: number;
   minStock: number;
   isActive: boolean;
+  /** نسخة السجل للتحكم في التعارض (base_version). */
+  version: number;
   extraUnits: ProductUnit[];
 }
 
 export type StockFilter = "all" | "low" | "out";
-export type SortKey = "name" | "price" | "stock" | "margin";
+/** نفس قيم الـ backend بالضبط. */
+export type SortKey =
+  | "name_asc"
+  | "newest"
+  | "price_asc"
+  | "price_desc"
+  | "stock_asc"
+  | "stock_desc"
+  | "margin_desc";
 export type ProductsView = "cards" | "table";
+
+export interface ProductFilters {
+  query: string;
+  /** "all" أو id القسم. */
+  category: string;
+  stock: StockFilter;
+  sort: SortKey;
+  page: number;
+  pageSize: number;
+}
+
+export interface ProductCategory {
+  id: string;
+  label: string;
+}
+
+export interface ProductsPage {
+  items: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface ProductsSummary {
+  total: number;
+  low: number;
+  out: number;
+  /** بالجنيه بسعر الشراء، وnull للكاشير. */
+  stockValue: number | null;
+}
 
 export interface ProductFilters {
   query: string;
@@ -61,3 +101,4 @@ export interface ProductFormValues {
   isActive: boolean;
   extraUnits: UnitFormRow[];
 }
+

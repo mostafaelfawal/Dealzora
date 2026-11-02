@@ -8,7 +8,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
@@ -51,16 +51,11 @@ import {
   type FormErrors,
   type FormField,
 } from "../lib/productForm";
-import { PRODUCT_CATEGORIES } from "../mocks/productsData";
 import type { Product, ProductFormValues, UnitFormRow } from "../types/product";
 import { ProductMarginBadge } from "./productMarginBadge";
+import useGetCategories from "../hooks/useGetCategories";
 
 const NO_CATEGORY = "none";
-
-const CATEGORY_ITEMS = [
-  { value: NO_CATEGORY, label: "بدون قسم" },
-  ...PRODUCT_CATEGORIES.map((c) => ({ value: c.id, label: c.label })),
-];
 
 const UNIT_ITEMS = BASE_UNITS.map((u) => ({ value: u, label: u }));
 
@@ -100,6 +95,15 @@ interface ProductFormProps {
 export function ProductForm({ product }: ProductFormProps) {
   const router = useRouter();
   const isEditing = Boolean(product);
+
+  const { data: categories = [] } = useGetCategories();
+  const categoryItems = useMemo(
+    () => [
+      { value: NO_CATEGORY, label: "بدون قسم" },
+      ...categories.map((c) => ({ value: c.id, label: c.label })),
+    ],
+    [categories],
+  );
 
   const [values, setValues] = useState<ProductFormValues>(() =>
     toFormValues(product),
@@ -176,7 +180,7 @@ export function ProductForm({ product }: ProductFormProps) {
   function submit(andNew: boolean) {
     if (saving) return;
 
-    const found = validateProduct(values, product?.id);
+    const found = validateProduct(values);
     setErrors(found);
 
     const firstError = FIELD_ORDER.find((field) => found[field]);
@@ -287,7 +291,7 @@ export function ProductForm({ product }: ProductFormProps) {
           <div className="space-y-1.5">
             <Label htmlFor="pf-category">القسم</Label>
             <Select
-              items={CATEGORY_ITEMS}
+              items={categoryItems}
               value={values.category || NO_CATEGORY}
               onValueChange={(next) => {
                 if (next) patch({ category: next === NO_CATEGORY ? "" : next });
@@ -297,7 +301,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 <SelectValue className="text-start" />
               </SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>
-                {CATEGORY_ITEMS.map((item) => (
+                {categoryItems.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>

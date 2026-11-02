@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit
 from app.core.base import uuid7
-from app.core.errors import AppError, ConflictError, NotFoundError, BadRequestError
+from app.core.errors import AppError, ConflictError, NotFoundError, BadRequestError, ForbiddenError
 from app.core.outbox import OutboxOp, enqueue_outbox
 from app.core.security import Actor, Role
+from .types import SortKey
 
 from .constants import (
     COPY_SUFFIX,
@@ -46,7 +47,7 @@ from .schema import (
     UnitIn,
     UnitOut,
 )
-from .types import MovementType, ProductFilters
+from .types import MovementType, ProductFilters, SortKey
 
 
 def _err(exc: type[AppError], code: ProductError, **details) -> AppError:
@@ -65,6 +66,9 @@ class ProductService:
 
     # ================= قراءة =================
     def list_products(self, query: ProductListQuery) -> ProductListOut:
+        if query.sort is SortKey.MARGIN_DESC and not self.is_admin:
+            raise ForbiddenError('forbidden', "الترتيب بهامش الربح للمدير فقط")
+
         filters = ProductFilters(
             query=query.q,
             category_id=query.category_id,
