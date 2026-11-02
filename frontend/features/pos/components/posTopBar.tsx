@@ -16,17 +16,17 @@ import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { POS_SHORTCUTS } from "../config/posShortcuts";
 import { useShellData } from "@/hooks/useShellData";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { POS_SHORTCUTS } from "../config/posShortcuts";
+import { posUiActions } from "../store/posUiSlice";
+import { selectHeld } from "../store/selectors";
+import { BRAND } from "@/config/brand";
 
-interface PosTopBarProps {
-  heldCount: number;
-  onHeld: () => void;
-  onShortcuts: () => void;
-}
-
-export function PosTopBar({ heldCount, onHeld, onShortcuts }: PosTopBarProps) {
+export function PosTopBar() {
+  const dispatch = useAppDispatch();
   const { shift, sync } = useShellData();
+  const heldCount = useAppSelector(selectHeld).length;
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-1 border-b px-2 sm:gap-2 sm:px-3">
@@ -41,9 +41,9 @@ export function PosTopBar({ heldCount, onHeld, onShortcuts }: PosTopBarProps) {
           <IconArrowRight className="size-5" />
         </Button>
       </AppTooltip>
-
+      <h1 className="text-lg font-bold">{BRAND.name}</h1>
       <BrandLogo variant="icon" />
-      <h1 className="hidden text-sm font-semibold sm:block">الكاشير</h1>
+      <h2 className="hidden text-sm font-semibold sm:block">الكاشير</h2>
 
       <Separator
         orientation="vertical"
@@ -58,7 +58,7 @@ export function PosTopBar({ heldCount, onHeld, onShortcuts }: PosTopBarProps) {
           type="button"
           variant="outline"
           size="lg"
-          onClick={onHeld}
+          onClick={() => dispatch(posUiActions.openDialog("held"))}
           aria-label={`الفواتير المعلّقة (${heldCount})`}
           className="gap-2 font-normal"
         >
@@ -76,7 +76,7 @@ export function PosTopBar({ heldCount, onHeld, onShortcuts }: PosTopBarProps) {
             variant="ghost"
             size="icon-lg"
             aria-label="الاختصارات"
-            onClick={onShortcuts}
+            onClick={() => dispatch(posUiActions.openDialog("shortcuts"))}
             className="hidden lg:inline-flex"
           >
             <IconKeyboard className="size-5" />

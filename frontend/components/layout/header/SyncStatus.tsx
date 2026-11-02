@@ -1,8 +1,18 @@
 "use client";
 
-import { AppTooltip } from "@/components/shared/AppTooltip";
+import {
+  IconCloudUpload,
+  IconDatabaseExport,
+  IconLoader2,
+} from "@tabler/icons-react";
+
 import { StatusDot, type StatusTone } from "@/components/shared/StatusDot";
 import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useNow } from "@/hooks/useNow";
 import { formatMinutesAgo } from "@/lib/format";
 import type { SyncState, SyncStatusType } from "@/types/shell";
@@ -20,28 +30,36 @@ const STATUS_CONFIG: Record<
   syncing: {
     tone: "warning",
     pulse: true,
-    description: "بيتم رفع التغييرات الأخيرة",
+    description: "يتم رفع التغييرات الأخيرة",
   },
   offline: {
     tone: "neutral",
     pulse: false,
-    description: "مفيش اتصال بالإنترنت. الشغل بيتحفظ على الجهاز ويترفع بعدين",
+    description: "لا انترنت. يتم حفظ البيانات محليا و رفعها بعد الأتصال",
   },
   error: {
     tone: "danger",
     pulse: false,
-    description: "فشل النسخ الاحتياطي. تأكد من الاتصال وحاول تاني",
+    description: "فشل النسخ الاحتياطي. تأكد من الاتصال وحاول مجددا",
   },
 };
 
 interface SyncStatusProps {
   sync: SyncState;
   showLabels?: boolean;
+  onBackup?: () => void;
 }
 
-export function SyncStatus({ sync, showLabels = false }: SyncStatusProps) {
+export function SyncStatus({
+  sync,
+  showLabels = false,
+  onBackup,
+}: SyncStatusProps) {
   const now = useNow(30_000);
   const { tone, pulse, description } = STATUS_CONFIG[sync.status];
+
+  const isSyncing = sync.status === "syncing";
+  const isOffline = sync.status === "offline";
 
   const label = (() => {
     switch (sync.status) {
@@ -58,16 +76,58 @@ export function SyncStatus({ sync, showLabels = false }: SyncStatusProps) {
     }
   })();
 
+  const lastBackupText =
+    sync.lastSyncedAt && now !== null
+      ? formatMinutesAgo(sync.lastSyncedAt, now)
+      : "لا توجد نسخة احتياطية بعد";
+
   return (
-    <AppTooltip message={description}>
-      <Button variant="ghost" size="lg" className="gap-2 px-2 font-normal">
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="lg"
+            className="gap-2 px-2 font-normal"
+          />
+        }
+      >
         <StatusDot tone={tone} pulse={pulse} />
         <span
           className={cn("text-sm", !showLabels && "sr-only 2xl:not-sr-only")}
         >
           {label}
         </span>
-      </Button>
-    </AppTooltip>
+        {!showLabels && (
+          <IconCloudUpload className="size-4 text-muted-foreground 2xl:hidden" />
+        )}
+      </PopoverTrigger>
+
+      <PopoverContent align="end" className="w-64">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">آخر نسخة احتياطية</p>
+          <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+            {lastBackupText}
+          </p>
+          {sync.status !== "synced" && (
+            <p className="pt-1 text-xs text-muted-foreground">{description}</p>
+          )}
+        </div>
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full"
+          disabled={isSyncing || isOffline}
+          onClick={onBackup}
+        >
+          {isSyncing ? (
+            <IconLoader2 className="size-4 animate-spin" />
+          ) : (
+            <IconDatabaseExport className="size-4" />
+          )}
+          {isSyncing ? "جارٍ النسخ الاحتياطي..." : "إنشاء نسخة احتياطية"}
+        </Button>
+      </PopoverContent>
+    </Popover>
   );
 }

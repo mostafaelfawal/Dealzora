@@ -3,40 +3,109 @@
 import { IconAlertTriangle, IconBarcode, IconX } from "@tabler/icons-react";
 import { useEffect } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
-import { formatQty, lineTotal } from "../lib/posCalc";
+import { formatQty } from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
+import { lineTotal } from "../lib/posCalc";
+import { cartActions } from "../store/cartSlice";
+import { removeLineWithUndo } from "../store/posActions";
+import { selectLines, selectSelectedId } from "../store/selectors";
 import type { CartLine } from "../types/pos";
 
 import { PosQtyField } from "./posQtyField";
-import { AppTooltip } from "@/components/shared/AppTooltip";
-
-interface PosCartTableProps {
-  lines: CartLine[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onSetQty: (id: string, qty: number) => void;
-  onStep: (id: string, direction: 1 | -1) => void;
-  onRemove: (id: string) => void;
-  onFocusSearch: () => void;
-}
 
 const th = "h-8 px-2 text-start text-xs font-normal text-muted-foreground";
+
+function CartRow({
+  line,
+  index,
+  selected,
+}: {
+  line: CartLine;
+  index: number;
+  selected: boolean;
+}) {
+  const dispatch = useAppDispatch();
+  const overStock = line.qty > line.stock;
+
+  return (
+    <tr
+      id={`pos-line-${line.productId}`}
+      aria-selected={selected}
+      onClick={() => dispatch(cartActions.selectLine(line.productId))}
+      className={cn(
+        "h-14 scroll-mt-8 cursor-pointer border-b lg:h-12",
+        selected && "bg-muted",
+      )}
+    >
+      <td className="hidden px-2 font-mono text-muted-foreground tabular-nums sm:table-cell">
+        {index + 1}
+      </td>
+      <td className="relative px-2">
+        {selected && (
+          <span
+            aria-hidden
+            className="absolute inset-y-0 inset-s-0 w-0.5 bg-primary"
+          />
+        )}
+        <span className="block truncate text-xs font-medium">{line.name}</span>
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="hidden font-mono sm:flex sm:gap-1">
+            <IconBarcode className="size-4" />
+            {line.barcode}
+          </span>
+          <span className="sm:hidden">
+            <Money amount={line.price} className="text-[11px]" /> / {line.unit}
+          </span>
+          {overStock && (
+            <span className="inline-flex items-center gap-1 text-warning">
+              <IconAlertTriangle className="size-3" />
+              أكثر من المتاح ({formatQty(line.stock)})
+            </span>
+          )}
+        </span>
+      </td>
+      <td className="hidden px-2 sm:table-cell">
+        <Money amount={line.price} className="text-xs" />
+      </td>
+      <td className="px-2">
+        <PosQtyField line={line} />
+      </td>
+      <td className="px-2">
+        <Money amount={lineTotal(line)} className="text-sm" />
+      </td>
+      <td className="pe-1">
+        <AppTooltip message={`حذف ${line.name}`}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`حذف ${line.name}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              dispatch(removeLineWithUndo(line.productId));
+            }}
+            className="size-9 lg:size-7"
+          >
+            <IconX />
+          </Button>
+        </AppTooltip>
+      </td>
+    </tr>
+  );
+}
 
 /**
  * جدول الفاتورة.
  * عمداً <table> عادي وليس shadcn Table: لأن حاوية Table تكسر الترويسة الثابتة (sticky header).
  */
-export function PosCartTable({
-  lines,
-  selectedId,
-  onSelect,
-  onSetQty,
-  onStep,
-  onRemove,
-  onFocusSearch,
-}: PosCartTableProps) {
+export function PosCartTable() {
+  const lines = useAppSelector(selectLines);
+  const selectedId = useAppSelector(selectSelectedId);
+
   useEffect(() => {
     if (!selectedId) return;
     document
@@ -47,7 +116,7 @@ export function PosCartTable({
   if (lines.length === 0) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-6 text-xs text-muted-foreground">
-        <IconBarcode className="size-8" />
+        <IconBarcode className="size-10" />
         <p className="text-sm font-medium text-foreground">الفاتورة فارغة</p>
         <p>امسح باركود أو اكتب اسم صنف، أو اضغط على بطاقة صنف.</p>
       </div>
@@ -80,83 +149,14 @@ export function PosCartTable({
           </tr>
         </thead>
         <tbody>
-          {lines.map((line, index) => {
-            const selected = line.productId === selectedId;
-            const overStock = line.qty > line.stock;
-            return (
-              <tr
-                key={line.productId}
-                id={`pos-line-${line.productId}`}
-                aria-selected={selected}
-                onClick={() => onSelect(line.productId)}
-                className={cn(
-                  "h-14 scroll-mt-8 cursor-pointer border-b lg:h-12",
-                  selected && "bg-muted",
-                )}
-              >
-                <td className="hidden px-2 font-mono text-muted-foreground tabular-nums sm:table-cell">
-                  {index + 1}
-                </td>
-                <td className="relative px-2">
-                  {selected && (
-                    <span
-                      aria-hidden
-                      className="absolute inset-y-0 inset-s-0 w-0.5 bg-primary"
-                    />
-                  )}
-                  <span className="block truncate text-xs font-medium">
-                    {line.name}
-                  </span>
-                  <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <span dir="ltr" className="hidden font-mono sm:inline">
-                      {line.barcode}
-                    </span>
-                    <span className="sm:hidden">
-                      <Money amount={line.price} className="text-[11px]" /> /{" "}
-                      {line.unit}
-                    </span>
-                    {overStock && (
-                      <span className="inline-flex items-center gap-1 text-warning">
-                        <IconAlertTriangle className="size-3" />
-                        أكثر من المتاح ({formatQty(line.stock)})
-                      </span>
-                    )}
-                  </span>
-                </td>
-                <td className="hidden px-2 sm:table-cell">
-                  <Money amount={line.price} className="text-xs" />
-                </td>
-                <td className="px-2">
-                  <PosQtyField
-                    line={line}
-                    onCommit={(qty) => onSetQty(line.productId, qty)}
-                    onStep={(direction) => onStep(line.productId, direction)}
-                    onDone={onFocusSearch}
-                  />
-                </td>
-                <td className="px-2">
-                  <Money amount={lineTotal(line)} className="text-sm" />
-                </td>
-                <td className="pe-1">
-                  <AppTooltip message={`حذف ${line.name}`} side="right">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={`حذف ${line.name}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onRemove(line.productId);
-                      }}
-                      className="size-9 lg:size-7"
-                    >
-                      <IconX />
-                    </Button>
-                  </AppTooltip>
-                </td>
-              </tr>
-            );
-          })}
+          {lines.map((line, index) => (
+            <CartRow
+              key={line.productId}
+              line={line}
+              index={index}
+              selected={line.productId === selectedId}
+            />
+          ))}
         </tbody>
       </table>
     </div>

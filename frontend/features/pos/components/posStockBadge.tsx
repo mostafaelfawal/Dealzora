@@ -1,7 +1,8 @@
 import { IconAlertTriangle, IconInfoCircle } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
-import { formatQty, getStockLevel } from "../lib/posCalc";
+import { formatQty } from "@/lib/format";
+import { getStockLevel } from "../lib/posCalc";
 import type { PosProduct } from "../types/pos";
 
 /** تنبيه المخزون: يظهر فقط عندما يكون الصنف قليلاً أو نافداً (نص + أيقونة، وليس لوناً وحده). */

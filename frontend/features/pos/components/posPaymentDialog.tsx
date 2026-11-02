@@ -1,6 +1,6 @@
 "use client";
 
-import { IconAlertTriangle } from "@tabler/icons-react";
+import { IconAlertTriangle, IconPrinter } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, RefObject } from "react";
 
@@ -22,14 +22,14 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { Separator } from "@/components/ui/separator";
-import {
-  formatMoneyText,
-  normalizeDigits,
-  round2,
-  suggestCashAmounts,
-} from "../lib/posCalc";
+import { formatMoneyText, normalizeDigits } from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
-import type { PaymentMethod, PaymentResult, PosCustomer } from "../types/pos";
+import { round2, suggestCashAmounts } from "../lib/posCalc";
+import { confirmPayment } from "../store/posActions";
+import { posUiActions } from "../store/posUiSlice";
+import { selectInvoiceCustomer, selectTotals } from "../store/selectors";
+import type { PaymentMethod } from "../types/pos";
 
 const METHODS: { id: PaymentMethod; label: string; key: string }[] = [
   { id: "cash", label: "كاش", key: "F1" },
@@ -40,26 +40,16 @@ const METHODS: { id: PaymentMethod; label: string; key: string }[] = [
 const initialCashText = (method: PaymentMethod, total: number) =>
   method === "cash" ? String(total) : "";
 
-interface PosPaymentDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  total: number;
-  customer: PosCustomer | null;
-  initialMethod: PaymentMethod;
-  onPickCustomer: (method: PaymentMethod) => void;
-  onConfirm: (result: PaymentResult) => void;
-}
-
 /** الدفع: فتح (F9) ثم Enter. الكاش معبّأ بالإجمالي، فإذا لم يكن هناك باقٍ فالعملية خطوتان فقط. */
-export function PosPaymentDialog({
-  open,
-  onOpenChange,
-  ...formProps
-}: PosPaymentDialogProps) {
+export function PosPaymentDialog() {
+  const dispatch = useAppDispatch();
+  const open = useAppSelector((s) => s.posUi.dialog === "payment");
   const cashInputRef = useRef<HTMLInputElement>(null);
 
+  const close = () => dispatch(posUiActions.closeDialog());
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => !next && close()}>
       <DialogContent
         showCloseButton={false}
         initialFocus={cashInputRef}
@@ -71,33 +61,25 @@ export function PosPaymentDialog({
             راجع المبلغ ثم اضغط Enter للتأكيد.
           </DialogDescription>
         </DialogHeader>
-        <PaymentForm
-          {...formProps}
-          cashInputRef={cashInputRef}
-          onCancel={() => onOpenChange(false)}
-        />
+        <PaymentForm cashInputRef={cashInputRef} onCancel={close} />
       </DialogContent>
     </Dialog>
   );
 }
 
-interface PaymentFormProps extends Omit<
-  PosPaymentDialogProps,
-  "open" | "onOpenChange"
-> {
+interface PaymentFormProps {
   cashInputRef: RefObject<HTMLInputElement | null>;
   onCancel: () => void;
 }
 
-function PaymentForm({
-  total,
-  customer,
-  initialMethod,
-  onPickCustomer,
-  onConfirm,
-  onCancel,
-  cashInputRef,
-}: PaymentFormProps) {
+function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
+  const dispatch = useAppDispatch();
+  const { total } = useAppSelector(selectTotals);
+  const customer = useAppSelector(selectInvoiceCustomer);
+  // الطريقة اللي اتفتحت بيها النافذة (أو اللي رجعنا بيها من اختيار العميل).
+  const initialMethod = useAppSelector((s) => s.posUi.paymentMethod);
+
+  // حالة الفورم (الطريقة الحالية والمبلغ المكتوب) محلية عمداً.
   const [method, setMethod] = useState<PaymentMethod>(initialMethod);
   const [cashText, setCashText] = useState(() =>
     initialCashText(initialMethod, total),
@@ -151,16 +133,22 @@ function PaymentForm({
         : `المبلغ الآجل ${formatMoneyText(credit)} أكبر من المتاح للعميل (${formatMoneyText(available)}).`;
   }
 
+  function pickCustomer() {
+    dispatch(posUiActions.pickCustomerFromPayment(method));
+  }
+
   function confirm() {
     if (error) return;
-    onConfirm({
-      method,
-      received: method === "cash" ? cash : applied,
-      cash: applied,
-      credit,
-      change,
-      print,
-    });
+    dispatch(
+      confirmPayment({
+        method,
+        received: method === "cash" ? cash : applied,
+        cash: applied,
+        credit,
+        change,
+        print,
+      }),
+    );
   }
 
   function handleSubmit(event: FormEvent) {
@@ -175,7 +163,7 @@ function PaymentForm({
       changeMethod(next.id);
     } else if (event.key === "F6") {
       event.preventDefault();
-      onPickCustomer(method);
+      pickCustomer();
     }
   }
 
@@ -239,9 +227,10 @@ function PaymentForm({
               aria-invalid={
                 method === "cash" && cash < total ? true : undefined
               }
+              maxLength={12}
               className="h-full text-center font-mono text-xl tabular-nums md:text-xl"
             />
-            <InputGroupAddon align="inline-end">
+            <InputGroupAddon align="inline-end" className="ml-2">
               <InputGroupText>ج.م</InputGroupText>
             </InputGroupAddon>
           </InputGroup>
@@ -306,7 +295,7 @@ function PaymentForm({
             </div>
             {customer && (
               <div className="flex items-center justify-between text-muted-foreground">
-                <dt>عليه حالياً · المتاح</dt>
+                <dt>دينه الحالي · المتاح</dt>
                 <dd className="flex items-center gap-2">
                   <Money amount={customer.balance} />
                   <span aria-hidden>·</span>
@@ -330,7 +319,7 @@ function PaymentForm({
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => onPickCustomer(method)}
+              onClick={pickCustomer}
               className="gap-2 font-normal text-foreground"
             >
               اختيار عميل
@@ -346,6 +335,7 @@ function PaymentForm({
           onCheckedChange={(value) => setPrint(Boolean(value))}
         />
         طباعة الإيصال
+        <IconPrinter className="size-5" />
       </label>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -354,7 +344,7 @@ function PaymentForm({
           variant="outline"
           size="lg"
           onClick={onCancel}
-          className="gap-2 font-normal"
+          className="h-11 gap-2 font-normal"
         >
           رجوع
           <ShortcutBadge className="rounded-none">Esc</ShortcutBadge>

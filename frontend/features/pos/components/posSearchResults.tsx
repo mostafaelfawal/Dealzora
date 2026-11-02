@@ -3,29 +3,27 @@
 import { useEffect } from "react";
 
 import { Money } from "@/components/shared/Money";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
-import type { PosProduct } from "../types/pos";
+import { addToCart } from "../store/posActions";
+import { posUiActions } from "../store/posUiSlice";
+import {
+  selectEntry,
+  selectSafeIndex,
+  selectSearchResults,
+} from "../store/selectors";
 
 import { PosStockBadge } from "./posStockBadge";
 
 export const posOptionId = (productId: string) => `pos-option-${productId}`;
 
-interface PosSearchResultsProps {
-  term: string;
-  results: PosProduct[];
-  activeIndex: number;
-  onHover: (index: number) => void;
-  onAdd: (product: PosProduct) => void;
-}
-
 /** نتائج البحث كقائمة (listbox). التنقل بالأسهم من خانة البحث نفسها. */
-export function PosSearchResults({
-  term,
-  results,
-  activeIndex,
-  onHover,
-  onAdd,
-}: PosSearchResultsProps) {
+export function PosSearchResults() {
+  const dispatch = useAppDispatch();
+  const term = useAppSelector((s) => selectEntry(s).term);
+  const results = useAppSelector(selectSearchResults);
+  const activeIndex = useAppSelector(selectSafeIndex);
+
   const activeId = results[activeIndex]
     ? posOptionId(results[activeIndex].id)
     : null;
@@ -62,7 +60,9 @@ export function PosSearchResults({
             id={posOptionId(product.id)}
             role="option"
             aria-selected={active}
-            onMouseMove={() => !active && onHover(index)}
+            onMouseMove={() =>
+              !active && dispatch(posUiActions.setActiveIndex(index))
+            }
             className={cn(
               "relative border-b last:border-b-0",
               active && "bg-muted",
@@ -77,7 +77,7 @@ export function PosSearchResults({
             <button
               type="button"
               tabIndex={-1}
-              onClick={() => onAdd(product)}
+              onClick={() => dispatch(addToCart(product))}
               className="flex h-12 w-full items-center gap-3 px-3 text-start outline-none"
             >
               <span className="min-w-0 flex-1">

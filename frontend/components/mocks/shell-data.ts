@@ -8,7 +8,7 @@ export const shellMock: {
   sync: SyncState;
   subscription: Subscription;
 } = {
-  user: { name: "أحمد محمود", role: "manager" },
+  user: { name: "مصطفى حمدي", role: "manager" },
   shift: { cashierName: "أحمد", openedAt: "2026-11-01T09:30:00" },
   drawerBalance: 3250,
   sync: { status: "synced", lastSyncedAt: Date.now() - 3 * 60_000 },

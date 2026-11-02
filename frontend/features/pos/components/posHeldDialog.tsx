@@ -5,7 +5,6 @@ import {
   IconInfoCircle,
   IconPlayerPause,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
 
 import { Money } from "@/components/shared/Money";
 import { Badge } from "@/components/ui/badge";
@@ -17,10 +16,19 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { formatTime } from "@/lib/format";
+import { useNow } from "@/hooks/useNow";
+import {
+  formatItemCount,
+  formatQty,
+  formatTime,
+  formatTimeAgo,
+} from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
-import { calcTotals, formatQty } from "../lib/posCalc";
-import type { HeldInvoice } from "../types/pos";
+import { calcTotals } from "../lib/posCalc";
+import { recallHeldInvoice } from "../store/posActions";
+import { posUiActions } from "../store/posUiSlice";
+import { selectHeld, selectIsEmpty } from "../store/selectors";
 
 import {
   PosPickerFooter,
@@ -28,51 +36,11 @@ import {
   pickerItemClass,
 } from "./posPickerChrome";
 
-interface PosHeldDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  held: HeldInvoice[];
-  /** إذا كانت الفاتورة الحالية تحتوي أصنافاً، فستُعلَّق تلقائياً عند الاسترجاع. */
-  currentHasItems: boolean;
-  onRecall: (id: string) => void;
-}
-
-/** "منذ 5 دقائق" بقواعد الجمع العربية. */
-function timeAgo(from: number, now: number) {
-  const minutes = Math.max(Math.floor((now - from) / 60_000), 0);
-  if (minutes < 1) return "الآن";
-  if (minutes < 60) {
-    if (minutes === 1) return "منذ دقيقة";
-    if (minutes === 2) return "منذ دقيقتين";
-    return `منذ ${minutes} ${minutes <= 10 ? "دقائق" : "دقيقة"}`;
-  }
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    if (hours === 1) return "منذ ساعة";
-    if (hours === 2) return "منذ ساعتين";
-    return `منذ ${hours} ${hours <= 10 ? "ساعات" : "ساعة"}`;
-  }
-  return formatTime(new Date(from).toISOString());
-}
-
-/** وقت حالي يتجدد كل نصف دقيقة طالما القائمة مفتوحة (تُركَّب عند فتح النافذة فقط). */
-function useNow() {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
-  return now;
-}
-
-function HeldItems({
-  held,
-  onRecall,
-}: {
-  held: HeldInvoice[];
-  onRecall: (id: string) => void;
-}) {
-  const now = useNow();
+/** الصفوف تتركّب عند فتح النافذة فقط، فالوقت يتجدد كل نصف دقيقة طالما القائمة مفتوحة. */
+function HeldItems() {
+  const dispatch = useAppDispatch();
+  const held = useAppSelector(selectHeld);
+  const now = useNow(30_000);
 
   return (
     <>
@@ -91,7 +59,7 @@ function HeldItems({
           <CommandItem
             key={h.id}
             value={`${h.id} ${customerName} ${names}`}
-            onSelect={() => onRecall(h.id)}
+            onSelect={() => dispatch(recallHeldInvoice(h.id))}
             className={`${pickerItemClass} items-start`}
           >
             <span
@@ -130,15 +98,16 @@ function HeldItems({
 
               <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <span>
-                  {totals.itemCount} صنف · {formatQty(totals.qtyCount)} وحدة
+                  {formatItemCount(totals.itemCount)} ·{" "}
+                  {formatQty(totals.qtyCount)} وحدة
                 </span>
                 <span aria-hidden>·</span>
                 <span
                   className="flex items-center gap-1"
-                  title={formatTime(new Date(h.heldAt).toISOString())}
+                  title={formatTime(h.heldAt)}
                 >
                   <IconClock className="size-3" aria-hidden />
-                  {timeAgo(h.heldAt, now)}
+                  {now === null ? "" : formatTimeAgo(h.heldAt, now)}
                 </span>
               </span>
             </span>
@@ -156,19 +125,18 @@ function HeldItems({
   );
 }
 
-export function PosHeldDialog({
-  open,
-  onOpenChange,
-  held,
-  currentHasItems,
-  onRecall,
-}: PosHeldDialogProps) {
+export function PosHeldDialog() {
+  const dispatch = useAppDispatch();
+  const open = useAppSelector((s) => s.posUi.dialog === "held");
+  const held = useAppSelector(selectHeld);
+  /** إذا كانت الفاتورة الحالية تحتوي أصنافاً، فستُعلَّق تلقائياً عند الاسترجاع. */
+  const currentHasItems = !useAppSelector(selectIsEmpty);
   const hasHeld = held.length > 0;
 
   return (
     <CommandDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => !next && dispatch(posUiActions.closeDialog())}
       className="sm:max-w-xl"
       title="الفواتير المعلّقة"
       description={
@@ -219,7 +187,7 @@ export function PosHeldDialog({
 
         {hasHeld && (
           <CommandGroup>
-            <HeldItems held={held} onRecall={onRecall} />
+            <HeldItems />
           </CommandGroup>
         )}
       </CommandList>

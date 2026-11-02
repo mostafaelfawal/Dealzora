@@ -9,12 +9,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import {
   POS_PAYMENT_KEYS,
   POS_SEARCH_KEYS,
   POS_SHORTCUTS,
   type PosKeyHint,
 } from "../config/posShortcuts";
+import { posUiActions } from "../store/posUiSlice";
 
 const GLOBAL_KEYS: PosKeyHint[] = Object.values(POS_SHORTCUTS).map((s) => ({
   keys: s.label,
@@ -42,15 +44,15 @@ function Group({ title, items }: { title: string; items: PosKeyHint[] }) {
   );
 }
 
-export function PosShortcutsDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
+export function PosShortcutsDialog() {
+  const dispatch = useAppDispatch();
+  const open = useAppSelector((s) => s.posUi.dialog === "shortcuts");
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => !next && dispatch(posUiActions.closeDialog())}
+    >
       <DialogContent
         showCloseButton={false}
         className="max-h-[85dvh] gap-3 overflow-y-auto sm:max-w-lg"

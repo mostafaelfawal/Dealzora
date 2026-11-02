@@ -3,8 +3,8 @@
 import { ThemeProvider } from "next-themes";
 import { DirectionProvider } from "@base-ui/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import StoreProvider from "./StoreProvider";
 import ThemedToaster from "./ThemedToaster";
+import { StoreProvider } from "./StoreProvider";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (

@@ -1,4 +1,4 @@
-import { CURRENCY_LABEL, formatNumber } from "@/lib/format";
+import { normalizeDigits } from "@/lib/format";
 import type {
   CartLine,
   InvoiceDiscount,
@@ -13,16 +13,6 @@ export const MAX_QTY = 9999;
 export const round2 = (n: number) =>
   Math.round((n + Number.EPSILON) * 100) / 100;
 const round3 = (n: number) => Math.round((n + Number.EPSILON) * 1000) / 1000;
-
-export function formatMoneyText(amount: number) {
-  return `${formatNumber(amount)} ${CURRENCY_LABEL}`;
-}
-
-export function formatQty(qty: number) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(
-    qty,
-  );
-}
 
 /** الأصناف بالقطعة أرقام صحيحة، والأصناف بالوزن لحد 3 كسور. */
 export function clampQty(qty: number, allowDecimal: boolean) {
@@ -78,15 +68,6 @@ export function calcTotals(invoice: PosInvoice): InvoiceTotals {
 }
 
 /* ---------- إدخال وبحث ---------- */
-
-/** يحوّل الأرقام العربية/الفارسية للاتينية (الكيبورد العربي بيكتبها كده أحياناً). */
-export function normalizeDigits(text: string) {
-  return text
-    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
-    .replace(/٫/g, ".")
-    .replace(/×/g, "*");
-}
 
 export function normalizeSearch(text: string) {
   return normalizeDigits(text)

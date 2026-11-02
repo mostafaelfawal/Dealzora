@@ -11,27 +11,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface PosCancelDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  itemCount: number;
-  total: number;
-  onConfirm: () => void;
-}
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { confirmCancel } from "../store/posActions";
+import { posUiActions } from "../store/posUiSlice";
+import { selectTotals } from "../store/selectors";
 
 /** تأكيد الإلغاء: يبيّن ما الذي سيُحذف، والتركيز الافتراضي على "رجوع" (الأكثر أماناً). */
-export function PosCancelDialog({
-  open,
-  onOpenChange,
-  itemCount,
-  total,
-  onConfirm,
-}: PosCancelDialogProps) {
+export function PosCancelDialog() {
+  const dispatch = useAppDispatch();
+  const open = useAppSelector((s) => s.posUi.dialog === "cancel");
+  const { itemCount, total } = useAppSelector(selectTotals);
   const backRef = useRef<HTMLButtonElement>(null);
 
+  const close = () => dispatch(posUiActions.closeDialog());
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => !next && close()}>
       <DialogContent
         showCloseButton={false}
         initialFocus={backRef}
@@ -55,7 +50,7 @@ export function PosCancelDialog({
             type="button"
             variant="destructive"
             size="lg"
-            onClick={onConfirm}
+            onClick={() => dispatch(confirmCancel())}
           >
             إلغاء الفاتورة
           </Button>
@@ -64,7 +59,7 @@ export function PosCancelDialog({
             type="button"
             variant="outline"
             size="lg"
-            onClick={() => onOpenChange(false)}
+            onClick={close}
           >
             رجوع
           </Button>

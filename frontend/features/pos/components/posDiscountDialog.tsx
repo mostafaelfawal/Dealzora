@@ -15,8 +15,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { formatMoneyText, normalizeDigits, round2 } from "../lib/posCalc";
-import type { InvoiceDiscount } from "../types/pos";
+import { formatMoneyText, normalizeDigits } from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { round2 } from "../lib/posCalc";
+import { applyDiscount } from "../store/posActions";
+import { posUiActions } from "../store/posUiSlice";
+import { selectInvoiceDiscount, selectTotals } from "../store/selectors";
 
 type Mode = "amount" | "percent" | "final";
 
@@ -26,24 +30,16 @@ const MODES: { id: Mode; label: string }[] = [
   { id: "final", label: "الإجمالي النهائي" },
 ];
 
-interface PosDiscountDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  subtotal: number;
-  current: InvoiceDiscount | null;
-  onApply: (discount: InvoiceDiscount) => void;
-  onRemove: () => void;
-}
-
-export function PosDiscountDialog({
-  open,
-  onOpenChange,
-  ...formProps
-}: PosDiscountDialogProps) {
+export function PosDiscountDialog() {
+  const dispatch = useAppDispatch();
+  const open = useAppSelector((s) => s.posUi.dialog === "discount");
   const valueInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => !next && dispatch(posUiActions.closeDialog())}
+    >
       <DialogContent
         showCloseButton={false}
         initialFocus={valueInputRef}
@@ -55,27 +51,22 @@ export function PosDiscountDialog({
             يُحتسب الخصم على مجموع الفاتورة بأكملها.
           </DialogDescription>
         </DialogHeader>
-        <DiscountForm
-          {...formProps}
-          valueInputRef={valueInputRef}
-          onClose={() => onOpenChange(false)}
-        />
+        <DiscountForm valueInputRef={valueInputRef} />
       </DialogContent>
     </Dialog>
   );
 }
 
 function DiscountForm({
-  subtotal,
-  current,
-  onApply,
-  onRemove,
-  onClose,
   valueInputRef,
-}: Omit<PosDiscountDialogProps, "open" | "onOpenChange"> & {
-  onClose: () => void;
+}: {
   valueInputRef: RefObject<HTMLInputElement | null>;
 }) {
+  const dispatch = useAppDispatch();
+  const { subtotal } = useAppSelector(selectTotals);
+  const current = useAppSelector(selectInvoiceDiscount);
+
+  // حالة الفورم نفسها (النوع والنص المكتوب) محلية، فمفيش سبب تروح الـ store.
   const [mode, setMode] = useState<Mode>(
     current?.type === "percent" ? "percent" : "amount",
   );
@@ -103,10 +94,12 @@ function DiscountForm({
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!valid) return;
-    onApply(
-      mode === "percent"
-        ? { type: "percent", value }
-        : { type: "amount", value: discountAmount },
+    dispatch(
+      applyDiscount(
+        mode === "percent"
+          ? { type: "percent", value }
+          : { type: "amount", value: discountAmount },
+      ),
     );
   }
 
@@ -205,7 +198,7 @@ function DiscountForm({
             type="button"
             variant="destructive"
             size="lg"
-            onClick={onRemove}
+            onClick={() => dispatch(applyDiscount(null))}
             className="sm:me-auto"
           >
             إزالة الخصم
@@ -215,7 +208,7 @@ function DiscountForm({
           type="button"
           variant="outline"
           size="lg"
-          onClick={onClose}
+          onClick={() => dispatch(posUiActions.closeDialog())}
           className="gap-2 font-normal"
         >
           رجوع

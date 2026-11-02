@@ -1,62 +1,26 @@
 "use client";
 
-import type { KeyboardEvent, RefObject } from "react";
-
 import { Button } from "@/components/ui/button";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
-import type { PosCategory, PosProduct } from "../types/pos";
+import { posUiActions } from "../store/posUiSlice";
+import {
+  selectCategories,
+  selectIsSearching,
+  selectVisibleProducts,
+} from "../store/selectors";
 
 import { PosProductCard } from "./posProductCard";
 import { PosSearchInput } from "./posSearchInput";
-import { PosSearchResults, posOptionId } from "./posSearchResults";
-
-interface PosProductPaneProps {
-  className?: string;
-  inputRef: RefObject<HTMLInputElement | null>;
-  query: string;
-  onQueryChange: (value: string) => void;
-  onSearchKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
-  notFound: string | null;
-  pendingQty: number | null;
-  searchTerm: string;
-  results: PosProduct[];
-  activeIndex: number;
-  onActiveIndexChange: (index: number) => void;
-  products: PosProduct[];
-  categories: PosCategory[];
-  category: string;
-  onCategoryChange: (id: string) => void;
-  onAdd: (product: PosProduct) => void;
-  /** الكميات الموجودة في الفاتورة حسب معرّف الصنف. */
-  cartQtyById: Record<string, number>;
-}
+import { PosSearchResults } from "./posSearchResults";
 
 /** العمود الأول: بحث + تصنيفات + بطاقات الأصناف (أو نتائج البحث). */
-export function PosProductPane({
-  className,
-  inputRef,
-  query,
-  onQueryChange,
-  onSearchKeyDown,
-  notFound,
-  pendingQty,
-  searchTerm,
-  results,
-  activeIndex,
-  onActiveIndexChange,
-  products,
-  categories,
-  category,
-  onCategoryChange,
-  onAdd,
-  cartQtyById,
-}: PosProductPaneProps) {
-  const searching = searchTerm !== "";
-  const visible =
-    category === "all"
-      ? products
-      : products.filter((p) => p.category === category);
-  const activeProduct = results[activeIndex];
+export function PosProductPane({ className }: { className?: string }) {
+  const dispatch = useAppDispatch();
+  const searching = useAppSelector(selectIsSearching);
+  const category = useAppSelector((s) => s.posUi.category);
+  const categories = useAppSelector(selectCategories);
+  const visible = useAppSelector(selectVisibleProducts);
 
   return (
     <section
@@ -64,20 +28,7 @@ export function PosProductPane({
       className={cn("min-h-0 flex-col lg:border-e", className)}
     >
       <div className="shrink-0 space-y-2 border-b p-3">
-        <PosSearchInput
-          inputRef={inputRef}
-          value={query}
-          onChange={onQueryChange}
-          onKeyDown={onSearchKeyDown}
-          expanded={searching && results.length > 0}
-          activeOptionId={
-            searching && activeProduct
-              ? posOptionId(activeProduct.id)
-              : undefined
-          }
-          notFound={notFound}
-          pendingQty={pendingQty}
-        />
+        <PosSearchInput />
 
         {!searching && (
           <div
@@ -92,7 +43,7 @@ export function PosProductPane({
                 size="sm"
                 variant={category === c.id ? "default" : "outline"}
                 aria-pressed={category === c.id}
-                onClick={() => onCategoryChange(c.id)}
+                onClick={() => dispatch(posUiActions.setCategory(c.id))}
                 className="shrink-0 font-normal"
               >
                 {c.label}
@@ -104,22 +55,11 @@ export function PosProductPane({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         {searching ? (
-          <PosSearchResults
-            term={searchTerm}
-            results={results}
-            activeIndex={activeIndex}
-            onHover={onActiveIndexChange}
-            onAdd={onAdd}
-          />
+          <PosSearchResults />
         ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {visible.map((product) => (
-              <PosProductCard
-                key={product.id}
-                product={product}
-                onAdd={onAdd}
-                inCartQty={cartQtyById[product.id] ?? 0}
-              />
+              <PosProductCard key={product.id} product={product} />
             ))}
           </div>
         )}

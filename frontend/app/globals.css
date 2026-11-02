@@ -222,3 +222,7 @@
     stroke-width: 1.5;
   }
 }
+
+button {
+  cursor: pointer !important;
+}

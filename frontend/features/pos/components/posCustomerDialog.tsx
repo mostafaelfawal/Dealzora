@@ -13,7 +13,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { toArabicDigits } from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
+import { selectCustomer } from "../store/posActions";
+import { posUiActions } from "../store/posUiSlice";
+import { selectCustomers, selectInvoiceCustomer } from "../store/selectors";
 import type { PosCustomer } from "../types/pos";
 
 import {
@@ -21,19 +26,6 @@ import {
   PosPickerHeader,
   pickerItemClass,
 } from "./posPickerChrome";
-
-interface PosCustomerDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  customers: PosCustomer[];
-  selectedId: string | null;
-  onSelect: (customer: PosCustomer | null) => void;
-}
-
-const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
-/** لتعمل البحث برقم الجوال حتى لو كتبه الكاشير بالأرقام العربية. */
-const toArabicDigits = (text: string) =>
-  text.replace(/\d/g, (d) => ARABIC_DIGITS[Number(d)]);
 
 function Avatar({
   selected,
@@ -66,7 +58,7 @@ function CreditStatus({ customer }: { customer: PosCustomer }) {
       <span className="flex items-baseline gap-1 text-xs text-muted-foreground">
         {balance > 0 ? (
           <>
-            عليه <Money amount={balance} className="text-foreground" />
+            دين <Money amount={balance} className="text-foreground" />
           </>
         ) : (
           "بدون مديونية"
@@ -108,17 +100,18 @@ function CreditStatus({ customer }: { customer: PosCustomer }) {
 }
 
 /** اختيار العميل بالبحث (الاسم أو الجوال) والأسهم وEnter. */
-export function PosCustomerDialog({
-  open,
-  onOpenChange,
-  customers,
-  selectedId,
-  onSelect,
-}: PosCustomerDialogProps) {
+export function PosCustomerDialog() {
+  const dispatch = useAppDispatch();
+  const open = useAppSelector((s) => s.posUi.dialog === "customer");
+  const customers = useAppSelector(selectCustomers);
+  const selectedId = useAppSelector(selectInvoiceCustomer)?.id ?? null;
+
   return (
     <CommandDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => {
+        if (!next) dispatch(posUiActions.closeCustomerDialog());
+      }}
       className="sm:max-w-xl"
       title="اختيار العميل"
       description="ابحث بالاسم أو رقم الجوال، أو ارجع إلى عميل نقدي"
@@ -145,7 +138,7 @@ export function PosCustomerDialog({
           <CommandItem
             value="عميل نقدي بدون حساب"
             keywords={["نقدي", "كاش"]}
-            onSelect={() => onSelect(null)}
+            onSelect={() => dispatch(selectCustomer(null))}
             className={pickerItemClass}
           >
             <Avatar selected={selectedId === null}>
@@ -171,7 +164,7 @@ export function PosCustomerDialog({
                 key={customer.id}
                 value={`${customer.name} ${customer.phone}`}
                 keywords={[toArabicDigits(customer.phone)]}
-                onSelect={() => onSelect(customer)}
+                onSelect={() => dispatch(selectCustomer(customer))}
                 className={pickerItemClass}
               >
                 <Avatar selected={selected}>

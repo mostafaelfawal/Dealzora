@@ -1,25 +1,26 @@
+"use client";
+
 import { IconBarcode } from "@tabler/icons-react";
 
 import { Money } from "@/components/shared/Money";
+import { formatQty } from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
-import { formatQty, getStockLevel } from "../lib/posCalc";
+import { getStockLevel } from "../lib/posCalc";
+import { addToCart } from "../store/posActions";
 import type { PosProduct } from "../types/pos";
 
 import { PosStockBadge } from "./posStockBadge";
 
-interface PosProductCardProps {
-  product: PosProduct;
-  onAdd: (product: PosProduct) => void;
-  /** الكمية الموجودة من هذا الصنف في الفاتورة الحالية (0 = غير مضاف). */
-  inCartQty?: number;
-}
-
 /** بطاقة صنف للمس والفأرة. لوحة المفاتيح تستخدم البحث. */
-export function PosProductCard({
-  product,
-  onAdd,
-  inCartQty = 0,
-}: PosProductCardProps) {
+export function PosProductCard({ product }: { product: PosProduct }) {
+  const dispatch = useAppDispatch();
+  /** الكمية الموجودة من هذا الصنف في الفاتورة الحالية (0 = غير مضاف). */
+  const inCartQty = useAppSelector(
+    (s) =>
+      s.cart.present.lines.find((l) => l.productId === product.id)?.qty ?? 0,
+  );
+
   const level = getStockLevel(product);
   const out = level === "out";
   const stockOk = level === "ok";
@@ -28,7 +29,7 @@ export function PosProductCard({
   return (
     <button
       type="button"
-      onClick={() => onAdd(product)}
+      onClick={() => dispatch(addToCart(product))}
       className={cn(
         "group relative flex h-full min-h-32 w-full min-w-0 flex-col justify-between gap-3 border bg-card p-3.5 text-start outline-none",
         "transition-[border-color,transform] duration-150",

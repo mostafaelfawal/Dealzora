@@ -1,30 +1,27 @@
+"use client";
+
 import { IconPlayerPause, IconPercentage, IconX } from "@tabler/icons-react";
 
 import { Money } from "@/components/shared/Money";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
+import { formatQty } from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
-import { formatQty, type InvoiceTotals } from "../lib/posCalc";
-import type { InvoiceDiscount } from "../types/pos";
-
-interface PosTotalsProps {
-  totals: InvoiceTotals;
-  discount: InvoiceDiscount | null;
-  onHold: () => void;
-  onDiscount: () => void;
-  onRemoveDiscount: () => void;
-  onPay: () => void;
-}
+import { cartActions } from "../store/cartSlice";
+import {
+  holdCurrentInvoice,
+  requestDialog,
+  requestPayment,
+} from "../store/posActions";
+import { selectInvoiceDiscount, selectTotals } from "../store/selectors";
 
 /** الإجمالي كبير وثابت أسفل الجدول، ومعه أزرار الإجراءات. */
-export function PosTotals({
-  totals,
-  discount,
-  onHold,
-  onDiscount,
-  onRemoveDiscount,
-  onPay,
-}: PosTotalsProps) {
+export function PosTotals() {
+  const dispatch = useAppDispatch();
+  const totals = useAppSelector(selectTotals);
+  const discount = useAppSelector(selectInvoiceDiscount);
+
   const empty = totals.itemCount === 0;
   const discountLabel =
     discount?.type === "percent" ? `الخصم (${discount.value}%)` : "الخصم";
@@ -53,7 +50,7 @@ export function PosTotals({
                 variant="ghost"
                 size="icon-xs"
                 aria-label="إزالة الخصم"
-                onClick={onRemoveDiscount}
+                onClick={() => dispatch(cartActions.setDiscount(null))}
               >
                 <IconX />
               </Button>
@@ -84,7 +81,7 @@ export function PosTotals({
           variant="outline"
           size="lg"
           disabled={empty}
-          onClick={onHold}
+          onClick={() => dispatch(holdCurrentInvoice())}
           className="h-12 gap-2 font-normal lg:h-11"
         >
           <IconPlayerPause className="size-4" />
@@ -98,7 +95,7 @@ export function PosTotals({
           variant="outline"
           size="lg"
           disabled={empty}
-          onClick={onDiscount}
+          onClick={() => dispatch(requestDialog("discount"))}
           className="h-12 gap-2 font-normal lg:h-11"
         >
           <IconPercentage className="size-4" />
@@ -111,7 +108,7 @@ export function PosTotals({
           type="button"
           size="lg"
           disabled={empty}
-          onClick={onPay}
+          onClick={() => dispatch(requestPayment())}
           className="h-12 gap-2 text-base lg:h-11"
         >
           ادفع

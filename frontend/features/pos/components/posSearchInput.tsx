@@ -1,7 +1,7 @@
 "use client";
 
 import { IconAlertTriangle, IconSearch, IconX } from "@tabler/icons-react";
-import type { KeyboardEvent, RefObject } from "react";
+import type { KeyboardEvent } from "react";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
@@ -10,32 +10,36 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { formatQty } from "@/lib/format";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
-import { formatQty } from "../lib/posCalc";
-
-interface PosSearchInputProps {
-  inputRef: RefObject<HTMLInputElement | null>;
-  value: string;
-  onChange: (value: string) => void;
-  onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
-  expanded: boolean;
-  activeOptionId?: string;
-  notFound: string | null;
-  /** الكمية المكتوبة بصيغة 3*باركود. */
-  pendingQty: number | null;
-}
+import { registerSearchInput } from "../lib/posFocus";
+import { handleSearchKey } from "../store/posActions";
+import { posUiActions } from "../store/posUiSlice";
+import {
+  selectEntry,
+  selectIsSearching,
+  selectQuery,
+  selectSafeIndex,
+  selectSearchResults,
+} from "../store/selectors";
+import { posOptionId } from "./posSearchResults";
 
 /** خانة الباركود والبحث: عليها التركيز دائماً، وتفهم صيغة 3*باركود. */
-export function PosSearchInput({
-  inputRef,
-  value,
-  onChange,
-  onKeyDown,
-  expanded,
-  activeOptionId,
-  notFound,
-  pendingQty,
-}: PosSearchInputProps) {
+export function PosSearchInput() {
+  const dispatch = useAppDispatch();
+  const value = useAppSelector(selectQuery);
+  const notFound = useAppSelector((s) => s.posUi.notFound);
+  /** الكمية المكتوبة بصيغة 3*باركود. */
+  const pendingQty = useAppSelector((s) => selectEntry(s).qty);
+  const searching = useAppSelector(selectIsSearching);
+  const results = useAppSelector(selectSearchResults);
+  const activeProduct = results[useAppSelector(selectSafeIndex)];
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (dispatch(handleSearchKey(event.key))) event.preventDefault();
+  }
+
   return (
     <div className="space-y-1.5">
       <InputGroup className="h-11">
@@ -43,16 +47,22 @@ export function PosSearchInput({
           <IconSearch className="mr-2 size-5" />
         </InputGroupAddon>
         <InputGroupInput
-          ref={inputRef}
+          ref={registerSearchInput}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={onKeyDown}
+          onChange={(event) =>
+            dispatch(posUiActions.setQuery(event.target.value))
+          }
+          onKeyDown={handleKeyDown}
           role="combobox"
           aria-label="باركود أو اسم الصنف"
           aria-autocomplete="list"
-          aria-expanded={expanded}
+          aria-expanded={searching && results.length > 0}
           aria-controls="pos-results"
-          aria-activedescendant={activeOptionId}
+          aria-activedescendant={
+            searching && activeProduct
+              ? posOptionId(activeProduct.id)
+              : undefined
+          }
           aria-invalid={notFound ? true : undefined}
           placeholder="امسح الباركود أو اكتب اسم الصنف…"
           autoComplete="off"
@@ -68,7 +78,7 @@ export function PosSearchInput({
               size="icon-xs"
               className="ml-2"
               aria-label="مسح الخانة"
-              onClick={() => onChange("")}
+              onClick={() => dispatch(posUiActions.setQuery(""))}
             >
               <IconX />
             </Button>

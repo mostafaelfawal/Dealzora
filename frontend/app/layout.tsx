@@ -5,13 +5,15 @@ import "./globals.css";
 
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/providers/AppProviders";
+import { BRAND } from "@/config/brand";
 
 // ========================================
 // Constants
 // ========================================
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
-const SITE_NAME = "Dealzora";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://dealzora.vercel.app";
+const SITE_NAME = BRAND.name;
 const CREATOR_NAME = "Mostafa Hamdi";
 
 const SITE_TITLE = "Dealzora | نظام إدارة المبيعات والمخزون ونقاط البيع POS";

@@ -29,7 +29,10 @@ export function BrandLogo({ variant, className }: BrandLogoProps) {
         width={width}
         height={height}
         priority
-        className={cn("hidden h-8 w-auto dark:block", className)}
+        className={cn(
+          "hidden h-8 w-auto dark:block bg-foreground rounded-sm border",
+          className,
+        )}
       />
     </>
   );

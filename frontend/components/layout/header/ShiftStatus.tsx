@@ -1,6 +1,10 @@
 "use client";
 
-import { IconClockHour4 } from "@tabler/icons-react";
+import {
+  IconClockHour4,
+  IconLockDollar,
+  IconPlayerPlay,
+} from "@tabler/icons-react";
 import Link from "next/link";
 
 import { StatusDot } from "@/components/shared/StatusDot";
@@ -77,6 +81,7 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
               render={<Link href="/shifts/close" />}
               className="w-full"
             >
+              <IconLockDollar className="size-4" />
               قفل الوردية وجرد الدرج
             </Button>
           </>
@@ -91,6 +96,7 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
               render={<Link href="/shifts/open" />}
               className="w-full"
             >
+              <IconPlayerPlay className="size-4" />
               فتح وردية
             </Button>
           </>
