@@ -41,6 +41,7 @@ import {
 } from "../config/importFields";
 import { PRODUCT_ROUTES } from "../config/productRoutes";
 import { MOCK_EXCEL } from "../mocks/excelMock";
+import { MotionDiv, popIn } from "@/components/shared/motion";
 
 type Step = "file" | "map" | "done";
 type DuplicateMode = "update" | "skip";
@@ -178,7 +179,9 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
         </DialogHeader>
         <StepIndicator current="done" />
         <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <IconCircleCheck className="size-14 animate-in text-success duration-300 zoom-in-50 motion-reduce:animate-none" />
+          <MotionDiv variants={popIn} initial="hidden" animate="show">
+            <IconCircleCheck className="size-14 text-success" />
+          </MotionDiv>
           <div className="space-y-1">
             <p className="text-base font-semibold">
               تم استيراد{" "}

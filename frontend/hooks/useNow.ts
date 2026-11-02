@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * يرجّع الوقت الحالي ويتحدّث كل فترة.
- * القيمة `null` قبل التحميل على المتصفح لتفادي اختلاف السيرفر والعميل (hydration).
+ * القيمة `null` على السيرفر وفي أول رندر على المتصفح لتفادي اختلاف الـ hydration.
  */
 export function useNow(intervalMs = 60_000): number | null {
-  const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(id);
-  }, [intervalMs]);
-
-  return now;
+  return useSyncExternalStore(
+    (onChange) => {
+      const id = setInterval(onChange, intervalMs);
+      return () => clearInterval(id);
+    },
+    () => Math.floor(Date.now() / intervalMs) * intervalMs,
+    () => null,
+  );
 }

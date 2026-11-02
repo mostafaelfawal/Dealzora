@@ -28,6 +28,7 @@ import { getCategoryLabel } from "../lib/productList";
 import type { Product } from "../types/product";
 import { ProductActionsMenu, type ProductActions } from "./productActionsMenu";
 import { ProductMarginBadge } from "./productMarginBadge";
+import { listRow, MotionTr } from "@/components/shared/motion";
 
 const th = "h-9 px-3 text-start text-xs font-normal text-muted-foreground";
 
@@ -106,7 +107,8 @@ export function ProductsTable({
           </thead>
           <tbody>
             {pageProducts.map((product, index) => (
-              <tr
+              <MotionTr
+                {...listRow(index)}
                 key={product.id}
                 style={{ animationDelay: `${Math.min(index, 12) * 20}ms` }}
                 onClick={(event) => {
@@ -118,7 +120,7 @@ export function ProductsTable({
                     return;
                   router.push(PRODUCT_ROUTES.edit(product.id));
                 }}
-                className="h-14 animate-in cursor-pointer border-b fade-in-0 fill-mode-backwards duration-300 last:border-b-0 hover:bg-muted/50 motion-reduce:animate-none"
+                className="h-14 cursor-pointer border-b fill-mode-backwards duration-300 last:border-b-0 hover:bg-muted/50"
               >
                 <td
                   className={cn(
@@ -179,7 +181,7 @@ export function ProductsTable({
                 <td className="pe-2">
                   <ProductActionsMenu product={product} {...actions} />
                 </td>
-              </tr>
+              </MotionTr>
             ))}
           </tbody>
         </table>

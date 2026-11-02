@@ -16,6 +16,11 @@ import { getCategoryLabel } from "../lib/productList";
 import type { Product } from "../types/product";
 import { ProductActionsMenu, type ProductActions } from "./productActionsMenu";
 import { ProductMarginBadge } from "./productMarginBadge";
+import {
+  listItem,
+  MotionArticle,
+  ProgressBar,
+} from "@/components/shared/motion";
 
 const BAR_TONE = {
   ok: "bg-primary",
@@ -34,11 +39,10 @@ export function ProductCard({ product, index, ...actions }: ProductCardProps) {
   const level = getStockLevel(product);
 
   return (
-    <article
-      style={{ animationDelay: `${Math.min(index, 12) * 25}ms` }}
+    <MotionArticle
+      {...listItem(index)}
       className={cn(
         "group relative flex flex-col gap-3 border bg-card p-3.5",
-        "animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-backwards duration-300 motion-reduce:animate-none",
         "transition-[border-color,transform] duration-150",
         "hover:border-primary/60 active:scale-[0.99]",
         "focus-within:border-primary",
@@ -136,18 +140,12 @@ export function ProductCard({ product, index, ...actions }: ProductCardProps) {
             {product.unit}
           </span>
         </div>
-        <span aria-hidden className="block h-0.5 w-full bg-muted">
-          <span
-            className={cn(
-              "block h-full transition-[width] duration-500",
-              BAR_TONE[level],
-            )}
-            style={{
-              width: `${stockRatio(product.stock, product.minStock) * 100}%`,
-            }}
-          />
-        </span>
+        <ProgressBar
+          value={stockRatio(product.stock, product.minStock)}
+          className="h-0.5"
+          barClassName={BAR_TONE[level]}
+        />
       </div>
-    </article>
+    </MotionArticle>
   );
 }

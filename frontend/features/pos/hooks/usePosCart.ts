@@ -61,6 +61,16 @@ function toLine(product: PosProduct, qty: number): CartLine {
   };
 }
 
+function loadPersisted(): Partial<Persisted> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Partial<Persisted>) : {};
+  } catch {
+    return {};
+  }
+}
+
 /**
  * حالة الفاتورة الحالية + المعلّقة.
  * تُحفظ في localStorage حتى لا يضيّع انقطاع الكهرباء أو تحديث الصفحة فاتورة قيد العمل.
@@ -70,11 +80,24 @@ function toLine(product: PosProduct, qty: number): CartLine {
  * فتبدأ سجلاً جديداً، لأنها تنقل الفاتورة خارج الشاشة أو تُنهيها.
  */
 export function usePosCart() {
-  const [history, setHistory] = useState<History>(INITIAL_HISTORY);
-  const [held, setHeld] = useState<HeldInvoice[]>([]);
-  const [nextNumber, setNextNumber] = useState(FIRST_INVOICE_NUMBER);
-  const [rawSelectedId, setSelectedId] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
+  const [initial] = useState(loadPersisted);
+  const [history, setHistory] = useState<History>(() =>
+    initial.invoice && Array.isArray(initial.invoice.lines)
+      ? freshHistory(initial.invoice)
+      : INITIAL_HISTORY,
+  );
+  const [held, setHeld] = useState<HeldInvoice[]>(() =>
+    Array.isArray(initial.held) ? initial.held : [],
+  );
+
+  const [nextNumber, setNextNumber] = useState(() =>
+    typeof initial.nextNumber === "number"
+      ? initial.nextNumber
+      : FIRST_INVOICE_NUMBER,
+  );
+  const [rawSelectedId, setSelectedId] = useState<string | null>(
+    () => initial.invoice?.lines?.at(-1)?.productId ?? null,
+  );
   const lastRemoved = useRef<{ line: CartLine; index: number } | null>(null);
 
   const invoice = history.present;
@@ -123,35 +146,14 @@ export function usePosCart() {
     });
   }, []);
 
-  /* ---------- تحميل وحفظ ---------- */
-
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw) as Partial<Persisted>;
-        if (data.invoice && Array.isArray(data.invoice.lines)) {
-          setHistory(freshHistory(data.invoice));
-          setSelectedId(data.invoice.lines.at(-1)?.productId ?? null);
-        }
-        if (Array.isArray(data.held)) setHeld(data.held);
-        if (typeof data.nextNumber === "number") setNextNumber(data.nextNumber);
-      }
-    } catch {
-      // بيانات تالفة أو التخزين غير متاح: نبدأ فاتورة جديدة.
-    }
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
     try {
       const data: Persisted = { invoice, held, nextNumber };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
       // تجاهل.
     }
-  }, [ready, invoice, held, nextNumber]);
+  }, [invoice, held, nextNumber]);
 
   /* ---------- مشتقات ---------- */
 

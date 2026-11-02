@@ -5,6 +5,7 @@ import { DirectionProvider } from "@base-ui/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ThemedToaster from "./ThemedToaster";
 import { StoreProvider } from "./StoreProvider";
+import { MotionProvider } from "@/components/shared/motion";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +17,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <StoreProvider>
-          <TooltipProvider delay={200}>{children}</TooltipProvider>
+          <TooltipProvider delay={200}>
+            <MotionProvider>{children}</MotionProvider>
+          </TooltipProvider>
         </StoreProvider>
         <ThemedToaster />
       </ThemeProvider>
