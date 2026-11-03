@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment } from "react";
+import { usePathname } from "next/navigation";
+import { Fragment, useState } from "react";
 
 import { Separator } from "@/components/ui/separator";
 import { getNavigationForRole } from "@/config/navigation";
@@ -13,9 +14,23 @@ interface SidebarNavProps {
   onNavigate?: () => void;
 }
 
+interface PendingNav {
+  href: string;
+  fromPath: string;
+}
+
 export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
   const { user } = useShellData();
+  const pathname = usePathname();
   const groups = getNavigationForRole(user.role);
+  const [pending, setPending] = useState<PendingNav | null>(null);
+
+  const pendingHref = pending?.fromPath === pathname ? pending.href : null;
+
+  function handleNavigate(href: string) {
+    setPending({ href, fromPath: pathname });
+    onNavigate?.();
+  }
 
   return (
     <nav aria-label="القائمة الرئيسية" className="flex-1 overflow-y-auto p-2">
@@ -37,7 +52,8 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                 <SidebarNavItem
                   item={item}
                   collapsed={collapsed}
-                  onNavigate={onNavigate}
+                  pendingHref={pendingHref}
+                  onNavigate={() => handleNavigate(item.href)}
                 />
               </li>
             ))}

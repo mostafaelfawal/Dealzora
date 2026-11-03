@@ -34,7 +34,7 @@ export function PosNoShift() {
             size="lg"
             variant="outline"
             nativeButton={false}
-            render={<Link href="/main" />}
+            render={<Link href="/main/dashboard" />}
           >
             رجوع إلى لوحة التحكم
           </Button>

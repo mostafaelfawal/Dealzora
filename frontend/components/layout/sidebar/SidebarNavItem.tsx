@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/types/navigation";
-import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface SidebarNavItemProps {
   item: NavItem;
   collapsed: boolean;
+  pendingHref?: string | null;
   onNavigate?: () => void;
 }
 
@@ -21,10 +22,13 @@ function isActivePath(pathname: string, href: string) {
 export function SidebarNavItem({
   item,
   collapsed,
+  pendingHref = null,
   onNavigate,
 }: SidebarNavItemProps) {
   const pathname = usePathname();
-  const active = isActivePath(pathname, item.href);
+  const active = pendingHref
+    ? pendingHref === item.href
+    : isActivePath(pathname, item.href);
   const Icon = item.icon;
 
   const link = (
@@ -39,13 +43,13 @@ export function SidebarNavItem({
         "focus-visible:ring-2 focus-visible:ring-sidebar-ring",
         collapsed && "justify-center px-0",
         active &&
-          "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+          "bg-sidebar-accent font-medium text-primary hover:text-primary",
       )}
     >
       {active && (
         <span
           aria-hidden
-          className="absolute inset-y-2 -inset-s-2 w-0.5 rounded-full bg-primary"
+          className="absolute inset-y-2 right-0 w-0.5 rounded-full bg-primary"
         />
       )}
       <Icon
