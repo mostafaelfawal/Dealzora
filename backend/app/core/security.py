@@ -9,13 +9,13 @@ from typing import Annotated
 from fastapi import Header, Depends
 from app.core.config import get_settings
 from app.core.errors import ForbiddenError, UnauthorizedError
-from app.core.auth import resolve_token
 from sqlalchemy.orm import Session
 from app.core.database import get_session
 
 class Role(StrEnum):
-    ADMIN = "admin"
+    MANAGER = "manager"
     CASHIER = "cashier"
+    # OWNER = "owner"
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,11 +38,12 @@ def get_actor(
     _app: Annotated[None, Depends(require_app_token)],
     authorization: Annotated[str | None, Header()] = None,
 ) -> Actor:
+    from app.modules.auth.service import AuthService
+
     scheme, _, token = (authorization or "").partition(" ")
     if scheme.lower() != "bearer" or not token:
         raise UnauthorizedError("unauthorized", "سجّل الدخول أولاً")
-    user = resolve_token(session, token)
-    return Actor(user_id=user.id, role=Role(user.role), device_id=get_settings().device_id)
+    return AuthService(session).authenticate(token)
 
 def require_write_permit(
     x_write_permit: Annotated[str | None, Header()] = None,

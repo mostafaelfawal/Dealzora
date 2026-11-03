@@ -101,4 +101,3 @@ export interface ProductFormValues {
   isActive: boolean;
   extraUnits: UnitFormRow[];
 }
-

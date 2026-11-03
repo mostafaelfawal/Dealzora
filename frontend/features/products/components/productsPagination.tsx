@@ -22,9 +22,7 @@ const PAGE_SIZE_ITEMS = PAGE_SIZES.map((size) => ({
 function getPageItems(current: number, total: number): (number | "gap")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
 
-  const sorted = [
-    ...new Set([1, total, current - 1, current, current + 1]),
-  ]
+  const sorted = [...new Set([1, total, current - 1, current, current + 1])]
     .filter((p) => p >= 1 && p <= total)
     .sort((a, b) => a - b);
 

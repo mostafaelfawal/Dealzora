@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { extractErrorMessage } from "@/lib/errors";
 
 import { PRODUCT_ROUTES } from "../config/productRoutes";
-import useGetProduct from "../hooks/useGetProduct";
+import { useProductFormContext } from "../context/ProductFormContext";
 import { ProductForm } from "./productForm";
 
-/** صفحة إضافة (بدون id) أو تعديل (مع id) صنف. */
-export function ProductFormScreen({ productId }: { productId?: string }) {
-  const { data: product, isPending, isError, error } = useGetProduct(productId);
+export function ProductFormScreen() {
+  const { productId, productData } = useProductFormContext();
+  const { data: product, isPending, isError, error } = productData;
 
-  if (!productId) return <ProductForm key="new" />;
+  if (!productId) return <ProductForm />;
 
   if (isPending) {
     return (
@@ -45,5 +45,5 @@ export function ProductFormScreen({ productId }: { productId?: string }) {
     );
   }
 
-  return <ProductForm key={product.id} product={product} />;
+  return <ProductForm />;
 }

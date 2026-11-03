@@ -130,7 +130,13 @@ export function useProductsList() {
       version: number;
       name: string;
     }) => deleteProduct(id, version),
-    onSuccess: (_data, vars) => toast.success(`حُذف «${vars.name}»`),
+    onSuccess: (_data, vars) => {
+      toast.success(`حُذف «${vars.name}»`);
+      // لو كان هذا آخر صنف في الصفحة، ارجع صفحة للخلف.
+      if (products.length === 1 && filters.page > 1) {
+        setFilters((current) => ({ ...current, page: current.page - 1 }));
+      }
+    },
     onError: (error) => toast.error(extractErrorMessage(error)),
     onSettled: refresh,
   });

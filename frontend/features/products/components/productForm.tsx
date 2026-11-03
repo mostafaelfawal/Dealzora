@@ -7,8 +7,8 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import type { FieldErrors, Path, PathValue } from "react-hook-form";
 import { toast } from "sonner";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
@@ -35,6 +35,8 @@ import {
 } from "../config/productOptions";
 import { PRODUCT_ROUTES } from "../config/productRoutes";
 import { PRODUCT_FORM_SHORTCUTS } from "../config/productShortcuts";
+import { useProductFormContext } from "../context/ProductFormContext";
+import useGetCategories from "../hooks/useGetCategories";
 import {
   calcMargin,
   generateBarcode,
@@ -43,37 +45,63 @@ import {
   parseNumber,
   suggestSalePrice,
 } from "../lib/productCalc";
-import {
-  emptyValues,
-  FIELD_ORDER,
-  toFormValues,
-  validateProduct,
-  type FormErrors,
-  type FormField,
-} from "../lib/productForm";
-import type { Product, ProductFormValues, UnitFormRow } from "../types/product";
+import type {
+  ProductSchemaType,
+  UnitSchemaType,
+} from "../schema/product.schema";
 import { ProductMarginBadge } from "./productMarginBadge";
-import useGetCategories from "../hooks/useGetCategories";
 
 const NO_CATEGORY = "none";
 
 const UNIT_ITEMS = BASE_UNITS.map((u) => ({ value: u, label: u }));
 
-const FIELD_IDS: Record<FormField, string> = {
+const FIELD_IDS = {
   name: "pf-name",
   barcode: "pf-barcode",
   costPrice: "pf-cost",
   salePrice: "pf-sale",
   minStock: "pf-min",
   openingStock: "pf-opening",
-  units: "pf-units-name-0",
-};
+} as const;
 
-function focusField(field: FormField) {
-  document.getElementById(FIELD_IDS[field])?.focus();
+type UnitKey = Exclude<keyof UnitSchemaType, "id">;
+const UNIT_KEYS: UnitKey[] = ["name", "factor", "barcode", "salePrice"];
+
+const ERROR_ORDER = [
+  "name",
+  "barcode",
+  "costPrice",
+  "salePrice",
+  "extraUnits",
+  "minStock",
+  "openingStock",
+] as const;
+
+function focusById(id: string) {
+  document.getElementById(id)?.focus();
 }
 
-/** المسؤول عن عرض الخطأ تحت الحقل. */
+function focusFirstError(errors: FieldErrors<ProductSchemaType>) {
+  for (const field of ERROR_ORDER) {
+    if (!errors[field]) continue;
+
+    if (field === "extraUnits") {
+      const rows = errors.extraUnits as unknown as
+        Array<Partial<Record<UnitKey, unknown>> | undefined> | undefined;
+      const index = Array.isArray(rows) ? rows.findIndex(Boolean) : -1;
+      const key =
+        index >= 0
+          ? (UNIT_KEYS.find((k) => rows?.[index]?.[k]) ?? "name")
+          : "name";
+      focusById(`pf-unit-${key}-${Math.max(index, 0)}`);
+      return;
+    }
+
+    focusById(FIELD_IDS[field]);
+    return;
+  }
+}
+
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
@@ -83,18 +111,17 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-interface ProductFormProps {
-  /** بدون صنف = إضافة، ومعه صنف = تعديل. */
-  product?: Product;
-}
+export function ProductForm() {
+  const { form, productId, onSubmit } = useProductFormContext();
+  const {
+    register,
+    watch,
+    setValue,
+    handleSubmit,
+    formState: { errors, isSubmitting, isSubmitted },
+  } = form;
 
-/**
- * فورم إضافة/تعديل صنف.
- * TODO: الحفظ حالياً وهمي؛ يُستبدل بالكتابة في IndexedDB + الـ outbox.
- */
-export function ProductForm({ product }: ProductFormProps) {
-  const router = useRouter();
-  const isEditing = Boolean(product);
+  const isEditing = Boolean(productId);
 
   const { data: categories = [] } = useGetCategories();
   const categoryItems = useMemo(
@@ -105,64 +132,43 @@ export function ProductForm({ product }: ProductFormProps) {
     [categories],
   );
 
-  const [values, setValues] = useState<ProductFormValues>(() =>
-    toFormValues(product),
-  );
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [saving, setSaving] = useState(false);
+  const values = watch();
 
-  function patch(partial: Partial<ProductFormValues>) {
-    setValues((current) => ({ ...current, ...partial }));
-  }
-
-  /** نمسح خطأ الحقل بمجرد ما المستخدم يعدّله. */
-  function edit<K extends keyof ProductFormValues>(
-    key: K,
-    value: ProductFormValues[K],
-    field?: FormField,
+  function setField<P extends Path<ProductSchemaType>>(
+    name: P,
+    value: PathValue<ProductSchemaType, P>,
   ) {
-    patch({ [key]: value } as Partial<ProductFormValues>);
-    if (field && errors[field]) {
-      setErrors((current) => ({ ...current, [field]: undefined }));
-    }
+    setValue(name, value, { shouldDirty: true, shouldValidate: isSubmitted });
   }
 
   function changeUnit(unit: string) {
-    patch({
-      unit,
-      // الوحدات اللي بتقبل كسور بنفعّلها تلقائياً.
-      allowDecimal: DECIMAL_UNITS.has(unit) ? true : values.allowDecimal,
-    });
+    setField("unit", unit);
+    if (DECIMAL_UNITS.has(unit)) setField("allowDecimal", true);
   }
 
-  /* ---------- الوحدات الإضافية ---------- */
   function addUnit(name = "") {
     if (values.extraUnits.length >= MAX_EXTRA_UNITS) return;
-    const row: UnitFormRow = {
+    const row: UnitSchemaType = {
       id: newLocalId(),
       name,
       factor: "",
       barcode: "",
       salePrice: "",
     };
-    patch({ extraUnits: [...values.extraUnits, row] });
-    if (errors.units) setErrors((c) => ({ ...c, units: undefined }));
+    setField("extraUnits", [...values.extraUnits, row]);
   }
 
-  function updateUnit(id: string, partial: Partial<UnitFormRow>) {
-    patch({
-      extraUnits: values.extraUnits.map((u) =>
-        u.id === id ? { ...u, ...partial } : u,
-      ),
-    });
-    if (errors.units) setErrors((c) => ({ ...c, units: undefined }));
+  function updateUnit(index: number, key: UnitKey, value: string) {
+    setField(`extraUnits.${index}.${key}`, value);
   }
 
   function removeUnit(id: string) {
-    patch({ extraUnits: values.extraUnits.filter((u) => u.id !== id) });
+    setField(
+      "extraUnits",
+      values.extraUnits.filter((u) => u.id !== id),
+    );
   }
 
-  /* ---------- الأسعار ---------- */
   const cost = numberOrZero(parseNumber(values.costPrice));
   const sale = numberOrZero(parseNumber(values.salePrice));
   const margin = calcMargin(cost, sale);
@@ -170,48 +176,31 @@ export function ProductForm({ product }: ProductFormProps) {
   function applyMarkup(percent: number) {
     if (!(cost > 0)) {
       toast.info("اكتب سعر الشراء أولاً");
-      focusField("costPrice");
+      focusById(FIELD_IDS.costPrice);
       return;
     }
-    edit("salePrice", String(suggestSalePrice(cost, percent)), "salePrice");
+    setField("salePrice", String(suggestSalePrice(cost, percent)));
   }
 
-  /* ---------- الحفظ ---------- */
   function submit(andNew: boolean) {
-    if (saving) return;
-
-    const found = validateProduct(values);
-    setErrors(found);
-
-    const firstError = FIELD_ORDER.find((field) => found[field]);
-    if (firstError) {
-      focusField(firstError);
-      toast.error("راجع الحقول المطلوبة");
-      return;
-    }
-
-    setSaving(true);
-    // TODO: اكتب في قاعدة البيانات المحلية + الـ outbox بدل التأخير الوهمي.
-    window.setTimeout(() => {
-      toast.success(isEditing ? "تم حفظ التعديلات" : "تمت إضافة الصنف", {
-        description: values.name.trim(),
-      });
-      setSaving(false);
-
-      if (andNew) {
-        setValues(emptyValues());
-        setErrors({});
-        focusField("name");
-      } else {
-        router.push(PRODUCT_ROUTES.list);
-      }
-    }, 400);
+    if (isSubmitting) return;
+    void handleSubmit(
+      async (data) => {
+        await onSubmit?.(data, andNew);
+      },
+      (found) => {
+        focusFirstError(found);
+        toast.error("راجع الحقول المطلوبة");
+      },
+    )();
   }
 
   useHotkey(PRODUCT_FORM_SHORTCUTS.save.match, () => submit(false));
   useHotkey(PRODUCT_FORM_SHORTCUTS.saveAndNew.match, () => submit(true));
 
-  const invalid = (field: FormField) => Boolean(errors[field]);
+  const invalid = (field: keyof typeof FIELD_IDS) => Boolean(errors[field]);
+  const unitsMessage =
+    errors.extraUnits?.root?.message ?? errors.extraUnits?.message;
 
   return (
     <form
@@ -233,7 +222,6 @@ export function ProductForm({ product }: ProductFormProps) {
         </p>
       </header>
 
-      {/* ---------- البيانات الأساسية ---------- */}
       <section className="space-y-4 border bg-card p-4">
         <h2 className="text-sm font-semibold">البيانات الأساسية</h2>
 
@@ -241,15 +229,14 @@ export function ProductForm({ product }: ProductFormProps) {
           <Label htmlFor="pf-name">اسم الصنف *</Label>
           <Input
             id="pf-name"
-            value={values.name}
-            onChange={(event) => edit("name", event.target.value, "name")}
+            {...register("name")}
             aria-invalid={invalid("name")}
             aria-describedby="pf-name-error"
             autoComplete="off"
             autoFocus={!isEditing}
             placeholder="مثال: أرز مصري 1 كجم"
           />
-          <FieldError id="pf-name-error" message={errors.name} />
+          <FieldError id="pf-name-error" message={errors.name?.message} />
         </div>
 
         <div className="space-y-1.5">
@@ -262,10 +249,7 @@ export function ProductForm({ product }: ProductFormProps) {
               />
               <Input
                 id="pf-barcode"
-                value={values.barcode}
-                onChange={(event) =>
-                  edit("barcode", event.target.value, "barcode")
-                }
+                {...register("barcode")}
                 aria-invalid={invalid("barcode")}
                 aria-describedby="pf-barcode-error"
                 autoComplete="off"
@@ -277,14 +261,14 @@ export function ProductForm({ product }: ProductFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => edit("barcode", generateBarcode(), "barcode")}
+              onClick={() => setField("barcode", generateBarcode())}
               className="gap-2 font-normal"
             >
               <IconSparkles className="size-4" />
               توليد
             </Button>
           </div>
-          <FieldError id="pf-barcode-error" message={errors.barcode} />
+          <FieldError id="pf-barcode-error" message={errors.barcode?.message} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -294,7 +278,8 @@ export function ProductForm({ product }: ProductFormProps) {
               items={categoryItems}
               value={values.category || NO_CATEGORY}
               onValueChange={(next) => {
-                if (next) patch({ category: next === NO_CATEGORY ? "" : next });
+                if (next)
+                  setField("category", next === NO_CATEGORY ? "" : next);
               }}
             >
               <SelectTrigger id="pf-category" className="w-full">
@@ -330,6 +315,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 ))}
               </SelectContent>
             </Select>
+            <FieldError id="pf-unit-error" message={errors.unit?.message} />
           </div>
         </div>
 
@@ -343,12 +329,11 @@ export function ProductForm({ product }: ProductFormProps) {
           <Switch
             id="pf-decimal"
             checked={values.allowDecimal}
-            onCheckedChange={(checked) => patch({ allowDecimal: checked })}
+            onCheckedChange={(checked) => setField("allowDecimal", checked)}
           />
         </div>
       </section>
 
-      {/* ---------- الأسعار ---------- */}
       <section className="space-y-4 border bg-card p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold">الأسعار</h2>
@@ -362,17 +347,17 @@ export function ProductForm({ product }: ProductFormProps) {
               id="pf-cost"
               dir="ltr"
               inputMode="decimal"
-              value={values.costPrice}
-              onChange={(event) =>
-                edit("costPrice", event.target.value, "costPrice")
-              }
+              {...register("costPrice")}
               aria-invalid={invalid("costPrice")}
               aria-describedby="pf-cost-error"
               autoComplete="off"
               placeholder="0"
               className="font-mono"
             />
-            <FieldError id="pf-cost-error" message={errors.costPrice} />
+            <FieldError
+              id="pf-cost-error"
+              message={errors.costPrice?.message}
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -381,17 +366,17 @@ export function ProductForm({ product }: ProductFormProps) {
               id="pf-sale"
               dir="ltr"
               inputMode="decimal"
-              value={values.salePrice}
-              onChange={(event) =>
-                edit("salePrice", event.target.value, "salePrice")
-              }
+              {...register("salePrice")}
               aria-invalid={invalid("salePrice")}
               aria-describedby="pf-sale-error"
               autoComplete="off"
               placeholder="0"
               className="font-mono"
             />
-            <FieldError id="pf-sale-error" message={errors.salePrice} />
+            <FieldError
+              id="pf-sale-error"
+              message={errors.salePrice?.message}
+            />
           </div>
         </div>
 
@@ -419,7 +404,6 @@ export function ProductForm({ product }: ProductFormProps) {
         </div>
       </section>
 
-      {/* ---------- المخزون ---------- */}
       <section className="space-y-4 border bg-card p-4">
         <h2 className="text-sm font-semibold">المخزون</h2>
 
@@ -430,17 +414,14 @@ export function ProductForm({ product }: ProductFormProps) {
               id="pf-min"
               dir="ltr"
               inputMode="decimal"
-              value={values.minStock}
-              onChange={(event) =>
-                edit("minStock", event.target.value, "minStock")
-              }
+              {...register("minStock")}
               aria-invalid={invalid("minStock")}
               aria-describedby="pf-min-error"
               autoComplete="off"
               placeholder="0"
               className="font-mono"
             />
-            <FieldError id="pf-min-error" message={errors.minStock} />
+            <FieldError id="pf-min-error" message={errors.minStock?.message} />
           </div>
 
           {!isEditing && (
@@ -450,17 +431,17 @@ export function ProductForm({ product }: ProductFormProps) {
                 id="pf-opening"
                 dir="ltr"
                 inputMode="decimal"
-                value={values.openingStock}
-                onChange={(event) =>
-                  edit("openingStock", event.target.value, "openingStock")
-                }
+                {...register("openingStock")}
                 aria-invalid={invalid("openingStock")}
                 aria-describedby="pf-opening-error"
                 autoComplete="off"
                 placeholder="0"
                 className="font-mono"
               />
-              <FieldError id="pf-opening-error" message={errors.openingStock} />
+              <FieldError
+                id="pf-opening-error"
+                message={errors.openingStock?.message}
+              />
             </div>
           )}
         </div>
@@ -472,7 +453,6 @@ export function ProductForm({ product }: ProductFormProps) {
         )}
       </section>
 
-      {/* ---------- وحدات إضافية ---------- */}
       <section className="space-y-3 border bg-card p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="space-y-0.5">
@@ -485,68 +465,91 @@ export function ProductForm({ product }: ProductFormProps) {
 
         {values.extraUnits.length > 0 && (
           <ul className="space-y-2">
-            {values.extraUnits.map((unit, index) => (
-              <li
-                key={unit.id}
-                className="grid grid-cols-2 gap-2 border p-2.5 sm:grid-cols-[1fr_5rem_1fr_6rem_auto]"
-              >
-                <Input
-                  id={`pf-units-name-${index}`}
-                  aria-label="اسم الوحدة"
-                  value={unit.name}
-                  onChange={(event) =>
-                    updateUnit(unit.id, { name: event.target.value })
-                  }
-                  placeholder="الاسم"
-                />
-                <Input
-                  aria-label={`عدد ${values.unit} في الوحدة`}
-                  dir="ltr"
-                  inputMode="decimal"
-                  value={unit.factor}
-                  onChange={(event) =>
-                    updateUnit(unit.id, { factor: event.target.value })
-                  }
-                  placeholder="العدد"
-                  className="font-mono"
-                />
-                <Input
-                  aria-label="باركود الوحدة"
-                  dir="ltr"
-                  value={unit.barcode}
-                  onChange={(event) =>
-                    updateUnit(unit.id, { barcode: event.target.value })
-                  }
-                  placeholder="الباركود"
-                  className="font-mono"
-                />
-                <Input
-                  aria-label="سعر بيع الوحدة"
-                  dir="ltr"
-                  inputMode="decimal"
-                  value={unit.salePrice}
-                  onChange={(event) =>
-                    updateUnit(unit.id, { salePrice: event.target.value })
-                  }
-                  placeholder="السعر"
-                  className="font-mono"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`حذف الوحدة ${unit.name || ""}`}
-                  onClick={() => removeUnit(unit.id)}
-                  className="text-destructive"
+            {values.extraUnits.map((unit, index) => {
+              const rowErrors = errors.extraUnits?.[index];
+              const rowMessage =
+                rowErrors?.name?.message ??
+                rowErrors?.factor?.message ??
+                rowErrors?.barcode?.message ??
+                rowErrors?.salePrice?.message;
+              return (
+                <li
+                  key={unit.id}
+                  className="grid grid-cols-2 gap-2 border p-2.5 sm:grid-cols-[1fr_5rem_1fr_6rem_auto]"
                 >
-                  <IconTrash />
-                </Button>
-              </li>
-            ))}
+                  <Input
+                    id={`pf-unit-name-${index}`}
+                    aria-label="اسم الوحدة"
+                    aria-invalid={Boolean(rowErrors?.name)}
+                    value={unit.name}
+                    onChange={(event) =>
+                      updateUnit(index, "name", event.target.value)
+                    }
+                    placeholder="الاسم"
+                  />
+                  <Input
+                    id={`pf-unit-factor-${index}`}
+                    aria-label={`عدد ${values.unit} في الوحدة`}
+                    aria-invalid={Boolean(rowErrors?.factor)}
+                    dir="ltr"
+                    inputMode="decimal"
+                    value={unit.factor}
+                    onChange={(event) =>
+                      updateUnit(index, "factor", event.target.value)
+                    }
+                    placeholder="العدد"
+                    className="font-mono"
+                  />
+                  <Input
+                    id={`pf-unit-barcode-${index}`}
+                    aria-label="باركود الوحدة"
+                    aria-invalid={Boolean(rowErrors?.barcode)}
+                    dir="ltr"
+                    value={unit.barcode}
+                    onChange={(event) =>
+                      updateUnit(index, "barcode", event.target.value)
+                    }
+                    placeholder="الباركود"
+                    className="font-mono"
+                  />
+                  <Input
+                    id={`pf-unit-salePrice-${index}`}
+                    aria-label="سعر بيع الوحدة"
+                    aria-invalid={Boolean(rowErrors?.salePrice)}
+                    dir="ltr"
+                    inputMode="decimal"
+                    value={unit.salePrice}
+                    onChange={(event) =>
+                      updateUnit(index, "salePrice", event.target.value)
+                    }
+                    placeholder="السعر"
+                    className="font-mono"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`حذف الوحدة ${unit.name || ""}`}
+                    onClick={() => removeUnit(unit.id)}
+                    className="text-destructive"
+                  >
+                    <IconTrash />
+                  </Button>
+                  {rowMessage && (
+                    <p
+                      role="alert"
+                      className="col-span-full text-xs text-destructive"
+                    >
+                      {rowMessage}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
 
-        <FieldError id="pf-units-error" message={errors.units} />
+        <FieldError id="pf-units-error" message={unitsMessage} />
 
         {values.extraUnits.length < MAX_EXTRA_UNITS && (
           <div className="flex flex-wrap gap-1.5">
@@ -577,7 +580,6 @@ export function ProductForm({ product }: ProductFormProps) {
         )}
       </section>
 
-      {/* ---------- الحالة ---------- */}
       <section className="flex items-center justify-between gap-3 border bg-card p-4">
         <div className="space-y-0.5">
           <Label htmlFor="pf-active">مفعّل في الكاشير</Label>
@@ -588,11 +590,10 @@ export function ProductForm({ product }: ProductFormProps) {
         <Switch
           id="pf-active"
           checked={values.isActive}
-          onCheckedChange={(checked) => patch({ isActive: checked })}
+          onCheckedChange={(checked) => setField("isActive", checked)}
         />
       </section>
 
-      {/* ---------- الأزرار ---------- */}
       <div
         className={cn(
           "sticky bottom-0 -mx-1 flex flex-col-reverse gap-2 border-t bg-background/95 px-1 py-3 backdrop-blur sm:flex-row sm:justify-end",
@@ -613,7 +614,7 @@ export function ProductForm({ product }: ProductFormProps) {
             type="button"
             variant="outline"
             size="lg"
-            disabled={saving}
+            disabled={isSubmitting}
             onClick={() => submit(true)}
             className="gap-2 font-normal"
           >
@@ -626,7 +627,7 @@ export function ProductForm({ product }: ProductFormProps) {
         <Button
           type="submit"
           size="lg"
-          disabled={saving}
+          disabled={isSubmitting}
           className="gap-2 px-5"
         >
           {isEditing ? "حفظ التعديلات" : "حفظ الصنف"}

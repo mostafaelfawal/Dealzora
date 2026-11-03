@@ -60,5 +60,7 @@ export const duplicateProduct = async (id: string) =>
   toProduct((await api.post<ProductDto>(`/products/${id}/duplicate`)).data);
 
 export const deleteProduct = async (id: string, baseVersion: number) => {
-  await api.delete(`/products/${id}`, { params: { base_version: baseVersion } });
+  await api.delete(`/products/${id}`, {
+    params: { base_version: baseVersion },
+  });
 };

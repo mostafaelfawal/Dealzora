@@ -18,7 +18,7 @@ def require_cashier(actor: Annotated[Actor, Depends(get_actor)]) -> Actor:
 
 
 def require_admin(actor: Annotated[Actor, Depends(get_actor)]) -> Actor:
-    if actor.role is not Role.ADMIN:
+    if actor.role is not Role.MANAGER:
         raise ForbiddenError("forbidden", "هذه العملية للمدير فقط")
     return actor
 

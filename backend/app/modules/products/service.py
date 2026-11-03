@@ -62,7 +62,7 @@ class ProductService:
 
     @property
     def is_admin(self) -> bool:
-        return self.actor.role is Role.ADMIN
+        return self.actor.role is Role.MANAGER
 
     # ================= قراءة =================
     def list_products(self, query: ProductListQuery) -> ProductListOut:
