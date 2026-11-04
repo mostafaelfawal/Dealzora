@@ -1,30 +1,12 @@
-"""جداول SQLAlchemy للمستخدمين والجلسات."""
+"""جدول الجلسات. جدول المستخدمين في modules/users/model.py."""
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, text
+from sqlalchemy import DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.base import Base, SyncMixin, utcnow
-
-from .constants import MAX_USERNAME_LEN
-
-
-class User(SyncMixin, Base):
-    __tablename__ = "users"
-
-    username: Mapped[str] = mapped_column(String(MAX_USERNAME_LEN))  # مُطبَّع (lowercase)
-    password_hash: Mapped[str] = mapped_column(String(255))  # Argon2id
-    role: Mapped[str] = mapped_column(String(16))
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    failed_attempts: Mapped[int] = mapped_column(Integer, default=0)
-    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-    __table_args__ = (
-        Index("uq_users_username_live", "username", unique=True, sqlite_where=text("deleted_at IS NULL")),
-    )
+from app.core.base import Base, utcnow
+from app.modules.users.model import User  # noqa: F401  (يضمن تسجيل users قبل الـ FK)
 
 
 class AuthSession(Base):

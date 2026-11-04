@@ -37,7 +37,7 @@ export function PosTopBar() {
           variant="ghost"
           size="icon-lg"
           nativeButton={false}
-          render={<Link href="/main/dashboard" />}
+          render={<Link href="/admin/dashboard" />}
           aria-label="خروج من الكاشير"
         >
           <IconArrowRight className="size-5" />

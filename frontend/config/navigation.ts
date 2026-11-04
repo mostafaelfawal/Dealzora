@@ -30,27 +30,27 @@ export const NAVIGATION: NavGroup[] = [
     items: [
       {
         title: "الرئيسية",
-        href: "/main/dashboard",
+        href: "/admin/dashboard",
         icon: IconLayoutDashboard,
       },
-      { title: "الفواتير", href: "/main/sales", icon: IconReceipt },
-      { title: "المرتجعات", href: "/main/returns", icon: IconReceiptRefund },
-      { title: "الورديات", href: "/main/shifts", icon: IconClockHour4 },
+      { title: "الفواتير", href: "/admin/sales", icon: IconReceipt },
+      { title: "المرتجعات", href: "/admin/returns", icon: IconReceiptRefund },
+      { title: "الورديات", href: "/admin/shifts", icon: IconClockHour4 },
     ],
   },
   {
     id: "stock",
     label: "المخزن",
     items: [
-      { title: "المنتجات", href: "/main/products", icon: IconPackage },
+      { title: "المنتجات", href: "/admin/products", icon: IconPackage },
       {
         title: "المخزون",
-        href: "/main/inventory",
+        href: "/admin/inventory",
         icon: IconBuildingWarehouse,
       },
       {
         title: "المشتريات",
-        href: "/main/purchases",
+        href: "/admin/purchases",
         icon: IconTruckDelivery,
       },
     ],
@@ -59,25 +59,25 @@ export const NAVIGATION: NavGroup[] = [
     id: "accounts",
     label: "الحسابات",
     items: [
-      { title: "العملاء", href: "/main/customers", icon: IconUsers },
+      { title: "العملاء", href: "/admin/customers", icon: IconUsers },
       {
         title: "الموردين",
-        href: "/main/suppliers",
+        href: "/admin/suppliers",
         icon: IconBuildingStore,
       },
       {
         title: "المصروفات",
-        href: "/main/expenses",
+        href: "/admin/expenses",
         icon: IconCash,
       },
       {
         title: "الخزنة",
-        href: "/main/treasury",
+        href: "/admin/treasury",
         icon: IconBuildingBank,
       },
       {
         title: "التقارير",
-        href: "/main/reports",
+        href: "/admin/reports",
         icon: IconChartBar,
       },
     ],
@@ -88,17 +88,17 @@ export const NAVIGATION: NavGroup[] = [
     items: [
       {
         title: "المستخدمين",
-        href: "/main/users",
+        href: "/admin/users",
         icon: IconUserShield,
       },
       {
         title: "سجل العمليات",
-        href: "/main/audit-log",
+        href: "/admin/audit-log",
         icon: IconHistory,
       },
       {
         title: "الإعدادات",
-        href: "/main/settings",
+        href: "/admin/settings",
         icon: IconSettings,
       },
     ],

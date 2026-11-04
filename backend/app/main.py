@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
-from app.core.migrations import run_migrations
+from app.core.init_db import init_db
 
 def prepare_data_dir(db_path: str) -> None:
     """ينشئ مجلد Dealzora ويقصر الوصول عليك + SYSTEM + Administrators (ويندوز)."""
@@ -33,7 +33,7 @@ def prepare_data_dir(db_path: str) -> None:
 async def lifespan(_: FastAPI):
     settings = get_settings()
     prepare_data_dir(settings.db_path)
-    run_migrations()
+    init_db()
     yield
 
 def create_app() -> FastAPI:

@@ -49,7 +49,7 @@ export const AUTH_EXPIRED_EVENT = "dz:auth-expired";
 
 // ---------- Write permit (من Rust بعد فحص الترخيص) ----------
 const WRITE_METHODS = new Set(["post", "put", "patch", "delete"]);
-const NO_PERMIT_PATHS = ["/auth/"]; // login/logout/setup لا تحتاج تصريح كتابة
+const NO_PERMIT_PATHS = ["/auth/", "/users/setup"]; // login/logout/setup لا تحتاج تصريح كتابة
 
 async function getWritePermit(): Promise<string | null> {
   return (

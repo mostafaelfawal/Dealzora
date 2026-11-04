@@ -2,7 +2,9 @@ from alembic import context
 
 import app.core.audit  # noqa: F401
 import app.core.outbox  # noqa: F401
-import app.modules.products  # noqa: F401
+import app.modules.users.model  # noqa: F401
+import app.modules.auth.model  # noqa: F401
+import app.modules.products.model  # noqa: F401
 from app.core.base import Base
 from app.core.database import get_engine
 
