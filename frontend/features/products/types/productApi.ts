@@ -45,3 +45,32 @@ export interface CategoryDto {
   id: string;
   name: string;
 }
+
+export interface ProductUnitPayload {
+  id?: string;
+  name: string;
+  factor: number; // × 1000
+  barcode: string | null;
+  sale_price: number | null; // قروش
+}
+
+interface ProductPayloadBase {
+  name: string;
+  barcode: string | null;
+  category_id: string | null;
+  unit: string;
+  allow_decimal: boolean;
+  cost_price: number; // قروش
+  sale_price: number; // قروش
+  min_stock: number; // × 1000
+  is_active: boolean;
+  extra_units: ProductUnitPayload[];
+}
+
+export interface ProductCreatePayload extends ProductPayloadBase {
+  opening_stock: number; // × 1000
+}
+
+export interface ProductUpdatePayload extends ProductPayloadBase {
+  base_version: number;
+}

@@ -76,28 +76,3 @@ export interface ProductFilters {
   stock: StockFilter;
   sort: SortKey;
 }
-
-/** صف وحدة إضافية داخل الفورم (كل القيم نصوص لحد ما نتحقق منها). */
-export interface UnitFormRow {
-  id: string;
-  name: string;
-  factor: string;
-  barcode: string;
-  salePrice: string;
-}
-
-/** قيم الفورم نصوص عمداً، فالمستخدم يقدر يكتب بحرية والتحقق بيحصل لاحقاً. */
-export interface ProductFormValues {
-  name: string;
-  barcode: string;
-  category: string;
-  unit: string;
-  allowDecimal: boolean;
-  costPrice: string;
-  salePrice: string;
-  minStock: string;
-  /** رصيد افتتاحي (عند الإضافة فقط). */
-  openingStock: string;
-  isActive: boolean;
-  extraUnits: UnitFormRow[];
-}

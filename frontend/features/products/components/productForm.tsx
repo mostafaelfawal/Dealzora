@@ -2,12 +2,14 @@
 
 import {
   IconBarcode,
+  IconDeviceFloppy,
+  IconLoader2,
   IconPlus,
   IconSparkles,
   IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { FieldErrors, Path, PathValue } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -87,7 +89,8 @@ function focusFirstError(errors: FieldErrors<ProductSchemaType>) {
 
     if (field === "extraUnits") {
       const rows = errors.extraUnits as unknown as
-        Array<Partial<Record<UnitKey, unknown>> | undefined> | undefined;
+        | Array<Partial<Record<UnitKey, unknown>> | undefined>
+        | undefined;
       const index = Array.isArray(rows) ? rows.findIndex(Boolean) : -1;
       const key =
         index >= 0
@@ -112,15 +115,17 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 }
 
 export function ProductForm() {
-  const { form, productId, onSubmit } = useProductFormContext();
+  const { form, productId, onSubmit, isSaving } = useProductFormContext();
   const {
     register,
     watch,
     setValue,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitted },
+    formState: { errors, isSubmitted },
   } = form;
-
+  const [pendingAction, setPendingAction] = useState<"save" | "saveAndNew">(
+    "save",
+  );
   const isEditing = Boolean(productId);
 
   const { data: categories = [] } = useGetCategories();
@@ -183,11 +188,10 @@ export function ProductForm() {
   }
 
   function submit(andNew: boolean) {
-    if (isSubmitting) return;
+    if (isSaving) return;
+    setPendingAction(andNew ? "saveAndNew" : "save");
     void handleSubmit(
-      async (data) => {
-        await onSubmit?.(data, andNew);
-      },
+      (data) => onSubmit(data, andNew),
       (found) => {
         focusFirstError(found);
         toast.error("راجع الحقول المطلوبة");
@@ -593,7 +597,6 @@ export function ProductForm() {
           onCheckedChange={(checked) => setField("isActive", checked)}
         />
       </section>
-
       <div
         className={cn(
           "sticky bottom-0 -mx-1 flex flex-col-reverse gap-2 border-t bg-background/95 px-1 py-3 backdrop-blur sm:flex-row sm:justify-end",
@@ -603,37 +606,61 @@ export function ProductForm() {
           type="button"
           variant="outline"
           size="lg"
+          disabled={isSaving}
           nativeButton={false}
           render={<Link href={PRODUCT_ROUTES.list} />}
           className="font-normal sm:me-auto"
         >
           إلغاء
         </Button>
+
         {!isEditing && (
           <Button
             type="button"
             variant="outline"
             size="lg"
-            disabled={isSubmitting}
+            disabled={isSaving}
+            aria-busy={isSaving && pendingAction === "saveAndNew"}
             onClick={() => submit(true)}
             className="gap-2 font-normal"
           >
-            حفظ وإضافة آخر
-            <ShortcutBadge className="hidden lg:inline-flex">
-              {PRODUCT_FORM_SHORTCUTS.saveAndNew.label}
-            </ShortcutBadge>
+            {isSaving && pendingAction === "saveAndNew" ? (
+              <>
+                <IconLoader2 className="size-4 animate-spin" aria-hidden />
+                جارٍ الحفظ…
+              </>
+            ) : (
+              <>
+                حفظ وإضافة آخر
+                <ShortcutBadge className="hidden lg:inline-flex">
+                  {PRODUCT_FORM_SHORTCUTS.saveAndNew.label}
+                </ShortcutBadge>
+              </>
+            )}
           </Button>
         )}
+
         <Button
           type="submit"
           size="lg"
-          disabled={isSubmitting}
+          disabled={isSaving}
+          aria-busy={isSaving && pendingAction === "save"}
           className="gap-2 px-5"
         >
-          {isEditing ? "حفظ التعديلات" : "حفظ الصنف"}
-          <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-            {PRODUCT_FORM_SHORTCUTS.save.label}
-          </ShortcutBadge>
+          {isSaving && pendingAction === "save" ? (
+            <>
+              <IconLoader2 className="size-4 animate-spin" aria-hidden />
+              جارٍ الحفظ…
+            </>
+          ) : (
+            <>
+              <IconDeviceFloppy className="size-4" aria-hidden />
+              {isEditing ? "حفظ التعديلات" : "حفظ الصنف"}
+              <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+                {PRODUCT_FORM_SHORTCUTS.save.label}
+              </ShortcutBadge>
+            </>
+          )}
         </Button>
       </div>
     </form>

@@ -11,9 +11,11 @@ import type {
 } from "../types/product";
 import type {
   CategoryDto,
+  ProductCreatePayload,
   ProductDto,
   ProductListDto,
   ProductsSummaryDto,
+  ProductUpdatePayload,
 } from "../types/productApi";
 
 /** أسماء الـ query params كما يتوقعها الـ backend. القيم undefined لا تُرسل. */
@@ -46,6 +48,12 @@ export const getProductsSummary = async (): Promise<ProductsSummary> =>
 
 export const getCategories = async (): Promise<ProductCategory[]> =>
   (await api.get<CategoryDto[]>("/products/categories")).data.map(toCategory);
+
+export const createProduct = async (payload: ProductCreatePayload) =>
+  toProduct((await api.post<ProductDto>("/products", payload)).data);
+
+export const updateProduct = async (id: string, payload: ProductUpdatePayload) =>
+  toProduct((await api.put<ProductDto>(`/products/${id}`, payload)).data);
 
 export const toggleProductActive = async (id: string, baseVersion: number) =>
   toProduct(
