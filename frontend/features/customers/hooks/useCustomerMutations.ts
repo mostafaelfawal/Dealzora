@@ -5,6 +5,8 @@ import { extractErrorMessage } from "@/lib/errors";
 import { formatMoneyText } from "@/lib/format";
 
 import {
+  bulkDeactivateCustomers,
+  bulkDeleteCustomers,
   collectPayment,
   deleteCustomer,
   saveCustomer,
@@ -12,6 +14,7 @@ import {
 } from "../api/customers.api";
 import { customerKeys } from "../config/customerQueryKeys";
 import type { CustomerInput, PaymentInput } from "../types/customer";
+import { showBulkResult, type BulkItem } from "@/lib/bulk";
 
 function useRefresh() {
   const queryClient = useQueryClient();
@@ -78,5 +81,26 @@ export function useCollectPayment() {
     },
     onError: (error) =>
       toast.error(extractErrorMessage(error, "تعذّر تسجيل الدفعة")),
+  });
+}
+
+export function useBulkDeleteCustomers() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (items: BulkItem[]) => bulkDeleteCustomers(items),
+    onSuccess: (result) => showBulkResult(result, "تم حذف", "عميل"),
+    onError: (error) => toast.error(extractErrorMessage(error, "تعذّر الحذف")),
+    onSettled: () => void refresh(),
+  });
+}
+
+export function useBulkDeactivateCustomers() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (items: BulkItem[]) => bulkDeactivateCustomers(items),
+    onSuccess: (result) => showBulkResult(result, "تم تعطيل", "عميل"),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
+    onSettled: () => void refresh(),
   });
 }

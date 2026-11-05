@@ -11,6 +11,7 @@ MAX_BARCODE_LEN = 32
 MAX_UNIT_NAME_LEN = 30
 MAX_NOTE_LEN = 300
 MAX_EXTRA_UNITS = 5  # TODO: طابقها مع MAX_EXTRA_UNITS في frontend/config/productOptions
+MAX_BULK_ITEMS = 200  # أقصى عدد عناصر في طلب جماعي واحد
 MAX_MONEY = 1_000_000_000  # بالقروش (10 مليون جنيه)
 MAX_QTY = 1_000_000 * QTY_SCALE
 DEFAULT_PAGE_SIZE = 50

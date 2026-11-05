@@ -69,10 +69,3 @@ export interface ProductsSummary {
   /** بالجنيه بسعر الشراء، وnull للكاشير. */
   stockValue: number | null;
 }
-
-export interface ProductFilters {
-  query: string;
-  category: string;
-  stock: StockFilter;
-  sort: SortKey;
-}

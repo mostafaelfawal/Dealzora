@@ -11,6 +11,7 @@ from .constants import (
     MAX_NOTE_LEN,
     MAX_PAGE_SIZE,
     MAX_QTY,
+    MAX_BULK_ITEMS
 )
 from .schema_validation import (
     Money,
@@ -206,3 +207,27 @@ class LedgerQuery(BaseModel):
 
     page: int = Field(1, ge=1)
     page_size: int = Field(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE)
+
+# ================= العمليات الجماعية =================
+class BulkItemIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    base_version: int = Field(ge=1)
+
+
+class BulkIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[BulkItemIn] = Field(min_length=1, max_length=MAX_BULK_ITEMS)
+
+
+class BulkFailureOut(BaseModel):
+    id: str
+    code: str
+    message: str
+
+
+class BulkResultOut(BaseModel):
+    succeeded: list[str]
+    failed: list[BulkFailureOut]

@@ -17,6 +17,7 @@ import type {
   ProductsSummaryDto,
   ProductUpdatePayload,
 } from "../types/productApi";
+import { BulkItem, BulkResultDto, toBulkPayload } from "@/lib/bulk";
 
 /** أسماء الـ query params كما يتوقعها الـ backend. القيم undefined لا تُرسل. */
 export interface GetProductsParams {
@@ -52,8 +53,10 @@ export const getCategories = async (): Promise<ProductCategory[]> =>
 export const createProduct = async (payload: ProductCreatePayload) =>
   toProduct((await api.post<ProductDto>("/products", payload)).data);
 
-export const updateProduct = async (id: string, payload: ProductUpdatePayload) =>
-  toProduct((await api.put<ProductDto>(`/products/${id}`, payload)).data);
+export const updateProduct = async (
+  id: string,
+  payload: ProductUpdatePayload,
+) => toProduct((await api.put<ProductDto>(`/products/${id}`, payload)).data);
 
 export const toggleProductActive = async (id: string, baseVersion: number) =>
   toProduct(
@@ -63,6 +66,19 @@ export const toggleProductActive = async (id: string, baseVersion: number) =>
       })
     ).data,
   );
+
+
+export const bulkDeleteProducts = async (items: BulkItem[]) =>
+  (await api.post<BulkResultDto>("/products/bulk-delete", toBulkPayload(items)))
+    .data;
+
+export const bulkDeactivateProducts = async (items: BulkItem[]) =>
+  (
+    await api.post<BulkResultDto>(
+      "/products/bulk-deactivate",
+      toBulkPayload(items),
+    )
+  ).data;
 
 export const duplicateProduct = async (id: string) =>
   toProduct((await api.post<ProductDto>(`/products/${id}/duplicate`)).data);

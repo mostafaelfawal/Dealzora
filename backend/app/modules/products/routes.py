@@ -13,18 +13,20 @@ from app.core.security import Actor, get_actor
 
 from .middleware import require_admin, require_admin_write, require_cashier
 from .schema import (
-BarcodeLookupOut,
-CategoryOut,
-LedgerQuery,
-ProductCreate,
-ProductListOut,
-ProductListQuery,
-ProductOut,
-ProductsSummaryOut,
-ProductUpdate,
-StockAdjustIn,
-StockLedgerOut,
-StockMovementOut,
+    BarcodeLookupOut,
+    CategoryOut,
+    LedgerQuery,
+    ProductCreate,
+    ProductListOut,
+    ProductListQuery,
+    ProductOut,
+    ProductsSummaryOut,
+    ProductUpdate,
+    StockAdjustIn,
+    StockLedgerOut,
+    StockMovementOut,
+    BulkIn,
+    BulkResultOut
 )
 from .service import ProductService
 
@@ -83,10 +85,26 @@ dependencies=[Depends(require_admin_write)],
 def create_product(data: ProductCreate, service: Service):
     return service.create_product(data)
 
+@router.post(
+    "/bulk-delete",
+    response_model=BulkResultOut,
+    dependencies=[Depends(require_admin_write)]
+)
+def bulk_delete_products(data: BulkIn, service: Service):
+    return service.bulk_delete(data)
+
+@router.post(
+    "/bulk-deactivate",
+    response_model=BulkResultOut,
+    dependencies=[Depends(require_admin_write)],
+)
+def bulk_deactivate_products(data: BulkIn, service: Service):
+    return service.bulk_deactivate(data)
 
 @router.put("/{product_id}", response_model=ProductOut, dependencies=[Depends(require_admin_write)])
 def update_product(product_id: str, data: ProductUpdate, service: Service):
     return service.update_product(product_id, data)
+
 
 
 @router.post(

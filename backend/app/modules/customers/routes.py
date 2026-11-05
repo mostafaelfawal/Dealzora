@@ -22,6 +22,8 @@ from .schema import (
     PaymentIn,
     StatementOut,
     StatementQuery,
+    BulkIn,
+    BulkResultOut,
 )
 from .service import CustomerService
 
@@ -76,6 +78,14 @@ def customer_statement(
 def create_customer(data: CustomerCreate, service: Service):
     return service.create_customer(data)
 
+@router.post("/bulk-delete", response_model=BulkResultOut, dependencies=[Depends(require_admin_write)])
+def bulk_delete_customers(data: BulkIn, service: Service):
+    return service.bulk_delete(data)
+
+
+@router.post("/bulk-deactivate", response_model=BulkResultOut, dependencies=[Depends(require_admin_write)])
+def bulk_deactivate_customers(data: BulkIn, service: Service):
+    return service.bulk_deactivate(data)
 
 @router.put("/{customer_id}", response_model=CustomerOut, dependencies=[Depends(require_admin_write)])
 def update_customer(customer_id: str, data: CustomerUpdate, service: Service):

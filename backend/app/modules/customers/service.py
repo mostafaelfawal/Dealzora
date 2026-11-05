@@ -48,9 +48,13 @@ from .schema import (
     StatementEntryOut,
     StatementOut,
     StatementQuery,
+    BulkFailureOut,
+    BulkIn,
+    BulkItemIn,
+    BulkResultOut
 )
 from .types import CustomerFilters, CustomerSort, LedgerType
-
+from collections.abc import Callable
 
 def _err(exc: type[AppError], code: CustomerError, **details) -> AppError:
     return exc(code=code.value, message=ERROR_MESSAGES[code], details=details or None)
@@ -158,21 +162,52 @@ class CustomerService:
         self._commit()
         return self._to_out(customer)
 
-    def toggle_active(self, customer_id: str, base_version: int) -> CustomerOut:
-        customer = self._get_or_404(customer_id)
+    def _set_active(self, customer: Customer, active: bool, base_version: int) -> None:
         self._check_version(customer, base_version)
-
         was_active = customer.is_active
-        customer.is_active = not was_active
+        customer.is_active = active
         customer.mark_modified()
         self._audit(
-            customer,
-            "toggle_active",
-            {"is_active": {"from": was_active, "to": customer.is_active}},
+            customer, "toggle_active", {"is_active": {"from": was_active, "to": active}}
         )
         self._enqueue(customer, base_version=base_version)
         self._commit()
+
+    def toggle_active(self, customer_id: str, base_version: int) -> CustomerOut:
+        customer = self._get_or_404(customer_id)
+        self._set_active(customer, not customer.is_active, base_version)
         return self._to_out(customer)
+
+    # ================= عمليات جماعية =================
+    def _run_bulk(self, data: BulkIn, action: Callable[[BulkItemIn], None]) -> BulkResultOut:
+        """كل عنصر في معاملة مستقلة، وفشل عنصر لا يوقف الباقي."""
+        succeeded: list[str] = []
+        failed: list[BulkFailureOut] = []
+        seen: set[str] = set()
+        for item in data.items:
+            if item.id in seen:
+                continue
+            seen.add(item.id)
+            try:
+                action(item)
+                succeeded.append(item.id)
+            except AppError as exc:
+                self.session.rollback()
+                failed.append(BulkFailureOut(id=item.id, code=exc.code, message=exc.message))
+        return BulkResultOut(succeeded=succeeded, failed=failed)
+
+    def bulk_delete(self, data: BulkIn) -> BulkResultOut:
+        return self._run_bulk(
+            data, lambda item: self.delete_customer(item.id, item.base_version)
+        )
+
+    def bulk_deactivate(self, data: BulkIn) -> BulkResultOut:
+        def action(item: BulkItemIn) -> None:
+            customer = self._get_or_404(item.id)
+            if customer.is_active:  # المعطّل أصلاً = نجاح بدون تغيير
+                self._set_active(customer, False, item.base_version)
+
+        return self._run_bulk(data, action)
 
     def delete_customer(self, customer_id: str, base_version: int) -> None:
         customer = self._get_or_404(customer_id)

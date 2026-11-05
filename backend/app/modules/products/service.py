@@ -36,6 +36,7 @@ from .helper import (
 )
 from .model import Product, ProductUnit, StockMovement
 from .repository import ProductRepository
+from collections.abc import Callable
 from .schema import (
     BarcodeLookupOut,
     CategoryOut,
@@ -52,6 +53,10 @@ from .schema import (
     StockMovementOut,
     UnitIn,
     UnitOut,
+    BulkFailureOut,
+    BulkIn,
+    BulkItemIn,
+    BulkResultOut,
 )
 from .types import MovementType, ProductFilters, SortKey
 
@@ -70,6 +75,49 @@ class ProductService:
     def is_admin(self) -> bool:
         return self.actor.role is Role.MANAGER
 
+    @staticmethod
+    def _check_version(product: Product, base_version: int) -> None:
+        if base_version != product.version:
+            raise _err(
+                ConflictError,
+                ProductError.VERSION_CONFLICT,
+                current_version=product.version,
+            )
+
+    def _set_active(self, product: Product, active: bool, base_version: int) -> None:
+        self._check_version(product, base_version)
+        was_active = product.is_active
+        product.is_active = active
+        product.mark_modified()
+        self._audit(
+            product,
+            "toggle_active",
+            {"is_active": {"from": was_active, "to": active}}
+        )
+        self._enqueue(product, base_version=base_version)
+        self._commit()
+
+    def _run_bulk(
+        self, data: BulkIn, action: Callable[[BulkItemIn], None]
+    ) -> BulkResultOut:
+        """ينفّذ action لكل عنصر في معاملة مستقلة، وفشل عنصر لا يوقف الباقي."""
+        succeeded: list[str] = []
+        failed: list[BulkFailureOut] = []
+        seen: set[str] = set()
+        for item in data.items:
+            if item.id in seen:
+                continue
+            seen.add(item.id)
+            try:
+                action(item)
+                succeeded.append(item.id)
+            except AppError as exc:
+                self.session.rollback()
+                failed.append(
+                    BulkFailureOut(id=item.id, code=exc.code, message=exc.message)
+                )
+        return BulkResultOut(succeeded=succeeded, failed=failed)
+    
     # ================= قراءة =================
     def list_products(self, query: ProductListQuery) -> ProductListOut:
         if query.sort is SortKey.MARGIN_DESC and not self.is_admin:
@@ -218,24 +266,23 @@ class ProductService:
 
     def toggle_active(self, product_id: str, base_version: int) -> ProductOut:
         product = self._get_or_404(product_id)
-        if base_version != product.version:
-            raise _err(
-                ConflictError,
-                ProductError.VERSION_CONFLICT,
-                current_version=product.version,
-            )
-        was_active = product.is_active
-        product.is_active = not was_active
-        product.mark_modified()
-        self._audit(
-            product,
-            "toggle_active",
-            {"is_active": {"from": was_active, "to": product.is_active}},
-        )
-        self._enqueue(product, base_version=base_version)
-        self._commit()
+        self._set_active(product, not product.is_active, base_version)
         return self._to_out(product)
 
+    # ================= عمليات جماعية =================
+    def bulk_delete(self, data: BulkIn) -> BulkResultOut:
+        return self._run_bulk(
+            data, lambda item: self.delete_product(item.id, item.base_version)
+        )
+
+    def bulk_deactivate(self, data: BulkIn) -> BulkResultOut:
+        def action(item: BulkItemIn) -> None:
+            product = self._get_or_404(item.id)
+            if product.is_active: # المعطل اصلا = نجاح بدون تغيير
+                self._set_active(product, False, item.base_version)
+
+        return self._run_bulk(data, action)
+    
     def delete_product(self, product_id: str, base_version: int) -> None:
         product = self._get_or_404(product_id)
         if base_version != product.version:

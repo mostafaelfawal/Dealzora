@@ -1,6 +1,11 @@
 "use client";
 
-import { IconDownload, IconFileSpreadsheet, IconLoader2, IconPlus } from "@tabler/icons-react";
+import {
+  IconDownload,
+  IconFileSpreadsheet,
+  IconLoader2,
+  IconPlus,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,6 +29,7 @@ import { ProductsTable } from "./productsTable";
 import { ProductsToolbar } from "./productsToolbar";
 import useExportProducts from "../hooks/useExportProducts";
 import { toListParams } from "../lib/productList";
+import { PAGE_SIZES } from "../config/productOptions";
 
 export const PRODUCTS_SEARCH_ID = "products-search";
 
@@ -75,7 +81,55 @@ export function ProductsScreen() {
     onRemove: list.remove,
   };
 
+  const emptyAction = (
+    <Button
+      size="lg"
+      nativeButton={false}
+      render={<Link href={PRODUCT_ROUTES.new} />}
+      className="gap-2"
+    >
+      <IconPlus />
+      صنف جديد
+      <ShortcutBadge className="border-primary-foreground/30 text-primary-foreground/80">
+        {PRODUCTS_SHORTCUTS.newProduct.label}
+      </ShortcutBadge>
+    </Button>
+  );
+
   function renderBody() {
+    // الجدول يعرض التحميل والخطأ والفراغ بنفسه.
+    if (view === "table") {
+      return (
+        <ProductsTable
+          products={list.products}
+          isLoading={list.isPending}
+          isFetching={list.isFetching}
+          isError={list.isError}
+          errorMessage={extractErrorMessage(list.error, "تعذّر تحميل الأصناف")}
+          onRetry={() => list.refetch()}
+          isFiltered={list.filtered}
+          onClearFilters={list.clearFilters}
+          emptyAction={emptyAction}
+          pagination={{
+            total: list.total,
+            page: list.page,
+            pageSize: list.filters.pageSize,
+            onPageChange: (page) => list.patchFilters({ page }),
+            onPageSizeChange: (pageSize) => list.patchFilters({ pageSize }),
+            pageSizes: PAGE_SIZES,
+            itemsLabel: "الأصناف",
+          }}
+          bulkActions={{
+            itemLabel: "صنف",
+            isPending: list.bulkPending,
+            onDelete: list.bulkRemove,
+            onDeactivate: list.bulkDeactivate,
+          }}
+          {...actions}
+        />
+      );
+    }
+
     if (list.isPending) {
       return (
         <p className="border border-dashed py-16 text-center text-sm text-muted-foreground">
@@ -112,7 +166,7 @@ export function ProductsScreen() {
       );
     }
 
-    return view === "cards" ? (
+    return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {list.products.map((product, index) => (
           <ProductCard
@@ -123,8 +177,6 @@ export function ProductsScreen() {
           />
         ))}
       </div>
-    ) : (
-      <ProductsTable products={list.products} {...actions} />
     );
   }
 
@@ -232,7 +284,7 @@ export function ProductsScreen() {
         {renderBody()}
       </div>
 
-      {list.total > 0 && (
+      {view === "cards" && list.total > 0 && (
         <ProductsPagination
           total={list.total}
           page={list.page}

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from .constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MAX_BULK_ITEMS
 from .schema_validation import (
     Address,
     Money,
@@ -15,7 +15,6 @@ from .schema_validation import (
     PositiveMoney,
 )
 from .types import CreditLevel, CustomerFilter, CustomerSort, LedgerType
-
 
 # ================= العميل =================
 class CustomerBase(BaseModel):
@@ -85,6 +84,29 @@ class CustomersSummaryOut(BaseModel):
     at_limit: int
     inactive: int
 
+# ================= العمليات الجماعية =================
+class BulkItemIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    base_version: int = Field(ge=1)
+
+
+class BulkIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[BulkItemIn] = Field(min_length=1, max_length=MAX_BULK_ITEMS)
+
+
+class BulkFailureOut(BaseModel):
+    id: str
+    code: str
+    message: str
+
+
+class BulkResultOut(BaseModel):
+    succeeded: list[str]
+    failed: list[BulkFailureOut]
 
 # ================= الدفعات وكشف الحساب =================
 class PaymentIn(BaseModel):

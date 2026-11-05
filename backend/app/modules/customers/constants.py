@@ -2,11 +2,12 @@
 
 from enum import StrEnum
 
-# ---- الحدود (طابقها مع frontend/features/customers/config/customerLimits.ts) ----
+# ---- الحدود ----
 MAX_NAME_LEN = 100
 MAX_ADDRESS_LEN = 200
 MAX_NOTES_LEN = 300
 MAX_NOTE_LEN = 300  # ملاحظة حركة الحساب
+MAX_BULK_ITEMS = 200  # أقصى عدد عناصر في طلب جماعي واحد
 MAX_PAYMENT_NOTE_LEN = 80
 MAX_PHONE_LEN = 16
 MAX_MONEY = 1_000_000_000  # بالقروش (10 مليون جنيه)
@@ -15,7 +16,7 @@ MAX_PAGE_SIZE = 500
 
 PHONE_PATTERN = r"\+?[0-9]{8,15}"
 
-# ---- قواعد الائتمان (طابقها مع customerOptions.ts) ----
+# ---- قواعد الائتمان  ----
 OVERDUE_DAYS = 30  # عليه دين وبدون أي دفعة لأكثر من هذه المدة = متأخر
 NEAR_LIMIT_PERCENT = 80  # استهلاك الحد الائتماني الذي يظهر عنده "قارب الحد"
 

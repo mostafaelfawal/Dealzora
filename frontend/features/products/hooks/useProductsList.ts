@@ -22,6 +22,11 @@ import {
 import type { Product, ProductFilters } from "../types/product";
 import useGetProducts from "./useGetProducts";
 import useGetProductsSummary from "./useGetProductsSummary";
+import { showBulkResult, type BulkItem } from "@/lib/bulk";
+import {
+  bulkDeactivateProducts,
+  bulkDeleteProducts,
+} from "../api/products.api";
 
 interface ToggleVars {
   id: string;
@@ -141,6 +146,30 @@ export function useProductsList() {
     onSettled: refresh,
   });
 
+  const toItems = (rows: Product[]): BulkItem[] =>
+    rows.map((p) => ({ id: p.id, version: p.version }));
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (rows: Product[]) => bulkDeleteProducts(toItems(rows)),
+    onSuccess: (result) => {
+      showBulkResult(result, "تم حذف", "صنف");
+      // لو اتحذفت كل أصناف الصفحة، ارجع صفحة للخلف.
+      if (result.succeeded.length >= products.length && filters.page > 1) {
+        setFilters((current) => ({ ...current, page: current.page - 1 }));
+      }
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, "تعذّر الحذف")),
+    onSettled: refresh,
+  });
+
+  const bulkDeactivateMutation = useMutation({
+    mutationFn: (rows: Product[]) => bulkDeactivateProducts(toItems(rows)),
+    onSuccess: (result) => showBulkResult(result, "تم تعطيل", "صنف"),
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
+    onSettled: refresh,
+  });
+
   const find = (id: string): Product | undefined =>
     products.find((p) => p.id === id);
 
@@ -178,5 +207,11 @@ export function useProductsList() {
     toggleActive,
     duplicate,
     remove,
+    bulkPending:
+      bulkDeleteMutation.isPending || bulkDeactivateMutation.isPending,
+    bulkRemove: (rows: Product[], clear: () => void) =>
+      bulkDeleteMutation.mutate(rows, { onSuccess: clear }),
+    bulkDeactivate: (rows: Product[], clear: () => void) =>
+      bulkDeactivateMutation.mutate(rows, { onSuccess: clear }),
   };
 }

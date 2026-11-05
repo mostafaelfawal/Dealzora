@@ -1,11 +1,15 @@
 "use client";
 
-import { IconBarcode } from "@tabler/icons-react";
-import Link from "next/link";
+import { IconBarcode, IconPackage } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
+import { AppTable } from "@/components/shared/app-table/AppTable";
+import type {
+  AppTableBulkActions,
+  AppTableColumn,
+  AppTablePaginationProps,
+} from "@/components/shared/app-table/types";
 import { Money } from "@/components/shared/Money";
-import { listRow, MotionTr } from "@/components/shared/motion";
 import { Switch } from "@/components/ui/switch";
 import { PosStockBadge } from "@/features/pos/components/posStockBadge";
 import { formatQty } from "@/lib/format";
@@ -16,136 +20,156 @@ import type { Product } from "../types/product";
 import { ProductActionsMenu, type ProductActions } from "./productActionsMenu";
 import { ProductMarginBadge } from "./productMarginBadge";
 
-const th = "h-9 px-3 text-start text-xs font-normal text-muted-foreground";
+interface Props extends ProductActions {
+  products: Product[];
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  errorMessage?: string;
+  onRetry: () => void;
+  isFiltered: boolean;
+  onClearFilters: () => void;
+  emptyAction: React.ReactNode;
+  pagination: AppTablePaginationProps;
+  bulkActions: AppTableBulkActions<Product>;
+}
 
-/** جدول المنتجات. الضغط على الصف يفتح التعديل، وعناصر التحكم بداخله لا تفعل ذلك. */
 export function ProductsTable({
   products,
+  isFiltered,
+  onClearFilters,
+  emptyAction,
+  pagination,
+  bulkActions,
+  onRetry,
+  errorMessage,
+  isLoading,
+  isFetching,
+  isError,
   ...actions
-}: { products: Product[] } & ProductActions) {
+}: Props) {
   const router = useRouter();
 
-  return (
-    <div className="overflow-x-auto border bg-card">
-      <table className="w-full min-w-170 text-xs">
-        <thead className="bg-muted/40">
-          <tr className="border-b">
-            <th scope="col" className={th}>
-              الصنف
-            </th>
-            <th scope="col" className={cn(th, "hidden md:table-cell")}>
-              القسم
-            </th>
-            <th scope="col" className={cn(th, "hidden lg:table-cell")}>
-              الشراء
-            </th>
-            <th scope="col" className={th}>
-              البيع
-            </th>
-            <th scope="col" className={cn(th, "hidden lg:table-cell")}>
-              الهامش
-            </th>
-            <th scope="col" className={th}>
-              المخزون
-            </th>
-            <th scope="col" className={cn(th, "w-20")}>
-              مفعّل
-            </th>
-            <th scope="col" className="w-12">
-              <span className="sr-only">إجراءات</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((product, index) => (
-            <MotionTr
-              key={product.id}
-              {...listRow(index)}
-              style={{ animationDelay: `${Math.min(index, 12) * 20}ms` }}
-              onClick={(event) => {
-                const target = event.target as HTMLElement;
-                // أحداث الـ portal (القائمة) تصعد في شجرة React رغم أنها خارج الصف في الـ DOM.
-                if (!event.currentTarget.contains(target)) return;
+  const columns: AppTableColumn<Product>[] = [
+    {
+      id: "name",
+      header: "الصنف",
+      skeletonClassName: "w-40",
+      cell: (p) => (
+        <div className={cn("min-w-0", !p.isActive && "opacity-60")}>
+          <span className="block max-w-64 truncate text-xs font-medium">
+            {p.name}
+          </span>
+          <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <IconBarcode className="size-3.5" aria-hidden />
+            <span dir="ltr" className="font-mono">
+              {p.barcode || "بدون باركود"}
+            </span>
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "category",
+      header: "القسم",
+      className: "hidden md:table-cell",
+      cellClassName: "text-muted-foreground",
+      cell: (p) => p.categoryName ?? "بدون قسم",
+    },
+    {
+      id: "cost",
+      header: "الشراء",
+      className: "hidden lg:table-cell",
+      cell: (p) =>
+        p.costPrice === null ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <Money
+            amount={p.costPrice}
+            className="text-xs text-muted-foreground"
+          />
+        ),
+    },
+    {
+      id: "sale",
+      header: "البيع",
+      cell: (p) => (
+        <>
+          <Money amount={p.salePrice} className="text-sm" />
+          <span className="block text-[11px] text-muted-foreground">
+            / {p.unit}
+          </span>
+        </>
+      ),
+    },
+    {
+      id: "margin",
+      header: "الهامش",
+      className: "hidden lg:table-cell",
+      cell: (p) =>
+        p.costPrice !== null && (
+          <ProductMarginBadge cost={p.costPrice} sale={p.salePrice} />
+        ),
+    },
+    {
+      id: "stock",
+      header: "المخزون",
+      cell: (p) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <bdi dir="ltr" className="font-mono text-sm tabular-nums">
+            {formatQty(p.stock)}
+          </bdi>
+          <PosStockBadge product={p} />
+        </div>
+      ),
+    },
+    {
+      id: "active",
+      header: "مفعّل",
+      className: "w-20",
+      cell: (p) => (
+        <Switch
+          size="sm"
+          checked={p.isActive}
+          onCheckedChange={() => actions.onToggleActive(p.id)}
+          aria-label={`${p.isActive ? "تعطيل" : "تفعيل"} ${p.name}`}
+        />
+      ),
+    },
+    {
+      id: "actions",
+      header: <span className="sr-only">إجراءات</span>,
+      className: "w-12 pe-2",
+      cell: (p) => <ProductActionsMenu product={p} {...actions} />,
+    },
+  ];
 
-                if (
-                  target.closest(
-                    "a, button, input, label, [role='switch'], [role='menu'], [role='menuitem']",
-                  )
-                )
-                  return;
-                router.push(PRODUCT_ROUTES.edit(product.id));
-              }}
-              className="h-14 cursor-pointer border-b fill-mode-backwards duration-300 last:border-b-0 hover:bg-muted/50"
-            >
-              <td
-                className={cn(
-                  "min-w-0 px-3",
-                  !product.isActive && "opacity-60",
-                )}
-              >
-                <Link
-                  href={PRODUCT_ROUTES.edit(product.id)}
-                  className="block max-w-64 truncate text-xs font-medium outline-none hover:underline focus-visible:underline"
-                >
-                  {product.name}
-                </Link>
-                <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <IconBarcode className="size-3.5" aria-hidden />
-                  <span dir="ltr" className="font-mono">
-                    {product.barcode || "بدون باركود"}
-                  </span>
-                </span>
-              </td>
-              <td className="hidden px-3 text-muted-foreground md:table-cell">
-                {product.categoryName ?? "بدون قسم"}
-              </td>
-              <td className="hidden px-3 lg:table-cell">
-                {product.costPrice === null ? (
-                  <span className="text-muted-foreground">—</span>
-                ) : (
-                  <Money
-                    amount={product.costPrice}
-                    className="text-xs text-muted-foreground"
-                  />
-                )}
-              </td>
-              <td className="px-3">
-                <Money amount={product.salePrice} className="text-sm" />
-                <span className="block text-[11px] text-muted-foreground">
-                  / {product.unit}
-                </span>
-              </td>
-              <td className="hidden px-3 lg:table-cell">
-                {product.costPrice !== null && (
-                  <ProductMarginBadge
-                    cost={product.costPrice}
-                    sale={product.salePrice}
-                  />
-                )}
-              </td>
-              <td className="px-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <bdi dir="ltr" className="font-mono text-sm tabular-nums">
-                    {formatQty(product.stock)}
-                  </bdi>
-                  <PosStockBadge product={product} />
-                </div>
-              </td>
-              <td className="px-3">
-                <Switch
-                  size="sm"
-                  checked={product.isActive}
-                  onCheckedChange={() => actions.onToggleActive(product.id)}
-                  aria-label={`${product.isActive ? "تعطيل" : "تفعيل"} ${product.name}`}
-                />
-              </td>
-              <td className="pe-2">
-                <ProductActionsMenu product={product} {...actions} />
-              </td>
-            </MotionTr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+  return (
+    <AppTable
+      data={products}
+      columns={columns}
+      getRowId={(p) => p.id}
+      isLoading={isLoading}
+      isFetching={isFetching}
+      isError={isError}
+      errorMessage={errorMessage}
+      onRetry={onRetry}
+      empty={{
+        icon: IconPackage,
+        title: "لا توجد أصناف بعد",
+        description:
+          "أضف أول صنف، أو استورد قائمتك كاملة من Excel في دقيقة واحدة.",
+        action: emptyAction,
+      }}
+      noResults={{ title: "لا توجد أصناف مطابقة" }}
+      isFiltered={isFiltered}
+      onClearFilters={onClearFilters}
+      onRowClick={(p) => router.push(PRODUCT_ROUTES.edit(p.id))}
+      rowClassName={(p) => (!p.isActive ? "bg-muted/20" : undefined)}
+      selectable
+      getRowLabel={(p) => p.name}
+      bulkActions={bulkActions}
+      pagination={pagination}
+    />
   );
 }

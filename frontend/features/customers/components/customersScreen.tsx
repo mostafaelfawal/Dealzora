@@ -9,9 +9,13 @@ import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
-import { CUSTOMERS_SEARCH_ID } from "../config/customerOptions";
+import { CUSTOMERS_SEARCH_ID, PAGE_SIZES } from "../config/customerOptions";
 import { CUSTOMERS_SHORTCUTS } from "../config/customerShortcuts";
-import { useToggleCustomer } from "../hooks/useCustomerMutations";
+import {
+  useBulkDeactivateCustomers,
+  useBulkDeleteCustomers,
+  useToggleCustomer,
+} from "../hooks/useCustomerMutations";
 import { useCustomersList } from "../hooks/useCustomersList";
 import { useCustomersView } from "../hooks/useCustomersView";
 import { CollectPaymentDialog } from "./collectPaymentDialog";
@@ -24,6 +28,8 @@ import { CustomersStats } from "./customersStats";
 import { CustomersTable } from "./customersTable";
 import { CustomersToolbar } from "./customersToolbar";
 import { DeleteCustomerDialog } from "./deleteCustomerDialog";
+import { AppTableBulkActions } from "@/components/shared/app-table/types";
+import { Customer } from "../types/customer";
 
 /** نافذة واحدة مفتوحة في كل مرة: فلا تتراكم النوافذ فوق بعضها. */
 type DialogState =
@@ -37,6 +43,30 @@ export function CustomersScreen() {
   const { view, setView } = useCustomersView();
   const toggle = useToggleCustomer();
   const [dialog, setDialog] = useState<DialogState>(null);
+  const bulkDelete = useBulkDeleteCustomers();
+  const bulkDeactivate = useBulkDeactivateCustomers();
+  const toItems = (rows: Customer[]) =>
+    rows.map((c) => ({ id: c.id, version: c.version }));
+
+  const bulkActions: AppTableBulkActions<Customer> = {
+    itemLabel: "عميل",
+    isPending: bulkDelete.isPending || bulkDeactivate.isPending,
+    onDelete: (rows, clear) =>
+      bulkDelete.mutate(toItems(rows), { onSuccess: clear }),
+    onDeactivate: (rows, clear) =>
+      bulkDeactivate.mutate(toItems(rows), { onSuccess: clear }),
+  };
+
+  const emptyAction = (
+    <Button
+      size="lg"
+      onClick={() => setDialog({ type: "form", id: null })}
+      className="gap-2"
+    >
+      <IconPlus />
+      إضافة أول عميل
+    </Button>
+  );
 
   const close = () => setDialog(null);
   const target =
@@ -80,6 +110,33 @@ export function CustomersScreen() {
   };
 
   function renderBody() {
+    if (view === "table") {
+      return (
+        <CustomersTable
+          customers={list.customers}
+          isLoading={list.isPending}
+          isFetching={list.isFetching}
+          isError={list.isError}
+          errorMessage={extractErrorMessage(list.error, "تعذّر تحميل العملاء")}
+          onRetry={() => list.refetch()}
+          isFiltered={list.filtered}
+          onClearFilters={list.clearFilters}
+          emptyAction={emptyAction}
+          pagination={{
+            total: list.total,
+            page: list.page,
+            pageSize: list.filters.pageSize,
+            onPageChange: (page) => list.patchFilters({ page }),
+            onPageSizeChange: (pageSize) => list.patchFilters({ pageSize }),
+            pageSizes: [...PAGE_SIZES],
+            itemsLabel: "العملاء",
+          }}
+          bulkActions={bulkActions}
+          {...actions}
+        />
+      );
+    }
+
     if (list.isPending) {
       return (
         <p className="border border-dashed py-16 text-center text-sm text-muted-foreground">
@@ -116,7 +173,7 @@ export function CustomersScreen() {
       );
     }
 
-    return view === "cards" ? (
+    return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {list.customers.map((customer, index) => (
           <CustomerCard
@@ -127,8 +184,6 @@ export function CustomersScreen() {
           />
         ))}
       </div>
-    ) : (
-      <CustomersTable customers={list.customers} {...actions} />
     );
   }
 
@@ -201,7 +256,7 @@ export function CustomersScreen() {
         {renderBody()}
       </div>
 
-      {list.total > 0 && (
+      {view === "cards" && list.total > 0 && (
         <CustomersPagination
           total={list.total}
           page={list.page}

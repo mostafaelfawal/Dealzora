@@ -18,6 +18,7 @@ import type {
   CustomerListDto,
   StatementDto,
 } from "../types/customerApi";
+import { toBulkPayload, type BulkItem, type BulkResultDto } from "@/lib/bulk";
 
 /** أقصى page_size يقبله الـ backend (MAX_PAGE_SIZE). */
 const PAGE_SIZE = 500;
@@ -65,7 +66,10 @@ export const saveCustomer = async (
     );
     return toCustomer(data);
   }
-  const { data } = await api.post<CustomerDto>("/customers", toCreatePayload(input));
+  const { data } = await api.post<CustomerDto>(
+    "/customers",
+    toCreatePayload(input),
+  );
   return toCustomer(data);
 };
 
@@ -79,11 +83,33 @@ export const toggleCustomerActive = async (id: string, baseVersion: number) =>
   );
 
 export const deleteCustomer = async (id: string, baseVersion: number) => {
-  await api.delete(`/customers/${id}`, { params: { base_version: baseVersion } });
+  await api.delete(`/customers/${id}`, {
+    params: { base_version: baseVersion },
+  });
 };
 
 export const collectPayment = async (id: string, payment: PaymentInput) =>
   toCustomer(
-    (await api.post<CustomerDto>(`/customers/${id}/payments`, toPaymentPayload(payment)))
-      .data,
+    (
+      await api.post<CustomerDto>(
+        `/customers/${id}/payments`,
+        toPaymentPayload(payment),
+      )
+    ).data,
   );
+
+export const bulkDeleteCustomers = async (items: BulkItem[]) =>
+  (
+    await api.post<BulkResultDto>(
+      "/customers/bulk-delete",
+      toBulkPayload(items),
+    )
+  ).data;
+
+export const bulkDeactivateCustomers = async (items: BulkItem[]) =>
+  (
+    await api.post<BulkResultDto>(
+      "/customers/bulk-deactivate",
+      toBulkPayload(items),
+    )
+  ).data;
