@@ -15,6 +15,7 @@ import app.modules.customers.model  # noqa: F401
 import app.modules.auth.model  # noqa: F401
 import app.modules.products.model  # noqa: F401
 import app.modules.shop.model  # noqa: F401
+import app.modules.expenses.model  # noqa: F401
 
 
 def init_db() -> None:
