@@ -1,23 +1,18 @@
-"""حماية المسارات بالأدوار (manager / cashier). تُستخدم كـ dependencies في routes.
+"""حماية المسارات بالأدوار. مصدر واحد لكل الـ modules (بدل middleware.py في كل موديول).
 
 - require_authenticated: أي مستخدم مسجّل (كاشير أو مدير).
 - require_manager: مدير فقط.
 - require_manager_write: مدير + تصريح كتابة ساري (الترخيص غير منتهٍ).
+
+الأسماء القديمة (cashier/admin) أبقيناها كـ aliases لتسهيل الترحيل.
 """
 
 from typing import Annotated
 
-from fastapi import Depends, Header
+from fastapi import Depends
 
-from app.core.errors import ForbiddenError, UnauthorizedError
-from app.core.security import Actor, Role, get_actor, require_write_permit
-
-
-def get_token(authorization: Annotated[str | None, Header()] = None) -> str:
-    scheme, _, token = (authorization or "").partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise UnauthorizedError("unauthorized", "سجّل الدخول أولاً")
-    return token
+from .errors import ForbiddenError
+from .security import Actor, Role, get_actor, require_write_permit
 
 
 def require_authenticated(actor: Annotated[Actor, Depends(get_actor)]) -> Actor:
@@ -35,3 +30,8 @@ def require_manager_write(
     _permit: Annotated[None, Depends(require_write_permit)],
 ) -> Actor:
     return actor
+
+
+require_cashier = require_authenticated
+require_admin = require_manager
+require_admin_write = require_manager_write

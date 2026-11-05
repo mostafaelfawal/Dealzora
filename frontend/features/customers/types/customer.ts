@@ -34,11 +34,7 @@ export interface PaymentInput {
 }
 
 export type CustomerFilter =
-  | "all"
-  | "debtors"
-  | "overdue"
-  | "limit"
-  | "inactive";
+  "all" | "debtors" | "overdue" | "limit" | "inactive";
 export type CustomerSortKey = "debt" | "name" | "recent" | "sales" | "newest";
 export type CustomersView = "cards" | "table";
 export type CreditLevel = "cash" | "ok" | "warn" | "full";
@@ -61,11 +57,7 @@ export interface CustomersSummary {
 }
 
 export type StatementEntryType =
-  | "sale"
-  | "payment"
-  | "return"
-  | "opening"
-  | "adjustment";
+  "sale" | "payment" | "return" | "opening" | "adjustment";
 
 export interface StatementEntry {
   id: string;

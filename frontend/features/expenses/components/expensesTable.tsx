@@ -114,7 +114,9 @@ export function ExpensesTable({
       onClearFilters={onClearFilters}
       onRowClick={(e) => actions.onEdit(e.id)}
       selectable
-      getRowLabel={(e) => `${categoryLabel(e.category)} - ${formatDate(e.spentAt)}`}
+      getRowLabel={(e) =>
+        `${categoryLabel(e.category)} - ${formatDate(e.spentAt)}`
+      }
       bulkActions={bulkActions}
       pagination={pagination}
     />

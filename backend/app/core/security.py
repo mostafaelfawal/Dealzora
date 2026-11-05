@@ -1,4 +1,4 @@
-"""هوية المستخدم + تصريح الكتابة (الترخيص). الأدوار المسموحة لكل مسار تُحدَّد في middleware كل module."""
+"""هوية المستخدم + تصريح الكتابة (الترخيص). الأدوار المسموحة لكل مسار تُحدَّد في core/permissions.py."""
 
 import hashlib
 import hmac
@@ -6,12 +6,15 @@ import time
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated
-from fastapi import Header, Depends
+
+from fastapi import Depends, Header
 from sqlalchemy.orm import Session
-from app.core.config import get_settings
-from app.core.errors import ForbiddenError, UnauthorizedError
-from app.core.database import get_session
+
+from app.core.bearer import get_bearer_token
 from app.core.clock_guard import ensure_clock_sane
+from app.core.config import get_settings
+from app.core.database import get_session
+from app.core.errors import ForbiddenError, UnauthorizedError
 
 
 class Role(StrEnum):
@@ -40,13 +43,10 @@ def require_app_token(
 def get_actor(
     session: Annotated[Session, Depends(get_session)],
     _app: Annotated[None, Depends(require_app_token)],
-    authorization: Annotated[str | None, Header()] = None,
+    token: Annotated[str, Depends(get_bearer_token)],
 ) -> Actor:
-    from app.modules.auth.service import AuthService
+    from app.modules.auth.service import AuthService  # استيراد متأخر لتفادي الدوران
 
-    scheme, _, token = (authorization or "").partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise UnauthorizedError("unauthorized", "سجّل الدخول أولاً")
     return AuthService(session).authenticate(token)
 
 

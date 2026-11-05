@@ -12,7 +12,10 @@ import {
   type ColumnMapping,
   type ImportFieldKey,
 } from "../config/importFields";
-import { BACKEND_DECIMAL_UNITS, BARCODE_PATTERN } from "../config/productLimits";
+import {
+  BACKEND_DECIMAL_UNITS,
+  BARCODE_PATTERN,
+} from "../config/productLimits";
 import { DECIMAL_UNITS } from "../config/productOptions";
 import type { Product } from "../types/product";
 import { numberOrZero, parseNumber } from "./productCalc";
@@ -91,7 +94,10 @@ export async function importProducts({
         BACKEND_DECIMAL_UNITS.has(unit) ||
         DECIMAL_UNITS.has(unit);
       const qty = (value: number) =>
-        Math.max(0, Math.round((decimal ? value : Math.round(value)) * QTY_SCALE));
+        Math.max(
+          0,
+          Math.round((decimal ? value : Math.round(value)) * QTY_SCALE),
+        );
       const categoryText = text("category").toLowerCase();
 
       const base = {
@@ -126,7 +132,9 @@ export async function importProducts({
             factor: Math.round(u.factor * QTY_SCALE),
             barcode: u.barcode || null,
             sale_price:
-              u.salePrice === null ? null : Math.round(u.salePrice * MONEY_SCALE),
+              u.salePrice === null
+                ? null
+                : Math.round(u.salePrice * MONEY_SCALE),
           })),
           base_version: existing.version,
         });

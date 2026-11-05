@@ -11,7 +11,12 @@ import { saveLastLogin, saveSession } from "@/features/auth/lib/authStorage";
 import { ApiError } from "@/lib/axios";
 
 import { runSetup } from "../lib/runSetup";
-import { cleanShopName, cleanUsername, setupSchema, type SetupSchemaType } from "../schema/setup.schema";
+import {
+  cleanShopName,
+  cleanUsername,
+  setupSchema,
+  type SetupSchemaType,
+} from "../schema/setup.schema";
 import type { SetupStep } from "../types/setup";
 
 type SetupFormContextType = {
@@ -25,7 +30,11 @@ type SetupFormContextType = {
 
 const SetupFormContext = createContext<SetupFormContextType | null>(null);
 
-export default function SetupFormContextProvider({ children }: { children: ReactNode }) {
+export default function SetupFormContextProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<SetupStep>("idle");
@@ -39,12 +48,19 @@ export default function SetupFormContextProvider({ children }: { children: React
   const mutation = useMutation({
     mutationFn: (v: SetupSchemaType) =>
       runSetup(
-        { shopName: cleanShopName(v.shopName), username: cleanUsername(v.username), password: v.password },
+        {
+          shopName: cleanShopName(v.shopName),
+          username: cleanUsername(v.username),
+          password: v.password,
+        },
         setStep,
       ),
     onSuccess: (session) => {
       saveSession(session);
-      saveLastLogin({ role: session.user.role, username: session.user.username });
+      saveLastLogin({
+        role: session.user.role,
+        username: session.user.username,
+      });
       queryClient.clear();
       router.replace(AUTH_ROUTES.home[session.user.role]);
     },
@@ -80,6 +96,9 @@ export default function SetupFormContextProvider({ children }: { children: React
 
 export function useSetupFormContext() {
   const ctx = useContext(SetupFormContext);
-  if (!ctx) throw new Error("useSetupFormContext يجب ان تكون بداخل SetupFormContextProvider");
+  if (!ctx)
+    throw new Error(
+      "useSetupFormContext يجب ان تكون بداخل SetupFormContextProvider",
+    );
   return ctx;
 }

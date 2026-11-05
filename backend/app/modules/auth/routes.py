@@ -9,7 +9,8 @@ from app.core.database import get_session
 from app.core.security import Actor, get_actor, require_app_token
 from app.modules.users.schema import UserOut
 
-from .middleware import get_token, require_authenticated
+from app.core.bearer import get_bearer_token
+from app.core.permissions import require_authenticated
 from .schema import ChangePasswordIn, LoginIn, LoginOut
 from .service import AuthService
 
@@ -34,7 +35,7 @@ def get_auth_service(
 
 PublicService = Annotated[AuthService, Depends(get_public_service)]
 Service = Annotated[AuthService, Depends(get_auth_service)]
-Token = Annotated[str, Depends(get_token)]
+Token = Annotated[str, Depends(get_bearer_token)]
 
 
 # ---------- بدون تسجيل دخول ----------

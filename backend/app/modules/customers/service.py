@@ -1,23 +1,22 @@
-"""قواعد العمل. كل أمر كتابة = معاملة واحدة: العميل + حركة الحساب + Audit + Outbox ثم commit واحد."""
+"""قواعد العمل. كل أمر كتابة = معاملة واحدة: العميل + حركة الحساب + Audit + Outbox ثم commit واحد.
+
+الأساس المشترك (Audit/Outbox/النسخة/commit/الحذف الناعم/العمليات الجماعية) في core.service_base.EntityService.
+"""
 
 from datetime import timedelta
 
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.audit import record_audit
-from app.core.base import uuid7, utcnow
-from app.core.errors import (
-    AppError,
-    BadRequestError,
-    ConflictError,
-    ForbiddenError,
-    NotFoundError,
-)
-from app.core.outbox import OutboxOp, enqueue_outbox
-from app.core.security import Actor, Role
+from app.core.base import utcnow, uuid7
+from app.core.bulk import BulkIn, BulkResultOut
+from app.core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
+from app.core.security import Actor
+from app.core.service_base import EntityService
+from app.core.snapshots import diff_snapshots
+from app.core.text import build_search_text
 
 from .constants import (
+    CUSTOMER_SNAPSHOT_FIELDS,
     DEFAULT_PAYMENT_NOTE,
     ENTITY_CUSTOMER,
     ENTITY_LEDGER_ENTRY,
@@ -26,14 +25,7 @@ from .constants import (
     OVERDUE_DAYS,
     CustomerError,
 )
-from .helper import (
-    build_search_text,
-    calc_available_credit,
-    calc_credit_level,
-    customer_snapshot,
-    diff_snapshots,
-    is_overdue,
-)
+from .helper import calc_available_credit, calc_credit_level, is_overdue
 from .model import Customer, CustomerLedgerEntry
 from .repository import CustomerRepository
 from .schema import (
@@ -48,27 +40,20 @@ from .schema import (
     StatementEntryOut,
     StatementOut,
     StatementQuery,
-    BulkFailureOut,
-    BulkIn,
-    BulkItemIn,
-    BulkResultOut
 )
 from .types import CustomerFilters, CustomerSort, LedgerType
-from collections.abc import Callable
-
-def _err(exc: type[AppError], code: CustomerError, **details) -> AppError:
-    return exc(code=code.value, message=ERROR_MESSAGES[code], details=details or None)
 
 
-class CustomerService:
+class CustomerService(EntityService):
+    entity = ENTITY_CUSTOMER
+    messages = ERROR_MESSAGES
+    version_conflict_error = CustomerError.VERSION_CONFLICT
+    unique_conflict_error = CustomerError.PHONE_TAKEN
+    snapshot_fields = CUSTOMER_SNAPSHOT_FIELDS
+
     def __init__(self, session: Session, actor: Actor) -> None:
-        self.session = session
-        self.actor = actor
+        super().__init__(session, actor)
         self.repo = CustomerRepository(session)
-
-    @property
-    def is_admin(self) -> bool:
-        return self.actor.role is Role.MANAGER
 
     @staticmethod
     def _overdue_before():
@@ -76,7 +61,7 @@ class CustomerService:
 
     # ================= قراءة =================
     def list_customers(self, query: CustomerListQuery) -> CustomerListOut:
-        if query.sort is CustomerSort.SALES and not self.is_admin:
+        if query.sort is CustomerSort.SALES and not self.is_manager:
             raise ForbiddenError("forbidden", "الترتيب بإجمالي المشتريات للمدير فقط")
 
         filters = CustomerFilters(
@@ -84,7 +69,7 @@ class CustomerService:
             query=query.q,
             filter=query.filter,
             sort=query.sort,
-            only_active=not self.is_admin,  # الكاشير لا يرى المعطّل
+            only_active=not self.is_manager,  # الكاشير لا يرى المعطّل
             page=query.page,
             page_size=query.page_size,
         )
@@ -141,7 +126,7 @@ class CustomerService:
                 customer, LedgerType.OPENING, debit=data.opening_balance, note=OPENING_NOTE
             )
 
-        self._audit(customer, "create", customer_snapshot(customer))
+        self._audit(customer, "create", self._snapshot(customer))
         self._enqueue(customer, base_version=None)
         self._commit()
         return self._to_out(customer)
@@ -151,81 +136,37 @@ class CustomerService:
         self._check_version(customer, data.base_version)
         self._check_phone(data.phone, exclude_customer_id=customer.id)
 
-        before = customer_snapshot(customer)
+        before = self._snapshot(customer)
         self._apply_fields(customer, data)
         self._refresh_search_text(customer)
         customer.mark_modified()
         self.repo.flush()
 
-        self._audit(customer, "update", diff_snapshots(before, customer_snapshot(customer)))
+        self._audit(customer, "update", diff_snapshots(before, self._snapshot(customer)))
         self._enqueue(customer, base_version=data.base_version)
         self._commit()
         return self._to_out(customer)
-
-    def _set_active(self, customer: Customer, active: bool, base_version: int) -> None:
-        self._check_version(customer, base_version)
-        was_active = customer.is_active
-        customer.is_active = active
-        customer.mark_modified()
-        self._audit(
-            customer, "toggle_active", {"is_active": {"from": was_active, "to": active}}
-        )
-        self._enqueue(customer, base_version=base_version)
-        self._commit()
 
     def toggle_active(self, customer_id: str, base_version: int) -> CustomerOut:
         customer = self._get_or_404(customer_id)
         self._set_active(customer, not customer.is_active, base_version)
         return self._to_out(customer)
 
-    # ================= عمليات جماعية =================
-    def _run_bulk(self, data: BulkIn, action: Callable[[BulkItemIn], None]) -> BulkResultOut:
-        """كل عنصر في معاملة مستقلة، وفشل عنصر لا يوقف الباقي."""
-        succeeded: list[str] = []
-        failed: list[BulkFailureOut] = []
-        seen: set[str] = set()
-        for item in data.items:
-            if item.id in seen:
-                continue
-            seen.add(item.id)
-            try:
-                action(item)
-                succeeded.append(item.id)
-            except AppError as exc:
-                self.session.rollback()
-                failed.append(BulkFailureOut(id=item.id, code=exc.code, message=exc.message))
-        return BulkResultOut(succeeded=succeeded, failed=failed)
-
-    def bulk_delete(self, data: BulkIn) -> BulkResultOut:
-        return self._run_bulk(
-            data, lambda item: self.delete_customer(item.id, item.base_version)
-        )
-
-    def bulk_deactivate(self, data: BulkIn) -> BulkResultOut:
-        def action(item: BulkItemIn) -> None:
-            customer = self._get_or_404(item.id)
-            if customer.is_active:  # المعطّل أصلاً = نجاح بدون تغيير
-                self._set_active(customer, False, item.base_version)
-
-        return self._run_bulk(data, action)
-
     def delete_customer(self, customer_id: str, base_version: int) -> None:
         customer = self._get_or_404(customer_id)
         self._check_version(customer, base_version)
         if customer.balance != 0:
-            raise _err(ConflictError, CustomerError.HAS_BALANCE, balance=customer.balance)
-
-        customer.mark_deleted()  # tombstone: يبقى في الجدول ويُنشر للمزامنة، والهاتف يتحرر
-        self._audit(customer, "delete", {"name": customer.name, "balance": customer.balance})
-        self._enqueue(customer, base_version=base_version, op=OutboxOp.DELETE)
-        self._commit()
+            raise self._err(ConflictError, CustomerError.HAS_BALANCE, balance=customer.balance)
+        self._soft_delete(
+            customer, base_version, {"name": customer.name, "balance": customer.balance}
+        )
 
     def collect_payment(self, customer_id: str, data: PaymentIn) -> CustomerOut:
         customer = self._get_or_404(customer_id)
         if customer.balance <= 0:
-            raise _err(BadRequestError, CustomerError.NO_DEBT)
+            raise self._err(BadRequestError, CustomerError.NO_DEBT)
         if data.amount > customer.balance:
-            raise _err(
+            raise self._err(
                 BadRequestError, CustomerError.AMOUNT_EXCEEDS_DEBT, balance=customer.balance
             )
 
@@ -243,29 +184,31 @@ class CustomerService:
         self._commit()
         return self._to_out(customer)
 
+    # ================= عمليات جماعية =================
+    def bulk_delete(self, data: BulkIn) -> BulkResultOut:
+        return self._run_bulk(
+            data, lambda item: self.delete_customer(item.id, item.base_version)
+        )
+
+    def bulk_deactivate(self, data: BulkIn) -> BulkResultOut:
+        return self._bulk_deactivate(data, self._get_or_404)
+
     # ================= داخلي =================
     def _get_or_404(self, customer_id: str) -> Customer:
         customer = self.repo.get(customer_id)
         if customer is None:
-            raise _err(NotFoundError, CustomerError.NOT_FOUND)
+            raise self._err(NotFoundError, CustomerError.NOT_FOUND)
         return customer
 
     def _get_visible(self, customer_id: str) -> Customer:
         customer = self._get_or_404(customer_id)
-        if not self.is_admin and not customer.is_active:
-            raise _err(NotFoundError, CustomerError.NOT_FOUND)
+        if not self.is_manager and not customer.is_active:
+            raise self._err(NotFoundError, CustomerError.NOT_FOUND)
         return customer
-
-    @staticmethod
-    def _check_version(customer: Customer, base_version: int) -> None:
-        if base_version != customer.version:
-            raise _err(
-                ConflictError, CustomerError.VERSION_CONFLICT, current_version=customer.version
-            )
 
     def _check_phone(self, phone: str | None, exclude_customer_id: str | None = None) -> None:
         if phone and self.repo.phone_taken(phone, exclude_customer_id=exclude_customer_id):
-            raise _err(ConflictError, CustomerError.PHONE_TAKEN, phone=phone)
+            raise self._err(ConflictError, CustomerError.PHONE_TAKEN, phone=phone)
 
     @staticmethod
     def _apply_fields(customer: Customer, data: CustomerBase) -> None:
@@ -278,7 +221,7 @@ class CustomerService:
 
     @staticmethod
     def _refresh_search_text(customer: Customer) -> None:
-        customer.search_text = build_search_text(customer.name, customer.phone)
+        customer.search_text = build_search_text(customer.name, [customer.phone])
 
     def _post_entry(
         self,
@@ -312,13 +255,10 @@ class CustomerService:
         if entry_type is LedgerType.PAYMENT:
             customer.last_payment_at = utcnow()
         self.repo.add_entry(entry)
-        enqueue_outbox(
-            self.session,
-            entity=ENTITY_LEDGER_ENTRY,
-            entity_id=entry.id,
-            op=OutboxOp.UPSERT,
-            device_id=self.actor.device_id,
-            payload={
+        self._enqueue_event(
+            ENTITY_LEDGER_ENTRY,
+            entry.id,
+            {
                 "id": entry.id,
                 "customer_id": customer.id,
                 "entry_type": entry.entry_type,
@@ -332,46 +272,6 @@ class CustomerService:
         )
         return entry
 
-    def _audit(self, customer: Customer, action: str, changes: dict) -> None:
-        record_audit(
-            self.session,
-            self.actor,
-            entity=ENTITY_CUSTOMER,
-            entity_id=customer.id,
-            action=action,
-            changes=changes,
-        )
-
-    def _enqueue(
-        self,
-        customer: Customer,
-        *,
-        base_version: int | None,
-        op: OutboxOp = OutboxOp.UPSERT,
-    ) -> None:
-        payload = {
-            "id": customer.id,
-            "version": customer.version,
-            "deleted_at": customer.deleted_at.isoformat() if customer.deleted_at else None,
-            **customer_snapshot(customer),
-        }
-        enqueue_outbox(
-            self.session,
-            entity=ENTITY_CUSTOMER,
-            entity_id=customer.id,
-            op=op,
-            payload=payload,
-            base_version=base_version,
-            device_id=self.actor.device_id,
-        )
-
-    def _commit(self) -> None:
-        try:
-            self.session.commit()
-        except IntegrityError as exc:  # سباق على الهاتف الفريد (الفحص المسبق يغطي الحالة العادية)
-            self.session.rollback()
-            raise _err(ConflictError, CustomerError.PHONE_TAKEN) from exc
-
     def _to_out(self, c: Customer) -> CustomerOut:
         """الكاشير لا يرى إجمالي المشتريات ولا الملاحظات."""
         return CustomerOut(
@@ -379,14 +279,14 @@ class CustomerService:
             name=c.name,
             phone=c.phone,
             address=c.address,
-            notes=c.notes if self.is_admin else None,
+            notes=c.notes if self.is_manager else None,
             balance=c.balance,
             credit_limit=c.credit_limit,
             available_credit=calc_available_credit(c.balance, c.credit_limit),
             credit_level=calc_credit_level(c.balance, c.credit_limit),
             is_overdue=is_overdue(c.balance, c.last_payment_at, c.created_at, utcnow()),
             is_active=c.is_active,
-            total_sales=c.total_sales if self.is_admin else None,
+            total_sales=c.total_sales if self.is_manager else None,
             last_purchase_at=c.last_purchase_at,
             last_payment_at=c.last_payment_at,
             version=c.version,

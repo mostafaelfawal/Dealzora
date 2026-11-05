@@ -89,8 +89,7 @@ function focusFirstError(errors: FieldErrors<ProductSchemaType>) {
 
     if (field === "extraUnits") {
       const rows = errors.extraUnits as unknown as
-        | Array<Partial<Record<UnitKey, unknown>> | undefined>
-        | undefined;
+        Array<Partial<Record<UnitKey, unknown>> | undefined> | undefined;
       const index = Array.isArray(rows) ? rows.findIndex(Boolean) : -1;
       const key =
         index >= 0

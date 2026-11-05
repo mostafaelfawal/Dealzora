@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_session
 from app.core.security import Actor, get_actor, require_app_token
-from app.modules.auth.middleware import require_manager_write
+from app.core.permissions import require_manager_write
 
 from .schema import ShopOut, ShopUpdate
 from .service import ShopService

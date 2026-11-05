@@ -39,7 +39,10 @@ export function AppTablePagination({
   pageSizes = DEFAULT_PAGE_SIZES,
   itemsLabel = "العناصر",
 }: AppTablePaginationProps) {
-  const sizeItems = pageSizes.map((s) => ({ value: String(s), label: String(s) }));
+  const sizeItems = pageSizes.map((s) => ({
+    value: String(s),
+    label: String(s),
+  }));
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, pageCount);
   const start = (currentPage - 1) * pageSize;
@@ -87,7 +90,10 @@ export function AppTablePagination({
       </div>
 
       {pageCount > 1 && (
-        <nav aria-label="التنقل بين الصفحات" className="flex items-center gap-1">
+        <nav
+          aria-label="التنقل بين الصفحات"
+          className="flex items-center gap-1"
+        >
           <Button
             type="button"
             variant="outline"
@@ -103,7 +109,11 @@ export function AppTablePagination({
 
           {pageItems.map((item, index) =>
             item === "gap" ? (
-              <span key={`gap-${index}`} aria-hidden className="px-1 text-muted-foreground">
+              <span
+                key={`gap-${index}`}
+                aria-hidden
+                className="px-1 text-muted-foreground"
+              >
                 …
               </span>
             ) : (

@@ -2,7 +2,13 @@ import { cn } from "@/lib/utils";
 
 import { passwordStrength } from "../lib/passwordStrength";
 
-const BAR_COLOR = ["", "bg-destructive", "bg-warning", "bg-primary", "bg-success"] as const;
+const BAR_COLOR = [
+  "",
+  "bg-destructive",
+  "bg-warning",
+  "bg-primary",
+  "bg-success",
+] as const;
 
 export function PasswordStrength({ password }: { password: string }) {
   const { score, label } = passwordStrength(password);
@@ -14,7 +20,10 @@ export function PasswordStrength({ password }: { password: string }) {
         {[1, 2, 3, 4].map((i) => (
           <span
             key={i}
-            className={cn("h-1 flex-1 bg-muted transition-colors", i <= score && BAR_COLOR[score])}
+            className={cn(
+              "h-1 flex-1 bg-muted transition-colors",
+              i <= score && BAR_COLOR[score],
+            )}
           />
         ))}
       </div>

@@ -33,13 +33,16 @@ export function useSaveExpense() {
       baseVersion?: number;
     }) => {
       if (!id) return createExpense(input);
-      if (baseVersion === undefined) throw new Error("baseVersion مطلوب للتعديل");
+      if (baseVersion === undefined)
+        throw new Error("baseVersion مطلوب للتعديل");
       return updateExpense(id, input, baseVersion);
     },
     onSuccess: (_expense, { id, input }) => {
       void refresh();
       toast.success(
-        id ? "تم حفظ التعديلات" : `تم تسجيل مصروف ${formatMoneyText(input.amount)}`,
+        id
+          ? "تم حفظ التعديلات"
+          : `تم تسجيل مصروف ${formatMoneyText(input.amount)}`,
       );
     },
     onError: (error) =>

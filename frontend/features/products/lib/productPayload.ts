@@ -35,7 +35,9 @@ function toBase(v: ProductSchemaType) {
   };
 }
 
-export const toCreatePayload = (v: ProductSchemaType): ProductCreatePayload => ({
+export const toCreatePayload = (
+  v: ProductSchemaType,
+): ProductCreatePayload => ({
   ...toBase(v),
   opening_stock: scaled(v.openingStock, QTY_SCALE),
 });

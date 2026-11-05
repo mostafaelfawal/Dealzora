@@ -27,9 +27,7 @@ import { ExpensesToolbar } from "./expensesToolbar";
 
 /** نافذة واحدة مفتوحة في كل مرة: فلا تتراكم النوافذ فوق بعضها. */
 type DialogState =
-  | { type: "form"; id: string | null }
-  | { type: "delete"; id: string }
-  | null;
+  { type: "form"; id: string | null } | { type: "delete"; id: string } | null;
 
 /** صفحة المصاريف: إحصائيات الفترات + بحث وفلاتر + بطاقات أو جدول. */
 export function ExpensesScreen() {

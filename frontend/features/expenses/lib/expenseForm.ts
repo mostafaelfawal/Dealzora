@@ -1,11 +1,6 @@
 import type { Expense, ExpenseInput } from "../types/expense";
 import type { ExpenseSchemaType } from "../schema/expense.schema";
-import {
-  amountOrZero,
-  parseAmount,
-  todayYmd,
-  toYmd,
-} from "./expenseCalc";
+import { amountOrZero, parseAmount, todayYmd, toYmd } from "./expenseCalc";
 
 export const emptyValues = (): ExpenseSchemaType => ({
   category: "",

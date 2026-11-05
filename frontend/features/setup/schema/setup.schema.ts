@@ -17,10 +17,14 @@ const check = (fn: (text: string) => string | null) =>
 
 const length = (text: string) => [...text].length;
 
-export const cleanShopName = (text: string) => text.split(/\s+/).filter(Boolean).join(" ");
-export const cleanUsername = (text: string) => text.normalize("NFKC").trim().toLowerCase();
+export const cleanShopName = (text: string) =>
+  text.split(/\s+/).filter(Boolean).join(" ");
+export const cleanUsername = (text: string) =>
+  text.normalize("NFKC").trim().toLowerCase();
 
-const USERNAME_RE = new RegExp(`^[a-z0-9._-]{${USERNAME_MIN},${USERNAME_MAX}}$`);
+const USERNAME_RE = new RegExp(
+  `^[a-z0-9._-]{${USERNAME_MIN},${USERNAME_MAX}}$`,
+);
 
 function shopNameError(text: string) {
   const n = length(cleanShopName(text));
@@ -41,8 +45,10 @@ function usernameError(text: string) {
 function passwordError(text: string) {
   const p = text.normalize("NFKC");
   if (!p) return "اكتب كلمة المرور";
-  if (length(p) < PASSWORD_MIN) return `كلمة المرور ${PASSWORD_MIN} خانات على الأقل`;
-  if (length(p) > PASSWORD_MAX) return `كلمة المرور أطول من ${PASSWORD_MAX} خانة`;
+  if (length(p) < PASSWORD_MIN)
+    return `كلمة المرور ${PASSWORD_MIN} خانات على الأقل`;
+  if (length(p) > PASSWORD_MAX)
+    return `كلمة المرور أطول من ${PASSWORD_MAX} خانة`;
   if (!p.trim()) return "كلمة المرور لا يمكن أن تكون مسافات فقط";
   if (new Set(p).size < 4) return "كلمة المرور ضعيفة: حروفها متكررة";
   return null;
@@ -58,9 +64,17 @@ export const setupSchema = z
   .superRefine((v, ctx) => {
     const u = cleanUsername(v.username);
     if (u && v.password.normalize("NFKC").toLowerCase().includes(u))
-      ctx.addIssue({ code: "custom", path: ["password"], message: "كلمة المرور لا يجب أن تحتوي اسم المستخدم" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["password"],
+        message: "كلمة المرور لا يجب أن تحتوي اسم المستخدم",
+      });
     if (v.confirm !== v.password)
-      ctx.addIssue({ code: "custom", path: ["confirm"], message: "كلمتا المرور غير متطابقتين" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["confirm"],
+        message: "كلمتا المرور غير متطابقتين",
+      });
   });
 
 export type SetupSchemaType = z.infer<typeof setupSchema>;

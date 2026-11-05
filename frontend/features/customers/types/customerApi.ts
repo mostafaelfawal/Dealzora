@@ -57,7 +57,10 @@ export interface CustomerCreatePayload {
   is_active: boolean;
 }
 
-export type CustomerUpdatePayload = Omit<CustomerCreatePayload, "opening_balance"> & {
+export type CustomerUpdatePayload = Omit<
+  CustomerCreatePayload,
+  "opening_balance"
+> & {
   base_version: number;
 };
 

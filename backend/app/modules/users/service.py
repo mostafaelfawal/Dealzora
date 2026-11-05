@@ -10,7 +10,6 @@ from app.core.audit import record_audit
 from app.core.base import utcnow, uuid7
 from app.core.config import get_settings
 from app.core.errors import (
-    AppError,
     BadRequestError,
     ConflictError,
     ForbiddenError,
@@ -24,7 +23,6 @@ from app.modules.shop.service import ShopService
 from .constants import ENTITY_USER, ERROR_MESSAGES, UserError
 from .helper import (
     actor_for,
-    diff_snapshots,
     password_contains_username,
     set_password,
     user_snapshot,
@@ -33,11 +31,10 @@ from .model import User
 from .repository import UserRepository
 from .schema import ResetPasswordIn, SetupIn, UserCreate, UserOut, UserUpdate
 from .types import AuditAction
+from app.core.error_factory import make_error_factory
+from app.core.snapshots import diff_snapshots
 
-
-def _err(exc: type[AppError], code: UserError, **details) -> AppError:
-    return exc(code=code.value, message=ERROR_MESSAGES[code], details=details or None)
-
+_err = make_error_factory(ERROR_MESSAGES)
 
 class UserService:
     def __init__(self, session: Session, actor: Actor | None = None) -> None:

@@ -149,7 +149,9 @@ export function CustomersToolbar({
               <IconLayoutGrid className="size-5" />
             </Button>
           </AppTooltip>
-          <AppTooltip message={`جدول (${CUSTOMERS_SHORTCUTS.toggleView.label})`}>
+          <AppTooltip
+            message={`جدول (${CUSTOMERS_SHORTCUTS.toggleView.label})`}
+          >
             <Button
               type="button"
               size="icon-lg"
@@ -181,7 +183,10 @@ export function CustomersToolbar({
             className="shrink-0 gap-1.5 font-normal"
           >
             {option.label}
-            <bdi dir="ltr" className="font-mono text-[11px] tabular-nums opacity-70">
+            <bdi
+              dir="ltr"
+              className="font-mono text-[11px] tabular-nums opacity-70"
+            >
               {countFor(option.id, summary)}
             </bdi>
           </Button>

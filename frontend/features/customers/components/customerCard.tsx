@@ -9,7 +9,10 @@ import { cn } from "@/lib/utils";
 
 import { formatDaysAgo, initialOf } from "../lib/customerCalc";
 import type { Customer } from "../types/customer";
-import { CustomerActionsMenu, type CustomerActions } from "./customerActionsMenu";
+import {
+  CustomerActionsMenu,
+  type CustomerActions,
+} from "./customerActionsMenu";
 import { CustomerCreditMeter } from "./customerCreditMeter";
 import { CustomerStatusBadges } from "./customerStatusBadges";
 
@@ -20,7 +23,11 @@ interface CustomerCardProps extends CustomerActions {
 }
 
 /** بطاقة عميل. الاسم يفتح كشف الحساب ويغطي البطاقة كلها، والإجراءات فوقه. */
-export function CustomerCard({ customer, index, ...actions }: CustomerCardProps) {
+export function CustomerCard({
+  customer,
+  index,
+  ...actions
+}: CustomerCardProps) {
   const hasDebt = customer.balance > 0;
 
   return (

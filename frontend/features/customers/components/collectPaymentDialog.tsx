@@ -40,14 +40,21 @@ export function CollectPaymentDialog({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <Dialog open={customer !== null} onOpenChange={(next) => !next && onClose()}>
+    <Dialog
+      open={customer !== null}
+      onOpenChange={(next) => !next && onClose()}
+    >
       <DialogContent
         showCloseButton={false}
         initialFocus={inputRef}
         className="gap-3 sm:max-w-sm"
       >
         {customer && (
-          <CollectForm customer={customer} inputRef={inputRef} onClose={onClose} />
+          <CollectForm
+            customer={customer}
+            inputRef={inputRef}
+            onClose={onClose}
+          />
         )}
       </DialogContent>
     </Dialog>
@@ -99,12 +106,17 @@ function CollectForm({
       </DialogHeader>
 
       <div className="flex items-end justify-between">
-        <span className="pb-1 text-sm text-muted-foreground">المديونية الحالية</span>
+        <span className="pb-1 text-sm text-muted-foreground">
+          المديونية الحالية
+        </span>
         <Money amount={customer.balance} className="text-3xl leading-none" />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="collect-amount" className="text-xs text-muted-foreground">
+        <label
+          htmlFor="collect-amount"
+          className="text-xs text-muted-foreground"
+        >
           المبلغ المستلم
         </label>
         <InputGroup className="h-12">
@@ -165,7 +177,10 @@ function CollectForm({
       </dl>
 
       {error && (
-        <p role="alert" className="flex items-center gap-2 text-xs text-destructive">
+        <p
+          role="alert"
+          className="flex items-center gap-2 text-xs text-destructive"
+        >
           <IconAlertTriangle className="size-4 shrink-0" />
           {error}
         </p>

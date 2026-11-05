@@ -20,7 +20,10 @@ import { Label } from "@/components/ui/label";
 import { EXPENSE_CATEGORIES } from "../config/expenseOptions";
 import { useSaveExpense } from "../hooks/useExpenseMutations";
 import { emptyValues, expenseToForm, formToInput } from "../lib/expenseForm";
-import { expenseSchema, type ExpenseSchemaType } from "../schema/expense.schema";
+import {
+  expenseSchema,
+  type ExpenseSchemaType,
+} from "../schema/expense.schema";
 import type { Expense } from "../types/expense";
 
 const IDS = {
@@ -249,7 +252,12 @@ function ExpenseForm({
           </Button>
         )}
 
-        <Button type="submit" size="lg" disabled={saving} className="gap-2 px-5">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={saving}
+          className="gap-2 px-5"
+        >
           {saving && pendingAction === "save" ? (
             <>
               <IconLoader2 className="size-4 animate-spin" aria-hidden />

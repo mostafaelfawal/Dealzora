@@ -6,6 +6,8 @@ from app.modules.customers.routes import router as customers_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.shop.routes import router as shop_router
 from app.modules.expenses.routes import router as expenses_router
+from app.modules.treasury.routes import router as treasury_router
+from app.modules.suppliers.routes import router as suppliers_router
 
 api_router = APIRouter()
 routes = [
@@ -15,6 +17,8 @@ routes = [
     auth_router,
     shop_router,
     expenses_router,
+    suppliers_router,
+    treasury_router
 ]
 
 for router in routes:

@@ -44,7 +44,10 @@ export function CustomerStatementDialog({
   onEdit: (id: string) => void;
 }) {
   return (
-    <Dialog open={customer !== null} onOpenChange={(next) => !next && onClose()}>
+    <Dialog
+      open={customer !== null}
+      onOpenChange={(next) => !next && onClose()}
+    >
       <DialogContent
         showCloseButton={false}
         className="max-h-[90dvh] gap-3 overflow-y-auto sm:max-w-2xl"
@@ -73,7 +76,9 @@ function Statement({
   onCollect: (id: string) => void;
   onEdit: (id: string) => void;
 }) {
-  const { data, isPending, isError, error, refetch } = useGetStatement(customer.id);
+  const { data, isPending, isError, error, refetch } = useGetStatement(
+    customer.id,
+  );
   const entries = data ? [...data].reverse() : [];
   const hasDebt = customer.balance > 0;
 
@@ -106,7 +111,10 @@ function Statement({
         <div className="space-y-1 border p-3">
           <p className="text-xs text-muted-foreground">المديونية</p>
           {hasDebt ? (
-            <Money amount={customer.balance} className="text-2xl leading-none text-destructive" />
+            <Money
+              amount={customer.balance}
+              className="text-2xl leading-none text-destructive"
+            />
           ) : (
             <p className="text-base font-semibold text-success">لا مديونية</p>
           )}
@@ -120,7 +128,10 @@ function Statement({
         </div>
         <div className="space-y-1 border p-3">
           <p className="text-xs text-muted-foreground">إجمالي مشترياته</p>
-          <Money amount={customer.totalSales} className="text-2xl leading-none" />
+          <Money
+            amount={customer.totalSales}
+            className="text-2xl leading-none"
+          />
           <p className="text-[11px] text-muted-foreground">
             آخر شراء: {formatDaysAgo(customer.lastPurchaseAt)}
           </p>
@@ -143,7 +154,12 @@ function Statement({
             <p role="alert" className="text-xs text-destructive">
               {extractErrorMessage(error, "تعذّر تحميل كشف الحساب")}
             </p>
-            <Button type="button" size="sm" variant="outline" onClick={() => refetch()}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => refetch()}
+            >
               إعادة المحاولة
             </Button>
           </div>
@@ -196,17 +212,27 @@ function Statement({
                     </span>
                   </td>
                   <td className="px-2.5">
-                    {entry.debit > 0 ? <Money amount={entry.debit} className="text-xs" /> : "—"}
-                  </td>
-                  <td className="px-2.5">
-                    {entry.credit > 0 ? (
-                      <Money amount={entry.credit} className="text-xs text-success" />
+                    {entry.debit > 0 ? (
+                      <Money amount={entry.debit} className="text-xs" />
                     ) : (
                       "—"
                     )}
                   </td>
                   <td className="px-2.5">
-                    <Money amount={entry.balance} className="text-xs font-medium" />
+                    {entry.credit > 0 ? (
+                      <Money
+                        amount={entry.credit}
+                        className="text-xs text-success"
+                      />
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-2.5">
+                    <Money
+                      amount={entry.balance}
+                      className="text-xs font-medium"
+                    />
                   </td>
                 </tr>
               ))}
@@ -216,7 +242,13 @@ function Statement({
       </div>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" size="lg" onClick={onClose} className="font-normal sm:me-auto">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={onClose}
+          className="font-normal sm:me-auto"
+        >
           إغلاق
         </Button>
         <Button

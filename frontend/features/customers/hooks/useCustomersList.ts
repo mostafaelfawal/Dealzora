@@ -33,7 +33,8 @@ export function useCustomersList() {
   const pageCount = Math.max(1, Math.ceil(matching.length / filters.pageSize));
   const page = Math.min(filters.page, pageCount);
   const customers = useMemo(
-    () => matching.slice((page - 1) * filters.pageSize, page * filters.pageSize),
+    () =>
+      matching.slice((page - 1) * filters.pageSize, page * filters.pageSize),
     [matching, page, filters.pageSize],
   );
 
@@ -46,7 +47,8 @@ export function useCustomersList() {
   }, []);
 
   const clearFilters = useCallback(
-    () => setFilters((prev) => ({ ...DEFAULT_FILTERS, pageSize: prev.pageSize })),
+    () =>
+      setFilters((prev) => ({ ...DEFAULT_FILTERS, pageSize: prev.pageSize })),
     [],
   );
 

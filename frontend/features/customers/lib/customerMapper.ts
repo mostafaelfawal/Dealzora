@@ -48,7 +48,9 @@ export const toStatementEntry = (dto: StatementEntryDto): StatementEntry => ({
   balance: toPounds(dto.balance_after),
 });
 
-export const toCreatePayload = (input: CustomerInput): CustomerCreatePayload => ({
+export const toCreatePayload = (
+  input: CustomerInput,
+): CustomerCreatePayload => ({
   name: input.name,
   phone: input.phone,
   address: input.address,

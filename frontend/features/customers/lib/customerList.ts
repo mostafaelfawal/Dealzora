@@ -9,7 +9,10 @@ import type {
   CustomersSummary,
 } from "../types/customer";
 
-export function summarize(customers: Customer[], now = Date.now()): CustomersSummary {
+export function summarize(
+  customers: Customer[],
+  now = Date.now(),
+): CustomersSummary {
   const summary: CustomersSummary = {
     total: customers.length,
     totalDebt: 0,

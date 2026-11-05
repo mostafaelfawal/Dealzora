@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.audit import record_audit
 from app.core.base import utcnow
 from app.core.config import get_settings
-from app.core.errors import AppError, BadRequestError, ForbiddenError, UnauthorizedError
+from app.core.errors import BadRequestError, ForbiddenError, UnauthorizedError
 from app.core.passwords import DUMMY_HASH, hash_password, needs_rehash, verify_password
 from app.core.security import Actor, Role
 from app.modules.users.constants import ENTITY_USER
@@ -19,6 +19,8 @@ from app.modules.users.helper import (
 from app.modules.users.model import User
 from app.modules.users.repository import UserRepository
 from app.modules.users.schema import UserOut
+from app.core.error_factory import make_error_factory
+from app.core.timeutils import aware
 
 from .constants import (
     ERROR_MESSAGES,
@@ -30,16 +32,14 @@ from .constants import (
     SESSION_TTL,
     AuthError,
 )
-from .helper import aware, generate_token, hash_token
+from .helper import generate_token, hash_token
 from .model import AuthSession
 from .repository import AuthRepository
 from .schema import ChangePasswordIn, LoginIn, LoginOut
 from .types import AuditAction
 
 
-def _err(exc: type[AppError], code: AuthError, **details) -> AppError:
-    return exc(code=code.value, message=ERROR_MESSAGES[code], details=details or None)
-
+_err = make_error_factory(ERROR_MESSAGES)
 
 class AuthService:
     def __init__(self, session: Session, actor: Actor | None = None) -> None:

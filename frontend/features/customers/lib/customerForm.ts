@@ -1,6 +1,11 @@
 import type { Customer, CustomerInput } from "../types/customer";
 import type { CustomerSchemaType } from "../schema/customer.schema";
-import { amountOrZero, cleanName, cleanPhone, parseAmount } from "./customerCalc";
+import {
+  amountOrZero,
+  cleanName,
+  cleanPhone,
+  parseAmount,
+} from "./customerCalc";
 
 export const EMPTY_CUSTOMER_FORM: CustomerSchemaType = {
   name: "",

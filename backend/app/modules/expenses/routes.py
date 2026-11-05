@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_session
 from app.core.security import Actor, get_actor
 
-from .middleware import require_admin, require_admin_write
+from app.core.permissions import require_admin, require_admin_write
 from .schema import (
     BulkIn,
     BulkResultOut,

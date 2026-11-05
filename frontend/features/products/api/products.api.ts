@@ -67,7 +67,6 @@ export const toggleProductActive = async (id: string, baseVersion: number) =>
     ).data,
   );
 
-
 export const bulkDeleteProducts = async (items: BulkItem[]) =>
   (await api.post<BulkResultDto>("/products/bulk-delete", toBulkPayload(items)))
     .data;

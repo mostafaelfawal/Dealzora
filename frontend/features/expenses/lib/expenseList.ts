@@ -37,7 +37,10 @@ function periodRange(period: ExpensePeriod, now = new Date()) {
     from.setDate(from.getDate() - 6);
     return { date_from: toYmd(from), date_to: to };
   }
-  return { date_from: toYmd(new Date(now.getFullYear(), now.getMonth(), 1)), date_to: to };
+  return {
+    date_from: toYmd(new Date(now.getFullYear(), now.getMonth(), 1)),
+    date_to: to,
+  };
 }
 
 /** يحوّل حالة الفلاتر إلى query params. القيم الافتراضية لا تُرسل. */

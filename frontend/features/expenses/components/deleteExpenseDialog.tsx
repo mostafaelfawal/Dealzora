@@ -42,7 +42,10 @@ export function DeleteExpenseDialog({
               <span className="flex flex-wrap items-baseline gap-1">
                 {categoryLabel(expense.category)} ·{" "}
                 {formatDate(expense.spentAt)} ·{" "}
-                <Money amount={expense.amount} className="inline-flex text-xs" />
+                <Money
+                  amount={expense.amount}
+                  className="inline-flex text-xs"
+                />
               </span>
             )}
             <span className="block">
@@ -74,7 +77,9 @@ export function DeleteExpenseDialog({
             }
             className="gap-2"
           >
-            {remove.isPending && <IconLoader2 className="size-4 animate-spin" />}
+            {remove.isPending && (
+              <IconLoader2 className="size-4 animate-spin" />
+            )}
             حذف المصروف
           </Button>
         </div>
