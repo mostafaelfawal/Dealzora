@@ -59,13 +59,17 @@ export function ProductsTable({
         <tbody>
           {products.map((product, index) => (
             <MotionTr
-              {...listRow(index)}
               key={product.id}
+              {...listRow(index)}
               style={{ animationDelay: `${Math.min(index, 12) * 20}ms` }}
               onClick={(event) => {
+                const target = event.target as HTMLElement;
+                // أحداث الـ portal (القائمة) تصعد في شجرة React رغم أنها خارج الصف في الـ DOM.
+                if (!event.currentTarget.contains(target)) return;
+
                 if (
-                  (event.target as HTMLElement).closest(
-                    "a, button, input, [role='switch']",
+                  target.closest(
+                    "a, button, input, label, [role='switch'], [role='menu'], [role='menuitem']",
                   )
                 )
                   return;

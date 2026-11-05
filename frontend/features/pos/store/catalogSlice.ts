@@ -1,11 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import {
-  POS_CATEGORIES,
-  POS_CUSTOMERS,
-  POS_INVOICES,
-  POS_PRODUCTS,
-} from "../mocks/posData";
 import type {
   CompletedInvoice,
   PosCategory,
@@ -17,15 +11,15 @@ export interface CatalogState {
   products: PosProduct[];
   categories: PosCategory[];
   customers: PosCustomer[];
+  /** TODO: لا يوجد endpoint للفواتير بعد. */
   invoices: CompletedInvoice[];
 }
 
-/** TODO: بدّل البيانات التجريبية بنتيجة الـ API. */
 const initialState: CatalogState = {
-  products: POS_PRODUCTS,
-  categories: POS_CATEGORIES,
-  customers: POS_CUSTOMERS,
-  invoices: POS_INVOICES,
+  products: [],
+  categories: [],
+  customers: [],
+  invoices: [],
 };
 
 const round3 = (n: number) => Math.round((n + Number.EPSILON) * 1000) / 1000;
@@ -37,7 +31,7 @@ const catalogSlice = createSlice({
     setCatalog(state, action: PayloadAction<Partial<CatalogState>>) {
       Object.assign(state, action.payload);
     },
-    /** يسجّل ما أُرجع على الفاتورة الأصلية (الفاتورة نفسها لا تتغير، فقط عدّاد المرتجع). */
+    /** يسجّل ما أُرجع على الفاتورة الأصلية (عدّاد المرتجع فقط). */
     applyReturn(
       state,
       action: PayloadAction<{

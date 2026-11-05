@@ -50,7 +50,11 @@ export function ProductActionsMenu({
       >
         <IconDots />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent
+        align="end"
+        className="w-44"
+        onClick={(event) => event.stopPropagation()}
+      >
         <DropdownMenuItem
           render={<Link href={PRODUCT_ROUTES.edit(product.id)} />}
         >

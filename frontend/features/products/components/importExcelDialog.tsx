@@ -6,13 +6,16 @@ import {
   IconCircleCheck,
   IconDownload,
   IconFileSpreadsheet,
+  IconLoader2,
   IconUpload,
 } from "@tabler/icons-react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import type { DragEvent } from "react";
 import { toast } from "sonner";
 
+import { MotionDiv, popIn } from "@/components/shared/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,9 +42,11 @@ import {
   type ColumnMapping,
   type MappingValue,
 } from "../config/importFields";
+import { productKeys } from "../config/productQueryKeys";
 import { PRODUCT_ROUTES } from "../config/productRoutes";
-import { MOCK_EXCEL } from "../mocks/excelMock";
-import { MotionDiv, popIn } from "@/components/shared/motion";
+import { readSheet, type ParsedSheet } from "../lib/excelSheet";
+import { importProducts, type ImportReport } from "../lib/productImport";
+import { downloadProductsTemplate } from "../lib/productExcel";
 
 type Step = "file" | "map" | "done";
 type DuplicateMode = "update" | "skip";
@@ -60,10 +65,7 @@ const FIELD_ITEMS = [
   })),
 ];
 
-/**
- * استيراد الأصناف من Excel: اختيار ملف ← ربط أعمدته بحقول التطبيق ← تأكيد.
- * الواجهة فقط حالياً. TODO: قراءة الملف وإرساله كـ import_job على السيرفر (تحقق ← تقرير أخطاء ← تطبيق).
- */
+/** استيراد الأصناف من Excel: اختيار ملف ← ربط أعمدته بحقول التطبيق ← استيراد. */
 export function ImportExcelDialog({
   open,
   onOpenChange,
@@ -122,30 +124,52 @@ function StepIndicator({ current }: { current: Step }) {
 }
 
 function ImportFlow({ onClose }: { onClose: () => void }) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>("file");
   const [fileName, setFileName] = useState("");
+  const [sheet, setSheet] = useState<ParsedSheet | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>({});
   const [duplicates, setDuplicates] = useState<DuplicateMode>("update");
   const [dragging, setDragging] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [report, setReport] = useState<ImportReport | null>(null);
 
-  function acceptFile(file: File | undefined) {
-    if (!file) return;
+  async function acceptFile(file: File | undefined) {
+    if (!file || reading) return;
     if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
       toast.error("الملف غير مدعوم", {
         description: "اختر ملف Excel بصيغة xlsx أو xls أو csv.",
       });
       return;
     }
-    setFileName(file.name);
-    // أعمدة تجريبية الآن، وبعدها تُقرأ من الملف الفعلي.
-    setMapping(autoMapColumns(MOCK_EXCEL.columns));
-    setStep("map");
+    setReading(true);
+    try {
+      const parsed = await readSheet(file);
+      if (parsed.columns.length === 0 || parsed.rows.length === 0) {
+        toast.error("الملف فارغ", {
+          description: "لم نجد أي صفوف بيانات تحت الصف الأول.",
+        });
+        return;
+      }
+      setFileName(file.name);
+      setSheet(parsed);
+      setMapping(autoMapColumns(parsed.columns));
+      setStep("map");
+    } catch {
+      toast.error("تعذّرت قراءة الملف", {
+        description: "تأكد أن الملف سليم وغير محمي بكلمة مرور.",
+      });
+    } finally {
+      setReading(false);
+    }
   }
 
   function handleDrop(event: DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     setDragging(false);
-    acceptFile(event.dataTransfer.files[0]);
+    void acceptFile(event.dataTransfer.files[0]);
   }
 
   /** كل حقل يُربط بعمود واحد فقط: ربطه بعمود جديد يفك ربطه من القديم. */
@@ -162,39 +186,104 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
     });
   }
 
+  async function runImport() {
+    if (!sheet || importing) return;
+    setImporting(true);
+    setProgress({ done: 0, total: sheet.rows.length });
+    try {
+      const result = await importProducts({
+        rows: sheet.rows,
+        mapping,
+        duplicates,
+        onProgress: (done, total) => setProgress({ done, total }),
+      });
+      await queryClient.invalidateQueries({ queryKey: productKeys.all });
+      setReport(result);
+      setStep("done");
+    } catch {
+      toast.error("تعذّر إكمال الاستيراد");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   const covered = new Set(Object.values(mapping));
   const missingRequired = IMPORT_FIELDS.filter(
     (f) => f.required && !covered.has(f.key),
   );
   const coveredCount = IMPORT_FIELDS.filter((f) => covered.has(f.key)).length;
-  const canImport = missingRequired.length === 0;
+  const canImport = missingRequired.length === 0 && !importing;
 
   /* ---------- الخطوة 3: تم ---------- */
-  if (step === "done") {
+  if (step === "done" && report) {
+    const saved = report.created + report.updated;
     return (
       <>
         <DialogHeader className="sr-only">
-          <DialogTitle>تم الاستيراد</DialogTitle>
-          <DialogDescription>اكتمل استيراد الأصناف من Excel.</DialogDescription>
+          <DialogTitle>انتهى الاستيراد</DialogTitle>
+          <DialogDescription>نتيجة استيراد الأصناف من Excel.</DialogDescription>
         </DialogHeader>
         <StepIndicator current="done" />
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
           <MotionDiv variants={popIn} initial="hidden" animate="show">
-            <IconCircleCheck className="size-14 text-success" />
+            <IconCircleCheck
+              className={cn(
+                "size-14",
+                saved > 0 ? "text-success" : "text-muted-foreground",
+              )}
+            />
           </MotionDiv>
           <div className="space-y-1">
             <p className="text-base font-semibold">
-              تم استيراد{" "}
+              تم حفظ{" "}
               <bdi dir="ltr" className="font-mono">
-                {MOCK_EXCEL.rowCount}
+                {saved}
               </bdi>{" "}
               صنف
             </p>
             <p className="text-xs text-muted-foreground">
-              أصبحت الأصناف في قائمتك وجاهزة للبيع من الكاشير.
+              جديد:{" "}
+              <bdi dir="ltr" className="font-mono">
+                {report.created}
+              </bdi>{" "}
+              · محدَّث:{" "}
+              <bdi dir="ltr" className="font-mono">
+                {report.updated}
+              </bdi>{" "}
+              · متخطّى:{" "}
+              <bdi dir="ltr" className="font-mono">
+                {report.skipped}
+              </bdi>{" "}
+              · فشل:{" "}
+              <bdi dir="ltr" className="font-mono">
+                {report.failed.length}
+              </bdi>
             </p>
           </div>
         </div>
+
+        {report.failed.length > 0 && (
+          <ul
+            aria-label="الصفوف التي فشل استيرادها"
+            className="max-h-40 divide-y overflow-y-auto border text-xs"
+          >
+            {report.failed.map((item) => (
+              <li
+                key={item.row}
+                className="flex items-center justify-between gap-3 px-3 py-1.5"
+              >
+                <span className="text-muted-foreground">
+                  الصف{" "}
+                  <bdi dir="ltr" className="font-mono">
+                    {item.row}
+                  </bdi>
+                </span>
+                <span className="text-destructive">{item.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
@@ -218,7 +307,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
   }
 
   /* ---------- الخطوة 1: اختيار الملف ---------- */
-  if (step === "file") {
+  if (step === "file" || !sheet) {
     return (
       <>
         <DialogHeader className="text-start">
@@ -246,19 +335,26 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
             type="file"
             accept=".xlsx,.xls,.csv"
             className="sr-only"
-            onChange={(event) => acceptFile(event.target.files?.[0])}
+            disabled={reading}
+            onChange={(event) => void acceptFile(event.target.files?.[0])}
           />
           <IconFileSpreadsheet className="size-10 text-muted-foreground" />
           <div className="space-y-1">
             <p className="text-sm font-medium">
-              {dragging
-                ? "أفلت الملف هنا"
-                : "اسحب ملف Excel هنا أو اضغط للاختيار"}
+              {reading
+                ? "جارٍ قراءة الملف…"
+                : dragging
+                  ? "أفلت الملف هنا"
+                  : "اسحب ملف Excel هنا أو اضغط للاختيار"}
             </p>
             <p className="text-xs text-muted-foreground">xlsx · xls · csv</p>
           </div>
           <span className="inline-flex h-9 items-center gap-2 border bg-background px-3 text-xs font-medium">
-            <IconUpload className="size-4" />
+            {reading ? (
+              <IconLoader2 className="size-4 animate-spin" />
+            ) : (
+              <IconUpload className="size-4" />
+            )}
             اختيار ملف
           </span>
         </label>
@@ -272,7 +368,11 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
             type="button"
             variant="outline"
             size="lg"
-            onClick={() => toast.info("سيتوفر نموذج Excel قريباً")}
+            onClick={() =>
+              void downloadProductsTemplate().catch(() =>
+                toast.error("تعذّر تحميل النموذج"),
+              )
+            }
             className="gap-2 font-normal"
           >
             <IconDownload className="size-4" />
@@ -305,11 +405,11 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
           </p>
           <p className="text-[11px] text-muted-foreground">
             <bdi dir="ltr" className="font-mono">
-              {MOCK_EXCEL.rowCount}
+              {sheet.rows.length}
             </bdi>{" "}
             صف ·{" "}
             <bdi dir="ltr" className="font-mono">
-              {MOCK_EXCEL.columns.length}
+              {sheet.columns.length}
             </bdi>{" "}
             أعمدة
           </p>
@@ -318,6 +418,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
           type="button"
           variant="ghost"
           size="sm"
+          disabled={importing}
           onClick={() => setStep("file")}
           className="font-normal"
         >
@@ -325,7 +426,6 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
         </Button>
       </div>
 
-      {/* حالة الحقول: الناقص المطلوب يظهر فوراً. */}
       <div aria-live="polite" className="space-y-1.5">
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">
@@ -339,7 +439,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
             </bdi>{" "}
             حقول
           </span>
-          {!canImport && (
+          {missingRequired.length > 0 && (
             <span className="text-destructive">
               ناقص: {missingRequired.map((f) => f.label).join("، ")}
             </span>
@@ -378,7 +478,6 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
 
       <Separator />
 
-      {/* عمود Excel (ومثال من أول صف) ← حقل في البرنامج */}
       <ul className="divide-y border">
         <li
           aria-hidden
@@ -388,7 +487,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
           <span className="w-4" />
           <span>يقابله في البرنامج</span>
         </li>
-        {MOCK_EXCEL.columns.map((column) => {
+        {sheet.columns.map((column) => {
           const value = mapping[column] ?? IGNORE;
           const ignored = value === IGNORE;
           return (
@@ -399,7 +498,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
               <div className={cn("min-w-0", ignored && "opacity-60")}>
                 <p className="truncate text-sm font-medium">{column}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  مثال: {MOCK_EXCEL.sample[column] ?? "—"}
+                  مثال: {sheet.rows[0]?.[column] || "—"}
                 </p>
               </div>
               <IconArrowLeft
@@ -412,6 +511,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
               <Select
                 items={FIELD_ITEMS}
                 value={value}
+                disabled={importing}
                 onValueChange={(next) => {
                   if (next) assign(column, next as MappingValue);
                 }}
@@ -457,6 +557,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
               key={option.id}
               type="button"
               size="lg"
+              disabled={importing}
               variant={duplicates === option.id ? "default" : "outline"}
               aria-pressed={duplicates === option.id}
               onClick={() => setDuplicates(option.id)}
@@ -473,6 +574,7 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
           type="button"
           variant="outline"
           size="lg"
+          disabled={importing}
           onClick={() => setStep("file")}
           className="font-normal sm:me-auto"
         >
@@ -482,17 +584,26 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
           type="button"
           size="lg"
           disabled={!canImport}
-          onClick={() => {
-            // TODO: أرسل الملف + الـ mapping + duplicates كـ import_job.
-            setStep("done");
-          }}
-          className="px-5"
+          onClick={() => void runImport()}
+          className="gap-2 px-5"
         >
-          استيراد{" "}
-          <bdi dir="ltr" className="font-mono">
-            {MOCK_EXCEL.rowCount}
-          </bdi>{" "}
-          صنف
+          {importing ? (
+            <>
+              <IconLoader2 className="size-4 animate-spin" aria-hidden />
+              جارٍ الاستيراد…{" "}
+              <bdi dir="ltr" className="font-mono tabular-nums">
+                {progress.done}/{progress.total}
+              </bdi>
+            </>
+          ) : (
+            <>
+              استيراد{" "}
+              <bdi dir="ltr" className="font-mono">
+                {sheet.rows.length}
+              </bdi>{" "}
+              صنف
+            </>
+          )}
         </Button>
       </div>
     </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconFileSpreadsheet, IconPlus } from "@tabler/icons-react";
+import { IconDownload, IconFileSpreadsheet, IconLoader2, IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,6 +22,8 @@ import { ProductsPagination } from "./productsPagination";
 import { ProductsStats } from "./productsStats";
 import { ProductsTable } from "./productsTable";
 import { ProductsToolbar } from "./productsToolbar";
+import useExportProducts from "../hooks/useExportProducts";
+import { toListParams } from "../lib/productList";
 
 export const PRODUCTS_SEARCH_ID = "products-search";
 
@@ -31,7 +33,13 @@ export function ProductsScreen() {
   const list = useProductsList();
   const { view, setView } = useProductsView();
   const [importOpen, setImportOpen] = useState(false);
+  const exportMutation = useExportProducts();
 
+  const exportToExcel = () => {
+    if (exportMutation.isPending) return;
+    // يصدّر حسب الفلاتر الحالية (بدون ترقيم الصفحات).
+    exportMutation.mutate(toListParams(list.filters));
+  };
   // الاختصارات لا تعمل والنافذة مفتوحة.
   const whenIdle = (fn: () => void) => () => {
     if (!importOpen) fn();
@@ -51,6 +59,7 @@ export function ProductsScreen() {
     PRODUCTS_SHORTCUTS.importExcel.match,
     whenIdle(() => setImportOpen(true)),
   );
+  useHotkey(PRODUCTS_SHORTCUTS.exportExcel.match, whenIdle(exportToExcel));
   useHotkey(
     PRODUCTS_SHORTCUTS.newProduct.match,
     whenIdle(() => router.push(PRODUCT_ROUTES.new)),
@@ -128,6 +137,27 @@ export function ProductsScreen() {
             أدر أصنافك وأسعارك ومخزونك من مكان واحد.
           </p>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          disabled={exportMutation.isPending}
+          onClick={exportToExcel}
+          className="h-10 gap-2 font-normal"
+        >
+          {exportMutation.isPending ? (
+            <IconLoader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <IconDownload className="size-4" aria-hidden />
+          )}
+          <span className="hidden sm:inline">
+            {list.filtered ? "تصدير النتائج" : "تصدير إلى Excel"}
+          </span>
+          <span className="sm:hidden">تصدير</span>
+          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+            {PRODUCTS_SHORTCUTS.exportExcel.label}
+          </ShortcutBadge>
+        </Button>
         <Button
           type="button"
           variant="outline"

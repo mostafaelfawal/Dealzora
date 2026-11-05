@@ -1,58 +1,47 @@
-export interface ProductShortcut {
-  label: string;
-  description: string;
-  match: (event: KeyboardEvent) => boolean;
-}
+import { ctrl, ENTER, plain, type Shortcut } from "@/lib/shortcuts";
 
-const plainKey = (key: string) => (event: KeyboardEvent) =>
-  event.key === key &&
-  !event.ctrlKey &&
-  !event.altKey &&
-  !event.metaKey &&
-  !event.shiftKey;
-
-/** Ctrl/⌘ + حرف بـ event.code ليعمل مع لوحة المفاتيح العربية. */
-const ctrlCode = (code: string) => (event: KeyboardEvent) =>
-  (event.ctrlKey || event.metaKey) &&
-  !event.altKey &&
-  !event.shiftKey &&
-  event.code === code;
+/** للتوافق مع أي import قديم. */
+export type ProductShortcut = Shortcut;
 
 /** اختصارات صفحة المنتجات. (F1 محجوز لـ "بيع جديد" في الـ Header.) */
 export const PRODUCTS_SHORTCUTS = {
   focusSearch: {
     label: "F2",
     description: "البحث عن صنف",
-    match: plainKey("F2"),
+    match: plain("F2"),
   },
   importExcel: {
     label: "F3",
     description: "استيراد من Excel",
-    match: plainKey("F3"),
+    match: plain("F3"),
   },
   newProduct: {
     label: "F4",
     description: "إضافة صنف جديد",
-    match: plainKey("F4"),
+    match: plain("F4"),
   },
   toggleView: {
     label: "F6",
     description: "التبديل بين البطاقات والجدول",
-    match: plainKey("F6"),
+    match: plain("F6"),
   },
-} as const satisfies Record<string, ProductShortcut>;
+  exportExcel: {
+    label: "F7",
+    description: "تصدير إلى Excel",
+    match: plain("F7"),
+  },
+} as const satisfies Record<string, Shortcut>;
 
 /** اختصارات صفحة إضافة/تعديل صنف. */
 export const PRODUCT_FORM_SHORTCUTS = {
   save: {
     label: "Ctrl+S",
     description: "حفظ الصنف",
-    match: ctrlCode("KeyS"),
+    match: ctrl("KeyS"),
   },
   saveAndNew: {
     label: "Ctrl+Enter",
     description: "حفظ وإضافة صنف آخر",
-    match: (event: KeyboardEvent) =>
-      (event.ctrlKey || event.metaKey) && event.key === "Enter",
+    match: ctrl(ENTER),
   },
-} as const satisfies Record<string, ProductShortcut>;
+} as const satisfies Record<string, Shortcut>;

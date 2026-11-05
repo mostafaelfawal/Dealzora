@@ -11,6 +11,7 @@ from app.core.database import get_engine
 import app.core.audit  # noqa: F401
 import app.core.outbox  # noqa: F401
 import app.modules.users.model  # noqa: F401
+import app.modules.customers.model  # noqa: F401
 import app.modules.auth.model  # noqa: F401
 import app.modules.products.model  # noqa: F401
 import app.modules.shop.model  # noqa: F401
