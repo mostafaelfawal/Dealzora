@@ -34,11 +34,15 @@ class Base(DeclarativeBase):
 
 class SyncMixin:
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid7)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
-    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     version: Mapped[int] = mapped_column(Integer, default=1)
     device_id: Mapped[str] = mapped_column(String(36))
     created_by: Mapped[str | None] = mapped_column(String(36), nullable=True)

@@ -5,7 +5,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.core.security import Role
-
+from app.modules.shop.schema_validation import ShopName
 from .schema_validation import (
     AssignableRole,
     NewPassword,
@@ -34,7 +34,8 @@ class SetupIn(BaseModel):
     """أول مدير في النظام (يعمل فقط والجدول فارغ)."""
 
     model_config = ConfigDict(extra="forbid")
-
+    
+    shop_name: ShopName
     username: Username
     password: NewPassword
 

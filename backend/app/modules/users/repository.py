@@ -21,7 +21,9 @@ class UserRepository:
         return self.session.scalars(stmt).first()
 
     def username_taken(self, username: str, *, exclude_id: str | None = None) -> bool:
-        stmt = select(User.id).where(User.username == username, User.deleted_at.is_(None))
+        stmt = select(User.id).where(
+            User.username == username, User.deleted_at.is_(None)
+        )
         if exclude_id:
             stmt = stmt.where(User.id != exclude_id)
         return self.session.scalar(stmt.limit(1)) is not None
@@ -45,7 +47,11 @@ class UserRepository:
         return self.session.scalar(stmt) or 0
 
     def list_users(self) -> list[User]:
-        stmt = select(User).where(User.deleted_at.is_(None)).order_by(User.created_at, User.username)
+        stmt = (
+            select(User)
+            .where(User.deleted_at.is_(None))
+            .order_by(User.created_at, User.username)
+        )
         return list(self.session.scalars(stmt).all())
 
     def add_user(self, user: User) -> None:

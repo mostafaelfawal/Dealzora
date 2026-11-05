@@ -16,11 +16,7 @@ let appToken: string | null = null;
 
 async function getAppToken(): Promise<string | null> {
   if (appToken) return appToken;
-  // الإنتاج: Rust بيدّيه للتطبيق. التطوير: من .env.local (للتطوير فقط)
-  appToken =
-    (await tauriInvoke<string>("get_session_token")) ??
-    process.env.NEXT_PUBLIC_DEV_SESSION_TOKEN ??
-    null;
+  appToken = await tauriInvoke<string>("get_session_token");
   return appToken;
 }
 
@@ -49,14 +45,17 @@ export const AUTH_EXPIRED_EVENT = "dz:auth-expired";
 
 // ---------- Write permit (من Rust بعد فحص الترخيص) ----------
 const WRITE_METHODS = new Set(["post", "put", "patch", "delete"]);
-const NO_PERMIT_PATHS = ["/auth/", "/users/setup"]; // login/logout/setup لا تحتاج تصريح كتابة
+const NO_PERMIT_PATHS = ["/auth/"];
 
-async function getWritePermit(): Promise<string | null> {
-  return (
-    (await tauriInvoke<string>("get_write_permit")) ??
-    process.env.NEXT_PUBLIC_DEV_WRITE_PERMIT ??
-    null
-  );
+async function getWritePermit(): Promise<string> {
+  try {
+    const permit = await tauriInvoke<string>("get_write_permit");
+    if (!permit) throw new Error("not_in_tauri");
+    return permit;
+  } catch (e) {
+    // الأكواد من Rust: license_not_started | license_expired | license_tampered | license_wrong_machine
+    throw new ApiError(403, String(e), "الترخيص غير فعال");
+  }
 }
 
 // ---------- Axios instance ----------
@@ -108,6 +107,7 @@ api.interceptors.response.use(
       };
     }>,
   ) => {
+    if ((err as unknown) instanceof ApiError) return Promise.reject(err);
     const status = err.response?.status ?? 0;
     const body = err.response?.data?.error;
 

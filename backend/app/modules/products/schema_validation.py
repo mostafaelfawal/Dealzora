@@ -76,7 +76,9 @@ def validate_granularity(allow_decimal: bool, **quantities: int) -> None:
     labels = {"min_stock": "الحد الأدنى", "opening_stock": "الرصيد الافتتاحي"}
     for key, value in quantities.items():
         if value % QTY_SCALE:
-            raise ValueError(f"{labels.get(key, key)} لا يقبل كسوراً لأن الصنف لا يُباع بالوزن")
+            raise ValueError(
+                f"{labels.get(key, key)} لا يقبل كسوراً لأن الصنف لا يُباع بالوزن"
+            )
 
 
 def validate_extra_units(base_unit: str, barcode: str | None, units: list) -> None:

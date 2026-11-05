@@ -4,7 +4,14 @@ from datetime import datetime
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
-from .constants import DEFAULT_PAGE_SIZE, DEFAULT_UNIT, MAX_EXTRA_UNITS, MAX_NOTE_LEN, MAX_PAGE_SIZE, MAX_QTY
+from .constants import (
+    DEFAULT_PAGE_SIZE,
+    DEFAULT_UNIT,
+    MAX_EXTRA_UNITS,
+    MAX_NOTE_LEN,
+    MAX_PAGE_SIZE,
+    MAX_QTY,
+)
 from .schema_validation import (
     Money,
     Name,
@@ -73,7 +80,9 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(ProductBase):
-    base_version: int = Field(ge=1, description="نسخة السجل التي بدأ منها المستخدم التعديل")
+    base_version: int = Field(
+        ge=1, description="نسخة السجل التي بدأ منها المستخدم التعديل"
+    )
 
 
 class ProductOut(BaseModel):
@@ -106,7 +115,12 @@ class ProductListQuery(BaseModel):
     stock: StockFilter = StockFilter.ALL
     sort: SortKey = SortKey.NAME_ASC
     page: int = Field(1, ge=1)
-    page_size: int = Field(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE, validation_alias=AliasChoices("page_size", "limit"))
+    page_size: int = Field(
+        DEFAULT_PAGE_SIZE,
+        ge=1,
+        le=MAX_PAGE_SIZE,
+        validation_alias=AliasChoices("page_size", "limit"),
+    )
 
 
 class ProductListOut(BaseModel):

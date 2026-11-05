@@ -42,7 +42,9 @@ def user_snapshot(user: User) -> dict[str, Any]:
     return {f: getattr(user, f) for f in USER_SNAPSHOT_FIELDS}
 
 
-def diff_snapshots(before: dict[str, Any], after: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def diff_snapshots(
+    before: dict[str, Any], after: dict[str, Any]
+) -> dict[str, dict[str, Any]]:
     return {
         key: {"from": before.get(key), "to": after.get(key)}
         for key in after

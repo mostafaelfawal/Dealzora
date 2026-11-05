@@ -5,7 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit
 from app.core.base import uuid7
-from app.core.errors import AppError, ConflictError, NotFoundError, BadRequestError, ForbiddenError
+from app.core.errors import (
+    AppError,
+    ConflictError,
+    NotFoundError,
+    BadRequestError,
+    ForbiddenError,
+)
 from app.core.outbox import OutboxOp, enqueue_outbox
 from app.core.security import Actor, Role
 from .types import SortKey
@@ -67,7 +73,7 @@ class ProductService:
     # ================= قراءة =================
     def list_products(self, query: ProductListQuery) -> ProductListOut:
         if query.sort is SortKey.MARGIN_DESC and not self.is_admin:
-            raise ForbiddenError('forbidden', "الترتيب بهامش الربح للمدير فقط")
+            raise ForbiddenError("forbidden", "الترتيب بهامش الربح للمدير فقط")
 
         filters = ProductFilters(
             query=query.q,
@@ -103,7 +109,9 @@ class ProductService:
         if found is None or (not self.is_admin and not found[0].is_active):
             raise _err(NotFoundError, ProductError.NOT_FOUND)
         product, unit = found
-        return BarcodeLookupOut(product=self._to_out(product), matched_unit_id=unit.id if unit else None)
+        return BarcodeLookupOut(
+            product=self._to_out(product), matched_unit_id=unit.id if unit else None
+        )
 
     def list_categories(self) -> list[CategoryOut]:
         return [CategoryOut.model_validate(c) for c in self.repo.list_categories()]
@@ -136,7 +144,9 @@ class ProductService:
         self.repo.flush()
 
         if data.opening_stock > 0:
-            self._record_movement(product, MovementType.OPENING, data.opening_stock, note="رصيد افتتاحي")
+            self._record_movement(
+                product, MovementType.OPENING, data.opening_stock, note="رصيد افتتاحي"
+            )
 
         self._audit(product, "create", product_snapshot(product))
         self._enqueue(product, base_version=None)
@@ -146,7 +156,11 @@ class ProductService:
     def update_product(self, product_id: str, data: ProductUpdate) -> ProductOut:
         product = self._get_or_404(product_id)
         if data.base_version != product.version:
-            raise _err(ConflictError, ProductError.VERSION_CONFLICT, current_version=product.version)
+            raise _err(
+                ConflictError,
+                ProductError.VERSION_CONFLICT,
+                current_version=product.version,
+            )
         self._check_category(data.category_id)
         self._check_barcodes(data, exclude_product_id=product.id)
 
@@ -157,7 +171,9 @@ class ProductService:
         product.mark_modified()
         self.repo.flush()
 
-        self._audit(product, "update", diff_snapshots(before, product_snapshot(product)))
+        self._audit(
+            product, "update", diff_snapshots(before, product_snapshot(product))
+        )
         self._enqueue(product, base_version=data.base_version)
         self._commit()
         return self._to_out(product)
@@ -203,11 +219,19 @@ class ProductService:
     def toggle_active(self, product_id: str, base_version: int) -> ProductOut:
         product = self._get_or_404(product_id)
         if base_version != product.version:
-            raise _err(ConflictError, ProductError.VERSION_CONFLICT, current_version=product.version)
+            raise _err(
+                ConflictError,
+                ProductError.VERSION_CONFLICT,
+                current_version=product.version,
+            )
         was_active = product.is_active
         product.is_active = not was_active
         product.mark_modified()
-        self._audit(product, "toggle_active", {"is_active": {"from": was_active, "to": product.is_active}})
+        self._audit(
+            product,
+            "toggle_active",
+            {"is_active": {"from": was_active, "to": product.is_active}},
+        )
         self._enqueue(product, base_version=base_version)
         self._commit()
         return self._to_out(product)
@@ -215,14 +239,22 @@ class ProductService:
     def delete_product(self, product_id: str, base_version: int) -> None:
         product = self._get_or_404(product_id)
         if base_version != product.version:
-            raise _err(ConflictError, ProductError.VERSION_CONFLICT, current_version=product.version)
+            raise _err(
+                ConflictError,
+                ProductError.VERSION_CONFLICT,
+                current_version=product.version,
+            )
         if product.stock_qty != 0:
-            raise _err(ConflictError, ProductError.HAS_STOCK, stock_qty=product.stock_qty)
+            raise _err(
+                ConflictError, ProductError.HAS_STOCK, stock_qty=product.stock_qty
+            )
 
         for unit in product.units:
             unit.mark_deleted()
         product.mark_deleted()  # tombstone: يبقى في الجدول ويُنشر للمزامنة
-        self._audit(product, "delete", {"name": product.name, "stock_qty": product.stock_qty})
+        self._audit(
+            product, "delete", {"name": product.name, "stock_qty": product.stock_qty}
+        )
         self._enqueue(product, base_version=base_version, op=OutboxOp.DELETE)
         self._commit()
 
@@ -231,17 +263,27 @@ class ProductService:
         if not product.allow_decimal and data.qty % QTY_SCALE:
             raise _err(BadRequestError, ProductError.FRACTION_NOT_ALLOWED)
 
-        delta, movement_type = compute_adjustment(data.reason, data.qty, product.stock_qty)
+        delta, movement_type = compute_adjustment(
+            data.reason, data.qty, product.stock_qty
+        )
         if delta == 0:
             raise _err(BadRequestError, ProductError.NO_STOCK_CHANGE)
         if product.stock_qty + delta < 0:
-            raise _err(BadRequestError, ProductError.INSUFFICIENT_STOCK, available=product.stock_qty)
+            raise _err(
+                BadRequestError,
+                ProductError.INSUFFICIENT_STOCK,
+                available=product.stock_qty,
+            )
 
         movement = self._record_movement(product, movement_type, delta, note=data.note)
         self._audit(
             product,
             "stock_adjust",
-            {"reason": data.reason.value, "qty_delta": delta, "balance_after": movement.balance_after},
+            {
+                "reason": data.reason.value,
+                "qty_delta": delta,
+                "balance_after": movement.balance_after,
+            },
         )
         self._commit()
         return StockMovementOut.model_validate(movement)
@@ -263,7 +305,9 @@ class ProductService:
         if category_id and self.repo.get_category(category_id) is None:
             raise _err(BadRequestError, ProductError.CATEGORY_NOT_FOUND)
 
-    def _check_barcodes(self, data: ProductBase, exclude_product_id: str | None = None) -> None:
+    def _check_barcodes(
+        self, data: ProductBase, exclude_product_id: str | None = None
+    ) -> None:
         codes = [data.barcode, *(u.barcode for u in data.extra_units)]
         for code in filter(None, codes):
             if self.repo.barcode_taken(code, exclude_product_id=exclude_product_id):
@@ -315,7 +359,12 @@ class ProductService:
         )
 
     def _record_movement(
-        self, product: Product, movement_type: MovementType, delta: int, *, note: str | None = None
+        self,
+        product: Product,
+        movement_type: MovementType,
+        delta: int,
+        *,
+        note: str | None = None,
     ) -> StockMovement:
         balance = product.stock_qty + delta
         movement = StockMovement(
@@ -351,14 +400,27 @@ class ProductService:
 
     def _audit(self, product: Product, action: str, changes: dict) -> None:
         record_audit(
-            self.session, self.actor, entity=ENTITY_PRODUCT, entity_id=product.id, action=action, changes=changes
+            self.session,
+            self.actor,
+            entity=ENTITY_PRODUCT,
+            entity_id=product.id,
+            action=action,
+            changes=changes,
         )
 
-    def _enqueue(self, product: Product, *, base_version: int | None, op: OutboxOp = OutboxOp.UPSERT) -> None:
+    def _enqueue(
+        self,
+        product: Product,
+        *,
+        base_version: int | None,
+        op: OutboxOp = OutboxOp.UPSERT,
+    ) -> None:
         payload = {
             "id": product.id,
             "version": product.version,
-            "deleted_at": product.deleted_at.isoformat() if product.deleted_at else None,
+            "deleted_at": product.deleted_at.isoformat()
+            if product.deleted_at
+            else None,
             **product_snapshot(product, include_deleted_units=True),
         }
         enqueue_outbox(
@@ -374,7 +436,9 @@ class ProductService:
     def _commit(self) -> None:
         try:
             self.session.commit()
-        except IntegrityError as exc:  # سباق على الباركود الفريد (الفحص المسبق يغطي الحالة العادية)
+        except (
+            IntegrityError
+        ) as exc:  # سباق على الباركود الفريد (الفحص المسبق يغطي الحالة العادية)
             self.session.rollback()
             raise _err(ConflictError, ProductError.BARCODE_TAKEN) from exc
 
@@ -390,7 +454,9 @@ class ProductService:
             allow_decimal=p.allow_decimal,
             cost_price=p.cost_price if self.is_admin else None,
             sale_price=p.sale_price,
-            margin_percent=calc_margin_percent(p.cost_price, p.sale_price) if self.is_admin else None,
+            margin_percent=calc_margin_percent(p.cost_price, p.sale_price)
+            if self.is_admin
+            else None,
             min_stock=p.min_stock,
             stock_qty=p.stock_qty,
             stock_level=calc_stock_level(p.stock_qty, p.min_stock),

@@ -52,7 +52,9 @@ def calc_margin_percent(cost: int, sale: int) -> int | None:
     return math.floor((sale - cost) * 100 / sale + 0.5)
 
 
-def compute_adjustment(reason: AdjustReason, qty: int, current: int) -> tuple[int, MovementType]:
+def compute_adjustment(
+    reason: AdjustReason, qty: int, current: int
+) -> tuple[int, MovementType]:
     """يحوّل مدخلات التعديل اليدوي إلى (الفرق الموقّع، نوع الحركة)."""
     if reason is AdjustReason.COUNT:
         return qty - current, MovementType.COUNT  # qty = الرصيد بعد الجرد
@@ -79,7 +81,9 @@ def _jsonable(value: Any) -> Any:
     return value.isoformat() if isinstance(value, datetime) else value
 
 
-def product_snapshot(product: Any, *, include_deleted_units: bool = False) -> dict[str, Any]:
+def product_snapshot(
+    product: Any, *, include_deleted_units: bool = False
+) -> dict[str, Any]:
     data: dict[str, Any] = {f: getattr(product, f) for f in PRODUCT_SNAPSHOT_FIELDS}
     units = product.all_units if include_deleted_units else product.units
     data["units"] = [
@@ -96,7 +100,9 @@ def product_snapshot(product: Any, *, include_deleted_units: bool = False) -> di
     return data
 
 
-def diff_snapshots(before: dict[str, Any], after: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def diff_snapshots(
+    before: dict[str, Any], after: dict[str, Any]
+) -> dict[str, dict[str, Any]]:
     return {
         key: {"from": before.get(key), "to": after.get(key)}
         for key in after

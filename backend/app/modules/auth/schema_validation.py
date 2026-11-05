@@ -10,6 +10,8 @@ from app.modules.users.helper import normalize_username
 
 # اسم الدخول: نوحّده فقط ولا نفحص النمط (حتى لا نكشف القواعد لمن يخمّن).
 LoginUsername = Annotated[
-    str, Field(min_length=1, max_length=MAX_USERNAME_LEN), AfterValidator(normalize_username)
+    str,
+    Field(min_length=1, max_length=MAX_USERNAME_LEN),
+    AfterValidator(normalize_username),
 ]
 LoginPassword = Annotated[str, Field(min_length=1, max_length=MAX_PASSWORD_LEN)]

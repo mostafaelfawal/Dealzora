@@ -1,11 +1,12 @@
+mod license;
+
 use std::process::Child;
 use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
 
-use hmac::{Hmac, Mac};
-use rand::{distributions::Alphanumeric, Rng};
+use hmac::{ Hmac, Mac };
+use rand::{ distributions::Alphanumeric, Rng };
 use sha2::Sha256;
-use tauri::{Manager, RunEvent, State};
+use tauri::{ Manager, RunEvent, State };
 
 struct AppState {
     session_token: String,
@@ -14,11 +15,7 @@ struct AppState {
 }
 
 fn random_secret(len: usize) -> String {
-    rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(len)
-        .map(char::from)
-        .collect()
+    rand::thread_rng().sample_iter(&Alphanumeric).take(len).map(char::from).collect()
 }
 
 #[tauri::command]
@@ -28,18 +25,55 @@ fn get_session_token(state: State<AppState>) -> String {
 
 #[tauri::command]
 fn get_write_permit(state: State<AppState>) -> Result<String, String> {
-    // TODO: افحص الترخيص هنا. لو منتهي ارجع Err ولا تصدر تصريح.
-    let expires = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|e| e.to_string())?
-        .as_secs()
-        + 300; // 5 دقائق
+    let expires = license::permit_expiry()?; // هيفشل لو الترخيص مش متفعل
 
-    let mut mac = Hmac::<Sha256>::new_from_slice(state.permit_secret.as_bytes())
+    let mut mac = Hmac::<Sha256>
+        ::new_from_slice(state.permit_secret.as_bytes())
         .map_err(|e| e.to_string())?;
     mac.update(expires.to_string().as_bytes());
     Ok(format!("{}.{}", expires, hex::encode(mac.finalize().into_bytes())))
 }
+
+#[tauri::command]
+fn get_license_status() -> Result<license::Status, String> {
+    license::status()
+}
+
+#[tauri::command]
+fn start_trial(shop_name: String) -> Result<license::Status, String> {
+    license::start_trial(&shop_name)
+}
+
+#[tauri::command]
+fn activate_license(key: String) -> Result<license::Status, String> {
+    license::activate(&key)
+}
+
+/// يضع عملية التطبيق في Job عليه KILL_ON_JOB_CLOSE: كل عملية نشغّلها بعد كده (الـ backend
+/// وأي عمليات فرعية له، حتى bootloader بتاع PyInstaller) تموت أوتوماتيك لما التطبيق يموت،
+/// سواء قفل عادي أو crash أو إنهاء من Task Manager.
+#[cfg(all(windows, not(debug_assertions)))]
+fn bind_children_to_app_lifetime() {
+    use win32job::Job;
+
+    let Ok(job) = Job::create() else {
+        return;
+    };
+    let Ok(mut info) = job.query_extended_limit_info() else {
+        return;
+    };
+    info.limit_kill_on_job_close();
+    if job.set_extended_limit_info(&mut info).is_err() {
+        return;
+    }
+    if job.assign_current_process().is_ok() {
+        // لازم الـ handle يفضل مفتوح لحد ما العملية تموت. لو اتعمله drop الـ Job هيقفل ويقتل كل حاجة فوراً.
+        std::mem::forget(job);
+    }
+}
+
+#[cfg(not(all(windows, not(debug_assertions))))]
+fn bind_children_to_app_lifetime() {}
 
 #[cfg(not(debug_assertions))]
 fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
@@ -48,9 +82,13 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
     let exe = std::env::current_exe().ok()?.parent()?.join("dealzora-backend.exe");
+    let db_password = license::db_password().ok()?;
+    let device_id = license::device_id().ok()?;
     Command::new(exe)
         .env("POS_SESSION_TOKEN", session_token)
         .env("POS_WRITE_PERMIT_SECRET", permit_secret)
+        .env("POS_DB_PASSWORD", db_password)
+        .env("POS_DEVICE_ID", device_id)
         .env("POS_DEBUG", "false")
         .creation_flags(CREATE_NO_WINDOW)
         .spawn()
@@ -64,27 +102,40 @@ fn spawn_backend(_: &str, _: &str) -> Option<Child> {
 
 pub fn run() {
     let (session_token, permit_secret) = if cfg!(debug_assertions) {
-        ("dev-token".to_string(), "dev-secret".to_string())
+        ("dealzora-app-session".to_string(), "dealzora-app-secret".to_string())
     } else {
         (random_secret(48), random_secret(48))
     };
 
+    // لازم قبل spawn_backend: العمليات الفرعية بترث الـ Job وقت إنشائها.
+    bind_children_to_app_lifetime();
     let backend = spawn_backend(&session_token, &permit_secret);
 
-    tauri::Builder::default()
+    tauri::Builder
+        ::default()
         .manage(AppState {
             session_token,
             permit_secret,
             backend: Mutex::new(backend),
         })
-        .invoke_handler(tauri::generate_handler![get_session_token, get_write_permit])
+        .invoke_handler(
+            tauri::generate_handler![
+                get_session_token,
+                get_write_permit,
+                get_license_status,
+                start_trial,
+                activate_license
+            ]
+        )
         .build(tauri::generate_context!())
         .expect("error while building tauri app")
         .run(|app, event| {
+            // قفل عادي: نقتل الـ backend صراحةً (الـ Job هو شبكة الأمان للحالات الأخرى).
             if let RunEvent::Exit = event {
                 let state: State<AppState> = app.state();
                 if let Some(mut child) = state.backend.lock().unwrap().take() {
                     let _ = child.kill();
+                    let _ = child.wait();
                 }
             }
         });

@@ -17,7 +17,9 @@ def get_engine() -> Engine:
 
     def _connect():
         # isolation_level=None: نتحكم بالمعاملات يدوياً (وصفة SQLAlchemy الرسمية لـ SQLite).
-        conn = sqlcipher3.connect(settings.db_path, check_same_thread=False, isolation_level=None)
+        conn = sqlcipher3.connect(
+            settings.db_path, check_same_thread=False, isolation_level=None
+        )
         password = settings.db_password.replace("'", "''")
         conn.execute(f"PRAGMA key = '{password}'")  # لازم يكون أول أمر
         conn.execute("PRAGMA journal_mode = WAL")

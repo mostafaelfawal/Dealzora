@@ -20,7 +20,7 @@ from app.core.errors import (
 from app.core.passwords import hash_password
 from app.core.security import Actor, Role
 from app.modules.auth.repository import AuthRepository
-
+from app.modules.shop.service import ShopService
 from .constants import ENTITY_USER, ERROR_MESSAGES, UserError
 from .helper import (
     actor_for,
@@ -56,7 +56,9 @@ class UserService:
         user = self._new_user(data.username, data.password, Role.MANAGER)
         self.repo.add_user(user)
         self.repo.flush()
-        self._audit(actor_for(user), user.id, AuditAction.SETUP, user_snapshot(user))
+        actor = actor_for(user)
+        ShopService(self.session).create_initial(actor, data.shop_name)  # نفس المعاملة
+        self._audit(actor, user.id, AuditAction.SETUP, user_snapshot(user))
         self._commit()
         return UserOut.model_validate(user)
 

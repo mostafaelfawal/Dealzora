@@ -6,7 +6,9 @@ from enum import StrEnum
 # ---- الجلسات ----
 SESSION_TTL = timedelta(hours=12)  # حد أقصى مطلق
 SESSION_IDLE_TTL = timedelta(hours=4)  # خمول بلا طلبات
-SESSION_TOUCH_INTERVAL = timedelta(minutes=1)  # لا نكتب last_seen أكثر من مرة في الدقيقة
+SESSION_TOUCH_INTERVAL = timedelta(
+    minutes=1
+)  # لا نكتب last_seen أكثر من مرة في الدقيقة
 MAX_SESSIONS_PER_USER = 5
 
 # ---- القفل ضد التخمين ----

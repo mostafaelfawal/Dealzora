@@ -14,10 +14,14 @@ from .schema import ChangePasswordIn, LoginIn, LoginOut
 from .service import AuthService
 
 # كل المسارات تتطلب توكن التطبيق (Rust). المسارات المحمية تتطلب فوقه جلسة مستخدم.
-router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(require_app_token)])
+router = APIRouter(
+    prefix="/auth", tags=["auth"], dependencies=[Depends(require_app_token)]
+)
 
 
-def get_public_service(session: Annotated[Session, Depends(get_session)]) -> AuthService:
+def get_public_service(
+    session: Annotated[Session, Depends(get_session)],
+) -> AuthService:
     return AuthService(session)
 
 
@@ -40,13 +44,19 @@ def login(data: LoginIn, service: PublicService):
 
 
 # ---------- أي مستخدم مسجّل ----------
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_authenticated)])
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_authenticated)],
+)
 def logout(service: Service, token: Token):
     service.logout(token)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/me", response_model=UserOut, dependencies=[Depends(require_authenticated)])
+@router.get(
+    "/me", response_model=UserOut, dependencies=[Depends(require_authenticated)]
+)
 def me(service: Service):
     return service.get_me()
 

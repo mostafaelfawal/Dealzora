@@ -27,11 +27,23 @@
     {
       "label": "Frontend",
       "type": "shell",
-      "command": "npm run dev",
+      "command": "npm run tauri:dev",
       "options": { "cwd": "${workspaceFolder}/frontend" },
       "isBackground": true,
       "problemMatcher": [],
       "runOptions": { "runOn": "folderOpen" }
+    },
+    {
+      "label": "Build backend exe",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/build-backend.ps1"
+      ],
+      "problemMatcher": []
     }
   ]
 }

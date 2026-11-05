@@ -31,7 +31,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="إنشاء مستخدم (للتطوير فقط)")
     parser.add_argument("username")
     parser.add_argument("--password", default=DEV_PASSWORD)
-    parser.add_argument("--role", choices=[r.value for r in (Role.MANAGER, Role.CASHIER)], default="manager")
+    parser.add_argument(
+        "--role",
+        choices=[r.value for r in (Role.MANAGER, Role.CASHIER)],
+        default="manager",
+    )
     args = parser.parse_args()
 
     settings = get_settings()

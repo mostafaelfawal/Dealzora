@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_session
-from app.core.security import Actor, get_actor, require_app_token
+from app.core.security import Actor, get_actor, require_app_token, require_write_permit
 from app.modules.auth.middleware import require_manager, require_manager_write
 
 from .schema import (
@@ -47,7 +47,12 @@ def setup_status(service: PublicService):
     return SetupStatusOut(setup_required=service.setup_required())
 
 
-@router.post("/setup", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/setup",
+    response_model=UserOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_write_permit)]
+)
 def setup_first_manager(data: SetupIn, service: PublicService):
     """يعمل فقط والنظام بلا مستخدمين."""
     return service.setup_first_manager(data)

@@ -55,7 +55,9 @@ class AuthService:
 
         # نتحقق دائماً (حتى لو غير موجود أو مقفل) كي لا يختلف زمن الرد.
         locked = bool(user and user.locked_until and aware(user.locked_until) > now)
-        valid = verify_password(user.password_hash if user else DUMMY_HASH, data.password)
+        valid = verify_password(
+            user.password_hash if user else DUMMY_HASH, data.password
+        )
         if locked:
             raise _err(ForbiddenError, AuthError.ACCOUNT_LOCKED)
 
@@ -64,11 +66,15 @@ class AuthService:
             if user:
                 now_locked = self._register_failure(user, now)
                 actor = Actor(user.id, role or Role.CASHIER, get_settings().device_id)
-                self._audit(actor, user.id, AuditAction.LOGIN_FAILED, {"locked": now_locked})
+                self._audit(
+                    actor, user.id, AuditAction.LOGIN_FAILED, {"locked": now_locked}
+                )
                 self.session.commit()
             raise _err(UnauthorizedError, AuthError.INVALID_CREDENTIALS)
 
-        if needs_rehash(user.password_hash):  # رفع قوة التجزئة تلقائياً عند تغيّر المعاملات
+        if needs_rehash(
+            user.password_hash
+        ):  # رفع قوة التجزئة تلقائياً عند تغيّر المعاملات
             user.password_hash = hash_password(data.password)
         user.failed_attempts = 0
         user.locked_until = None
@@ -89,7 +95,9 @@ class AuthService:
         self.repo.trim_user_sessions(user.id, MAX_SESSIONS_PER_USER)
         self._audit(actor_for(user), user.id, AuditAction.LOGIN)
         self.session.commit()
-        return LoginOut(token=token, expires_at=expires_at, user=UserOut.model_validate(user))
+        return LoginOut(
+            token=token, expires_at=expires_at, user=UserOut.model_validate(user)
+        )
 
     def authenticate(self, token: str) -> Actor:
         """يُستدعى من get_actor في كل طلب محمي. الدور يُقرأ من القاعدة دائماً."""
@@ -110,7 +118,9 @@ class AuthService:
             raise _err(UnauthorizedError, AuthError.UNAUTHORIZED)
 
         actor = Actor(user_id=user.id, role=role, device_id=get_settings().device_id)
-        if now - last_seen > SESSION_TOUCH_INTERVAL:  # نحدّث آخر نشاط بدون كتابة في كل طلب
+        if (
+            now - last_seen > SESSION_TOUCH_INTERVAL
+        ):  # نحدّث آخر نشاط بدون كتابة في كل طلب
             row.last_seen_at = now
             try:
                 self.session.commit()
@@ -143,7 +153,12 @@ class AuthService:
             now_locked = self._register_failure(user, now)
             if now_locked:
                 self.repo.delete_user_sessions(user.id)
-            self._audit(actor, user.id, AuditAction.PASSWORD_CHANGE_FAILED, {"locked": now_locked})
+            self._audit(
+                actor,
+                user.id,
+                AuditAction.PASSWORD_CHANGE_FAILED,
+                {"locked": now_locked},
+            )
             self.session.commit()
             raise _err(BadRequestError, AuthError.WRONG_PASSWORD)
 
@@ -180,7 +195,11 @@ class AuthService:
         return False
 
     def _audit(
-        self, actor: Actor, entity_id: str, action: AuditAction, changes: dict | None = None
+        self,
+        actor: Actor,
+        entity_id: str,
+        action: AuditAction,
+        changes: dict | None = None,
     ) -> None:
         record_audit(
             self.session,

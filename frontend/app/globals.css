@@ -228,3 +228,8 @@
 button {
   cursor: pointer !important;
 }
+
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}

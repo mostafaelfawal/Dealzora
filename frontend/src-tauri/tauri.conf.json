@@ -24,6 +24,7 @@
     }
   },
   "bundle": {
+    "externalBin": ["binaries/dealzora-backend"],
     "active": true,
     "targets": ["nsis"],
     "icon": [
@@ -33,6 +34,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico"
+      }
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

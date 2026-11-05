@@ -11,23 +11,31 @@ from app.core.config import get_settings
 from app.core.errors import register_error_handlers
 from app.core.init_db import init_db
 
+
 def prepare_data_dir(db_path: str) -> None:
     """ينشئ مجلد Dealzora ويقصر الوصول عليك + SYSTEM + Administrators (ويندوز)."""
     folder = Path(db_path).parent
     first_time = not folder.exists()
     folder.mkdir(parents=True, exist_ok=True)
     if first_time and os.name == "nt":
-        root = folder.parent # C:Dealzora
+        root = folder.parent
         user = os.environ.get("USERNAME", "")
-        subprocess.run([
-            "icacls", str(root), "/inheritance:r",
-            "/grant:r", f"{user}:(OI)(CI)F",
-            "/grant:r", "SYSTEM:(OI)(CI)F",
-            "/grant:r", "Administrators:(OI)(CI)F",
-        ],
-        check=False,
-        capture_output=True
-    )
+        subprocess.run(
+            [
+                "icacls",
+                str(root),
+                "/inheritance:r",
+                "/grant:r",
+                f"{user}:(OI)(CI)F",
+                "/grant:r",
+                "SYSTEM:(OI)(CI)F",
+                "/grant:r",
+                "Administrators:(OI)(CI)F",
+            ],
+            check=False,
+            capture_output=True,
+        )
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -35,6 +43,7 @@ async def lifespan(_: FastAPI):
     prepare_data_dir(settings.db_path)
     init_db()
     yield
+
 
 def create_app() -> FastAPI:
     settings = get_settings()

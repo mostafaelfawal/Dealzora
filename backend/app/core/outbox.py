@@ -31,12 +31,18 @@ class OutboxEvent(Base):
     op: Mapped[str] = mapped_column(String(16))
     payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     base_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    status: Mapped[str] = mapped_column(String(16), default=OutboxStatus.READY.value, index=True)
+    status: Mapped[str] = mapped_column(
+        String(16), default=OutboxStatus.READY.value, index=True
+    )
     attempts: Mapped[int] = mapped_column(Integer, default=0)
-    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     idempotency_key: Mapped[str] = mapped_column(String(36), unique=True, default=uuid7)
     device_id: Mapped[str] = mapped_column(String(36))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow
+    )
 
 
 def enqueue_outbox(
