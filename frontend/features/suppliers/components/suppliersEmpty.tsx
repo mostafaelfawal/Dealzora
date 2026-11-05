@@ -1,4 +1,8 @@
-import { IconBuildingStore, IconFilterOff, IconPlus } from "@tabler/icons-react";
+import {
+  IconBuildingStore,
+  IconFilterOff,
+  IconPlus,
+} from "@tabler/icons-react";
 import Link from "next/link";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";

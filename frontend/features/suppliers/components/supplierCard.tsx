@@ -15,7 +15,10 @@ import {
   balanceStatus,
 } from "../lib/supplierCalc";
 import type { Supplier } from "../types/supplier";
-import { SupplierActionsMenu, type SupplierActions } from "./supplierActionsMenu";
+import {
+  SupplierActionsMenu,
+  type SupplierActions,
+} from "./supplierActionsMenu";
 
 interface SupplierCardProps extends SupplierActions {
   supplier: Supplier;

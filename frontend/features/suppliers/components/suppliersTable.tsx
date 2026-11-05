@@ -21,7 +21,10 @@ import {
   balanceStatus,
 } from "../lib/supplierCalc";
 import type { Supplier } from "../types/supplier";
-import { SupplierActionsMenu, type SupplierActions } from "./supplierActionsMenu";
+import {
+  SupplierActionsMenu,
+  type SupplierActions,
+} from "./supplierActionsMenu";
 
 interface Props extends SupplierActions {
   suppliers: Supplier[];
@@ -133,8 +136,7 @@ export function SuppliersTable({
       empty={{
         icon: IconBuildingStore,
         title: "لا يوجد موردون بعد",
-        description:
-          "أضف أول مورد لتسجّل مشترياتك ومدفوعاتك وتتابع حسابه.",
+        description: "أضف أول مورد لتسجّل مشترياتك ومدفوعاتك وتتابع حسابه.",
         action: emptyAction,
       }}
       noResults={{ title: "لا يوجد موردون مطابقون" }}

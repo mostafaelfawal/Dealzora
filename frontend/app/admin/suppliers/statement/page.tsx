@@ -6,7 +6,6 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = { title: "كشف حساب مورد" };
 
-
 export default function SupplierStatementPage() {
   return (
     <Suspense>

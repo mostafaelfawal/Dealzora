@@ -17,10 +17,7 @@ export type BalanceFilter = "all" | "owed" | "settled";
 
 /** نفس قيم الـ backend بالضبط. */
 export type SupplierSortKey =
-  | "name_asc"
-  | "newest"
-  | "balance_desc"
-  | "balance_asc";
+  "name_asc" | "newest" | "balance_desc" | "balance_asc";
 
 export type SuppliersView = "cards" | "table";
 
@@ -48,11 +45,7 @@ export interface SuppliersSummary {
 }
 
 export type SupplierTransactionType =
-  | "opening"
-  | "purchase"
-  | "purchase_return"
-  | "payment"
-  | "adjustment";
+  "opening" | "purchase" | "purchase_return" | "payment" | "adjustment";
 
 export interface SupplierTransaction {
   id: string;

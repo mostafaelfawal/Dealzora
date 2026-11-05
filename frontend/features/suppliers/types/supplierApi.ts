@@ -28,7 +28,8 @@ export interface SuppliersSummaryDto {
 export interface SupplierTransactionDto {
   id: string;
   supplier_id: string;
-  txn_type: "opening" | "purchase" | "purchase_return" | "payment" | "adjustment";
+  txn_type:
+    "opening" | "purchase" | "purchase_return" | "payment" | "adjustment";
   amount_delta: number; // قروش، موقّعة
   balance_after: number; // قروش
   note: string | null;

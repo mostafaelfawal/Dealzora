@@ -1,4 +1,5 @@
-import { BulkItem, BulkResultDto, toBulkPayload } from "@/lib/bulk";
+import { api } from "@/lib/axios";
+import { toBulkPayload, type BulkItem, type BulkResultDto } from "@/lib/bulk";
 
 import {
   toStatement,
@@ -22,13 +23,6 @@ import type {
   SupplierUpdatePayload,
 } from "../types/supplierApi";
 
-/**
- * ⚠️ API مؤقت: كل دالة تطبع اسم الإجراء ومدخلاته في الـ console وترجع قيمة فارغة.
- * عند ربط الـ backend استبدل كل دالة بـ api.get / api.post (انظر المسارات في التعليقات).
- */
-const log = (action: string, payload?: unknown) =>
-  console.log(`[suppliers] ${action}`, payload ?? "");
-
 /** أسماء الـ query params كما يتوقعها الـ backend. القيم undefined لا تُرسل. */
 export interface GetSuppliersParams {
   q?: string;
@@ -38,137 +32,112 @@ export interface GetSuppliersParams {
   page_size?: number;
 }
 
-const emptyDto = (id: string): SupplierDto => ({
-  id,
-  name: "",
-  phone: null,
-  address: null,
-  notes: null,
-  balance: 0,
-  is_active: true,
-  version: 1,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-});
+/** شكل استجابة GET /suppliers (Page[SupplierOut]). */
+interface SupplierListDto {
+  items: SupplierDto[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+type StatementDto = Parameters<typeof toStatement>[0];
+type SummaryDto = Parameters<typeof toSummary>[0];
+type TransactionDto = Parameters<typeof toTransaction>[0];
 
 // GET /suppliers
 export const getSuppliers = async (
   params: GetSuppliersParams,
 ): Promise<SuppliersPage> => {
-  log("getSuppliers", params);
+  const { data } = await api.get<SupplierListDto>("/suppliers", { params });
   return {
-    items: [],
-    total: 0,
-    page: params.page ?? 1,
-    pageSize: params.page_size ?? 24,
+    items: data.items.map(toSupplier),
+    total: data.total,
+    page: data.page,
+    pageSize: data.page_size,
   };
 };
 
 // GET /suppliers/{id}
-export const getSupplier = async (id: string): Promise<Supplier> => {
-  log("getSupplier", { id });
-  return toSupplier(emptyDto(id));
-};
+export const getSupplier = async (id: string): Promise<Supplier> =>
+  toSupplier((await api.get<SupplierDto>(`/suppliers/${id}`)).data);
 
 // GET /suppliers/summary
-export const getSuppliersSummary = async (): Promise<SuppliersSummary> => {
-  log("getSuppliersSummary");
-  return toSummary({ total: 0, owed: 0, inactive: 0, total_payable: 0 });
-};
+export const getSuppliersSummary = async (): Promise<SuppliersSummary> =>
+  toSummary((await api.get<SummaryDto>("/suppliers/summary")).data);
 
 // POST /suppliers
 export const createSupplier = async (
   payload: SupplierCreatePayload,
-): Promise<Supplier> => {
-  log("createSupplier", payload);
-  return toSupplier({
-    ...emptyDto("stub"),
-    name: payload.name,
-    phone: payload.phone,
-    address: payload.address,
-    notes: payload.notes,
-    balance: payload.opening_balance,
-    is_active: payload.is_active,
-  });
-};
+): Promise<Supplier> =>
+  toSupplier((await api.post<SupplierDto>("/suppliers", payload)).data);
 
 // PUT /suppliers/{id}
 export const updateSupplier = async (
   id: string,
   payload: SupplierUpdatePayload,
-): Promise<Supplier> => {
-  log("updateSupplier", { id, payload });
-  return toSupplier({
-    ...emptyDto(id),
-    name: payload.name,
-    phone: payload.phone,
-    address: payload.address,
-    notes: payload.notes,
-    is_active: payload.is_active,
-    version: payload.base_version + 1,
-  });
-};
+): Promise<Supplier> =>
+  toSupplier((await api.put<SupplierDto>(`/suppliers/${id}`, payload)).data);
 
 // POST /suppliers/{id}/toggle-active?base_version=
 export const toggleSupplierActive = async (
   id: string,
   baseVersion: number,
-): Promise<Supplier> => {
-  log("toggleSupplierActive", { id, baseVersion });
-  return toSupplier({ ...emptyDto(id), version: baseVersion + 1 });
-};
+): Promise<Supplier> =>
+  toSupplier(
+    (
+      await api.post<SupplierDto>(`/suppliers/${id}/toggle-active`, null, {
+        params: { base_version: baseVersion },
+      })
+    ).data,
+  );
 
 // DELETE /suppliers/{id}?base_version=
 export const deleteSupplier = async (
   id: string,
   baseVersion: number,
 ): Promise<void> => {
-  log("deleteSupplier", { id, baseVersion });
+  await api.delete(`/suppliers/${id}`, {
+    params: { base_version: baseVersion },
+  });
 };
 
 // POST /suppliers/bulk-delete
 export const bulkDeleteSuppliers = async (
   items: BulkItem[],
-): Promise<BulkResultDto> => {
-  log("bulkDeleteSuppliers", toBulkPayload(items));
-  return { succeeded: [], failed: [] };
-};
+): Promise<BulkResultDto> =>
+  (
+    await api.post<BulkResultDto>(
+      "/suppliers/bulk-delete",
+      toBulkPayload(items),
+    )
+  ).data;
 
 // POST /suppliers/bulk-deactivate
 export const bulkDeactivateSuppliers = async (
   items: BulkItem[],
-): Promise<BulkResultDto> => {
-  log("bulkDeactivateSuppliers", toBulkPayload(items));
-  return { succeeded: [], failed: [] };
-};
+): Promise<BulkResultDto> =>
+  (
+    await api.post<BulkResultDto>(
+      "/suppliers/bulk-deactivate",
+      toBulkPayload(items),
+    )
+  ).data;
 
 // GET /suppliers/{id}/statement?page=&page_size=
 export const getSupplierStatement = async (
   id: string,
   params: { page: number; page_size: number },
-): Promise<SupplierStatementPage> => {
-  log("getSupplierStatement", { id, ...params });
-  return toStatement({
-    items: [],
-    total: 0,
-    page: params.page,
-    page_size: params.page_size,
-  });
-};
+): Promise<SupplierStatementPage> =>
+  toStatement(
+    (await api.get<StatementDto>(`/suppliers/${id}/statement`, { params }))
+      .data,
+  );
 
 // POST /suppliers/{id}/payments
 export const createSupplierPayment = async (
   id: string,
   payload: SupplierPaymentPayload,
-): Promise<SupplierTransaction> => {
-  log("createSupplierPayment", { id, payload });
-  return toTransaction({
-    id: "stub",
-    supplier_id: id,
-    txn_type: "payment",
-    amount_delta: -payload.amount,
-    balance_after: 0,
-    note: payload.note,
-    created_at: new Date().toISOString(),
-  });
-};
+): Promise<SupplierTransaction> =>
+  toTransaction(
+    (await api.post<TransactionDto>(`/suppliers/${id}/payments`, payload)).data,
+  );

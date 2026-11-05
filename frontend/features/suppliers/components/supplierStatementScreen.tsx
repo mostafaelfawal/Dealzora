@@ -99,7 +99,10 @@ export function SupplierStatementScreen() {
         <IconReceipt className="size-10 text-muted-foreground" />
         <p className="text-sm font-medium">لم نجد هذا المورد</p>
         <p className="text-xs text-muted-foreground">
-          {extractErrorMessage(supplierQuery.error, "ربما حُذف أو الرابط غير صحيح.")}
+          {extractErrorMessage(
+            supplierQuery.error,
+            "ربما حُذف أو الرابط غير صحيح.",
+          )}
         </p>
         <Button
           size="lg"

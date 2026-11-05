@@ -29,7 +29,10 @@ export function SupplierPaymentDialog({
   onClose: () => void;
 }) {
   return (
-    <Dialog open={supplier !== null} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={supplier !== null}
+      onOpenChange={(open) => !open && onClose()}
+    >
       <DialogContent showCloseButton={false} className="gap-3 sm:max-w-md">
         {supplier && <PaymentForm supplier={supplier} onClose={onClose} />}
       </DialogContent>
@@ -115,7 +118,11 @@ function PaymentForm({
           )}
         </div>
         {error && (
-          <p id="sp-amount-error" role="alert" className="text-xs text-destructive">
+          <p
+            id="sp-amount-error"
+            role="alert"
+            className="text-xs text-destructive"
+          >
             {error}
           </p>
         )}
@@ -144,7 +151,12 @@ function PaymentForm({
         >
           إلغاء
         </Button>
-        <Button type="submit" size="lg" disabled={saving} className="gap-2 px-5">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={saving}
+          className="gap-2 px-5"
+        >
           {saving ? (
             <>
               <IconLoader2 className="size-4 animate-spin" aria-hidden />
