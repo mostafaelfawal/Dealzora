@@ -3,12 +3,12 @@
 import { IconCash, IconPhone, IconUsers } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
-import { AppTable } from "@/components/shared/app-table/AppTable";
+import { AppTable } from "@/components/shared/AppTable/AppTable";
 import type {
   AppTableBulkActions,
   AppTableColumn,
   AppTablePaginationProps,
-} from "@/components/shared/app-table/types";
+} from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

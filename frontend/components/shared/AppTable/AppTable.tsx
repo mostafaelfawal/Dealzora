@@ -18,6 +18,7 @@ import type {
   AppTableNoResults,
   AppTablePaginationProps,
 } from "./types";
+import { AppTooltip } from "../AppTooltip";
 
 const th = "h-9 px-3 text-start text-xs font-normal text-muted-foreground";
 const INTERACTIVE =
@@ -94,7 +95,8 @@ export function AppTable<T>({
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 
   const selectableRows = useMemo(
-    () => (selectable ? data.filter((row) => isRowSelectable?.(row) ?? true) : []),
+    () =>
+      selectable ? data.filter((row) => isRowSelectable?.(row) ?? true) : [],
     [data, selectable, isRowSelectable],
   );
   // نعتمد فقط على الصفوف الظاهرة حالياً، فلا يبقى تحديد لصفوف اختفت.
@@ -103,7 +105,8 @@ export function AppTable<T>({
     [selectableRows, selected, getRowId],
   );
 
-  const allSelected = selectableRows.length > 0 && selectedRows.length === selectableRows.length;
+  const allSelected =
+    selectableRows.length > 0 && selectedRows.length === selectableRows.length;
   const someSelected = selectedRows.length > 0 && !allSelected;
 
   const clearSelection = () => setSelected(new Set());
@@ -154,13 +157,20 @@ export function AppTable<T>({
         <StateBox>
           <Icon className="size-10 text-muted-foreground" />
           <div className="space-y-1">
-            <p className="text-sm font-medium">{noResults?.title ?? "لا توجد نتائج مطابقة"}</p>
+            <p className="text-sm font-medium">
+              {noResults?.title ?? "لا توجد نتائج مطابقة"}
+            </p>
             <p className="text-xs text-muted-foreground">
               {noResults?.description ?? "جرّب كلمة أخرى أو امسح الفلاتر."}
             </p>
           </div>
           {onClearFilters && (
-            <Button type="button" variant="outline" size="lg" onClick={onClearFilters}>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={onClearFilters}
+            >
               مسح الفلاتر
             </Button>
           )}
@@ -175,10 +185,16 @@ export function AppTable<T>({
         <div className="space-y-1">
           <p className="text-sm font-medium">{empty.title}</p>
           {empty.description && (
-            <p className="max-w-xs text-xs text-muted-foreground">{empty.description}</p>
+            <p className="max-w-xs text-xs text-muted-foreground">
+              {empty.description}
+            </p>
           )}
         </div>
-        {empty.action && <div className="flex flex-wrap justify-center gap-2">{empty.action}</div>}
+        {empty.action && (
+          <div className="flex flex-wrap justify-center gap-2">
+            {empty.action}
+          </div>
+        )}
       </StateBox>
     );
   }
@@ -202,17 +218,24 @@ export function AppTable<T>({
               <tr className="border-b">
                 {selectable && (
                   <th scope="col" className="w-10 px-3">
-                    <Checkbox
-                      aria-label="تحديد الكل"
-                      checked={allSelected}
-                      indeterminate={someSelected}
-                      disabled={isLoading || selectableRows.length === 0}
-                      onCheckedChange={(checked) => toggleAll(Boolean(checked))}
-                    />
+                    <AppTooltip side="right" message="تحديد الكل">
+                      <Checkbox
+                        checked={allSelected}
+                        indeterminate={someSelected}
+                        disabled={isLoading || selectableRows.length === 0}
+                        onCheckedChange={(checked) =>
+                          toggleAll(Boolean(checked))
+                        }
+                      />
+                    </AppTooltip>
                   </th>
                 )}
                 {columns.map((column) => (
-                  <th key={column.id} scope="col" className={cn(th, column.className)}>
+                  <th
+                    key={column.id}
+                    scope="col"
+                    className={cn(th, column.className)}
+                  >
                     {column.header}
                   </th>
                 ))}
@@ -222,36 +245,51 @@ export function AppTable<T>({
             <tbody>
               {isLoading
                 ? Array.from({ length: skeletonCount }, (_, i) => (
-                    <tr key={i} className={cn(rowHeightClassName, "border-b last:border-b-0")}>
+                    <tr
+                      key={i}
+                      className={cn(
+                        rowHeightClassName,
+                        "border-b last:border-b-0",
+                      )}
+                    >
                       {selectable && (
                         <td className="px-3">
                           <Skeleton className="size-4" />
                         </td>
                       )}
                       {columns.map((column) => (
-                        <td key={column.id} className={cn("px-3", column.className)}>
-                          <Skeleton className={cn("h-4 w-24", column.skeletonClassName)} />
+                        <td
+                          key={column.id}
+                          className={cn("px-3", column.className)}
+                        >
+                          <Skeleton
+                            className={cn("h-4 w-24", column.skeletonClassName)}
+                          />
                         </td>
                       ))}
                     </tr>
                   ))
                 : data.map((row, index) => {
                     const id = getRowId(row);
-                    const canSelect = selectable && (isRowSelectable?.(row) ?? true);
+                    const canSelect =
+                      selectable && (isRowSelectable?.(row) ?? true);
                     const isSelected = selected.has(id);
 
                     return (
                       <MotionTr
                         key={id}
                         {...listRow(index)}
-                        style={{ animationDelay: `${Math.min(index, 12) * 20}ms` }}
+                        style={{
+                          animationDelay: `${Math.min(index, 12) * 20}ms`,
+                        }}
                         data-state={isSelected ? "selected" : undefined}
                         onClick={
                           onRowClick
                             ? (event) => {
                                 const target = event.target as HTMLElement;
                                 // أحداث الـ portal (القوائم والنوافذ) تصعد في شجرة React رغم أنها خارج الصف.
-                                if (!event.currentTarget.contains(target)) return;
+                                if (!event.currentTarget.contains(target))
+                                  return;
                                 if (target.closest(INTERACTIVE)) return;
                                 onRowClick(row);
                               }
@@ -267,18 +305,32 @@ export function AppTable<T>({
                         {selectable && (
                           <td className="w-10 px-3">
                             {canSelect && (
-                              <Checkbox
-                                aria-label={getRowLabel ? `تحديد ${getRowLabel(row)}` : "تحديد الصف"}
-                                checked={isSelected}
-                                onCheckedChange={(checked) => toggleRow(id, Boolean(checked))}
-                              />
+                              <AppTooltip
+                                side="right"
+                                message={
+                                  getRowLabel
+                                    ? `تحديد ${getRowLabel(row)}`
+                                    : "تحديد الصف"
+                                }
+                              >
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) =>
+                                    toggleRow(id, Boolean(checked))
+                                  }
+                                />
+                              </AppTooltip>
                             )}
                           </td>
                         )}
                         {columns.map((column) => (
                           <td
                             key={column.id}
-                            className={cn("px-3", column.className, column.cellClassName)}
+                            className={cn(
+                              "px-3",
+                              column.className,
+                              column.cellClassName,
+                            )}
                           >
                             {column.cell(row, index)}
                           </td>
@@ -291,10 +343,16 @@ export function AppTable<T>({
         </div>
       )}
 
-      {pagination && pagination.total > 0 && <AppTablePagination {...pagination} />}
+      {pagination && pagination.total > 0 && (
+        <AppTablePagination {...pagination} />
+      )}
 
       {hasBulk && bulkActions && selectedRows.length > 0 && (
-        <AppTableBulkBar rows={selectedRows} actions={bulkActions} onClear={clearSelection} />
+        <AppTableBulkBar
+          rows={selectedRows}
+          actions={bulkActions}
+          onClear={clearSelection}
+        />
       )}
     </div>
   );

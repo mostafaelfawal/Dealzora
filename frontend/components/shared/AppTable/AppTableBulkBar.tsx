@@ -21,7 +21,13 @@ interface Props<T> {
 }
 
 export function AppTableBulkBar<T>({ rows, actions, onClear }: Props<T>) {
-  const { onDelete, onDeactivate, confirmDelete = true, isPending, itemLabel = "عنصر" } = actions;
+  const {
+    onDelete,
+    onDeactivate,
+    confirmDelete = true,
+    isPending,
+    itemLabel = "عنصر",
+  } = actions;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const backRef = useRef<HTMLButtonElement>(null);
   const count = rows.length;
@@ -91,18 +97,36 @@ export function AppTableBulkBar<T>({ rows, actions, onClear }: Props<T>) {
       </div>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent showCloseButton={false} initialFocus={backRef} className="sm:max-w-sm">
+        <DialogContent
+          showCloseButton={false}
+          initialFocus={backRef}
+          className="sm:max-w-sm"
+        >
           <DialogHeader className="text-start">
             <DialogTitle>
               حذف {count} {itemLabel}؟
             </DialogTitle>
-            <DialogDescription>لا يمكن التراجع عن هذا الإجراء.</DialogDescription>
+            <DialogDescription>
+              لا يمكن التراجع عن هذا الإجراء.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button ref={backRef} type="button" variant="outline" size="lg" onClick={() => setConfirmOpen(false)}>
+            <Button
+              ref={backRef}
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={() => setConfirmOpen(false)}
+            >
               رجوع
             </Button>
-            <Button type="button" variant="destructive" size="lg" onClick={runDelete}>
+            <Button
+              type="button"
+              variant="destructive"
+              size="lg"
+              onClick={runDelete}
+            >
+              <IconTrash />
               تأكيد الحذف
             </Button>
           </div>

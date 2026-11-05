@@ -3,12 +3,12 @@
 import { IconBarcode, IconPackage } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
-import { AppTable } from "@/components/shared/app-table/AppTable";
+import { AppTable } from "@/components/shared/AppTable/AppTable";
 import type {
   AppTableBulkActions,
   AppTableColumn,
   AppTablePaginationProps,
-} from "@/components/shared/app-table/types";
+} from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { Switch } from "@/components/ui/switch";
 import { PosStockBadge } from "@/features/pos/components/posStockBadge";

@@ -28,7 +28,7 @@ import { CustomersStats } from "./customersStats";
 import { CustomersTable } from "./customersTable";
 import { CustomersToolbar } from "./customersToolbar";
 import { DeleteCustomerDialog } from "./deleteCustomerDialog";
-import { AppTableBulkActions } from "@/components/shared/app-table/types";
+import { AppTableBulkActions } from "@/components/shared/AppTable/types";
 import { Customer } from "../types/customer";
 
 /** نافذة واحدة مفتوحة في كل مرة: فلا تتراكم النوافذ فوق بعضها. */
