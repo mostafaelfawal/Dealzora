@@ -27,6 +27,7 @@ async function call<T>(cmd: string, args?: Record<string, unknown>): Promise<T> 
   }
 }
 
+export const resetLicenseDev = () => call<void>("reset_license_dev");
 export const getLicenseStatus = () => call<LicenseStatus>("get_license_status");
 export const startTrial = (shopName: string) =>
   call<LicenseStatus>("start_trial", { shopName });

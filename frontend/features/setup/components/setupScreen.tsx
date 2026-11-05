@@ -8,6 +8,7 @@ import { BRAND } from "@/config/brand";
 import { useSetupGate } from "../hooks/useSetupGate";
 import { SetupForm } from "./setupForm";
 import { SetupShowcase } from "./setupShowcase";
+import { resetLicenseDev } from "../lib/license";
 
 export function SetupScreen() {
   const ready = useSetupGate("setup");
@@ -39,6 +40,14 @@ export function SetupScreen() {
       </section>
 
       <SetupShowcase />
+      {process.env.NODE_ENV === "development" && (
+        <button
+          type="button"
+          onClick={() => resetLicenseDev().then(() => location.reload())}
+        >
+          Reset license (dev)
+        </button>
+      )}
     </main>
   );
 }

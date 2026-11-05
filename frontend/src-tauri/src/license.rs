@@ -415,3 +415,17 @@ pub fn device_id() -> R<String> {
     let h = hex::encode(Sha256::digest(format!("device|{}", machine_id()?)));
     Ok(format!("{}-{}-{}-{}-{}", &h[0..8], &h[8..12], &h[12..16], &h[16..20], &h[20..32]))
 }
+
+#[cfg(debug_assertions)]
+pub fn reset_dev() -> R<()> {
+    let _g = lock();
+    for p in file_paths() {
+        let _ = fs::remove_file(p);
+    }
+    #[cfg(windows)]
+    {
+        use winreg::{ enums::HKEY_CURRENT_USER, RegKey };
+        let _ = RegKey::predef(HKEY_CURRENT_USER).delete_subkey_all(REG_PATH);
+    }
+    Ok(())
+}

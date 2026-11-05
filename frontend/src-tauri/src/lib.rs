@@ -100,6 +100,12 @@ fn spawn_backend(_: &str, _: &str) -> Option<Child> {
     None // في التطوير الـ backend بيشتغل من VS Code task
 }
 
+#[cfg(debug_assertions)]
+#[tauri::command]
+fn reset_license_dev() -> Result<(), String> {
+    license::reset_dev()
+}
+
 pub fn run() {
     let (session_token, permit_secret) = if cfg!(debug_assertions) {
         ("dealzora-app-session".to_string(), "dealzora-app-secret".to_string())
@@ -124,7 +130,8 @@ pub fn run() {
                 get_write_permit,
                 get_license_status,
                 start_trial,
-                activate_license
+                activate_license,
+                reset_license_dev
             ]
         )
         .build(tauri::generate_context!())
