@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { extractErrorMessage } from "@/lib/errors";
+import { toastFileSaved } from "@/lib/fileToast";
 
 import type { GetProductsParams } from "../api/products.api";
 import { exportProducts } from "../lib/productExcel";
@@ -19,20 +20,25 @@ export default function useExportProducts() {
         }),
       );
     },
-    onSuccess: ({ count, fileName }) =>
-      count === 0
-        ? toast.info("لا توجد أصناف للتصدير", {
-            id: TOAST_ID,
-            description: "غيّر الفلاتر أو أضف أصنافاً أولاً.",
-          })
-        : toast.success("تم تصدير المنتجات إلى Excel بنجاح", {
-            id: TOAST_ID,
-            description: `${count} صنف في الملف «${fileName}» داخل مجلد التنزيلات (Downloads).`,
-            duration: 6000,
-          }),
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "تعذّر تصدير المنتجات إلى Excel"), {
+    onSuccess: ({ count, file }) => {
+      if (!file) {
+        toast.info("لا توجد أصناف للتصدير", {
+          id: TOAST_ID,
+          description: "غيّر الفلاتر أو أضف أصنافاً أولاً.",
+        });
+        return;
+      }
+      toastFileSaved({
         id: TOAST_ID,
-      }),
+        title: "تم تصدير المنتجات إلى Excel بنجاح",
+        detail: `${count} صنف`,
+        file,
+      });
+    },
+    onError: (error) =>
+      toast.error(
+        extractErrorMessage(error, "تعذّر تصدير المنتجات إلى Excel"),
+        { id: TOAST_ID },
+      ),
   });
 }

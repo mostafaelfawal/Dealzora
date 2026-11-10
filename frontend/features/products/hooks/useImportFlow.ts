@@ -7,23 +7,27 @@ import {
   type ColumnMapping,
   type MappingValue,
 } from "../config/importFields";
-import {
-  SHEET_PATTERN,
-  type DuplicateMode,
-  type ImportStep,
-} from "../config/importOptions";
+import type { DuplicateMode, ImportStep } from "../config/importOptions";
 import { productKeys } from "../config/productQueryKeys";
-import { readSheet, type ParsedSheet } from "../lib/excelSheet";
+import type { ParsedSheet } from "../lib/excelSheet";
+import { loadImportFile, type LoadedSheet } from "../lib/importFile";
 import { assignColumn, mappingCoverage } from "../lib/importMapping";
 import { importProducts, type ImportReport } from "../lib/productImport";
 
-/** حالة معالج الاستيراد كاملة: الملف ← ربط الأعمدة ← التقرير. */
-export function useImportFlow() {
+/**
+ * حالة معالج الاستيراد كاملة: الملف ← ربط الأعمدة ← التقرير.
+ * initial: ملف مقروء مسبقاً (إفلات على صفحة المنتجات) فيبدأ من خطوة ربط الأعمدة مباشرة.
+ */
+export function useImportFlow(initial?: LoadedSheet | null) {
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<ImportStep>("file");
-  const [fileName, setFileName] = useState("");
-  const [sheet, setSheet] = useState<ParsedSheet | null>(null);
-  const [mapping, setMapping] = useState<ColumnMapping>({});
+  const [step, setStep] = useState<ImportStep>(initial ? "map" : "file");
+  const [fileName, setFileName] = useState(initial?.fileName ?? "");
+  const [sheet, setSheet] = useState<ParsedSheet | null>(
+    initial?.sheet ?? null,
+  );
+  const [mapping, setMapping] = useState<ColumnMapping>(() =>
+    initial ? autoMapColumns(initial.sheet.columns) : {},
+  );
   const [duplicates, setDuplicates] = useState<DuplicateMode>("update");
   const [reading, setReading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -32,29 +36,14 @@ export function useImportFlow() {
 
   async function acceptFile(file: File | undefined) {
     if (!file || reading) return;
-    if (!SHEET_PATTERN.test(file.name)) {
-      toast.error("الملف غير مدعوم", {
-        description: "اختر ملف Excel بصيغة xlsx أو xls أو csv.",
-      });
-      return;
-    }
     setReading(true);
     try {
-      const parsed = await readSheet(file);
-      if (parsed.columns.length === 0 || parsed.rows.length === 0) {
-        toast.error("الملف فارغ", {
-          description: "لم نجد أي صفوف بيانات تحت الصف الأول.",
-        });
-        return;
-      }
-      setFileName(file.name);
-      setSheet(parsed);
-      setMapping(autoMapColumns(parsed.columns));
+      const loaded = await loadImportFile(file);
+      if (!loaded) return;
+      setFileName(loaded.fileName);
+      setSheet(loaded.sheet);
+      setMapping(autoMapColumns(loaded.sheet.columns));
       setStep("map");
-    } catch {
-      toast.error("تعذّرت قراءة الملف", {
-        description: "تأكد أن الملف سليم وغير محمي بكلمة مرور.",
-      });
     } finally {
       setReading(false);
     }

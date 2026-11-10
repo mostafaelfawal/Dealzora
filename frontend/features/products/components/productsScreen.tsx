@@ -21,6 +21,7 @@ import { PRODUCTS_SHORTCUTS } from "../config/productShortcuts";
 import { useProductsList } from "../hooks/useProductsList";
 import { useProductsView } from "../hooks/useProductsView";
 import { ImportExcelDialog } from "./importExcelDialog";
+import { ProductsDropOverlay } from "./productsDropOverlay";
 import { ProductCard } from "./productCard";
 import { ProductsEmpty } from "./productsEmpty";
 import { ProductsPagination } from "./productsPagination";
@@ -28,6 +29,8 @@ import { ProductsStats } from "./productsStats";
 import { ProductsTable } from "./productsTable";
 import { ProductsToolbar } from "./productsToolbar";
 import useExportProducts from "../hooks/useExportProducts";
+import { useProductsFileDrop } from "../hooks/useProductsFileDrop";
+import type { LoadedSheet } from "../lib/importFile";
 import { toListParams } from "../lib/productList";
 import { PAGE_SIZES } from "../config/productOptions";
 
@@ -39,7 +42,18 @@ export function ProductsScreen() {
   const list = useProductsList();
   const { view, setView } = useProductsView();
   const [importOpen, setImportOpen] = useState(false);
+  // ملف مُفلَت على الصفحة: تفتح النافذة عليه مباشرة بدل خطوة اختيار الملف.
+  const [droppedSheet, setDroppedSheet] = useState<LoadedSheet | null>(null);
   const exportMutation = useExportProducts();
+
+  const openImport = (sheet: LoadedSheet | null = null) => {
+    setDroppedSheet(sheet);
+    setImportOpen(true);
+  };
+  const { dragging } = useProductsFileDrop({
+    enabled: !importOpen,
+    onLoaded: openImport,
+  });
 
   const exportToExcel = () => {
     if (exportMutation.isPending) return;
@@ -63,7 +77,7 @@ export function ProductsScreen() {
   );
   useHotkey(
     PRODUCTS_SHORTCUTS.importExcel.match,
-    whenIdle(() => setImportOpen(true)),
+    whenIdle(() => openImport()),
   );
   useHotkey(PRODUCTS_SHORTCUTS.exportExcel.match, whenIdle(exportToExcel));
   useHotkey(
@@ -161,7 +175,7 @@ export function ProductsScreen() {
         <ProductsEmpty
           hasProducts={list.summary.total > 0}
           onClearFilters={list.clearFilters}
-          onImport={() => setImportOpen(true)}
+          onImport={() => openImport()}
         />
       );
     }
@@ -214,7 +228,7 @@ export function ProductsScreen() {
           type="button"
           variant="outline"
           size="lg"
-          onClick={() => setImportOpen(true)}
+          onClick={() => openImport()}
           className="h-10 gap-2 font-normal"
         >
           <IconFileSpreadsheet className="size-4" />
@@ -294,7 +308,12 @@ export function ProductsScreen() {
         />
       )}
 
-      <ImportExcelDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ImportExcelDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        initial={droppedSheet}
+      />
+      <ProductsDropOverlay visible={dragging} />
     </div>
   );
 }

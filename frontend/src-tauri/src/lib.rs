@@ -1,3 +1,4 @@
+mod downloads;
 mod license;
 
 use std::process::Child;
@@ -159,7 +160,9 @@ pub fn run() {
                 start_trial,
                 activate_license,
                 reset_license_dev,
-                open_whatsapp
+                open_whatsapp,
+                downloads::save_download,
+                downloads::reveal_download
             ]
         )
         .build(tauri::generate_context!())

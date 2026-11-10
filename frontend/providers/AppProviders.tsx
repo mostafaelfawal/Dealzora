@@ -7,6 +7,7 @@ import ThemedToaster from "./ThemedToaster";
 import { StoreProvider } from "./StoreProvider";
 import { QueryProvider } from "./QueryProvider";
 import { MotionProvider } from "@/components/shared/motion";
+import { FileDropGuard } from "./FileDropGuard";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -25,6 +26,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           </StoreProvider>
         </QueryProvider>
         <ThemedToaster />
+        <FileDropGuard />
       </ThemeProvider>
     </DirectionProvider>
   );

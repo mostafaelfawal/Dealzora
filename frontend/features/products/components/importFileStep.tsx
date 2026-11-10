@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toastFileSaved } from "@/lib/fileToast";
 import { cn } from "@/lib/utils";
 
 import { SHEET_ACCEPT } from "../config/importOptions";
@@ -81,9 +82,9 @@ function DropZone({
 }
 
 function downloadTemplate() {
-  void downloadProductsTemplate().catch(() =>
-    toast.error("تعذّر تحميل النموذج"),
-  );
+  downloadProductsTemplate()
+    .then((file) => toastFileSaved({ title: "تم تحميل النموذج", file }))
+    .catch(() => toast.error("تعذّر تحميل النموذج"));
 }
 
 /** الخطوة 1: اختيار الملف أو تحميل نموذج جاهز. */

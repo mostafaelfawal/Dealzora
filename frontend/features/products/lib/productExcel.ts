@@ -1,3 +1,5 @@
+import { saveFile, type SavedFile } from "@/lib/saveFile";
+
 import { getProducts, type GetProductsParams } from "../api/products.api";
 import type { Product } from "../types/product";
 
@@ -25,7 +27,17 @@ interface SheetSpec {
   widths?: number[];
 }
 
-async function saveWorkbook(sheets: SheetSpec[], fileName: string) {
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+/**
+ * يبني الملف في الذاكرة ثم يحفظه عبر saveFile.
+ * لا نستخدم XLSX.writeFile: يعتمد على <a download> الذي لا يؤكد الحفظ داخل Tauri.
+ */
+async function saveWorkbook(
+  sheets: SheetSpec[],
+  fileName: string,
+): Promise<SavedFile> {
   const XLSX = await import("xlsx");
   const workbook = XLSX.utils.book_new();
   for (const spec of sheets) {
@@ -35,7 +47,9 @@ async function saveWorkbook(sheets: SheetSpec[], fileName: string) {
   }
   // الورقة من اليمين لليسار.
   workbook.Workbook = { Views: [{ RTL: true }] };
-  XLSX.writeFile(workbook, fileName);
+  const bytes = XLSX.write(workbook, { bookType: "xlsx", type: "array" }) as
+    ArrayBuffer | Uint8Array;
+  return saveFile(new Uint8Array(bytes), fileName, XLSX_MIME);
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -73,16 +87,21 @@ const toRow = (p: Product): Cell[] => [
   p.isActive ? "مفعّل" : "معطّل",
 ];
 
-/** يصدّر الأصناف المطابقة للفلاتر. يرجّع عدد الأصناف (0 = لم يُنشأ ملف). */
+export interface ExportResult {
+  /** 0 = لا أصناف مطابقة، ولم يُنشأ ملف. */
+  count: number;
+  file: SavedFile | null;
+}
+
+/** يصدّر الأصناف المطابقة للفلاتر ويرجّع عددها والملف المحفوظ. */
 export async function exportProducts(
   params: GetProductsParams,
   onProgress?: (loaded: number, total: number) => void,
-): Promise<{ count: number; fileName: string }> {
+): Promise<ExportResult> {
   const products = await fetchAllProducts(params, onProgress);
-  const fileName = `products-${today()}.xlsx`;
-  if (products.length === 0) return { count: 0, fileName };
+  if (products.length === 0) return { count: 0, file: null };
 
-  await saveWorkbook(
+  const file = await saveWorkbook(
     [
       {
         name: "الأصناف",
@@ -90,14 +109,14 @@ export async function exportProducts(
         widths: WIDTHS,
       },
     ],
-    fileName,
+    `products-${today()}.xlsx`,
   );
-  return { count: products.length, fileName };
+  return { count: products.length, file };
 }
 
 /** نموذج جاهز للتعبئة: ورقة بيانات بمثالين + ورقة تعليمات. */
-export async function downloadProductsTemplate() {
-  await saveWorkbook(
+export async function downloadProductsTemplate(): Promise<SavedFile> {
+  return saveWorkbook(
     [
       {
         name: "الأصناف",
