@@ -34,7 +34,10 @@ const catalogSlice = createSlice({
     /** بعد حفظ فاتورة: تُضاف أولاً، ويُخصم المباع من الرصيد المحلي فوراً (بدون انتظار إعادة التحميل). */
     addInvoice(state, action: PayloadAction<CompletedInvoice>) {
       const invoice = action.payload;
-      state.invoices = [invoice, ...state.invoices.filter((i) => i.id !== invoice.id)];
+      state.invoices = [
+        invoice,
+        ...state.invoices.filter((i) => i.id !== invoice.id),
+      ];
       for (const line of invoice.lines) {
         const product = state.products.find((p) => p.id === line.productId);
         if (product) product.stock = round3(product.stock - line.qty);

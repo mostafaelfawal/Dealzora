@@ -3,7 +3,10 @@
 import { useSyncExternalStore } from "react";
 
 import { readSession } from "@/features/auth/lib/authStorage";
-import { useBackupStatus, useLicense } from "@/features/settings/hooks/useSettings";
+import {
+  useBackupStatus,
+  useLicense,
+} from "@/features/settings/hooks/useSettings";
 import { useCurrentShift } from "@/features/shifts/hooks/useShifts";
 import { useNow } from "@/hooks/useNow";
 import type { SessionUser } from "@/types/auth";
@@ -45,16 +48,22 @@ export function useShellData() {
   const shift = shiftQuery.data ?? null;
   const now = useNow(60_000);
   const last = backup.data?.lastBackupAt ?? 0;
-  const stale = !last || (now !== null && now - last > STALE_BACKUP_HOURS * 3_600_000);
+  const stale =
+    !last || (now !== null && now - last > STALE_BACKUP_HOURS * 3_600_000);
 
   const sync: SyncState = {
-    status: backup.isError ? "offline" : stale && backup.data ? "error" : "synced",
+    status: backup.isError
+      ? "offline"
+      : stale && backup.data
+        ? "error"
+        : "synced",
     lastSyncedAt: last,
   };
 
   const daysLeft = license.data?.days_left;
   const subscription: Subscription = {
-    daysRemaining: typeof daysLeft === "number" ? daysLeft : Number.POSITIVE_INFINITY,
+    daysRemaining:
+      typeof daysLeft === "number" ? daysLeft : Number.POSITIVE_INFINITY,
   };
 
   return {

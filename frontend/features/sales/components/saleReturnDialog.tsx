@@ -1,6 +1,11 @@
 "use client";
 
-import { IconLoader2, IconMinus, IconPlus, IconReceiptRefund } from "@tabler/icons-react";
+import {
+  IconLoader2,
+  IconMinus,
+  IconPlus,
+  IconReceiptRefund,
+} from "@tabler/icons-react";
 import { useState } from "react";
 
 import { Money } from "@/components/shared/Money";
@@ -57,7 +62,10 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   );
 
   function setQty(id: string, value: number, max: number) {
-    setQtys((prev) => ({ ...prev, [id]: Math.min(Math.max(round3(value), 0), max) }));
+    setQtys((prev) => ({
+      ...prev,
+      [id]: Math.min(Math.max(round3(value), 0), max),
+    }));
   }
 
   function submit() {
@@ -99,13 +107,19 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
           return (
             <li
               key={line.id}
-              className={cn("flex items-center gap-3 p-2.5", max === 0 && "opacity-50")}
+              className={cn(
+                "flex items-center gap-3 p-2.5",
+                max === 0 && "opacity-50",
+              )}
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">{line.name}</span>
+                <span className="block truncate text-sm font-medium">
+                  {line.name}
+                </span>
                 <span className="text-[11px] text-muted-foreground">
                   مباع {formatQty(line.qty)} {line.unitName}
-                  {line.returnedQty > 0 && ` · رجع ${formatQty(line.returnedQty)}`}
+                  {line.returnedQty > 0 &&
+                    ` · رجع ${formatQty(line.returnedQty)}`}
                 </span>
               </span>
               <div className="flex items-center">
@@ -127,7 +141,9 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
                   disabled={max === 0}
                   value={qty === 0 ? "" : String(qty)}
                   placeholder="0"
-                  onChange={(e) => setQty(line.id, Number(e.target.value) || 0, max)}
+                  onChange={(e) =>
+                    setQty(line.id, Number(e.target.value) || 0, max)
+                  }
                   className="h-8 w-14 border-x-0 text-center font-mono"
                 />
                 <Button
@@ -175,14 +191,24 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
       />
 
       <div className="flex items-end justify-between border-t pt-3">
-        <span className="pb-0.5 text-sm font-medium">قيمة المرتجع (تقريباً)</span>
+        <span className="pb-0.5 text-sm font-medium">
+          قيمة المرتجع (تقريباً)
+        </span>
         <Money amount={estimate} className="text-2xl leading-none" />
       </div>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" size="lg" onClick={onClose} className="gap-2 font-normal">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={onClose}
+          className="gap-2 font-normal"
+        >
           رجوع
-          <ShortcutBadge className="hidden rounded-none lg:inline-flex">Esc</ShortcutBadge>
+          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+            Esc
+          </ShortcutBadge>
         </Button>
         <Button
           type="submit"

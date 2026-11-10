@@ -1,7 +1,12 @@
 import { fromQty, toMs, toPounds, toPoundsOrNull, toQty } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
 
-import type { AdjustInput, LedgerEntry, StockReport, StockRow } from "../types/inventory";
+import type {
+  AdjustInput,
+  LedgerEntry,
+  StockReport,
+  StockRow,
+} from "../types/inventory";
 
 interface MovementDto {
   id: string;
@@ -51,7 +56,11 @@ const toRow = (d: StockRowDto): StockRow => ({
 });
 
 /** حركة صنف (الأحدث أولاً). */
-export async function fetchLedger(productId: string, page: number, pageSize: number) {
+export async function fetchLedger(
+  productId: string,
+  page: number,
+  pageSize: number,
+) {
   const { data } = await api.get<{ items: MovementDto[]; total: number }>(
     `/products/${productId}/stock-ledger`,
     { params: { page, page_size: pageSize } },
@@ -72,7 +81,9 @@ export const adjustStock = async (productId: string, input: AdjustInput) =>
   );
 
 /** النواقص والراكد وقيمة المخزون (للمدير). */
-export async function fetchStockReport(stagnantDays: number): Promise<StockReport> {
+export async function fetchStockReport(
+  stagnantDays: number,
+): Promise<StockReport> {
   const { data } = await api.get<{
     stock_value: number;
     low: StockRowDto[];

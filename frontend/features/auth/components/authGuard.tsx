@@ -35,7 +35,8 @@ export function AuthGuard({
   );
 
   const roles = role === undefined ? null : Array.isArray(role) ? role : [role];
-  const roleOk = sessionRole !== null && (!roles || roles.includes(sessionRole));
+  const roleOk =
+    sessionRole !== null && (!roles || roles.includes(sessionRole));
   const allowed = sessionRole !== null && roleOk;
 
   useEffect(() => {

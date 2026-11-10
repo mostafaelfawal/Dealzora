@@ -84,7 +84,9 @@ export function UsersStats({
         icon={<IconCashRegister />}
         label="الكاشير"
         active={role === "cashier"}
-        onClick={() => onChange({ role: role === "cashier" ? "all" : "cashier" })}
+        onClick={() =>
+          onChange({ role: role === "cashier" ? "all" : "cashier" })
+        }
       >
         <Count value={summary.cashiers} />
       </Stat>
@@ -92,7 +94,9 @@ export function UsersStats({
         icon={<IconShieldCheck />}
         label="المديرون"
         active={role === "manager"}
-        onClick={() => onChange({ role: role === "manager" ? "all" : "manager" })}
+        onClick={() =>
+          onChange({ role: role === "manager" ? "all" : "manager" })
+        }
       >
         <Count value={summary.managers} />
       </Stat>

@@ -34,12 +34,18 @@ export function PosNoShift() {
 
   return (
     <main className="flex h-dvh items-start justify-center bg-background p-4 pt-[12dvh]">
-      <MotionDiv variants={fadeUp} initial="hidden" animate="show" className="w-full max-w-sm">
+      <MotionDiv
+        variants={fadeUp}
+        initial="hidden"
+        animate="show"
+        className="w-full max-w-sm"
+      >
         <Card>
           <CardHeader>
             <CardTitle>أهلاً {user.name}، ابدأ ورديتك</CardTitle>
             <CardDescription>
-              لا توجد وردية مفتوحة. عدّ الفكّة الموجودة في الدرج واكتبها لتبدأ البيع.
+              لا توجد وردية مفتوحة. عدّ الفكّة الموجودة في الدرج واكتبها لتبدأ
+              البيع.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

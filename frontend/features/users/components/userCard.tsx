@@ -34,7 +34,10 @@ export function UserCard({ user, index, ...actions }: UserCardProps) {
       )}
     >
       <div
-        className={cn("flex items-start gap-2.5", !user.isActive && "opacity-60")}
+        className={cn(
+          "flex items-start gap-2.5",
+          !user.isActive && "opacity-60",
+        )}
       >
         <span
           aria-hidden

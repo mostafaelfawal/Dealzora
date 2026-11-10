@@ -1,6 +1,11 @@
 "use client";
 
-import { IconCopy, IconEye, IconEyeOff, IconRefresh } from "@tabler/icons-react";
+import {
+  IconCopy,
+  IconEye,
+  IconEyeOff,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 

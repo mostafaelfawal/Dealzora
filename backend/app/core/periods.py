@@ -4,7 +4,10 @@ from datetime import date, datetime, time, timedelta, timezone
 
 
 def local_today() -> date:
-    return date.today()
+    from app.core.base import frozen_now
+
+    frozen = frozen_now.get()
+    return frozen.astimezone().date() if frozen else date.today()
 
 
 def day_bounds_utc(day_from: date, day_to: date) -> tuple[datetime, datetime]:

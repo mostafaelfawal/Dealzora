@@ -82,7 +82,9 @@ export function UsersTable({
       header: "آخر دخول",
       className: "hidden md:table-cell",
       cellClassName: "text-muted-foreground",
-      cell: (u) => <span className="text-xs">{lastLoginLabel(u.lastLoginAt)}</span>,
+      cell: (u) => (
+        <span className="text-xs">{lastLoginLabel(u.lastLoginAt)}</span>
+      ),
     },
     {
       id: "active",

@@ -1,6 +1,10 @@
 "use client";
 
-import { IconAlertTriangle, IconLoader2, IconPrinter } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconLoader2,
+  IconPrinter,
+} from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, RefObject } from "react";
 

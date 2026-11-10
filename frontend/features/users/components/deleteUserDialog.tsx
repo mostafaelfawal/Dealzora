@@ -37,7 +37,8 @@ export function DeleteUserDialog({
                 <bdi dir="ltr" className="font-mono">
                   {user.username}
                 </bdi>{" "}
-                ويُسجَّل خروجه فوراً. لو كنت تريد إيقافه مؤقتاً، عطّله بدل الحذف.
+                ويُسجَّل خروجه فوراً. لو كنت تريد إيقافه مؤقتاً، عطّله بدل
+                الحذف.
               </>
             )}
           </DialogDescription>

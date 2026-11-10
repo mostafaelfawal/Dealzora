@@ -90,7 +90,10 @@ export function UsersScreen() {
           isLoading={list.isPending}
           isFetching={list.isFetching}
           isError={list.isError}
-          errorMessage={extractErrorMessage(list.error, "تعذّر تحميل المستخدمين")}
+          errorMessage={extractErrorMessage(
+            list.error,
+            "تعذّر تحميل المستخدمين",
+          )}
           onRetry={() => list.refetch()}
           isFiltered={list.filtered}
           onClearFilters={list.clearFilters}

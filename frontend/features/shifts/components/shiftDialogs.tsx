@@ -106,7 +106,8 @@ function CloseShiftForm({
         100,
     ) / 100;
   const expected = shift.expectedCash;
-  const diff = expected === null ? null : Math.round((counted - expected) * 100) / 100;
+  const diff =
+    expected === null ? null : Math.round((counted - expected) * 100) / 100;
 
   function submit() {
     if (close.isPending) return;
@@ -125,14 +126,17 @@ function CloseShiftForm({
       <DialogHeader className="text-start">
         <DialogTitle>قفل الوردية وجرد الدرج</DialogTitle>
         <DialogDescription>
-          {shift.cashierName ?? "الكاشير"} · فُتحت {formatTime(shift.openedAt)} ·{" "}
-          {shift.salesCount} فاتورة. عدّ النقدية في الدرج واكتب عدد كل فئة.
+          {shift.cashierName ?? "الكاشير"} · فُتحت {formatTime(shift.openedAt)}{" "}
+          · {shift.salesCount} فاتورة. عدّ النقدية في الدرج واكتب عدد كل فئة.
         </DialogDescription>
       </DialogHeader>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {CASH_DENOMINATIONS.map((d, i) => (
-          <label key={d} className="flex items-center gap-2 border p-1.5 ps-2.5">
+          <label
+            key={d}
+            className="flex items-center gap-2 border p-1.5 ps-2.5"
+          >
             <span className="w-10 shrink-0 font-mono text-sm font-semibold tabular-nums">
               {d}
             </span>
@@ -148,14 +152,18 @@ function CloseShiftForm({
               maxLength={5}
               placeholder="0"
               value={counts[d] ?? ""}
-              onChange={(e) => setCounts((prev) => ({ ...prev, [d]: e.target.value }))}
+              onChange={(e) =>
+                setCounts((prev) => ({ ...prev, [d]: e.target.value }))
+              }
               onFocus={(e) => e.currentTarget.select()}
               className="h-8 min-w-0 text-center font-mono"
             />
           </label>
         ))}
         <label className="col-span-2 flex items-center gap-2 border p-1.5 ps-2.5 sm:col-span-2">
-          <span className="shrink-0 text-xs text-muted-foreground">فكّة / أخرى</span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            فكّة / أخرى
+          </span>
           <Input
             aria-label="مبالغ أخرى بالجنيه"
             dir="ltr"
@@ -185,7 +193,9 @@ function CloseShiftForm({
 
       <dl aria-live="polite" className="space-y-1.5 text-xs">
         <div className="flex items-end justify-between">
-          <dt className="pb-0.5 text-sm font-medium">النقدية الفعلية في الدرج</dt>
+          <dt className="pb-0.5 text-sm font-medium">
+            النقدية الفعلية في الدرج
+          </dt>
           <dd>
             <Money amount={counted} className="text-3xl leading-none" />
           </dd>
@@ -202,7 +212,11 @@ function CloseShiftForm({
               <dt className="text-muted-foreground">الفرق</dt>
               <dd
                 className={
-                  diff === 0 ? "text-success" : diff > 0 ? "text-warning" : "text-destructive"
+                  diff === 0
+                    ? "text-success"
+                    : diff > 0
+                      ? "text-warning"
+                      : "text-destructive"
                 }
               >
                 {diff === 0 ? (
@@ -229,9 +243,16 @@ function CloseShiftForm({
           className="gap-2 font-normal"
         >
           رجوع
-          <ShortcutBadge className="hidden rounded-none lg:inline-flex">Esc</ShortcutBadge>
+          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+            Esc
+          </ShortcutBadge>
         </Button>
-        <Button type="submit" size="lg" disabled={close.isPending} className="gap-2 px-5">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={close.isPending}
+          className="gap-2 px-5"
+        >
           {close.isPending ? (
             <IconLoader2 className="size-4 animate-spin" />
           ) : (

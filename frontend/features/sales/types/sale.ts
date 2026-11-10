@@ -1,9 +1,6 @@
 export type PaymentMethod = "cash" | "credit" | "mixed";
 export type ReturnReason =
-  | "wrong_item"
-  | "defective"
-  | "customer_changed"
-  | "other";
+  "wrong_item" | "defective" | "customer_changed" | "other";
 export type SaleStatusFilter = "all" | "credit" | "returned";
 export type SaleSort = "newest" | "oldest" | "total_desc" | "total_asc";
 

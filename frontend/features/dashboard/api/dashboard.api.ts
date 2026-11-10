@@ -6,8 +6,17 @@ import type { Kpis, NamedValue, Overview } from "../types/dashboard";
 
 /* شكل الـ backend (قروش، كميات × 1000، snake_case). */
 type KpisDto = Record<
-  | "net_sales" | "gross_profit" | "expenses" | "net_profit" | "invoices" | "avg_ticket"
-  | "items_sold" | "returns" | "discounts" | "cash_sales" | "credit_sales",
+  | "net_sales"
+  | "gross_profit"
+  | "expenses"
+  | "net_profit"
+  | "invoices"
+  | "avg_ticket"
+  | "items_sold"
+  | "returns"
+  | "discounts"
+  | "cash_sales"
+  | "credit_sales",
   number
 >;
 interface NamedDto {
@@ -23,7 +32,14 @@ interface OverviewDto {
   prev_to: string;
   kpis: KpisDto;
   prev: KpisDto;
-  trend: { day: string; net: number; profit: number; invoices: number; prev_net: number; prev_profit: number }[];
+  trend: {
+    day: string;
+    net: number;
+    profit: number;
+    invoices: number;
+    prev_net: number;
+    prev_profit: number;
+  }[];
   heatmap: { weekday: number; hour: number; invoices: number; net: number }[];
   payments: NamedDto[];
   top_products: NamedDto[];
@@ -40,7 +56,12 @@ interface OverviewDto {
     discounts: number;
   }[];
   health: Record<string, number>;
-  shift: { cashier_name: string | null; opened_at: string; sales_count: number; expected_cash: number } | null;
+  shift: {
+    cashier_name: string | null;
+    opened_at: string;
+    sales_count: number;
+    expected_cash: number;
+  } | null;
   recent_sales: {
     id: string;
     number: number;
@@ -100,7 +121,11 @@ export async function fetchOverview(range: DateRange): Promise<Overview> {
     topProducts: data.top_products.map((x) => toNamed(x)),
     categories: data.categories.map((x) => toNamed(x)),
     expensesByCategory: data.expenses_by_category.map((x) => toNamed(x, false)),
-    cashFlow: data.cash_flow.map((c) => ({ day: parseIsoDay(c.day), cashIn: p(c.cash_in), cashOut: p(c.cash_out) })),
+    cashFlow: data.cash_flow.map((c) => ({
+      day: parseIsoDay(c.day),
+      cashIn: p(c.cash_in),
+      cashOut: p(c.cash_out),
+    })),
     cashiers: data.cashiers.map((c) => ({
       userId: c.user_id,
       name: c.name,

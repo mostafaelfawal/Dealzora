@@ -35,7 +35,10 @@ function Difference({ value }: { value: number | null }) {
   if (value === null) return <span className="text-muted-foreground">—</span>;
   if (value === 0)
     return (
-      <Badge variant="outline" className="border-success/50 font-normal text-success">
+      <Badge
+        variant="outline"
+        className="border-success/50 font-normal text-success"
+      >
         مطابق
       </Badge>
     );
@@ -76,9 +79,7 @@ export function ShiftsScreen() {
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs font-medium">
             {s.cashierName ?? "—"}
-            {s.isOpen && (
-              <Badge className="font-normal">مفتوحة الآن</Badge>
-            )}
+            {s.isOpen && <Badge className="font-normal">مفتوحة الآن</Badge>}
           </p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
             {formatWhen(s.openedAt)}
@@ -143,9 +144,15 @@ export function ShiftsScreen() {
             onClick={() => setDialog(shift ? "close" : "open")}
             className="h-10 gap-2"
           >
-            {shift ? <IconLockDollar className="size-4" /> : <IconPlayerPlay className="size-4" />}
+            {shift ? (
+              <IconLockDollar className="size-4" />
+            ) : (
+              <IconPlayerPlay className="size-4" />
+            )}
             {shift ? "قفل الوردية الحالية" : "فتح وردية"}
-            <ShortcutBadge className="hidden lg:inline-flex">{SHIFT_KEY.label}</ShortcutBadge>
+            <ShortcutBadge className="hidden lg:inline-flex">
+              {SHIFT_KEY.label}
+            </ShortcutBadge>
           </Button>
         }
       />
@@ -156,9 +163,13 @@ export function ShiftsScreen() {
           icon={<IconClockHour4 />}
           label="الوردية الحالية"
           tone={shift ? "success" : "warning"}
-          hint={shift ? `منذ ${formatWhen(shift.openedAt)}` : "افتح وردية لبدء البيع"}
+          hint={
+            shift
+              ? `منذ ${formatWhen(shift.openedAt)}`
+              : "افتح وردية لبدء البيع"
+          }
         >
-          {shift ? shift.cashierName ?? "مفتوحة" : "لا يوجد"}
+          {shift ? (shift.cashierName ?? "مفتوحة") : "لا يوجد"}
         </StatTile>
         <StatTile index={1} icon={<IconReceipt />} label="مبيعات الوردية">
           <Money amount={shift?.salesTotal ?? 0} className="text-lg" />
@@ -170,7 +181,13 @@ export function ShiftsScreen() {
           index={3}
           icon={<IconScale />}
           label="فرق آخر وردية"
-          tone={!last?.difference ? "default" : last.difference > 0 ? "warning" : "danger"}
+          tone={
+            !last?.difference
+              ? "default"
+              : last.difference > 0
+                ? "warning"
+                : "danger"
+          }
         >
           <Difference value={last?.difference ?? null} />
         </StatTile>
@@ -190,7 +207,11 @@ export function ShiftsScreen() {
           title: "لا توجد ورديات بعد",
           description: "افتح أول وردية لتبدأ البيع من شاشة الكاشير.",
           action: (
-            <Button size="lg" onClick={() => setDialog("open")} className="gap-2">
+            <Button
+              size="lg"
+              onClick={() => setDialog("open")}
+              className="gap-2"
+            >
               <IconPlayerPlay className="size-4" />
               فتح وردية
             </Button>
@@ -211,7 +232,10 @@ export function ShiftsScreen() {
         }}
       />
 
-      <OpenShiftDialog open={dialog === "open"} onClose={() => setDialog(null)} />
+      <OpenShiftDialog
+        open={dialog === "open"}
+        onClose={() => setDialog(null)}
+      />
       <CloseShiftDialog
         shift={shift}
         open={dialog === "close"}

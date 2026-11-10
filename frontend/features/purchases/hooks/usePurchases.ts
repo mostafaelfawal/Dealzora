@@ -18,7 +18,11 @@ import {
   fetchPurchases,
   fetchPurchasesSummary,
 } from "../api/purchases.api";
-import type { PurchaseFilters, PurchaseInput, RefundMethod } from "../types/purchase";
+import type {
+  PurchaseFilters,
+  PurchaseInput,
+  RefundMethod,
+} from "../types/purchase";
 
 export const purchaseKeys = {
   all: ["purchases"] as const,
@@ -44,18 +48,37 @@ export const usePurchase = (id: string | null) =>
   });
 
 export const usePurchasesSummary = () =>
-  useQuery({ queryKey: purchaseKeys.summary(), queryFn: fetchPurchasesSummary });
+  useQuery({
+    queryKey: purchaseKeys.summary(),
+    queryFn: fetchPurchasesSummary,
+  });
 
 export const usePurchaseProducts = () =>
-  useQuery({ queryKey: purchaseKeys.products(), queryFn: fetchAllProducts, staleTime: 30_000 });
+  useQuery({
+    queryKey: purchaseKeys.products(),
+    queryFn: fetchAllProducts,
+    staleTime: 30_000,
+  });
 
 export const usePurchaseSuppliers = () =>
-  useQuery({ queryKey: purchaseKeys.suppliers(), queryFn: fetchAllSuppliers, staleTime: 30_000 });
+  useQuery({
+    queryKey: purchaseKeys.suppliers(),
+    queryFn: fetchAllSuppliers,
+    staleTime: 30_000,
+  });
 
 function useRefresh() {
   const qc = useQueryClient();
   return () => {
-    for (const key of [purchaseKeys.all, ["products"], ["suppliers"], ["treasury"], ["reports"], ["dashboard"], ["pos", "catalog"]])
+    for (const key of [
+      purchaseKeys.all,
+      ["products"],
+      ["suppliers"],
+      ["treasury"],
+      ["reports"],
+      ["dashboard"],
+      ["pos", "catalog"],
+    ])
       void qc.invalidateQueries({ queryKey: key });
   };
 }
@@ -73,7 +96,8 @@ export function useCreatePurchase() {
             : `دُفع ${formatMoneyText(p.paidAmount)} من الخزنة`,
       });
     },
-    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ فاتورة الشراء")),
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّر حفظ فاتورة الشراء")),
   });
 }
 

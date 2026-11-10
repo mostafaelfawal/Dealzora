@@ -62,10 +62,17 @@ export async function fetchSalesReport(r: Range): Promise<SalesReport> {
   };
 }
 
-export async function fetchProductsReport(r: Range, rank: ProductRank, limit = 20) {
-  const { data } = await api.get<{ items: ProductRowDto[] }>("/reports/products", {
-    params: { ...rangeParams(r), rank, limit },
-  });
+export async function fetchProductsReport(
+  r: Range,
+  rank: ProductRank,
+  limit = 20,
+) {
+  const { data } = await api.get<{ items: ProductRowDto[] }>(
+    "/reports/products",
+    {
+      params: { ...rangeParams(r), rank, limit },
+    },
+  );
   return data.items.map(toProductRow);
 }
 
@@ -95,7 +102,9 @@ export async function fetchDebtsReport(): Promise<DebtsReport> {
 }
 
 export async function fetchTreasuryReport(r: Range): Promise<TreasuryReport> {
-  const { data } = await api.get("/reports/treasury", { params: rangeParams(r) });
+  const { data } = await api.get("/reports/treasury", {
+    params: rangeParams(r),
+  });
   return {
     opening: toPounds(data.opening),
     totalIn: toPounds(data.total_in),

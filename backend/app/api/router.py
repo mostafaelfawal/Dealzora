@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 
+from app.core.config import get_settings
+
 from app.modules.audit.routes import router as audit_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.backup.routes import router as backup_router
@@ -32,6 +34,12 @@ routes = [
     audit_router,
     backup_router,
 ]
+
+# أدوات التطوير (بيانات تجريبية) لا توجد أصلاً في نسخة الإنتاج.
+if get_settings().debug:
+    from app.modules.devtools.routes import router as devtools_router
+
+    routes.append(devtools_router)
 
 for router in routes:
     api_router.include_router(router)

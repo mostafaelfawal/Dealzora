@@ -51,7 +51,8 @@ export function toCompletedInvoice(sale: Sale): CompletedInvoice {
           creditLimit: 0,
         }
       : null,
-    discountRate: gross > 0 ? Math.min(Math.max(1 - sale.total / gross, 0), 1) : 0,
+    discountRate:
+      gross > 0 ? Math.min(Math.max(1 - sale.total / gross, 0), 1) : 0,
     lines: sale.lines.map((l) => ({
       lineId: l.id,
       productId: l.productId,

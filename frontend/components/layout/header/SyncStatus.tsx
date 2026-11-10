@@ -35,7 +35,8 @@ const STATUS_CONFIG: Record<
   offline: {
     tone: "neutral",
     pulse: false,
-    description: "تعذّر الاتصال بالخادم المحلي. أعد تشغيل البرنامج لو استمرت المشكلة",
+    description:
+      "تعذّر الاتصال بالخادم المحلي. أعد تشغيل البرنامج لو استمرت المشكلة",
   },
   error: {
     tone: "danger",
@@ -115,20 +116,20 @@ export function SyncStatus({
           )}
         </div>
         {onBackup && (
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full"
-          disabled={isSyncing || isOffline}
-          onClick={onBackup}
-        >
-          {isSyncing ? (
-            <IconLoader2 className="size-4 animate-spin" />
-          ) : (
-            <IconDatabaseExport className="size-4" />
-          )}
-          {isSyncing ? "جارٍ النسخ الاحتياطي..." : "إنشاء نسخة احتياطية"}
-        </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full"
+            disabled={isSyncing || isOffline}
+            onClick={onBackup}
+          >
+            {isSyncing ? (
+              <IconLoader2 className="size-4 animate-spin" />
+            ) : (
+              <IconDatabaseExport className="size-4" />
+            )}
+            {isSyncing ? "جارٍ النسخ الاحتياطي..." : "إنشاء نسخة احتياطية"}
+          </Button>
         )}
       </PopoverContent>
     </Popover>

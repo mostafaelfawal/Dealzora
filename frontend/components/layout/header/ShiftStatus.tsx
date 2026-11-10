@@ -39,87 +39,90 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
 
   return (
     <>
-    <Popover open={popover} onOpenChange={setPopover}>
-      <PopoverTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="lg"
-            className="gap-2 px-2 font-normal"
-          />
-        }
-      >
-        <StatusDot tone={isOpen ? "success" : "warning"} pulse={isOpen} />
-        <span
-          className={cn(
-            "text-sm",
-            showLabels ? "inline" : "sr-only xl:not-sr-only",
-          )}
+      <Popover open={popover} onOpenChange={setPopover}>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="lg"
+              className="gap-2 px-2 font-normal"
+            />
+          }
         >
-          {isOpen ? "الوردية مفتوحة" : "لا توجد وردية مفتوحة"}
-        </span>
-        {isOpen && (
+          <StatusDot tone={isOpen ? "success" : "warning"} pulse={isOpen} />
           <span
             className={cn(
-              "text-sm text-muted-foreground",
-              showLabels ? "hidden sm:inline" : "hidden 2xl:inline",
+              "text-sm",
+              showLabels ? "inline" : "sr-only xl:not-sr-only",
             )}
-            suppressHydrationWarning
           >
-            · {shift.cashierName} منذ {formatTime(shift.openedAt)}
+            {isOpen ? "الوردية مفتوحة" : "لا توجد وردية مفتوحة"}
           </span>
-        )}
-        {!showLabels && (
-          <IconClockHour4 className="size-4 text-muted-foreground xl:hidden" />
-        )}
-      </PopoverTrigger>
+          {isOpen && (
+            <span
+              className={cn(
+                "text-sm text-muted-foreground",
+                showLabels ? "hidden sm:inline" : "hidden 2xl:inline",
+              )}
+              suppressHydrationWarning
+            >
+              · {shift.cashierName} منذ {formatTime(shift.openedAt)}
+            </span>
+          )}
+          {!showLabels && (
+            <IconClockHour4 className="size-4 text-muted-foreground xl:hidden" />
+          )}
+        </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-64">
-        {isOpen ? (
-          <>
-            <div className="space-y-1">
-              <p className="text-sm font-medium">الوردية الحالية</p>
-              <p
-                className="text-sm text-muted-foreground"
-                suppressHydrationWarning
+        <PopoverContent align="end" className="w-64">
+          {isOpen ? (
+            <>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">الوردية الحالية</p>
+                <p
+                  className="text-sm text-muted-foreground"
+                  suppressHydrationWarning
+                >
+                  {shift.cashierName ?? "—"} · فُتحت{" "}
+                  {formatTime(shift.openedAt)} · {shift.salesCount} فاتورة
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => openDialog("close")}
+                className="w-full"
               >
-                {shift.cashierName ?? "—"} · فُتحت {formatTime(shift.openedAt)} ·{" "}
-                {shift.salesCount} فاتورة
+                <IconLockDollar className="size-4" />
+                قفل الوردية وجرد الدرج
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                افتح وردية عشان تقدر تسجّل مبيعات وتتابع رصيد الدرج.
               </p>
-            </div>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => openDialog("close")}
-              className="w-full"
-            >
-              <IconLockDollar className="size-4" />
-              قفل الوردية وجرد الدرج
-            </Button>
-          </>
-        ) : (
-          <>
-            <p className="text-sm text-muted-foreground">
-              افتح وردية عشان تقدر تسجّل مبيعات وتتابع رصيد الدرج.
-            </p>
-            <Button
-              size="lg"
-              onClick={() => openDialog("open")}
-              className="w-full"
-            >
-              <IconPlayerPlay className="size-4" />
-              فتح وردية
-            </Button>
-          </>
-        )}
-      </PopoverContent>
-    </Popover>
-    <OpenShiftDialog open={dialog === "open"} onClose={() => setDialog(null)} />
-    <CloseShiftDialog
-      shift={shift}
-      open={dialog === "close"}
-      onClose={() => setDialog(null)}
-    />
+              <Button
+                size="lg"
+                onClick={() => openDialog("open")}
+                className="w-full"
+              >
+                <IconPlayerPlay className="size-4" />
+                فتح وردية
+              </Button>
+            </>
+          )}
+        </PopoverContent>
+      </Popover>
+      <OpenShiftDialog
+        open={dialog === "open"}
+        onClose={() => setDialog(null)}
+      />
+      <CloseShiftDialog
+        shift={shift}
+        open={dialog === "close"}
+        onClose={() => setDialog(null)}
+      />
     </>
   );
 }

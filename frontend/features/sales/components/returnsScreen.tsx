@@ -8,17 +8,29 @@ import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { PeriodPicker, periodOf, type PeriodValue } from "@/components/shared/PeriodPicker";
+import {
+  PeriodPicker,
+  periodOf,
+  type PeriodValue,
+} from "@/components/shared/PeriodPicker";
 import { StatTile } from "@/components/shared/StatTile";
 import { Badge } from "@/components/ui/badge";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { round2 } from "@/features/pos/lib/posCalc";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatWhen } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 import { formatQty } from "@/lib/format";
 
-import { PAGE_SIZES, RETURN_REASON_LABEL, RETURN_REASONS } from "../config/saleOptions";
+import {
+  PAGE_SIZES,
+  RETURN_REASON_LABEL,
+  RETURN_REASONS,
+} from "../config/saleOptions";
 import { useReturnsList } from "../hooks/useSales";
 import type { ReturnReason, SaleReturn } from "../types/sale";
 import { SaleDetailSheet } from "./saleDetailSheet";
@@ -119,7 +131,12 @@ export function ReturnsScreen() {
       />
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-        <StatTile index={0} icon={<IconReceiptRefund />} label="مرتجعات الصفحة" tone="danger">
+        <StatTile
+          index={0}
+          icon={<IconReceiptRefund />}
+          label="مرتجعات الصفحة"
+          tone="danger"
+        >
           <Money amount={pageTotal} className="text-lg" />
         </StatTile>
         <StatTile index={1} icon={<IconReceiptRefund />} label="رُدّ نقداً">
@@ -146,7 +163,13 @@ export function ReturnsScreen() {
             aria-label="بحث في المرتجعات"
           />
         </InputGroup>
-        <PeriodPicker value={period} onChange={(v) => { setPeriod(v); setPage(1); }} />
+        <PeriodPicker
+          value={period}
+          onChange={(v) => {
+            setPeriod(v);
+            setPage(1);
+          }}
+        />
         <OptionSelect
           label="السبب"
           items={REASON_OPTIONS}
@@ -194,7 +217,11 @@ export function ReturnsScreen() {
         }}
       />
 
-      <SaleDetailSheet saleId={openSale} onClose={() => setOpenSale(null)} onReturn={setReturning} />
+      <SaleDetailSheet
+        saleId={openSale}
+        onClose={() => setOpenSale(null)}
+        onReturn={setReturning}
+      />
       <SaleReturnDialog sale={returning} onClose={() => setReturning(null)} />
     </div>
   );

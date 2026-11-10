@@ -18,7 +18,10 @@ import { useHotkey } from "@/hooks/useHotkey";
 
 const GENERAL = [
   { keys: SHORTCUTS.newSale.label, label: "بيع جديد (الكاشير)" },
-  { keys: SHORTCUTS.globalSearch.label, label: "بحث شامل: صنف، عميل، فاتورة، صفحة" },
+  {
+    keys: SHORTCUTS.globalSearch.label,
+    label: "بحث شامل: صنف، عميل، فاتورة، صفحة",
+  },
   { keys: "F4", label: "إضافة جديد في الصفحة الحالية" },
   { keys: "F6", label: "تبديل العرض (بطاقات / جدول)" },
   { keys: "/", label: "الانتقال لخانة البحث في الصفحة" },
@@ -28,7 +31,8 @@ const GENERAL = [
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
-  (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+  (target.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
 
 /**
  * اختصارات التنقل على مستوى لوحة التحكم:
@@ -43,15 +47,22 @@ export function NavHotkeys() {
     function onKeyDown(event: KeyboardEvent) {
       if (event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
         const digit = /^Digit(\d)$/.exec(event.code)?.[1];
-        const item = digit && NAV_HOTKEYS.find((i) => i.hotkey === Number(digit));
+        const item =
+          digit && NAV_HOTKEYS.find((i) => i.hotkey === Number(digit));
         if (item) {
           event.preventDefault();
           router.push(item.href);
         }
         return;
       }
-      if (event.key === "/" && !event.ctrlKey && !event.metaKey && !isTyping(event.target)) {
-        const search = document.querySelector<HTMLInputElement>("[data-page-search]");
+      if (
+        event.key === "/" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !isTyping(event.target)
+      ) {
+        const search =
+          document.querySelector<HTMLInputElement>("[data-page-search]");
         if (search) {
           event.preventDefault();
           search.focus();
@@ -82,7 +93,10 @@ export function NavHotkeys() {
           <h3 className="text-xs font-medium text-muted-foreground">عام</h3>
           <ul className="divide-y border">
             {GENERAL.map((s) => (
-              <li key={s.keys} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+              <li
+                key={s.keys}
+                className="flex items-center justify-between gap-3 px-3 py-2 text-xs"
+              >
                 <span>{s.label}</span>
                 <ShortcutBadge>{s.keys}</ShortcutBadge>
               </li>
@@ -90,7 +104,9 @@ export function NavHotkeys() {
           </ul>
         </section>
         <section className="space-y-1.5">
-          <h3 className="text-xs font-medium text-muted-foreground">التنقل بين الصفحات</h3>
+          <h3 className="text-xs font-medium text-muted-foreground">
+            التنقل بين الصفحات
+          </h3>
           <ul className="grid grid-cols-2 gap-px border bg-border">
             {NAV_HOTKEYS.map((item) => (
               <li

@@ -13,7 +13,10 @@ export function PosScreen() {
   if (isShiftLoading) {
     return (
       <main className="flex h-dvh items-center justify-center text-muted-foreground">
-        <IconLoader2 className="size-6 animate-spin" aria-label="جارٍ التحميل" />
+        <IconLoader2
+          className="size-6 animate-spin"
+          aria-label="جارٍ التحميل"
+        />
       </main>
     );
   }

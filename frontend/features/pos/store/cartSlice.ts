@@ -228,7 +228,10 @@ const cartSlice = createSlice({
     },
 
     /** خصم مبلغ ثابت على سطر (0 = إزالة). */
-    setLineDiscount(state, action: PayloadAction<{ id: string; amount: number }>) {
+    setLineDiscount(
+      state,
+      action: PayloadAction<{ id: string; amount: number }>,
+    ) {
       const { id, amount } = action.payload;
       commit(state, (prev) => {
         const target = prev.lines.find((l) => l.productId === id);

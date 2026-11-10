@@ -68,7 +68,12 @@ export interface PurchaseInput {
   supplierId: string;
   supplierInvoice: string;
   purchasedOn: string;
-  lines: { productId: string; qty: number; unitCost: number; newSalePrice: number | null }[];
+  lines: {
+    productId: string;
+    qty: number;
+    unitCost: number;
+    newSalePrice: number | null;
+  }[];
   discount: number;
   paidAmount: number;
   note: string;

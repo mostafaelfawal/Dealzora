@@ -62,7 +62,8 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
 
   // المدير يرجّع بدون مهلة (الـ backend يطبّق نفس القاعدة).
   const isManager = useSessionUser().role === "manager";
-  const expired = !isManager && now !== null && isReturnExpired(invoice.soldAt, now);
+  const expired =
+    !isManager && now !== null && isReturnExpired(invoice.soldAt, now);
 
   const lines: ReturnLine[] = invoice.lines
     .filter((l) => (qtys[l.productId] ?? 0) > 0)

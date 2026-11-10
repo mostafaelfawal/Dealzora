@@ -89,7 +89,8 @@ function DiscountForm({
     return selectLines(s).find((l) => l.productId === id) ?? null;
   });
   // في خصم الصنف: الأساس قيمة السطر، والخصم الحالي مبلغ ثابت.
-  const subtotal = isLine && selectedLine ? lineGross(selectedLine) : totals.subtotal;
+  const subtotal =
+    isLine && selectedLine ? lineGross(selectedLine) : totals.subtotal;
   const lineCurrent =
     selectedLine && lineDiscount(selectedLine) > 0
       ? { type: "amount" as const, value: lineDiscount(selectedLine) }

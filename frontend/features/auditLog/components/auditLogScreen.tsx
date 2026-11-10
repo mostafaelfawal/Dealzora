@@ -8,7 +8,11 @@ import { AppTable } from "@/components/shared/AppTable/AppTable";
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { PeriodPicker, periodOf, type PeriodValue } from "@/components/shared/PeriodPicker";
+import {
+  PeriodPicker,
+  periodOf,
+  type PeriodValue,
+} from "@/components/shared/PeriodPicker";
 import { Badge } from "@/components/ui/badge";
 import { cleanParams, toMs } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
@@ -67,15 +71,39 @@ const ENTITY_OPTIONS = [
 ];
 const ACTION_OPTIONS = [
   { value: "all", label: "كل العمليات" },
-  ...["create", "update", "delete", "stock_adjust", "return", "collect_payment", "close"].map((a) => ({
+  ...[
+    "create",
+    "update",
+    "delete",
+    "stock_adjust",
+    "return",
+    "collect_payment",
+    "close",
+  ].map((a) => ({
     value: a,
     label: ACTION_LABEL[a],
   })),
 ];
 
-async function fetchAudit(f: { entity: string; action: string; actor: string; from: string; to: string; page: number; pageSize: number }) {
+async function fetchAudit(f: {
+  entity: string;
+  action: string;
+  actor: string;
+  from: string;
+  to: string;
+  page: number;
+  pageSize: number;
+}) {
   const { data } = await api.get<{
-    items: { id: string; entity: string; entity_id: string; action: string; actor_name: string | null; changes: Record<string, unknown> | null; created_at: string }[];
+    items: {
+      id: string;
+      entity: string;
+      entity_id: string;
+      action: string;
+      actor_name: string | null;
+      changes: Record<string, unknown> | null;
+      created_at: string;
+    }[];
     total: number;
   }>("/audit-log", {
     params: cleanParams({
@@ -103,22 +131,33 @@ async function fetchAudit(f: { entity: string; action: string; actor: string; fr
 }
 
 const show = (v: unknown) =>
-  v === null || v === undefined || v === "" ? "—" : typeof v === "object" ? JSON.stringify(v) : String(v);
+  v === null || v === undefined || v === ""
+    ? "—"
+    : typeof v === "object"
+      ? JSON.stringify(v)
+      : String(v);
 
 /** التغييرات: {حقل: {from, to}} تُعرض "قبل ← بعد"، وغيرها قيمة واحدة. */
 function Changes({ changes }: { changes: Record<string, unknown> | null }) {
-  if (!changes || Object.keys(changes).length === 0) return <span className="text-muted-foreground">—</span>;
+  if (!changes || Object.keys(changes).length === 0)
+    return <span className="text-muted-foreground">—</span>;
   return (
     <dl className="grid gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-[auto_1fr]">
       {Object.entries(changes).map(([key, value]) => {
-        const diff = value && typeof value === "object" && "from" in value && "to" in value ? (value as { from: unknown; to: unknown }) : null;
+        const diff =
+          value && typeof value === "object" && "from" in value && "to" in value
+            ? (value as { from: unknown; to: unknown })
+            : null;
         return (
           <div key={key} className="contents">
             <dt className="font-mono text-muted-foreground">{key}</dt>
             <dd className="min-w-0 break-words">
               {diff ? (
                 <>
-                  <span className="text-destructive line-through">{show(diff.from)}</span> ← <span className="text-success">{show(diff.to)}</span>
+                  <span className="text-destructive line-through">
+                    {show(diff.from)}
+                  </span>{" "}
+                  ← <span className="text-success">{show(diff.to)}</span>
                 </>
               ) : (
                 show(value)
@@ -143,18 +182,30 @@ export function AuditLogScreen() {
 
   const actors = useQuery({
     queryKey: ["audit", "actors"],
-    queryFn: async () => (await api.get<{ id: string; name: string }[]>("/audit-log/actors")).data,
+    queryFn: async () =>
+      (await api.get<{ id: string; name: string }[]>("/audit-log/actors")).data,
   });
   const list = useQuery({
     queryKey: ["audit", entity, action, actor, period.range, page, pageSize],
-    queryFn: () => fetchAudit({ entity, action, actor, from: period.range.from, to: period.range.to, page, pageSize }),
+    queryFn: () =>
+      fetchAudit({
+        entity,
+        action,
+        actor,
+        from: period.range.from,
+        to: period.range.to,
+        page,
+        pageSize,
+      }),
     placeholderData: keepPreviousData,
   });
 
-  const reset = <T,>(fn: (v: T) => void) => (v: T) => {
-    fn(v);
-    setPage(1);
-  };
+  const reset =
+    <T,>(fn: (v: T) => void) =>
+    (v: T) => {
+      fn(v);
+      setPage(1);
+    };
 
   const columns: AppTableColumn<AuditEntry>[] = [
     {
@@ -164,17 +215,34 @@ export function AuditLogScreen() {
       cell: (e) => (
         <div className="min-w-0 space-y-1.5">
           <p className="flex flex-wrap items-center gap-1.5 text-xs">
-            <Badge variant="outline" className={cn("font-normal", DANGER.has(e.action) && "border-destructive/50 text-destructive")}>
+            <Badge
+              variant="outline"
+              className={cn(
+                "font-normal",
+                DANGER.has(e.action) &&
+                  "border-destructive/50 text-destructive",
+              )}
+            >
               {ACTION_LABEL[e.action] ?? e.action}
             </Badge>
             <span>{ENTITY_LABEL[e.entity] ?? e.entity}</span>
-            <IconChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", expanded === e.id && "rotate-180")} />
+            <IconChevronDown
+              className={cn(
+                "size-3.5 text-muted-foreground transition-transform",
+                expanded === e.id && "rotate-180",
+              )}
+            />
           </p>
           {expanded === e.id && <Changes changes={e.changes} />}
         </div>
       ),
     },
-    { id: "by", header: "بواسطة", cellClassName: "text-xs", cell: (e) => e.actorName ?? "—" },
+    {
+      id: "by",
+      header: "بواسطة",
+      cellClassName: "text-xs",
+      cell: (e) => e.actorName ?? "—",
+    },
     {
       id: "when",
       header: "الوقت",
@@ -192,11 +260,26 @@ export function AuditLogScreen() {
       />
       <div className="flex flex-wrap items-center gap-2">
         <PeriodPicker value={period} onChange={reset(setPeriod)} />
-        <OptionSelect label="النوع" items={ENTITY_OPTIONS} value={entity} onChange={reset(setEntity)} className="w-40" />
-        <OptionSelect label="العملية" items={ACTION_OPTIONS} value={action} onChange={reset(setAction)} className="w-40" />
+        <OptionSelect
+          label="النوع"
+          items={ENTITY_OPTIONS}
+          value={entity}
+          onChange={reset(setEntity)}
+          className="w-40"
+        />
+        <OptionSelect
+          label="العملية"
+          items={ACTION_OPTIONS}
+          value={action}
+          onChange={reset(setAction)}
+          className="w-40"
+        />
         <OptionSelect
           label="المستخدم"
-          items={[{ value: "all", label: "كل المستخدمين" }, ...(actors.data ?? []).map((a) => ({ value: a.id, label: a.name }))]}
+          items={[
+            { value: "all", label: "كل المستخدمين" },
+            ...(actors.data ?? []).map((a) => ({ value: a.id, label: a.name })),
+          ]}
           value={actor}
           onChange={reset(setActor)}
           className="w-40"

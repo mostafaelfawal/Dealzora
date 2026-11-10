@@ -25,13 +25,7 @@ export const addDays = (date: Date, days: number) => {
 /* ---------- الفترات الجاهزة ---------- */
 
 export type PeriodPreset =
-  | "today"
-  | "yesterday"
-  | "week"
-  | "month"
-  | "last_month"
-  | "year"
-  | "custom";
+  "today" | "yesterday" | "week" | "month" | "last_month" | "year" | "custom";
 
 export interface DateRange {
   /** YYYY-MM-DD */

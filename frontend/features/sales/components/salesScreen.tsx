@@ -16,12 +16,20 @@ import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { PeriodPicker, periodOf, type PeriodValue } from "@/components/shared/PeriodPicker";
+import {
+  PeriodPicker,
+  periodOf,
+  type PeriodValue,
+} from "@/components/shared/PeriodPicker";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { StatTile } from "@/components/shared/StatTile";
 import { Button } from "@/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { SHORTCUTS } from "@/config/shortcuts";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatWhen } from "@/lib/dates";
@@ -36,7 +44,12 @@ import {
   STATUS_TABS,
 } from "../config/saleOptions";
 import { useSalesList, useSalesSummary } from "../hooks/useSales";
-import type { PaymentMethod, Sale, SaleSort, SaleStatusFilter } from "../types/sale";
+import type {
+  PaymentMethod,
+  Sale,
+  SaleSort,
+  SaleStatusFilter,
+} from "../types/sale";
 import { SaleBadges } from "./saleBadges";
 import { SaleDetailSheet } from "./saleDetailSheet";
 import { SaleReturnDialog } from "./saleReturnDialog";
@@ -75,10 +88,12 @@ export function SalesScreen() {
   const summary = useSalesSummary();
   const s = summary.data;
 
-  const reset = <T,>(fn: (v: T) => void) => (v: T) => {
-    fn(v);
-    setPage(1);
-  };
+  const reset =
+    <T,>(fn: (v: T) => void) =>
+    (v: T) => {
+      fn(v);
+      setPage(1);
+    };
   const filtered = q !== "" || method !== "all" || status !== "all";
 
   const columns: AppTableColumn<Sale>[] = [
@@ -89,8 +104,12 @@ export function SalesScreen() {
       cell: (sale) => (
         <div className="min-w-0">
           <p className="flex items-center gap-2">
-            <span className="font-mono text-sm font-semibold">#{sale.number}</span>
-            <span className="truncate text-xs">{sale.customerName ?? "عميل نقدي"}</span>
+            <span className="font-mono text-sm font-semibold">
+              #{sale.number}
+            </span>
+            <span className="truncate text-xs">
+              {sale.customerName ?? "عميل نقدي"}
+            </span>
           </p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
             {sale.lines.length} صنف · {formatWhen(sale.soldAt)}
@@ -132,7 +151,10 @@ export function SalesScreen() {
         ) : (
           <Money
             amount={sale.profit}
-            className={cn("text-xs", sale.profit < 0 ? "text-destructive" : "text-success")}
+            className={cn(
+              "text-xs",
+              sale.profit < 0 ? "text-destructive" : "text-success",
+            )}
           />
         ),
     },
@@ -151,7 +173,12 @@ export function SalesScreen() {
         title="الفواتير"
         description="كل فواتير البيع. اضغط على أي فاتورة لطباعتها أو إرسالها واتساب أو عمل مرتجع منها."
         actions={
-          <Button size="lg" nativeButton={false} render={<Link href="/pos" />} className="h-10 gap-2">
+          <Button
+            size="lg"
+            nativeButton={false}
+            render={<Link href="/pos" />}
+            className="h-10 gap-2"
+          >
             <IconShoppingCartPlus className="size-4" />
             بيع جديد
             <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
@@ -235,7 +262,12 @@ export function SalesScreen() {
             className="w-36"
           />
         </div>
-        <SegmentedTabs label="حالة الفاتورة" items={STATUS_TABS} value={status} onChange={reset(setStatus)} />
+        <SegmentedTabs
+          label="حالة الفاتورة"
+          items={STATUS_TABS}
+          value={status}
+          onChange={reset(setStatus)}
+        />
       </div>
 
       <AppTable
@@ -260,7 +292,10 @@ export function SalesScreen() {
           title: "لا توجد فواتير في هذه الفترة",
           description: "اختر فترة أخرى، أو ابدأ البيع من شاشة الكاشير.",
         }}
-        noResults={{ title: "لا توجد فواتير مطابقة", description: "جرّب رقماً أو اسماً آخر." }}
+        noResults={{
+          title: "لا توجد فواتير مطابقة",
+          description: "جرّب رقماً أو اسماً آخر.",
+        }}
         rowHeightClassName="h-16"
         pagination={{
           total: list.data?.total ?? 0,

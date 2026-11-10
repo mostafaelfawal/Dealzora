@@ -107,7 +107,10 @@ const toSalePayload = (s: SaleInput) => ({
 const toReturnPayload = (r: ReturnInput) => ({
   reason: r.reason,
   note: r.note || null,
-  lines: r.lines.map((l) => ({ sale_line_id: l.saleLineId, qty: toQty(l.qty) })),
+  lines: r.lines.map((l) => ({
+    sale_line_id: l.saleLineId,
+    qty: toQty(l.qty),
+  })),
 });
 
 /* ---------- endpoints ---------- */
@@ -174,8 +177,12 @@ export const createReturn = async (
   input: ReturnInput,
 ): Promise<SaleReturn> =>
   toSaleReturn(
-    (await api.post<ReturnDto>(`/sales/${saleId}/returns`, toReturnPayload(input)))
-      .data,
+    (
+      await api.post<ReturnDto>(
+        `/sales/${saleId}/returns`,
+        toReturnPayload(input),
+      )
+    ).data,
   );
 
 export async function createExchange(

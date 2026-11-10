@@ -23,7 +23,11 @@ import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { StatTile } from "@/components/shared/StatTile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { getProducts } from "@/features/products/api/products.api";
 import type { Product } from "@/features/products/types/product";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -33,7 +37,11 @@ import { extractErrorMessage } from "@/lib/errors";
 import { formatQty } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { INVENTORY_SHORTCUTS, STAGNANT_DAYS_OPTIONS, TABS } from "../config/inventoryOptions";
+import {
+  INVENTORY_SHORTCUTS,
+  STAGNANT_DAYS_OPTIONS,
+  TABS,
+} from "../config/inventoryOptions";
 import { useStockReport } from "../hooks/useInventory";
 import type { InventoryTab, StockRow } from "../types/inventory";
 import { AdjustStockDialog, type AdjustTarget } from "./adjustStockDialog";
@@ -86,12 +94,15 @@ export function InventoryScreen() {
   });
 
   const r = report.data;
-  const stagnantRows = (r?.stagnant ?? []).filter((x) => !q || x.name.includes(q));
+  const stagnantRows = (r?.stagnant ?? []).filter(
+    (x) => !q || x.name.includes(q),
+  );
   const rows: StockRow[] =
     tab === "stagnant"
       ? stagnantRows.slice((page - 1) * pageSize, page * pageSize)
       : (products.data?.items ?? []).map(fromProduct);
-  const total = tab === "stagnant" ? stagnantRows.length : (products.data?.total ?? 0);
+  const total =
+    tab === "stagnant" ? stagnantRows.length : (products.data?.total ?? 0);
   const loading = tab === "stagnant" ? report.isPending : products.isPending;
 
   // F4 من داخل نافذة الحركة = تعديل نفس الصنف.
@@ -114,7 +125,9 @@ export function InventoryScreen() {
           <p className="truncate text-xs font-medium">{row.name}</p>
           {tab === "stagnant" && (
             <p className="text-[11px] text-muted-foreground">
-              {row.lastSoldAt ? `آخر بيع ${formatDayLabel(row.lastSoldAt)}` : "لم يُبع أبداً"}
+              {row.lastSoldAt
+                ? `آخر بيع ${formatDayLabel(row.lastSoldAt)}`
+                : "لم يُبع أبداً"}
             </p>
           )}
         </div>
@@ -129,17 +142,39 @@ export function InventoryScreen() {
         return (
           <div className="w-32 space-y-1">
             <p className="flex items-center gap-1.5 text-xs">
-              <span className={cn("font-mono font-semibold", out && "text-destructive", low && "text-warning")}>
+              <span
+                className={cn(
+                  "font-mono font-semibold",
+                  out && "text-destructive",
+                  low && "text-warning",
+                )}
+              >
                 {formatQty(row.stock)}
               </span>
               <span className="text-muted-foreground">{row.unit}</span>
-              {out && <Badge variant="outline" className="border-destructive/50 px-1 font-normal text-destructive">نفد</Badge>}
-              {low && <Badge variant="outline" className="border-warning/50 px-1 font-normal text-warning">قليل</Badge>}
+              {out && (
+                <Badge
+                  variant="outline"
+                  className="border-destructive/50 px-1 font-normal text-destructive"
+                >
+                  نفد
+                </Badge>
+              )}
+              {low && (
+                <Badge
+                  variant="outline"
+                  className="border-warning/50 px-1 font-normal text-warning"
+                >
+                  قليل
+                </Badge>
+              )}
             </p>
             {row.minStock > 0 && (
               <ProgressBar
                 value={row.stock / (row.minStock * 2)}
-                barClassName={out ? "bg-destructive" : low ? "bg-warning" : "bg-success"}
+                barClassName={
+                  out ? "bg-destructive" : low ? "bg-warning" : "bg-success"
+                }
               />
             )}
           </div>
@@ -165,11 +200,21 @@ export function InventoryScreen() {
       className: "w-40",
       cell: (row) => (
         <div className="flex gap-1">
-          <Button size="sm" variant="outline" onClick={() => setAdjustFor(toTarget(row))} className="gap-1 font-normal">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setAdjustFor(toTarget(row))}
+            className="gap-1 font-normal"
+          >
             <IconAdjustments className="size-3.5" />
             تعديل
           </Button>
-          <Button size="icon-sm" variant="ghost" aria-label={`حركة ${row.name}`} onClick={() => setLedgerFor(toTarget(row))}>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-label={`حركة ${row.name}`}
+            onClick={() => setLedgerFor(toTarget(row))}
+          >
             <IconHistory />
           </Button>
         </div>
@@ -185,13 +230,33 @@ export function InventoryScreen() {
       />
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <StatTile index={0} icon={<IconBuildingWarehouse />} label="قيمة المخزون (بسعر الشراء)" active={tab === "all"} onClick={() => switchTab("all")}>
+        <StatTile
+          index={0}
+          icon={<IconBuildingWarehouse />}
+          label="قيمة المخزون (بسعر الشراء)"
+          active={tab === "all"}
+          onClick={() => switchTab("all")}
+        >
           <Money amount={r?.stockValue ?? 0} className="text-lg" />
         </StatTile>
-        <StatTile index={1} icon={<IconAlertTriangle />} label="قارب على النفاد" tone="warning" active={tab === "low"} onClick={() => switchTab("low")}>
+        <StatTile
+          index={1}
+          icon={<IconAlertTriangle />}
+          label="قارب على النفاد"
+          tone="warning"
+          active={tab === "low"}
+          onClick={() => switchTab("low")}
+        >
           <span className="font-mono">{r?.low.length ?? 0}</span>
         </StatTile>
-        <StatTile index={2} icon={<IconPackageOff />} label="نفد من المخزون" tone="danger" active={tab === "out"} onClick={() => switchTab("out")}>
+        <StatTile
+          index={2}
+          icon={<IconPackageOff />}
+          label="نفد من المخزون"
+          tone="danger"
+          active={tab === "out"}
+          onClick={() => switchTab("out")}
+        >
           <span className="font-mono">{r?.out.length ?? 0}</span>
         </StatTile>
         <StatTile
@@ -200,7 +265,14 @@ export function InventoryScreen() {
           label={`راكد (${stagnantDays} يوماً بلا بيع)`}
           active={tab === "stagnant"}
           onClick={() => switchTab("stagnant")}
-          hint={r ? <>مجمّد فيه <Money amount={r.stagnantValue} className="text-[11px]" /></> : undefined}
+          hint={
+            r ? (
+              <>
+                مجمّد فيه{" "}
+                <Money amount={r.stagnantValue} className="text-[11px]" />
+              </>
+            ) : undefined
+          }
         >
           <span className="font-mono">{r?.stagnant.length ?? 0}</span>
         </StatTile>
@@ -224,14 +296,27 @@ export function InventoryScreen() {
             />
           </InputGroup>
           {tab === "stagnant" && (
-            <OptionSelect label="مدة الركود" items={STAGNANT_DAYS_OPTIONS} value={stagnantDays as "30"} onChange={setStagnantDays} className="w-40" />
+            <OptionSelect
+              label="مدة الركود"
+              items={STAGNANT_DAYS_OPTIONS}
+              value={stagnantDays as "30"}
+              onChange={setStagnantDays}
+              className="w-40"
+            />
           )}
         </div>
         <SegmentedTabs
           label="عرض"
           items={TABS.map((t) => ({
             ...t,
-            count: t.id === "low" ? r?.low.length : t.id === "out" ? r?.out.length : t.id === "stagnant" ? r?.stagnant.length : undefined,
+            count:
+              t.id === "low"
+                ? r?.low.length
+                : t.id === "out"
+                  ? r?.out.length
+                  : t.id === "stagnant"
+                    ? r?.stagnant.length
+                    : undefined,
           }))}
           value={tab}
           onChange={switchTab}
@@ -244,16 +329,26 @@ export function InventoryScreen() {
         getRowId={(row) => row.productId}
         onRowClick={(row) => setLedgerFor(toTarget(row))}
         isLoading={loading}
-        isFetching={tab === "stagnant" ? report.isFetching : products.isFetching}
+        isFetching={
+          tab === "stagnant" ? report.isFetching : products.isFetching
+        }
         isError={tab === "stagnant" ? report.isError : products.isError}
-        errorMessage={extractErrorMessage(tab === "stagnant" ? report.error : products.error, "تعذّر تحميل المخزون")}
-        onRetry={() => (tab === "stagnant" ? report.refetch() : products.refetch())}
+        errorMessage={extractErrorMessage(
+          tab === "stagnant" ? report.error : products.error,
+          "تعذّر تحميل المخزون",
+        )}
+        onRetry={() =>
+          tab === "stagnant" ? report.refetch() : products.refetch()
+        }
         isFiltered={q !== ""}
         onClearFilters={() => setSearch("")}
         empty={{
           icon: IconBox,
           title: tab === "all" ? "لا توجد أصناف بعد" : "لا توجد أصناف هنا",
-          description: tab === "all" ? "أضف أصنافك من صفحة المنتجات." : "ممتاز! لا يوجد ما يحتاج انتباهك.",
+          description:
+            tab === "all"
+              ? "أضف أصنافك من صفحة المنتجات."
+              : "ممتاز! لا يوجد ما يحتاج انتباهك.",
         }}
         rowHeightClassName="h-16"
         pagination={{
@@ -270,7 +365,11 @@ export function InventoryScreen() {
         }}
       />
 
-      <LedgerSheet target={ledgerFor} onClose={() => setLedgerFor(null)} onAdjust={setAdjustFor} />
+      <LedgerSheet
+        target={ledgerFor}
+        onClose={() => setLedgerFor(null)}
+        onAdjust={setAdjustFor}
+      />
       <AdjustStockDialog
         target={adjustFor}
         onClose={() => {

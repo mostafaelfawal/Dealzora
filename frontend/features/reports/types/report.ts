@@ -51,7 +51,12 @@ export interface DebtsReport {
     isOverdue: boolean;
   }[];
   suppliersTotal: number;
-  suppliers: { id: string; name: string; phone: string | null; balance: number }[];
+  suppliers: {
+    id: string;
+    name: string;
+    phone: string | null;
+    balance: number;
+  }[];
 }
 
 export interface TreasuryReport {
@@ -59,5 +64,10 @@ export interface TreasuryReport {
   totalIn: number;
   totalOut: number;
   closing: number;
-  byKind: { kind: string; direction: "in" | "out"; count: number; total: number }[];
+  byKind: {
+    kind: string;
+    direction: "in" | "out";
+    count: number;
+    total: number;
+  }[];
 }

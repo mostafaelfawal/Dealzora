@@ -71,7 +71,10 @@ export function UserMenu({ user }: UserMenuProps) {
           الإعدادات وكلمة المرور
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={() => void handleLogout()}>
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => void handleLogout()}
+        >
           <IconLogout className="size-4" />
           تسجيل الخروج
         </DropdownMenuItem>

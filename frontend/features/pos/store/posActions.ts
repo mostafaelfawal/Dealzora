@@ -232,7 +232,9 @@ export const applyDiscount =
       const id = selectSelectedId(state);
       if (id) {
         // خصم الصنف يُحفظ كمبلغ ثابت (النسبة تُحوَّل لمبلغ في النافذة).
-        dispatch(cartActions.setLineDiscount({ id, amount: discount?.value ?? 0 }));
+        dispatch(
+          cartActions.setLineDiscount({ id, amount: discount?.value ?? 0 }),
+        );
       }
     } else {
       dispatch(cartActions.setDiscount(discount));
@@ -290,7 +292,8 @@ const handleSaveError =
   (error: unknown, fallback: string): AppThunk =>
   (dispatch) => {
     const details = error instanceof ApiError ? error.details : null;
-    const product = typeof details?.product === "string" ? details.product : null;
+    const product =
+      typeof details?.product === "string" ? details.product : null;
     toast.error(extractErrorMessage(error, fallback), {
       description: product ? "الصنف: " + product : undefined,
       duration: 8000,
@@ -312,7 +315,11 @@ const recordSaved =
     invoice.lines = invoice.lines.map((l) => {
       const cartLine = cartLines.find((c) => c.productId === l.productId);
       return cartLine
-        ? { ...l, barcode: cartLine.barcode, allowDecimal: cartLine.allowDecimal }
+        ? {
+            ...l,
+            barcode: cartLine.barcode,
+            allowDecimal: cartLine.allowDecimal,
+          }
         : l;
     });
     dispatch(catalogActions.addInvoice(invoice));
@@ -321,7 +328,11 @@ const recordSaved =
         catalogActions.setCatalog({
           customers: state.catalog.customers.map((c) =>
             c.id === sale.customerId
-              ? { ...c, balance: Math.round((c.balance + sale.creditAmount) * 100) / 100 }
+              ? {
+                  ...c,
+                  balance:
+                    Math.round((c.balance + sale.creditAmount) * 100) / 100,
+                }
               : c,
           ),
         }),
@@ -353,7 +364,9 @@ export const confirmPayment =
         sale.change > 0
           ? "الباقي للعميل: " + formatMoneyText(sale.change)
           : sale.creditAmount > 0
-            ? formatMoneyText(sale.creditAmount) + " آجل على " + (sale.customerName ?? "العميل")
+            ? formatMoneyText(sale.creditAmount) +
+              " آجل على " +
+              (sale.customerName ?? "العميل")
             : "تم استلام " + formatMoneyText(sale.cashAmount);
       toast.success("تم حفظ الفاتورة #" + sale.number, {
         description,
@@ -368,7 +381,10 @@ export const confirmPayment =
       });
     } catch (error) {
       dispatch(
-        handleSaveError(error, "تعذّر حفظ الفاتورة. الفاتورة ما زالت مفتوحة، أعد المحاولة"),
+        handleSaveError(
+          error,
+          "تعذّر حفظ الفاتورة. الفاتورة ما زالت مفتوحة، أعد المحاولة",
+        ),
       );
     } finally {
       dispatch(posUiActions.setSaving(false));
@@ -442,7 +458,11 @@ export const confirmExchange =
     const hasNewItems = !selectIsEmpty(state);
     const total = selectTotals(state).total;
     const saleInput = hasNewItems
-      ? buildSaleInput(state, { paymentMethod: "cash", cashAmount: total, received: total })
+      ? buildSaleInput(state, {
+          paymentMethod: "cash",
+          cashAmount: total,
+          received: total,
+        })
       : null;
 
     dispatch(posUiActions.setSaving(true));
@@ -458,7 +478,10 @@ export const confirmExchange =
       dispatch(
         catalogActions.applyReturn({
           invoiceId: draft.invoiceId,
-          lines: draft.lines.map((l) => ({ productId: l.productId, qty: l.qty })),
+          lines: draft.lines.map((l) => ({
+            productId: l.productId,
+            qty: l.qty,
+          })),
         }),
       );
       if (sale) {
@@ -468,12 +491,16 @@ export const confirmExchange =
       } else dispatch(posUiActions.closeDialog());
       dispatch(exchangeActions.clear());
 
-      const net = Math.round(((sale?.total ?? 0) - saleReturn.total) * 100) / 100;
+      const net =
+        Math.round(((sale?.total ?? 0) - saleReturn.total) * 100) / 100;
       const amount = formatMoneyText(Math.abs(net));
       toast.success(
         sale
           ? "تم الاستبدال (فاتورة #" + sale.number + ")"
-          : "تم تسجيل المرتجع #" + saleReturn.number + " من فاتورة #" + draft.invoiceNumber,
+          : "تم تسجيل المرتجع #" +
+              saleReturn.number +
+              " من فاتورة #" +
+              draft.invoiceNumber,
         {
           description:
             net > 0

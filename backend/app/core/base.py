@@ -3,6 +3,7 @@
 import os
 import time
 import uuid
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from enum import StrEnum
 
@@ -19,8 +20,13 @@ def uuid7() -> str:
     return str(uuid.UUID(bytes=bytes(raw)))
 
 
+# وقت بديل لمولّد البيانات التجريبية فقط (devtools) ليكتب تاريخاً سابقاً.
+# None دائماً في التشغيل العادي، وهو ContextVar فلا يتسرب لطلبات أخرى.
+frozen_now: ContextVar[datetime | None] = ContextVar("frozen_now", default=None)
+
+
 def utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return frozen_now.get() or datetime.now(timezone.utc)
 
 
 class SyncState(StrEnum):

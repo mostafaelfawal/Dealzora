@@ -24,7 +24,15 @@ export const periodOf = (preset: PeriodPreset): PeriodValue => ({
 export function PeriodPicker({
   value,
   onChange,
-  presets = ["today", "yesterday", "week", "month", "last_month", "year", "custom"],
+  presets = [
+    "today",
+    "yesterday",
+    "week",
+    "month",
+    "last_month",
+    "year",
+    "custom",
+  ],
 }: {
   value: PeriodValue;
   onChange: (value: PeriodValue) => void;

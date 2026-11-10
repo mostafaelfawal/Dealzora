@@ -21,6 +21,7 @@ import app.modules.treasury.model  # noqa: F401
 import app.modules.shifts.model  # noqa: F401
 import app.modules.sales.model  # noqa: F401
 import app.modules.purchases.model  # noqa: F401
+import app.modules.devtools.model  # noqa: F401
 
 def init_db() -> None:
     Base.metadata.create_all(get_engine())

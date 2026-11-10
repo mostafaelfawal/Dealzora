@@ -77,7 +77,11 @@ export function SidebarNavItem({
 
   return (
     <AppTooltip
-      message={item.hotkey !== undefined ? `${item.title} (Alt ${item.hotkey})` : item.title}
+      message={
+        item.hotkey !== undefined
+          ? `${item.title} (Alt ${item.hotkey})`
+          : item.title
+      }
       side="left"
     >
       {link}

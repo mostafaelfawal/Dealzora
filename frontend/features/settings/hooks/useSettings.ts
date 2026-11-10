@@ -29,7 +29,11 @@ export function useBackupStatus() {
 }
 
 export function useBackups(enabled = true) {
-  return useQuery({ queryKey: settingsKeys.backups, queryFn: fetchBackups, enabled });
+  return useQuery({
+    queryKey: settingsKeys.backups,
+    queryFn: fetchBackups,
+    enabled,
+  });
 }
 
 export function useCreateBackup() {
@@ -40,12 +44,17 @@ export function useCreateBackup() {
       void qc.invalidateQueries({ queryKey: ["backup"] });
       toast.success("تم إنشاء نسخة احتياطية مشفّرة");
     },
-    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر إنشاء النسخة الاحتياطية")),
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّر إنشاء النسخة الاحتياطية")),
   });
 }
 
 export function useShopName() {
-  return useQuery({ queryKey: settingsKeys.shop, queryFn: fetchShopName, staleTime: 10 * 60_000 });
+  return useQuery({
+    queryKey: settingsKeys.shop,
+    queryFn: fetchShopName,
+    staleTime: 10 * 60_000,
+  });
 }
 
 export function useRenameShop() {
@@ -65,7 +74,8 @@ export function useChangePassword() {
     mutationFn: ({ current, next }: { current: string; next: string }) =>
       changePassword(current, next),
     onSuccess: () => toast.success("تم تغيير كلمة المرور"),
-    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر تغيير كلمة المرور")),
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّر تغيير كلمة المرور")),
   });
 }
 

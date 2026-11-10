@@ -1,8 +1,22 @@
 "use client";
 
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-import { ANIMATION, AXIS_TICK, BAR_RADIUS_H, CHART, formatCompact } from "./chartTheme";
+import {
+  ANIMATION,
+  AXIS_TICK,
+  BAR_RADIUS_H,
+  CHART,
+  formatCompact,
+} from "./chartTheme";
 import { ChartTooltipBox, type TooltipRow } from "./ChartTooltip";
 
 export interface RankItem {
@@ -34,13 +48,27 @@ export function RankBarChart({
 }) {
   const data = items.map((i) => ({
     ...i,
-    short: i.label.length > MAX_LABEL ? `${i.label.slice(0, MAX_LABEL)}…` : i.label,
+    short:
+      i.label.length > MAX_LABEL ? `${i.label.slice(0, MAX_LABEL)}…` : i.label,
   }));
   return (
     <div style={{ height: Math.max(data.length * ROW + 8, 80) }} dir="ltr">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 4, bottom: 0, left: 36 }} barSize={BAR}>
-          <XAxis type="number" reversed hide domain={[(min: number) => Math.min(0, min), (max: number) => Math.max(0, max)]} />
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 0, right: 4, bottom: 0, left: 36 }}
+          barSize={BAR}
+        >
+          <XAxis
+            type="number"
+            reversed
+            hide
+            domain={[
+              (min: number) => Math.min(0, min),
+              (max: number) => Math.max(0, max),
+            ]}
+          />
           <YAxis
             type="category"
             dataKey="short"
@@ -53,14 +81,25 @@ export function RankBarChart({
           <Tooltip
             cursor={{ fill: "var(--muted)", opacity: 0.6 }}
             content={({ active, payload }) => {
-              const p = active && payload?.[0] ? (payload[0].payload as RankItem) : null;
+              const p =
+                active && payload?.[0]
+                  ? (payload[0].payload as RankItem)
+                  : null;
               if (!p) return null;
               return (
                 <ChartTooltipBox
                   title={p.label}
                   rows={[
-                    { label: valueLabel, value: p.value, color: p.color ?? (p.value < 0 ? CHART.bad : CHART.main), kind },
-                    ...(p.extra ?? []).map((e) => ({ ...e, color: CHART.muted })),
+                    {
+                      label: valueLabel,
+                      value: p.value,
+                      color: p.color ?? (p.value < 0 ? CHART.bad : CHART.main),
+                      kind,
+                    },
+                    ...(p.extra ?? []).map((e) => ({
+                      ...e,
+                      color: CHART.muted,
+                    })),
                   ]}
                 />
               );
@@ -78,7 +117,10 @@ export function RankBarChart({
             {...ANIMATION}
           >
             {data.map((d) => (
-              <Cell key={d.key} fill={d.color ?? (d.value < 0 ? CHART.bad : CHART.main)} />
+              <Cell
+                key={d.key}
+                fill={d.color ?? (d.value < 0 ? CHART.bad : CHART.main)}
+              />
             ))}
           </Bar>
         </BarChart>

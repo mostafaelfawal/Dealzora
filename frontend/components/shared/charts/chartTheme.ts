@@ -25,7 +25,10 @@ export const CHART = {
   ],
 } as const;
 
-const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+const compact = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 const full = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 
 /** محاور الرسوم: 12.5K بدل 12,500 حتى لا تزدحم. */
@@ -38,4 +41,8 @@ export const AXIS_TICK = { fill: CHART.axis, fontSize: 11 } as const;
 /** إعدادات مشتركة: الأعمدة رفيعة بأطراف مدوّرة 4px، والحركة سريعة. */
 export const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 export const BAR_RADIUS_H: [number, number, number, number] = [4, 0, 0, 4]; // أفقي في RTL: الطرف على اليسار
-export const ANIMATION = { isAnimationActive: true, animationDuration: 450, animationEasing: "ease-out" } as const;
+export const ANIMATION = {
+  isAnimationActive: true,
+  animationDuration: 450,
+  animationEasing: "ease-out",
+} as const;

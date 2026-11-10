@@ -20,7 +20,8 @@ export function changePct(current: number, previous: number): number | null {
 export const marginPct = (k: Kpis) =>
   k.netSales > 0 ? Math.round((k.grossProfit / k.netSales) * 100) : 0;
 
-const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? " صباحاً" : " مساءً"}`;
+const hourLabel = (h: number) =>
+  `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? " صباحاً" : " مساءً"}`;
 
 /**
  * ملاحظات مكتوبة بلغة التاجر من نفس الأرقام: ما الذي تغيّر، وأين الفرصة، وما الذي يحتاج تصرفاً.
@@ -39,17 +40,29 @@ export function buildInsights(o: Overview, max = 6): Insight[] {
 
   const margin = marginPct(k);
   const prevMargin = marginPct(o.prev);
-  if (k.netSales > 0 && o.prev.netSales > 0 && Math.abs(margin - prevMargin) >= 3)
+  if (
+    k.netSales > 0 &&
+    o.prev.netSales > 0 &&
+    Math.abs(margin - prevMargin) >= 3
+  )
     out.push({
       tone: margin > prevMargin ? "good" : "bad",
       text: `هامش الربح ${margin}% مقابل ${prevMargin}% سابقاً${margin < prevMargin ? " — راجع الخصومات وأسعار الشراء." : "."}`,
     });
 
   if (k.netProfit < 0 && k.netSales > 0)
-    out.push({ tone: "bad", text: `المصروفات (${formatMoneyText(k.expenses)}) أكبر من مجمل الربح في هذه الفترة.`, href: "/admin/expenses" });
+    out.push({
+      tone: "bad",
+      text: `المصروفات (${formatMoneyText(k.expenses)}) أكبر من مجمل الربح في هذه الفترة.`,
+      href: "/admin/expenses",
+    });
 
   if (o.health.outOfStock > 0)
-    out.push({ tone: "bad", text: `${o.health.outOfStock} صنف نفد من المخزون — مبيعات ضائعة محتملة.`, href: "/admin/inventory" });
+    out.push({
+      tone: "bad",
+      text: `${o.health.outOfStock} صنف نفد من المخزون — مبيعات ضائعة محتملة.`,
+      href: "/admin/inventory",
+    });
 
   if (o.health.overdueCustomers > 0)
     out.push({
@@ -60,14 +73,19 @@ export function buildInsights(o: Overview, max = 6): Insight[] {
 
   const best = [...o.trend].sort((a, b) => b.net - a.net)[0];
   if (best && best.net > 0 && o.trend.length > 1)
-    out.push({ tone: "info", text: `أفضل يوم: ${formatDayLabel(best.day)} بصافي ${formatMoneyText(best.net)}.` });
+    out.push({
+      tone: "info",
+      text: `أفضل يوم: ${formatDayLabel(best.day)} بصافي ${formatMoneyText(best.net)}.`,
+    });
 
   if (o.heatmap.length > 0) {
     const byHour = new Map<number, number>();
-    for (const c of o.heatmap) byHour.set(c.hour, (byHour.get(c.hour) ?? 0) + c.invoices);
+    for (const c of o.heatmap)
+      byHour.set(c.hour, (byHour.get(c.hour) ?? 0) + c.invoices);
     const [peakHour] = [...byHour.entries()].sort((a, b) => b[1] - a[1])[0];
     const byDay = new Map<number, number>();
-    for (const c of o.heatmap) byDay.set(c.weekday, (byDay.get(c.weekday) ?? 0) + c.net);
+    for (const c of o.heatmap)
+      byDay.set(c.weekday, (byDay.get(c.weekday) ?? 0) + c.net);
     const [peakDay] = [...byDay.entries()].sort((a, b) => b[1] - a[1])[0];
     out.push({
       tone: "info",
@@ -83,7 +101,11 @@ export function buildInsights(o: Overview, max = 6): Insight[] {
     });
 
   if (k.netSales > 0 && k.returns / (k.netSales + k.returns) > 0.05)
-    out.push({ tone: "bad", text: `المرتجعات ${Math.round((k.returns / (k.netSales + k.returns)) * 100)}% من المبيعات — راجع أسبابها.`, href: "/admin/returns" });
+    out.push({
+      tone: "bad",
+      text: `المرتجعات ${Math.round((k.returns / (k.netSales + k.returns)) * 100)}% من المبيعات — راجع أسبابها.`,
+      href: "/admin/returns",
+    });
 
   return out.slice(0, max);
 }

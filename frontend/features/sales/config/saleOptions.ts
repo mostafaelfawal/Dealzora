@@ -16,12 +16,13 @@ export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   mixed: "مختلط",
 };
 
-export const METHOD_OPTIONS: { value: PaymentMethod | "all"; label: string }[] = [
-  { value: "all", label: "كل طرق الدفع" },
-  { value: "cash", label: "كاش" },
-  { value: "credit", label: "آجل" },
-  { value: "mixed", label: "مختلط" },
-];
+export const METHOD_OPTIONS: { value: PaymentMethod | "all"; label: string }[] =
+  [
+    { value: "all", label: "كل طرق الدفع" },
+    { value: "cash", label: "كاش" },
+    { value: "credit", label: "آجل" },
+    { value: "mixed", label: "مختلط" },
+  ];
 
 export const STATUS_TABS: { id: SaleStatusFilter; label: string }[] = [
   { id: "all", label: "كل الفواتير" },
@@ -56,7 +57,19 @@ export const saleKeys = {
 };
 
 export const SALE_SHORTCUTS = {
-  print: { label: "Ctrl P", description: "طباعة الفاتورة المفتوحة", match: (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.code === "KeyP" },
-  whatsapp: { label: "F7", description: "إرسال الفاتورة واتساب", match: plain("F7") },
-  returnSale: { label: "F10", description: "مرتجع من الفاتورة", match: plain("F10") },
+  print: {
+    label: "Ctrl P",
+    description: "طباعة الفاتورة المفتوحة",
+    match: (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.code === "KeyP",
+  },
+  whatsapp: {
+    label: "F7",
+    description: "إرسال الفاتورة واتساب",
+    match: plain("F7"),
+  },
+  returnSale: {
+    label: "F10",
+    description: "مرتجع من الفاتورة",
+    match: plain("F10"),
+  },
 } satisfies Record<string, Shortcut>;

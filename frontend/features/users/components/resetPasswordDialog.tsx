@@ -111,7 +111,12 @@ function ResetForm({ user, onClose }: { user: User; onClose: () => void }) {
         >
           إلغاء
         </Button>
-        <Button type="submit" size="lg" disabled={saving} className="gap-2 px-5">
+        <Button
+          type="submit"
+          size="lg"
+          disabled={saving}
+          className="gap-2 px-5"
+        >
           {saving ? (
             <>
               <IconLoader2 className="size-4 animate-spin" aria-hidden />

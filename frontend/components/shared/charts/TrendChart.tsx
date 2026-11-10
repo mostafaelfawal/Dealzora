@@ -41,7 +41,8 @@ export function TrendChart({
   kind?: "money" | "count";
   height?: number;
 }) {
-  const withPrev = previousLabel !== undefined && data.some((d) => (d.previous ?? 0) !== 0);
+  const withPrev =
+    previousLabel !== undefined && data.some((d) => (d.previous ?? 0) !== 0);
   return (
     <div className="space-y-2">
       {withPrev && (
@@ -54,14 +55,21 @@ export function TrendChart({
       )}
       <div style={{ height }} dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
+          <ComposedChart
+            data={data}
+            margin={{ top: 8, right: 4, bottom: 0, left: 4 }}
+          >
             <defs>
               <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={CHART.main} stopOpacity={0.22} />
                 <stop offset="100%" stopColor={CHART.main} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} stroke={CHART.grid} strokeDasharray="3 3" />
+            <CartesianGrid
+              vertical={false}
+              stroke={CHART.grid}
+              strokeDasharray="3 3"
+            />
             <XAxis
               dataKey="label"
               reversed
@@ -81,17 +89,37 @@ export function TrendChart({
               allowDecimals={kind === "money"}
             />
             <Tooltip
-              cursor={{ stroke: CHART.axis, strokeWidth: 1, strokeDasharray: "4 4" }}
+              cursor={{
+                stroke: CHART.axis,
+                strokeWidth: 1,
+                strokeDasharray: "4 4",
+              }}
               content={({ active, payload }) => {
-                const p = active && payload?.[0] ? (payload[0].payload as TrendPoint) : null;
+                const p =
+                  active && payload?.[0]
+                    ? (payload[0].payload as TrendPoint)
+                    : null;
                 if (!p) return null;
                 return (
                   <ChartTooltipBox
                     title={p.title}
                     rows={[
-                      { label: currentLabel, value: p.current, color: CHART.main, kind },
+                      {
+                        label: currentLabel,
+                        value: p.current,
+                        color: CHART.main,
+                        kind,
+                      },
                       ...(withPrev
-                        ? [{ label: previousLabel!, value: p.previous ?? 0, color: CHART.muted, kind, dashed: true }]
+                        ? [
+                            {
+                              label: previousLabel!,
+                              value: p.previous ?? 0,
+                              color: CHART.muted,
+                              kind,
+                              dashed: true,
+                            },
+                          ]
                         : []),
                     ]}
                   />
@@ -106,7 +134,12 @@ export function TrendChart({
                 strokeWidth={2}
                 strokeDasharray="5 4"
                 dot={false}
-                activeDot={{ r: 4, stroke: CHART.surface, strokeWidth: 2, fill: CHART.muted }}
+                activeDot={{
+                  r: 4,
+                  stroke: CHART.surface,
+                  strokeWidth: 2,
+                  fill: CHART.muted,
+                }}
                 {...ANIMATION}
               />
             )}
@@ -116,8 +149,22 @@ export function TrendChart({
               stroke={CHART.main}
               strokeWidth={2}
               fill="url(#trend-fill)"
-              dot={data.length <= 14 ? { r: 3, fill: CHART.main, stroke: CHART.surface, strokeWidth: 2 } : false}
-              activeDot={{ r: 5, fill: CHART.main, stroke: CHART.surface, strokeWidth: 2 }}
+              dot={
+                data.length <= 14
+                  ? {
+                      r: 3,
+                      fill: CHART.main,
+                      stroke: CHART.surface,
+                      strokeWidth: 2,
+                    }
+                  : false
+              }
+              activeDot={{
+                r: 5,
+                fill: CHART.main,
+                stroke: CHART.surface,
+                strokeWidth: 2,
+              }}
               {...ANIMATION}
             />
           </ComposedChart>

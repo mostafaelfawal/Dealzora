@@ -6,7 +6,8 @@ import type { Sale } from "../types/sale";
 
 /** طريقة الدفع + حالة المرتجع (نص وليس لوناً فقط). */
 export function SaleBadges({ sale }: { sale: Sale }) {
-  const fullyReturned = sale.returnedTotal > 0 && sale.returnedTotal >= sale.total;
+  const fullyReturned =
+    sale.returnedTotal > 0 && sale.returnedTotal >= sale.total;
   return (
     <>
       <Badge

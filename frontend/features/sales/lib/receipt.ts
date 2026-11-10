@@ -108,7 +108,10 @@ export function toWhatsappNumber(phone: string): string | null {
 
 export function buildWhatsappText(sale: Sale, shopName: string): string {
   const lines = sale.lines
-    .map((l) => `• ${l.name} — ${formatQty(l.qty)} × ${money(l.unitPrice)} = ${money(l.lineTotal)}`)
+    .map(
+      (l) =>
+        `• ${l.name} — ${formatQty(l.qty)} × ${money(l.unitPrice)} = ${money(l.lineTotal)}`,
+    )
     .join("\n");
   const discount = sale.invoiceDiscount + sale.linesDiscount;
   return [
@@ -119,7 +122,9 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
     "",
     discount > 0 ? `الخصم: ${money(discount)} ${CURRENCY_LABEL}` : null,
     `*الإجمالي: ${money(sale.total)} ${CURRENCY_LABEL}*`,
-    sale.creditAmount > 0 ? `آجل على الحساب: ${money(sale.creditAmount)} ${CURRENCY_LABEL}` : null,
+    sale.creditAmount > 0
+      ? `آجل على الحساب: ${money(sale.creditAmount)} ${CURRENCY_LABEL}`
+      : null,
     "",
     FOOTER,
   ]
@@ -128,7 +133,11 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
 }
 
 /** يفتح محادثة واتساب بنص الفاتورة. بدون رقم = يختار المستخدم جهة الاتصال. */
-export async function sendWhatsapp(sale: Sale, shopName: string, phone?: string | null) {
+export async function sendWhatsapp(
+  sale: Sale,
+  shopName: string,
+  phone?: string | null,
+) {
   const number = phone ? toWhatsappNumber(phone) : null;
   const url = `https://wa.me/${number ?? ""}?text=${encodeURIComponent(buildWhatsappText(sale, shopName))}`;
   if (isTauri()) await invoke("open_whatsapp", { url });

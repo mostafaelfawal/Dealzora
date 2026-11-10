@@ -2,7 +2,14 @@ import { getProducts } from "@/features/products/api/products.api";
 import type { Product } from "@/features/products/types/product";
 import { getSuppliers } from "@/features/suppliers/api/suppliers.api";
 import type { Supplier } from "@/features/suppliers/types/supplier";
-import { cleanParams, fromQty, toCents, toMs, toPounds, toQty } from "@/lib/apiMap";
+import {
+  cleanParams,
+  fromQty,
+  toCents,
+  toMs,
+  toPounds,
+  toQty,
+} from "@/lib/apiMap";
 import { api } from "@/lib/axios";
 
 import type {
@@ -70,17 +77,20 @@ const toPurchase = (d: PurchaseDto): Purchase => ({
 });
 
 export async function fetchPurchases(f: PurchaseFilters) {
-  const { data } = await api.get<{ items: PurchaseDto[]; total: number }>("/purchases", {
-    params: cleanParams({
-      q: f.q.trim(),
-      supplier_id: f.supplierId,
-      status: f.status,
-      date_from: f.dateFrom,
-      date_to: f.dateTo,
-      page: f.page,
-      page_size: f.pageSize,
-    }),
-  });
+  const { data } = await api.get<{ items: PurchaseDto[]; total: number }>(
+    "/purchases",
+    {
+      params: cleanParams({
+        q: f.q.trim(),
+        supplier_id: f.supplierId,
+        status: f.status,
+        date_from: f.dateFrom,
+        date_to: f.dateTo,
+        page: f.page,
+        page_size: f.pageSize,
+      }),
+    },
+  );
   return { items: data.items.map(toPurchase), total: data.total };
 }
 
@@ -113,7 +123,8 @@ export const createPurchase = async (input: PurchaseInput) =>
           product_id: l.productId,
           qty: toQty(l.qty),
           unit_cost: toCents(l.unitCost),
-          new_sale_price: l.newSalePrice === null ? null : toCents(l.newSalePrice),
+          new_sale_price:
+            l.newSalePrice === null ? null : toCents(l.newSalePrice),
         })),
         discount: toCents(input.discount),
         paid_amount: toCents(input.paidAmount),
@@ -133,7 +144,10 @@ export async function createPurchaseReturn(
     {
       refund_method: refundMethod,
       note: note.trim() || null,
-      lines: lines.map((l) => ({ purchase_line_id: l.lineId, qty: toQty(l.qty) })),
+      lines: lines.map((l) => ({
+        purchase_line_id: l.lineId,
+        qty: toQty(l.qty),
+      })),
     },
   );
   return { number: data.number, total: toPounds(data.total) };
@@ -145,19 +159,32 @@ const PAGE = 200;
 
 /** كل الأصناف (بأسعار الشراء، فهي للمدير فقط) للبحث السريع داخل الفورم. */
 export async function fetchAllProducts(): Promise<Product[]> {
-  const first = await getProducts({ page: 1, page_size: PAGE, sort: "name_asc" });
+  const first = await getProducts({
+    page: 1,
+    page_size: PAGE,
+    sort: "name_asc",
+  });
   const items = [...first.items];
   const pages = Math.ceil(first.total / Math.max(first.pageSize, 1));
   for (let page = 2; page <= pages; page++)
-    items.push(...(await getProducts({ page, page_size: PAGE, sort: "name_asc" })).items);
+    items.push(
+      ...(await getProducts({ page, page_size: PAGE, sort: "name_asc" })).items,
+    );
   return items;
 }
 
 export async function fetchAllSuppliers(): Promise<Supplier[]> {
-  const first = await getSuppliers({ page: 1, page_size: PAGE, sort: "name_asc" });
+  const first = await getSuppliers({
+    page: 1,
+    page_size: PAGE,
+    sort: "name_asc",
+  });
   const items = [...first.items];
   const pages = Math.ceil(first.total / Math.max(first.pageSize, 1));
   for (let page = 2; page <= pages; page++)
-    items.push(...(await getSuppliers({ page, page_size: PAGE, sort: "name_asc" })).items);
+    items.push(
+      ...(await getSuppliers({ page, page_size: PAGE, sort: "name_asc" }))
+        .items,
+    );
   return items;
 }

@@ -66,7 +66,9 @@ export function OpenShiftForm({
               key={amount}
               type="button"
               size="sm"
-              variant={moneyInputOrZero(text) === amount ? "default" : "outline"}
+              variant={
+                moneyInputOrZero(text) === amount ? "default" : "outline"
+              }
               onClick={() => setText(String(amount))}
               className="font-mono font-normal"
             >
@@ -75,7 +77,8 @@ export function OpenShiftForm({
           ))}
         </div>
         <p className="text-[11px] text-muted-foreground">
-          المبلغ الموجود في الدرج قبل أول بيعة. يُحسب منه رصيد الدرج المتوقع عند القفل.
+          المبلغ الموجود في الدرج قبل أول بيعة. يُحسب منه رصيد الدرج المتوقع عند
+          القفل.
         </p>
       </div>
 

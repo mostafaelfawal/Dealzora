@@ -16,13 +16,21 @@ import { AppTable } from "@/components/shared/AppTable/AppTable";
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { PeriodPicker, periodOf, type PeriodValue } from "@/components/shared/PeriodPicker";
+import {
+  PeriodPicker,
+  periodOf,
+  type PeriodValue,
+} from "@/components/shared/PeriodPicker";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { StatTile } from "@/components/shared/StatTile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useHotkey } from "@/hooks/useHotkey";
 import { formatDayLabel, parseIsoDay } from "@/lib/dates";
@@ -61,7 +69,10 @@ export function PurchasesScreen() {
   });
   const summary = usePurchasesSummary().data;
 
-  useHotkey(NEW_KEY.match, () => openId === null && router.push("/admin/purchases/new"));
+  useHotkey(
+    NEW_KEY.match,
+    () => openId === null && router.push("/admin/purchases/new"),
+  );
 
   const columns: AppTableColumn<Purchase>[] = [
     {
@@ -81,18 +92,28 @@ export function PurchasesScreen() {
         </div>
       ),
     },
-    { id: "total", header: "الإجمالي", cell: (p) => <Money amount={p.total} className="text-sm" /> },
+    {
+      id: "total",
+      header: "الإجمالي",
+      cell: (p) => <Money amount={p.total} className="text-sm" />,
+    },
     {
       id: "paid",
       header: "الدفع",
       className: "hidden sm:table-cell",
       cell: (p) =>
         p.creditAmount > 0 ? (
-          <Badge variant="outline" className="border-warning/50 font-normal text-warning">
+          <Badge
+            variant="outline"
+            className="border-warning/50 font-normal text-warning"
+          >
             آجل <Money amount={p.creditAmount} className="text-[10px]" />
           </Badge>
         ) : (
-          <Badge variant="outline" className="border-success/50 font-normal text-success">
+          <Badge
+            variant="outline"
+            className="border-success/50 font-normal text-success"
+          >
             مدفوعة
           </Badge>
         ),
@@ -101,7 +122,15 @@ export function PurchasesScreen() {
       id: "returned",
       header: "مرتجع",
       className: "hidden md:table-cell",
-      cell: (p) => (p.returnedTotal > 0 ? <Money amount={p.returnedTotal} className="text-xs text-destructive" /> : "—"),
+      cell: (p) =>
+        p.returnedTotal > 0 ? (
+          <Money
+            amount={p.returnedTotal}
+            className="text-xs text-destructive"
+          />
+        ) : (
+          "—"
+        ),
     },
     {
       id: "by",
@@ -118,7 +147,12 @@ export function PurchasesScreen() {
         title="المشتريات"
         description="فواتير الشراء من الموردين. كل فاتورة تزيد المخزون وتحدّث سعر الشراء تلقائياً."
         actions={
-          <Button size="lg" nativeButton={false} render={<Link href="/admin/purchases/new" />} className="h-10 gap-2">
+          <Button
+            size="lg"
+            nativeButton={false}
+            render={<Link href="/admin/purchases/new" />}
+            className="h-10 gap-2"
+          >
             <IconPlus className="size-4" />
             فاتورة شراء
             <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
@@ -129,16 +163,46 @@ export function PurchasesScreen() {
       />
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <StatTile index={0} icon={<IconCalendarMonth />} label="مشتريات الشهر" hint={summary ? `${summary.monthCount} فاتورة` : undefined}>
+        <StatTile
+          index={0}
+          icon={<IconCalendarMonth />}
+          label="مشتريات الشهر"
+          hint={summary ? `${summary.monthCount} فاتورة` : undefined}
+        >
           <Money amount={summary?.monthTotal ?? 0} className="text-lg" />
         </StatTile>
         <StatTile index={1} icon={<IconCash />} label="مدفوع هذا الشهر">
           <Money amount={summary?.monthPaid ?? 0} className="text-lg" />
         </StatTile>
-        <StatTile index={2} icon={<IconTruckDelivery />} label="آجل هذا الشهر" tone="warning" onClick={() => { setStatus("credit"); setPage(1); }} active={status === "credit"}>
-          <Money amount={Math.max((summary?.monthTotal ?? 0) - (summary?.monthPaid ?? 0), 0)} className="text-lg" />
+        <StatTile
+          index={2}
+          icon={<IconTruckDelivery />}
+          label="آجل هذا الشهر"
+          tone="warning"
+          onClick={() => {
+            setStatus("credit");
+            setPage(1);
+          }}
+          active={status === "credit"}
+        >
+          <Money
+            amount={Math.max(
+              (summary?.monthTotal ?? 0) - (summary?.monthPaid ?? 0),
+              0,
+            )}
+            className="text-lg"
+          />
         </StatTile>
-        <StatTile index={3} icon={<IconReceiptRefund />} label="مرتجع للموردين" onClick={() => { setStatus("returned"); setPage(1); }} active={status === "returned"}>
+        <StatTile
+          index={3}
+          icon={<IconReceiptRefund />}
+          label="مرتجع للموردين"
+          onClick={() => {
+            setStatus("returned");
+            setPage(1);
+          }}
+          active={status === "returned"}
+        >
           <Money amount={summary?.returnsMonth ?? 0} className="text-lg" />
         </StatTile>
       </div>
@@ -160,9 +224,23 @@ export function PurchasesScreen() {
               aria-label="بحث في المشتريات"
             />
           </InputGroup>
-          <PeriodPicker value={period} onChange={(v) => { setPeriod(v); setPage(1); }} />
+          <PeriodPicker
+            value={period}
+            onChange={(v) => {
+              setPeriod(v);
+              setPage(1);
+            }}
+          />
         </div>
-        <SegmentedTabs label="حالة الفاتورة" items={STATUS_TABS} value={status} onChange={(v) => { setStatus(v); setPage(1); }} />
+        <SegmentedTabs
+          label="حالة الفاتورة"
+          items={STATUS_TABS}
+          value={status}
+          onChange={(v) => {
+            setStatus(v);
+            setPage(1);
+          }}
+        />
       </div>
 
       <AppTable
@@ -185,7 +263,12 @@ export function PurchasesScreen() {
           title: "لا توجد فواتير شراء في هذه الفترة",
           description: "سجّل أول فاتورة شراء ليدخل المخزون ويتحدث سعر الشراء.",
           action: (
-            <Button size="lg" nativeButton={false} render={<Link href="/admin/purchases/new" />} className="gap-2">
+            <Button
+              size="lg"
+              nativeButton={false}
+              render={<Link href="/admin/purchases/new" />}
+              className="gap-2"
+            >
               <IconPlus className="size-4" />
               فاتورة شراء جديدة
             </Button>
@@ -206,7 +289,10 @@ export function PurchasesScreen() {
         }}
       />
 
-      <PurchaseDetailSheet purchaseId={openId} onClose={() => setOpenId(null)} />
+      <PurchaseDetailSheet
+        purchaseId={openId}
+        onClose={() => setOpenId(null)}
+      />
     </div>
   );
 }

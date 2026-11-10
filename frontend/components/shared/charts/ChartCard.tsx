@@ -33,12 +33,17 @@ export function ChartCard({
       initial="hidden"
       animate="show"
       transition={{ delay: Math.min(index, 8) * 0.04 }}
-      className={cn("flex min-w-0 flex-col gap-3 border bg-card p-3 sm:p-4", className)}
+      className={cn(
+        "flex min-w-0 flex-col gap-3 border bg-card p-3 sm:p-4",
+        className,
+      )}
     >
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold">{title}</h2>
-          {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {action}
@@ -55,7 +60,13 @@ export function ChartCard({
 }
 
 /** حالة فارغة داخل الرسم (بدل محاور فاضية). */
-export function ChartEmpty({ text, height = 180 }: { text: string; height?: number }) {
+export function ChartEmpty({
+  text,
+  height = 180,
+}: {
+  text: string;
+  height?: number;
+}) {
   return (
     <div
       className="flex items-center justify-center border border-dashed text-xs text-muted-foreground"

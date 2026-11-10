@@ -70,7 +70,12 @@ export interface Overview {
   cashFlow: { day: number; cashIn: number; cashOut: number }[];
   cashiers: Cashier[];
   health: Health;
-  shift: { cashierName: string | null; openedAt: number; salesCount: number; expectedCash: number } | null;
+  shift: {
+    cashierName: string | null;
+    openedAt: number;
+    salesCount: number;
+    expectedCash: number;
+  } | null;
   recentSales: {
     id: string;
     number: number;

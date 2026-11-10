@@ -32,10 +32,20 @@ import { printReceipt, sendWhatsapp } from "../lib/receipt";
 import type { Sale } from "../types/sale";
 import { SaleBadges } from "./saleBadges";
 
-function Row({ label, children, strong }: { label: string; children: ReactNode; strong?: boolean }) {
+function Row({
+  label,
+  children,
+  strong,
+}: {
+  label: string;
+  children: ReactNode;
+  strong?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className={strong ? "text-sm font-medium" : "text-muted-foreground"}>{label}</dt>
+      <dt className={strong ? "text-sm font-medium" : "text-muted-foreground"}>
+        {label}
+      </dt>
       <dd>{children}</dd>
     </div>
   );
@@ -66,11 +76,17 @@ export function SaleDetailSheet({
 
   useHotkey(SALE_SHORTCUTS.print.match, () => open && print());
   useHotkey(SALE_SHORTCUTS.whatsapp.match, () => open && void whatsapp());
-  useHotkey(SALE_SHORTCUTS.returnSale.match, () => open && sale && onReturn(sale));
+  useHotkey(
+    SALE_SHORTCUTS.returnSale.match,
+    () => open && sale && onReturn(sale),
+  );
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
-      <SheetContent side="left" className="w-full gap-0 overflow-y-auto sm:max-w-md">
+      <SheetContent
+        side="left"
+        className="w-full gap-0 overflow-y-auto sm:max-w-md"
+      >
         <SheetHeader className="border-b">
           <SheetTitle className="flex items-center gap-2 text-base">
             فاتورة #{sale?.number ?? "…"}
@@ -93,19 +109,28 @@ export function SaleDetailSheet({
           <div className="flex flex-1 flex-col gap-4 p-4">
             <ul className="divide-y border">
               {sale.lines.map((l, i) => (
-                <MotionLi key={l.id} {...listItem(i)} className="flex items-start gap-3 p-2.5">
+                <MotionLi
+                  key={l.id}
+                  {...listItem(i)}
+                  className="flex items-start gap-3 p-2.5"
+                >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{l.name}</span>
+                    <span className="block truncate text-sm font-medium">
+                      {l.name}
+                    </span>
                     <span className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
                       {formatQty(l.qty)} {l.unitName} ×
                       <Money amount={l.unitPrice} className="text-[11px]" />
                       {l.discount > 0 && (
                         <span className="text-warning">
-                          · خصم <Money amount={l.discount} className="text-[11px]" />
+                          · خصم{" "}
+                          <Money amount={l.discount} className="text-[11px]" />
                         </span>
                       )}
                       {l.returnedQty > 0 && (
-                        <span className="text-destructive">· رجع {formatQty(l.returnedQty)}</span>
+                        <span className="text-destructive">
+                          · رجع {formatQty(l.returnedQty)}
+                        </span>
                       )}
                     </span>
                   </span>
@@ -144,19 +169,26 @@ export function SaleDetailSheet({
               )}
               {sale.returnedTotal > 0 && (
                 <Row label="مرتجع">
-                  <Money amount={sale.returnedTotal} className="text-destructive" />
+                  <Money
+                    amount={sale.returnedTotal}
+                    className="text-destructive"
+                  />
                 </Row>
               )}
               {sale.profit !== null && (
                 <Row label="صافي الربح">
                   <Money
                     amount={sale.profit}
-                    className={sale.profit < 0 ? "text-destructive" : "text-success"}
+                    className={
+                      sale.profit < 0 ? "text-destructive" : "text-success"
+                    }
                   />
                 </Row>
               )}
               {sale.note && (
-                <p className="pt-1 text-muted-foreground">ملاحظة: {sale.note}</p>
+                <p className="pt-1 text-muted-foreground">
+                  ملاحظة: {sale.note}
+                </p>
               )}
             </dl>
 
@@ -168,7 +200,12 @@ export function SaleDetailSheet({
                   {SALE_SHORTCUTS.print.label}
                 </ShortcutBadge>
               </Button>
-              <Button size="lg" variant="outline" onClick={() => void whatsapp()} className="gap-2">
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => void whatsapp()}
+                className="gap-2"
+              >
                 <IconBrandWhatsapp className="size-4 text-success" />
                 واتساب
                 <ShortcutBadge className="hidden lg:inline-flex">

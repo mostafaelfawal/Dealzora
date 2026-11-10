@@ -45,7 +45,11 @@ const QUICK_ACTIONS = [
     shortcut: SHORTCUTS.newSale.label,
   },
   { title: "إضافة صنف", href: "/admin/products/new", icon: IconPlus },
-  { title: "فاتورة شراء جديدة", href: "/admin/purchases/new", icon: IconTruckDelivery },
+  {
+    title: "فاتورة شراء جديدة",
+    href: "/admin/purchases/new",
+    icon: IconTruckDelivery,
+  },
   { title: "إضافة مورد", href: "/admin/suppliers/new", icon: IconPlus },
 ];
 
@@ -199,18 +203,29 @@ export function GlobalSearch() {
                   key={c.id}
                   value={`customer-${c.id}`}
                   keywords={keywords}
-                  onSelect={() => go(`/admin/customers?q=${encodeURIComponent(c.phone ?? c.name)}`)}
+                  onSelect={() =>
+                    go(
+                      `/admin/customers?q=${encodeURIComponent(c.phone ?? c.name)}`,
+                    )
+                  }
                 >
                   <IconUser className="size-4" />
                   <span className="truncate">{c.name}</span>
                   {c.phone && (
-                    <span dir="ltr" className="font-mono text-[11px] text-muted-foreground">
+                    <span
+                      dir="ltr"
+                      className="font-mono text-[11px] text-muted-foreground"
+                    >
                       {c.phone}
                     </span>
                   )}
                   {c.balance > 0 && (
                     <span className="ms-auto text-[11px] text-destructive">
-                      عليه <Money amount={toPounds(c.balance)} className="text-[11px]" />
+                      عليه{" "}
+                      <Money
+                        amount={toPounds(c.balance)}
+                        className="text-[11px]"
+                      />
                     </span>
                   )}
                 </CommandItem>
@@ -236,7 +251,9 @@ export function GlobalSearch() {
                 <Icon className="size-4" />
                 <span>{title}</span>
                 {hotkey !== undefined && (
-                  <ShortcutBadge className="ms-auto">Alt {hotkey}</ShortcutBadge>
+                  <ShortcutBadge className="ms-auto">
+                    Alt {hotkey}
+                  </ShortcutBadge>
                 )}
               </CommandItem>
             ))}

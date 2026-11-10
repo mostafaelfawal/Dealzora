@@ -1,6 +1,10 @@
 "use client";
 
-import { IconAlertTriangle, IconDeviceFloppy, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconDeviceFloppy,
+  IconLoader2,
+} from "@tabler/icons-react";
 import { useState } from "react";
 
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
@@ -42,13 +46,25 @@ export function AdjustStockDialog({
   return (
     <Dialog open={target !== null} onOpenChange={(next) => !next && onClose()}>
       <DialogContent showCloseButton={false} className="gap-3 sm:max-w-md">
-        {target && <AdjustForm key={target.productId} target={target} onClose={onClose} />}
+        {target && (
+          <AdjustForm
+            key={target.productId}
+            target={target}
+            onClose={onClose}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-function AdjustForm({ target, onClose }: { target: AdjustTarget; onClose: () => void }) {
+function AdjustForm({
+  target,
+  onClose,
+}: {
+  target: AdjustTarget;
+  onClose: () => void;
+}) {
   const adjust = useAdjustStock();
   const [reason, setReason] = useState<AdjustReason>("count");
   const [text, setText] = useState("");
@@ -67,24 +83,39 @@ function AdjustForm({ target, onClose }: { target: AdjustTarget; onClose: () => 
 
   let error: string | null = null;
   if (text.trim() && !valid) error = "اكتب رقماً صحيحاً";
-  else if (valid && reason === "count" && qty < 0) error = "الرصيد لا يكون سالباً";
-  else if (valid && (reason === "damage" || reason === "gift") && qty <= 0) error = "الكمية أكبر من صفر";
-  else if (valid && reason === "other" && qty === 0) error = "الفرق لا يكون صفراً";
-  else if (valid && after < 0) error = `الكمية أكبر من الرصيد المتاح (${formatQty(target.stock)})`;
+  else if (valid && reason === "count" && qty < 0)
+    error = "الرصيد لا يكون سالباً";
+  else if (valid && (reason === "damage" || reason === "gift") && qty <= 0)
+    error = "الكمية أكبر من صفر";
+  else if (valid && reason === "other" && qty === 0)
+    error = "الفرق لا يكون صفراً";
+  else if (valid && after < 0)
+    error = `الكمية أكبر من الرصيد المتاح (${formatQty(target.stock)})`;
   else if (reason === "other" && !note.trim()) error = "اكتب سبب التعديل";
   const canSave = text.trim() !== "" && !error && after !== target.stock;
 
   function submit() {
     if (!canSave || adjust.isPending) return;
-    adjust.mutate({ productId: target.productId, input: { reason, qty, note } }, { onSuccess: onClose });
+    adjust.mutate(
+      { productId: target.productId, input: { reason, qty, note } },
+      { onSuccess: onClose },
+    );
   }
 
   return (
-    <form noValidate onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
+    <form
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+      className="space-y-4"
+    >
       <DialogHeader className="text-start">
         <DialogTitle>تعديل مخزون «{target.name}»</DialogTitle>
         <DialogDescription>
-          الرصيد الحالي {formatQty(target.stock)} {target.unit}. كل تعديل يُسجَّل بسببه في حركة الصنف.
+          الرصيد الحالي {formatQty(target.stock)} {target.unit}. كل تعديل
+          يُسجَّل بسببه في حركة الصنف.
         </DialogDescription>
       </DialogHeader>
 
@@ -99,7 +130,9 @@ function AdjustForm({ target, onClose }: { target: AdjustTarget; onClose: () => 
       />
 
       <div className="space-y-1.5">
-        <Label htmlFor="adj-qty">{config.qtyLabel} ({target.unit})</Label>
+        <Label htmlFor="adj-qty">
+          {config.qtyLabel} ({target.unit})
+        </Label>
         <Input
           id="adj-qty"
           autoFocus
@@ -116,33 +149,73 @@ function AdjustForm({ target, onClose }: { target: AdjustTarget; onClose: () => 
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="adj-note">ملاحظة {reason === "other" ? "*" : "(اختياري)"}</Label>
-        <Input id="adj-note" value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder="مثال: كسر أثناء النقل" />
+        <Label htmlFor="adj-note">
+          ملاحظة {reason === "other" ? "*" : "(اختياري)"}
+        </Label>
+        <Input
+          id="adj-note"
+          value={note}
+          maxLength={300}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="مثال: كسر أثناء النقل"
+        />
       </div>
 
       <div className="flex items-end justify-between border-t pt-3 text-xs">
         <span className="pb-0.5 text-sm font-medium">الرصيد بعد التعديل</span>
-        <span className={cn("font-mono text-2xl leading-none tabular-nums", after < target.stock ? "text-destructive" : after > target.stock ? "text-success" : "")}>
-          {formatQty(after)} <span className="text-xs text-muted-foreground">{target.unit}</span>
+        <span
+          className={cn(
+            "font-mono text-2xl leading-none tabular-nums",
+            after < target.stock
+              ? "text-destructive"
+              : after > target.stock
+                ? "text-success"
+                : "",
+          )}
+        >
+          {formatQty(after)}{" "}
+          <span className="text-xs text-muted-foreground">{target.unit}</span>
         </span>
       </div>
 
       {error && text.trim() !== "" && (
-        <p role="alert" className="flex items-center gap-2 text-xs text-destructive">
+        <p
+          role="alert"
+          className="flex items-center gap-2 text-xs text-destructive"
+        >
           <IconAlertTriangle className="size-4 shrink-0" />
           {error}
         </p>
       )}
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" size="lg" onClick={onClose} className="gap-2 font-normal">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={onClose}
+          className="gap-2 font-normal"
+        >
           رجوع
-          <ShortcutBadge className="hidden rounded-none lg:inline-flex">Esc</ShortcutBadge>
+          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+            Esc
+          </ShortcutBadge>
         </Button>
-        <Button type="submit" size="lg" disabled={!canSave || adjust.isPending} className="gap-2 px-5">
-          {adjust.isPending ? <IconLoader2 className="size-4 animate-spin" /> : <IconDeviceFloppy className="size-4" />}
+        <Button
+          type="submit"
+          size="lg"
+          disabled={!canSave || adjust.isPending}
+          className="gap-2 px-5"
+        >
+          {adjust.isPending ? (
+            <IconLoader2 className="size-4 animate-spin" />
+          ) : (
+            <IconDeviceFloppy className="size-4" />
+          )}
           حفظ التعديل
-          <ShortcutBadge className="hidden rounded-none border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">Enter</ShortcutBadge>
+          <ShortcutBadge className="hidden rounded-none border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+            Enter
+          </ShortcutBadge>
         </Button>
       </div>
     </form>

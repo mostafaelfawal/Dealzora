@@ -14,11 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { useHotkey } from "@/hooks/useHotkey";
 import { cn } from "@/lib/utils";
 
-import {
-  ASSIGNABLE_ROLES,
-  ROLE_HELP,
-  ROLE_LABEL,
-} from "../config/userOptions";
+import { ASSIGNABLE_ROLES, ROLE_HELP, ROLE_LABEL } from "../config/userOptions";
 import { USER_ROUTES } from "../config/userRoutes";
 import { USER_FORM_SHORTCUTS } from "../config/userShortcuts";
 import { useUserFormContext } from "../context/UserFormContext";
@@ -130,7 +126,10 @@ export function UserForm() {
             placeholder="cashier1"
             className="font-mono"
           />
-          <FieldError id="uf-username-error" message={errors.username?.message} />
+          <FieldError
+            id="uf-username-error"
+            message={errors.username?.message}
+          />
           <p className="text-xs text-muted-foreground">
             حروف إنجليزية صغيرة وأرقام و . _ - فقط (من 3 إلى 50 خانة). هذا ما
             سيكتبه الكاشير عند الدخول.
