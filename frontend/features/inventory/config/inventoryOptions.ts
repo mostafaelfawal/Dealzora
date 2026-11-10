@@ -12,7 +12,7 @@ export const STAGNANT_DAYS_OPTIONS = [
   { value: "90", label: "راكد 90 يوماً" },
 ] as const;
 
-export const TABS: { id: InventoryTab; label: string }[] = [
+export const INVENTORY_TABS: { id: InventoryTab; label: string }[] = [
   { id: "all", label: "كل الأصناف" },
   { id: "low", label: "قارب على النفاد" },
   { id: "out", label: "نفد" },
@@ -64,13 +64,6 @@ export const ADJUST_REASONS: {
   },
 ];
 
-export const inventoryKeys = {
-  all: ["inventory"] as const,
-  report: (days: number) => ["inventory", "report", days] as const,
-  ledger: (id: string, page: number) =>
-    ["inventory", "ledger", id, page] as const,
-};
-
 export const INVENTORY_SHORTCUTS = {
   adjust: {
     label: "F4",
@@ -78,3 +71,8 @@ export const INVENTORY_SHORTCUTS = {
     match: plain("F4"),
   },
 } satisfies Record<string, Shortcut>;
+
+export const INVENTORY_PAGE_SIZES = [24, 48, 96];
+export const DEFAULT_STAGNANT_DAYS = "30";
+export const INVENTORY_SEARCH_DEBOUNCE_MS = 300;
+export const LEDGER_PAGE_SIZE = 20;

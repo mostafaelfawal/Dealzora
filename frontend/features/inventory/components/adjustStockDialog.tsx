@@ -24,14 +24,7 @@ import { cn } from "@/lib/utils";
 
 import { ADJUST_REASONS } from "../config/inventoryOptions";
 import { useAdjustStock } from "../hooks/useInventory";
-import type { AdjustReason } from "../types/inventory";
-
-export interface AdjustTarget {
-  productId: string;
-  name: string;
-  unit: string;
-  stock: number;
-}
+import type { AdjustReason, AdjustTarget } from "../types/inventory";
 
 const round3 = (n: number) => Math.round((n + Number.EPSILON) * 1000) / 1000;
 

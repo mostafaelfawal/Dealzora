@@ -50,3 +50,11 @@ export interface AdjustInput {
   qty: number;
   note: string;
 }
+
+/** الصنف الذي يُفتح له نافذة التعديل أو سجل الحركة. */
+export interface AdjustTarget {
+  productId: string;
+  name: string;
+  unit: string;
+  stock: number;
+}

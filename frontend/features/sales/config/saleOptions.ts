@@ -9,6 +9,7 @@ import type {
 
 export const PAGE_SIZES = [12, 24, 48] as const;
 export const DEFAULT_PAGE_SIZE = 24;
+export const SALES_SEARCH_DEBOUNCE_MS = 300;
 
 export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   cash: "كاش",
@@ -48,14 +49,6 @@ export const RETURN_REASONS = Object.entries(RETURN_REASON_LABEL).map(
   ([id, label]) => ({ id: id as ReturnReason, label }),
 );
 
-export const saleKeys = {
-  all: ["sales"] as const,
-  list: (f: object) => [...saleKeys.all, "list", f] as const,
-  detail: (id: string) => [...saleKeys.all, "detail", id] as const,
-  summary: () => [...saleKeys.all, "summary"] as const,
-  returns: (f: object) => [...saleKeys.all, "returns", f] as const,
-};
-
 export const SALE_SHORTCUTS = {
   print: {
     label: "Ctrl P",
@@ -73,3 +66,12 @@ export const SALE_SHORTCUTS = {
     match: plain("F10"),
   },
 } satisfies Record<string, Shortcut>;
+
+/** فلتر السبب في سجل المرتجعات. */
+export const RETURN_REASON_FILTER_OPTIONS: {
+  value: ReturnReason | "all";
+  label: string;
+}[] = [
+  { value: "all", label: "كل الأسباب" },
+  ...RETURN_REASONS.map((r) => ({ value: r.id, label: r.label })),
+];

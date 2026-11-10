@@ -16,7 +16,7 @@ import {
   fetchSales,
   fetchSalesSummary,
 } from "../api/sales.api";
-import { saleKeys } from "../config/saleOptions";
+import { SALE_AFFECTED_KEYS, saleKeys } from "../config/saleQueryKeys";
 import type { ReturnInput, SaleFilters } from "../types/sale";
 
 export function useSalesList(filters: SaleFilters) {
@@ -51,16 +51,7 @@ export function useReturnsList(filters: Parameters<typeof fetchReturns>[0]) {
 export function useInvalidateAfterSale() {
   const qc = useQueryClient();
   return () => {
-    for (const key of [
-      saleKeys.all,
-      ["products"],
-      ["customers"],
-      ["treasury"],
-      ["shifts"],
-      ["dashboard"],
-      ["reports"],
-      ["pos", "catalog"],
-    ]) {
+    for (const key of SALE_AFFECTED_KEYS) {
       void qc.invalidateQueries({ queryKey: key });
     }
   };

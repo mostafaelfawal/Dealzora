@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createContext, type ReactNode, useContext, useEffect } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 
+import { PRODUCT_FIELD_IDS } from "../config/productFormFields";
 import { PRODUCT_ROUTES } from "../config/productRoutes";
 import useCreateProduct from "../hooks/useCreateProduct";
 import useGetProduct from "../hooks/useGetProduct";
@@ -81,7 +82,7 @@ export default function ProductFormContextProvider({
       await createMutation.mutateAsync(values);
       if (andNew) {
         reset(emptyValues());
-        document.getElementById("pf-name")?.focus();
+        document.getElementById(PRODUCT_FIELD_IDS.name)?.focus();
       } else {
         router.push(PRODUCT_ROUTES.list);
       }

@@ -5,6 +5,7 @@ import { IconDeviceFloppy, IconLoader2 } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
+import { FieldError } from "@/components/shared/form";
 import { Money } from "@/components/shared/Money";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
@@ -41,15 +42,6 @@ const IDS = {
   openingBalance: "cf-opening",
   notes: "cf-notes",
 } as const;
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <p id={id} role="alert" className="text-xs text-destructive">
-      {message}
-    </p>
-  );
-}
 
 /** إضافة عميل (customer = null) أو تعديله. المحتوى يتركّب عند الفتح فقط ليبدأ الفورم نظيفاً. */
 export function CustomerFormDialog({

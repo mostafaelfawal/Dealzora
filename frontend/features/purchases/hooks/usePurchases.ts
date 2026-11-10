@@ -18,20 +18,15 @@ import {
   fetchPurchases,
   fetchPurchasesSummary,
 } from "../api/purchases.api";
+import {
+  PURCHASE_AFFECTED_KEYS,
+  purchaseKeys,
+} from "../config/purchaseQueryKeys";
 import type {
   PurchaseFilters,
   PurchaseInput,
   RefundMethod,
 } from "../types/purchase";
-
-export const purchaseKeys = {
-  all: ["purchases"] as const,
-  list: (f: PurchaseFilters) => [...purchaseKeys.all, "list", f] as const,
-  detail: (id: string) => [...purchaseKeys.all, "detail", id] as const,
-  summary: () => [...purchaseKeys.all, "summary"] as const,
-  products: () => [...purchaseKeys.all, "products"] as const,
-  suppliers: () => [...purchaseKeys.all, "suppliers"] as const,
-};
 
 export const usePurchasesList = (f: PurchaseFilters) =>
   useQuery({
@@ -70,15 +65,7 @@ export const usePurchaseSuppliers = () =>
 function useRefresh() {
   const qc = useQueryClient();
   return () => {
-    for (const key of [
-      purchaseKeys.all,
-      ["products"],
-      ["suppliers"],
-      ["treasury"],
-      ["reports"],
-      ["dashboard"],
-      ["pos", "catalog"],
-    ])
+    for (const key of PURCHASE_AFFECTED_KEYS)
       void qc.invalidateQueries({ queryKey: key });
   };
 }

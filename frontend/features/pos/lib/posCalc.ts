@@ -12,7 +12,8 @@ export const MAX_QTY = 9999;
 
 export const round2 = (n: number) =>
   Math.round((n + Number.EPSILON) * 100) / 100;
-const round3 = (n: number) => Math.round((n + Number.EPSILON) * 1000) / 1000;
+export const round3 = (n: number) =>
+  Math.round((n + Number.EPSILON) * 1000) / 1000;
 
 /** الأصناف بالقطعة أرقام صحيحة، والأصناف بالوزن لحد 3 كسور. */
 export function clampQty(qty: number, allowDecimal: boolean) {

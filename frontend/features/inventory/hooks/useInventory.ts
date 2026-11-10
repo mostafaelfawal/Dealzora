@@ -14,7 +14,11 @@ import {
   fetchLedger,
   fetchStockReport,
 } from "../api/inventory.api";
-import { inventoryKeys, MOVEMENT_LABEL } from "../config/inventoryOptions";
+import { LEDGER_PAGE_SIZE, MOVEMENT_LABEL } from "../config/inventoryOptions";
+import {
+  INVENTORY_AFFECTED_KEYS,
+  inventoryKeys,
+} from "../config/inventoryQueryKeys";
 import type { AdjustInput } from "../types/inventory";
 
 export const useStockReport = (stagnantDays: number) =>
@@ -26,7 +30,7 @@ export const useStockReport = (stagnantDays: number) =>
 export const useLedger = (
   productId: string | null,
   page: number,
-  pageSize = 20,
+  pageSize = LEDGER_PAGE_SIZE,
 ) =>
   useQuery({
     queryKey: inventoryKeys.ledger(productId ?? "", page),
@@ -46,13 +50,7 @@ export function useAdjustStock() {
       input: AdjustInput;
     }) => adjustStock(productId, input),
     onSuccess: (m) => {
-      for (const key of [
-        inventoryKeys.all,
-        ["products"],
-        ["reports"],
-        ["dashboard"],
-        ["pos", "catalog"],
-      ])
+      for (const key of INVENTORY_AFFECTED_KEYS)
         void qc.invalidateQueries({ queryKey: key });
       toast.success(`تم تسجيل ${MOVEMENT_LABEL[m.type]}`, {
         description: `الرصيد الآن ${formatQty(m.balanceAfter)}`,

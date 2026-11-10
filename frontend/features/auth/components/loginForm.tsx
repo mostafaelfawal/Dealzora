@@ -3,6 +3,7 @@
 import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react";
 import { useState } from "react";
 
+import { FieldError } from "@/components/shared/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,15 +16,6 @@ import {
 } from "../context/LoginFormContext";
 import { LoginRoleSwitch } from "./loginRoleSwitch";
 import { PasswordInput } from "./passwordInput";
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <p id={id} role="alert" className="text-xs text-destructive">
-      {message}
-    </p>
-  );
-}
 
 export function LoginForm() {
   const { form, submit, isLoggingIn, loginError, clearError } =

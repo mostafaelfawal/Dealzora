@@ -20,64 +20,107 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { round2 } from "@/features/pos/lib/posCalc";
 import { formatQty } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { RETURN_REASONS } from "../config/saleOptions";
 import { useCreateReturn } from "../hooks/useSales";
-import type { ReturnReason, Sale } from "../types/sale";
+import {
+  clampReturnQty,
+  returnableQty,
+  saleReturnSelection,
+  type SaleReturnQtys,
+} from "../lib/saleReturn";
+import type { ReturnReason, Sale, SaleLine } from "../types/sale";
 
-const round3 = (n: number) => Math.round((n + Number.EPSILON) * 1000) / 1000;
+const NOTE_MAX = 200;
 
-/** مرتجع من لوحة المدير (بدون مهلة). القيمة النهائية يحسبها السيرفر بالسعر المدفوع فعلاً. */
-export function SaleReturnDialog({
-  sale,
-  onClose,
+/** سطر بكمية قابلة للزيادة والنقص، و"الكل" لإرجاع المتاح كله. */
+function ReturnLineStepper({
+  line,
+  qty,
+  onChange,
 }: {
-  sale: Sale | null;
-  onClose: () => void;
+  line: SaleLine;
+  qty: number;
+  onChange: (qty: number) => void;
 }) {
+  const max = returnableQty(line);
+  const set = (value: number) => onChange(clampReturnQty(value, max));
+
   return (
-    <Dialog open={sale !== null} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent
-        showCloseButton={false}
-        className="max-h-[90dvh] gap-3 overflow-y-auto sm:max-w-lg"
+    <li
+      className={cn("flex items-center gap-3 p-2.5", max === 0 && "opacity-50")}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium">{line.name}</span>
+        <span className="text-[11px] text-muted-foreground">
+          مباع {formatQty(line.qty)} {line.unitName}
+          {line.returnedQty > 0 && ` · رجع ${formatQty(line.returnedQty)}`}
+        </span>
+      </span>
+      <div className="flex items-center">
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="outline"
+          aria-label={`تقليل ${line.name}`}
+          disabled={qty <= 0}
+          onClick={() => set(qty - 1)}
+          className="size-8"
+        >
+          <IconMinus />
+        </Button>
+        <Input
+          aria-label={`كمية مرتجع ${line.name}`}
+          dir="ltr"
+          inputMode="decimal"
+          disabled={max === 0}
+          value={qty === 0 ? "" : String(qty)}
+          placeholder="0"
+          onChange={(e) => set(Number(e.target.value) || 0)}
+          className="h-8 w-14 border-x-0 text-center font-mono"
+        />
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="outline"
+          aria-label={`زيادة ${line.name}`}
+          disabled={qty >= max}
+          onClick={() => set(qty + 1)}
+          className="size-8"
+        >
+          <IconPlus />
+        </Button>
+      </div>
+      <Button
+        type="button"
+        size="xs"
+        variant="link"
+        disabled={max === 0 || qty === max}
+        onClick={() => set(max)}
+        className="font-normal"
       >
-        {sale && <ReturnForm key={sale.id} sale={sale} onClose={onClose} />}
-      </DialogContent>
-    </Dialog>
+        الكل
+      </Button>
+    </li>
   );
 }
 
 function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   const create = useCreateReturn();
-  const [qtys, setQtys] = useState<Record<string, number>>({});
+  const [qtys, setQtys] = useState<SaleReturnQtys>({});
   const [reason, setReason] = useState<ReturnReason>("customer_changed");
   const [note, setNote] = useState("");
-
-  const chosen = sale.lines.filter((l) => (qtys[l.id] ?? 0) > 0);
-  const estimate = round2(
-    chosen.reduce((sum, l) => sum + (l.netTotal / l.qty) * qtys[l.id], 0),
-  );
-
-  function setQty(id: string, value: number, max: number) {
-    setQtys((prev) => ({
-      ...prev,
-      [id]: Math.min(Math.max(round3(value), 0), max),
-    }));
-  }
+  const selection = saleReturnSelection(sale, qtys);
+  const canSubmit = selection.chosen.length > 0 && !create.isPending;
 
   function submit() {
-    if (chosen.length === 0 || create.isPending) return;
+    if (!canSubmit) return;
     create.mutate(
       {
         saleId: sale.id,
-        input: {
-          reason,
-          note: note.trim(),
-          lines: chosen.map((l) => ({ saleLineId: l.id, qty: qtys[l.id] })),
-        },
+        input: { reason, note: note.trim(), lines: selection.lines },
       },
       { onSuccess: onClose },
     );
@@ -101,76 +144,14 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
       </DialogHeader>
 
       <ul className="divide-y border">
-        {sale.lines.map((line) => {
-          const max = round3(line.qty - line.returnedQty);
-          const qty = qtys[line.id] ?? 0;
-          return (
-            <li
-              key={line.id}
-              className={cn(
-                "flex items-center gap-3 p-2.5",
-                max === 0 && "opacity-50",
-              )}
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">
-                  {line.name}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  مباع {formatQty(line.qty)} {line.unitName}
-                  {line.returnedQty > 0 &&
-                    ` · رجع ${formatQty(line.returnedQty)}`}
-                </span>
-              </span>
-              <div className="flex items-center">
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label={`تقليل ${line.name}`}
-                  disabled={qty <= 0}
-                  onClick={() => setQty(line.id, qty - 1, max)}
-                  className="size-8"
-                >
-                  <IconMinus />
-                </Button>
-                <Input
-                  aria-label={`كمية مرتجع ${line.name}`}
-                  dir="ltr"
-                  inputMode="decimal"
-                  disabled={max === 0}
-                  value={qty === 0 ? "" : String(qty)}
-                  placeholder="0"
-                  onChange={(e) =>
-                    setQty(line.id, Number(e.target.value) || 0, max)
-                  }
-                  className="h-8 w-14 border-x-0 text-center font-mono"
-                />
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label={`زيادة ${line.name}`}
-                  disabled={qty >= max}
-                  onClick={() => setQty(line.id, qty + 1, max)}
-                  className="size-8"
-                >
-                  <IconPlus />
-                </Button>
-              </div>
-              <Button
-                type="button"
-                size="xs"
-                variant="link"
-                disabled={max === 0 || qty === max}
-                onClick={() => setQty(line.id, max, max)}
-                className="font-normal"
-              >
-                الكل
-              </Button>
-            </li>
-          );
-        })}
+        {sale.lines.map((line) => (
+          <ReturnLineStepper
+            key={line.id}
+            line={line}
+            qty={qtys[line.id] ?? 0}
+            onChange={(qty) => setQtys((prev) => ({ ...prev, [line.id]: qty }))}
+          />
+        ))}
       </ul>
 
       <div className="space-y-1.5">
@@ -185,7 +166,7 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
       <Input
         aria-label="ملاحظة"
         value={note}
-        maxLength={200}
+        maxLength={NOTE_MAX}
         onChange={(e) => setNote(e.target.value)}
         placeholder="ملاحظة (اختياري)"
       />
@@ -194,7 +175,7 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
         <span className="pb-0.5 text-sm font-medium">
           قيمة المرتجع (تقريباً)
         </span>
-        <Money amount={estimate} className="text-2xl leading-none" />
+        <Money amount={selection.estimate} className="text-2xl leading-none" />
       </div>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -213,7 +194,7 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
         <Button
           type="submit"
           size="lg"
-          disabled={chosen.length === 0 || create.isPending}
+          disabled={!canSubmit}
           className="gap-2 px-5"
         >
           {create.isPending ? (
@@ -225,5 +206,26 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
         </Button>
       </div>
     </form>
+  );
+}
+
+/** مرتجع من لوحة المدير (بدون مهلة). القيمة النهائية يحسبها السيرفر بالسعر المدفوع فعلاً. */
+export function SaleReturnDialog({
+  sale,
+  onClose,
+}: {
+  sale: Sale | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={sale !== null} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[90dvh] gap-3 overflow-y-auto sm:max-w-lg"
+      >
+        {/* key يعيد تهيئة النموذج لكل فاتورة. */}
+        {sale && <ReturnForm key={sale.id} sale={sale} onClose={onClose} />}
+      </DialogContent>
+    </Dialog>
   );
 }

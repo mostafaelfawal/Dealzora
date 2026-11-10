@@ -28,7 +28,7 @@ import {
   MOVEMENT_LABEL,
 } from "../config/inventoryOptions";
 import { useLedger } from "../hooks/useInventory";
-import type { AdjustTarget } from "./adjustStockDialog";
+import type { AdjustTarget } from "../types/inventory";
 
 const PAGE_SIZE = 20;
 

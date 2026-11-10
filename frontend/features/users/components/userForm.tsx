@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { FieldErrors, Path, PathValue } from "react-hook-form";
 import { toast } from "sonner";
 
+import { FieldError } from "@/components/shared/form";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,15 +37,6 @@ function focusFirstError(errors: FieldErrors<UserSchemaType>) {
     document.getElementById(FIELD_IDS[field])?.focus();
     return;
   }
-}
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <p id={id} role="alert" className="text-xs text-destructive">
-      {message}
-    </p>
-  );
 }
 
 export function UserForm() {
