@@ -53,6 +53,11 @@ export const POS_SHORTCUTS = {
     description: "خصم على الفاتورة",
     match: plainKey("F8"),
   },
+  lineDiscount: {
+    label: "F5",
+    description: "خصم على الصنف المحدد",
+    match: plainKey("F5"),
+  },
   pay: {
     label: "F9",
     description: "الدفع",

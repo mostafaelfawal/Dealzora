@@ -157,7 +157,7 @@ function ManualEntryForm({
         <DialogTitle>حركة جديدة في الخزنة</DialogTitle>
         <DialogDescription>
           للإيداع أو السحب اليدوي فقط (رصيد افتتاحي، تمويل، سحب المالك).
-          المصروفات تدخل الخزنة تلقائياً.
+          المبيعات والمشتريات والمصروفات والتحصيل تدخل الخزنة تلقائياً.
         </DialogDescription>
       </DialogHeader>
 

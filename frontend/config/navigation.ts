@@ -32,8 +32,9 @@ export const NAVIGATION: NavGroup[] = [
         title: "الرئيسية",
         href: "/admin/dashboard",
         icon: IconLayoutDashboard,
+        hotkey: 1,
       },
-      { title: "الفواتير", href: "/admin/sales", icon: IconReceipt },
+      { title: "الفواتير", href: "/admin/sales", icon: IconReceipt, hotkey: 2 },
       { title: "المرتجعات", href: "/admin/returns", icon: IconReceiptRefund },
       { title: "الورديات", href: "/admin/shifts", icon: IconClockHour4 },
     ],
@@ -42,16 +43,23 @@ export const NAVIGATION: NavGroup[] = [
     id: "stock",
     label: "المخزن",
     items: [
-      { title: "المنتجات", href: "/admin/products", icon: IconPackage },
+      {
+        title: "المنتجات",
+        href: "/admin/products",
+        icon: IconPackage,
+        hotkey: 3,
+      },
       {
         title: "المخزون",
         href: "/admin/inventory",
         icon: IconBuildingWarehouse,
+        hotkey: 4,
       },
       {
         title: "المشتريات",
         href: "/admin/purchases",
         icon: IconTruckDelivery,
+        hotkey: 5,
       },
     ],
   },
@@ -59,11 +67,17 @@ export const NAVIGATION: NavGroup[] = [
     id: "accounts",
     label: "الحسابات",
     items: [
-      { title: "العملاء", href: "/admin/customers", icon: IconUsers },
+      {
+        title: "العملاء",
+        href: "/admin/customers",
+        icon: IconUsers,
+        hotkey: 6,
+      },
       {
         title: "الموردين",
         href: "/admin/suppliers",
         icon: IconBuildingStore,
+        hotkey: 7,
       },
       {
         title: "المصروفات",
@@ -74,11 +88,13 @@ export const NAVIGATION: NavGroup[] = [
         title: "الخزنة",
         href: "/admin/treasury",
         icon: IconBuildingBank,
+        hotkey: 8,
       },
       {
         title: "التقارير",
         href: "/admin/reports",
         icon: IconChartBar,
+        hotkey: 9,
       },
     ],
   },
@@ -114,3 +130,8 @@ export function getNavigationForRole(role: UserRole): NavGroup[] {
     ),
   })).filter((group) => group.items.length > 0);
 }
+
+/** كل الصفحات التي لها رقم اختصار (Alt + رقم). */
+export const NAV_HOTKEYS = NAVIGATION.flatMap((g) => g.items).filter(
+  (item): item is typeof item & { hotkey: number } => item.hotkey !== undefined,
+);

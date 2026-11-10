@@ -10,6 +10,7 @@ import {
   holdCurrentInvoice,
   redoInvoice,
   requestDialog,
+  requestLineDiscount,
   requestPayment,
   requestReturn,
   undoInvoice,
@@ -51,6 +52,10 @@ export function usePosHotkeys() {
   useHotkey(
     POS_SHORTCUTS.discount.match,
     whenIdle(() => dispatch(requestDialog("discount"))),
+  );
+  useHotkey(
+    POS_SHORTCUTS.lineDiscount.match,
+    whenIdle(() => dispatch(requestLineDiscount())),
   );
   useHotkey(
     POS_SHORTCUTS.pay.match,

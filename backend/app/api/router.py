@@ -1,24 +1,36 @@
 from fastapi import APIRouter
 
-from app.modules.products.routes import router as products_router
-from app.modules.users.routes import router as users_router
-from app.modules.customers.routes import router as customers_router
+from app.modules.audit.routes import router as audit_router
 from app.modules.auth.routes import router as auth_router
-from app.modules.shop.routes import router as shop_router
+from app.modules.backup.routes import router as backup_router
+from app.modules.customers.routes import router as customers_router
 from app.modules.expenses.routes import router as expenses_router
-from app.modules.treasury.routes import router as treasury_router
+from app.modules.products.routes import router as products_router
+from app.modules.purchases.routes import router as purchases_router
+from app.modules.reports.routes import router as reports_router
+from app.modules.sales.routes import router as sales_router
+from app.modules.shifts.routes import router as shifts_router
+from app.modules.shop.routes import router as shop_router
 from app.modules.suppliers.routes import router as suppliers_router
+from app.modules.treasury.routes import router as treasury_router
+from app.modules.users.routes import router as users_router
 
 api_router = APIRouter()
 routes = [
-    products_router,
-    users_router,
-    customers_router,
     auth_router,
     shop_router,
-    expenses_router,
+    users_router,
+    products_router,
+    customers_router,
     suppliers_router,
-    treasury_router
+    expenses_router,
+    treasury_router,
+    shifts_router,
+    sales_router,
+    purchases_router,
+    reports_router,
+    audit_router,
+    backup_router,
 ]
 
 for router in routes:

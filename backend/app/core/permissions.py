@@ -3,6 +3,7 @@
 - require_authenticated: أي مستخدم مسجّل (كاشير أو مدير).
 - require_manager: مدير فقط.
 - require_manager_write: مدير + تصريح كتابة ساري (الترخيص غير منتهٍ).
+- require_authenticated_write: أي مستخدم + تصريح كتابة (البيع والمرتجع وفتح/قفل الوردية).
 
 الأسماء القديمة (cashier/admin) أبقيناها كـ aliases لتسهيل الترحيل.
 """
@@ -32,6 +33,14 @@ def require_manager_write(
     return actor
 
 
+def require_authenticated_write(
+    actor: Annotated[Actor, Depends(require_authenticated)],
+    _permit: Annotated[None, Depends(require_write_permit)],
+) -> Actor:
+    return actor
+
+
 require_cashier = require_authenticated
+require_cashier_write = require_authenticated_write
 require_admin = require_manager
 require_admin_write = require_manager_write

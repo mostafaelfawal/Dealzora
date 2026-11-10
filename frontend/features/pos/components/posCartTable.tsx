@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatQty } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
-import { lineTotal } from "../lib/posCalc";
+import { lineDiscount, lineTotal } from "../lib/posCalc";
 import { cartActions } from "../store/cartSlice";
 import { removeLineWithUndo } from "../store/posActions";
 import { selectLines, selectSelectedId } from "../store/selectors";
@@ -76,6 +76,11 @@ function CartRow({
       </td>
       <td className="px-2">
         <Money amount={lineTotal(line)} className="text-sm" />
+        {lineDiscount(line) > 0 && (
+          <span className="block text-[10px] text-warning">
+            خصم <Money amount={lineDiscount(line)} className="text-[10px]" />
+          </span>
+        )}
       </td>
       <td className="pe-1">
         <AppTooltip message={`حذف ${line.name}`}>

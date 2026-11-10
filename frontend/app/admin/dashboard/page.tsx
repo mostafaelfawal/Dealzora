@@ -1,3 +1,9 @@
-export default function Dashboard() {
-  return <h1 className="text-3xl font-black">اهلا بك في لوحة التحكم</h1>;
+import type { Metadata } from "next";
+
+import { DashboardScreen } from "@/features/dashboard/components/dashboardScreen";
+
+export const metadata: Metadata = { title: "الرئيسية" };
+
+export default function DashboardPage() {
+  return <DashboardScreen />;
 }

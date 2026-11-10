@@ -1,7 +1,8 @@
 "use client";
 
-import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
+import { IconLogout, IconSettings } from "@tabler/icons-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ROLE_LABELS } from "@/config/roles";
+import { AUTH_ROUTES } from "@/features/auth/config/authRoutes";
+import { clearSession } from "@/features/auth/lib/authStorage";
+import { logout } from "@/features/settings/api/settings.api";
 import type { SessionUser } from "@/types/auth";
 
 interface UserMenuProps {
@@ -22,8 +26,16 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
-  function handleLogout() {
-    // TODO: اربطها بتسجيل الخروج الحقيقي.
+  const router = useRouter();
+
+  async function handleLogout() {
+    try {
+      await logout(); // يلغي الجلسة في الـ backend
+    } catch {
+      // حتى لو فشل الطلب نمسح الجلسة محلياً.
+    }
+    clearSession();
+    router.replace(AUTH_ROUTES.login);
   }
 
   return (
@@ -54,16 +66,12 @@ export function UserMenu({ user }: UserMenuProps) {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/profile" />}>
-          <IconUser className="size-4" />
-          الملف الشخصي
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/settings" />}>
+        <DropdownMenuItem render={<Link href="/admin/settings" />}>
           <IconSettings className="size-4" />
-          الإعدادات
+          الإعدادات وكلمة المرور
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+        <DropdownMenuItem variant="destructive" onClick={() => void handleLogout()}>
           <IconLogout className="size-4" />
           تسجيل الخروج
         </DropdownMenuItem>

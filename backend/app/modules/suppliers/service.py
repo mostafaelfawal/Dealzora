@@ -3,6 +3,7 @@
 from sqlalchemy.orm import Session
 
 from app.core.base import uuid7
+from app.core.periods import local_today
 from app.core.bulk import BulkIn, BulkResultOut
 from app.core.errors import ConflictError, NotFoundError
 from app.core.security import Actor
@@ -155,7 +156,19 @@ class SupplierService(EntityService):
             "payment",
             {"amount": data.amount, "balance_after": txn.balance_after},
         )
-        # TODO(treasury): تسجيل حركة خروج في الخزنة داخل نفس المعاملة.
+        # السداد نقدية خارجة من الخزنة في نفس المعاملة.
+        from app.modules.treasury.service import TreasuryService
+        from app.modules.treasury.types import CashDirection, CashKind
+
+        TreasuryService(self.session, self.actor).post_entry(
+            direction=CashDirection.OUT,
+            kind=CashKind.SUPPLIER_PAYMENT,
+            amount=data.amount,
+            occurred_at=local_today(),
+            note=data.note or f"سداد لـ {supplier.name}",
+            source_entity=ENTITY_SUPPLIER_TXN,
+            source_id=txn.id,
+        )
         self._commit()
         return SupplierTransactionOut.model_validate(txn)
 
@@ -191,6 +204,24 @@ class SupplierService(EntityService):
     def _refresh_search_text(supplier: Supplier) -> None:
         supplier.search_text = build_search_text(supplier.name, [supplier.phone])
 
+    # ================= واجهة للموديولات الأخرى (بدون commit) =================
+    def get_for_update(self, supplier_id: str) -> Supplier:
+        return self._get_or_404(supplier_id)
+
+    def record_transaction(
+        self,
+        supplier: Supplier,
+        txn_type: TransactionType,
+        delta: int,
+        *,
+        note: str | None = None,
+        ref_type: str | None = None,
+        ref_id: str | None = None,
+    ) -> SupplierTransaction:
+        return self._record_transaction(
+            supplier, txn_type, delta, note=note, ref_type=ref_type, ref_id=ref_id
+        )
+
     def _record_transaction(
         self,
         supplier: Supplier,
@@ -198,6 +229,8 @@ class SupplierService(EntityService):
         delta: int,
         *,
         note: str | None = None,
+        ref_type: str | None = None,
+        ref_id: str | None = None,
     ) -> SupplierTransaction:
         balance = supplier.balance + delta
         txn = SupplierTransaction(
@@ -209,6 +242,8 @@ class SupplierService(EntityService):
             amount_delta=delta,
             balance_after=balance,
             note=note,
+            ref_type=ref_type,
+            ref_id=ref_id,
         )
         supplier.balance = balance  # الرصيد المخزّن، داخل نفس المعاملة
         self.repo.add_transaction(txn)
@@ -222,6 +257,8 @@ class SupplierService(EntityService):
                 "amount_delta": delta,
                 "balance_after": balance,
                 "note": note,
+                "ref_type": ref_type,
+                "ref_id": ref_id,
             },
         )
         return txn

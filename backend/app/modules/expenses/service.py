@@ -11,7 +11,10 @@ from app.core.errors import AppError, ConflictError, NotFoundError
 from app.core.outbox import OutboxOp, enqueue_outbox
 from app.core.security import Actor
 
-from .constants import ENTITY_EXPENSE, ERROR_MESSAGES, ExpenseError
+from app.modules.treasury.service import TreasuryService
+from app.modules.treasury.types import CashDirection, CashKind
+
+from .constants import CATEGORY_LABELS, ENTITY_EXPENSE, ERROR_MESSAGES, ExpenseError
 from .helper import build_search_text, diff_snapshots, expense_snapshot
 from .model import Expense
 from .repository import ExpenseRepository
@@ -80,6 +83,7 @@ class ExpenseService:
 
         self._audit(expense, "create", expense_snapshot(expense))
         self._enqueue(expense, base_version=None)
+        self._sync_cash(expense)
         self.session.commit()
         return self._to_out(expense, self._names([expense]))
 
@@ -94,6 +98,7 @@ class ExpenseService:
 
         self._audit(expense, "update", diff_snapshots(before, expense_snapshot(expense)))
         self._enqueue(expense, base_version=data.base_version)
+        self._sync_cash(expense)
         self.session.commit()
         return self._to_out(expense, self._names([expense]))
 
@@ -104,6 +109,9 @@ class ExpenseService:
         self._audit(expense, "delete", expense_snapshot(expense))
         expense.mark_deleted()  # tombstone: يبقى في الجدول ويُنشر للمزامنة
         self._enqueue(expense, base_version=base_version, op=OutboxOp.DELETE)
+        TreasuryService(self.session, self.actor).void_source_entry(
+            source_entity=ENTITY_EXPENSE, source_id=expense.id
+        )
         self.session.commit()
 
     # ================= عمليات جماعية =================
@@ -154,6 +162,19 @@ class ExpenseService:
         expense.spent_at = data.spent_at
         expense.note = data.note
         expense.search_text = build_search_text(data.note)
+
+    def _sync_cash(self, expense: Expense) -> None:
+        """كل مصروف = حركة خروج من الخزنة بنفس المبلغ والتاريخ (في نفس المعاملة)."""
+        label = CATEGORY_LABELS.get(expense.category, "مصروف")
+        TreasuryService(self.session, self.actor).upsert_source_entry(
+            source_entity=ENTITY_EXPENSE,
+            source_id=expense.id,
+            direction=CashDirection.OUT,
+            kind=CashKind.EXPENSE,
+            amount=expense.amount,
+            occurred_at=expense.spent_at,
+            note=f"{label}: {expense.note}" if expense.note else label,
+        )
 
     def _names(self, rows: list[Expense]) -> dict[str, str]:
         return self.repo.user_names(e.created_by for e in rows if e.created_by)

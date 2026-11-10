@@ -31,7 +31,16 @@ export function getStockLevel(
   return "ok";
 }
 
-export const lineTotal = (line: CartLine) => round2(line.price * line.qty);
+/** قيمة السطر قبل خصمه. */
+export const lineGross = (line: CartLine) => round2(line.price * line.qty);
+
+/** خصم السطر الفعلي (لا يتجاوز قيمته لو قلّت الكمية بعد الخصم). */
+export const lineDiscount = (line: CartLine) =>
+  round2(Math.min(Math.max(line.discount ?? 0, 0), lineGross(line)));
+
+/** قيمة السطر بعد خصمه. */
+export const lineTotal = (line: CartLine) =>
+  round2(lineGross(line) - lineDiscount(line));
 
 export function calcDiscount(
   subtotal: number,
@@ -48,6 +57,9 @@ export function calcDiscount(
 export interface InvoiceTotals {
   itemCount: number;
   qtyCount: number;
+  /** مجموع خصومات الأصناف. */
+  linesDiscount: number;
+  /** المجموع بعد خصم الأصناف (وقبل خصم الفاتورة). */
   subtotal: number;
   discountAmount: number;
   total: number;
@@ -60,6 +72,9 @@ export function calcTotals(invoice: PosInvoice): InvoiceTotals {
   const discountAmount = calcDiscount(subtotal, invoice.discount);
   return {
     itemCount: invoice.lines.length,
+    linesDiscount: round2(
+      invoice.lines.reduce((sum, line) => sum + lineDiscount(line), 0),
+    ),
     qtyCount: round3(invoice.lines.reduce((sum, l) => sum + l.qty, 0)),
     subtotal,
     discountAmount,

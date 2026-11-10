@@ -8,6 +8,7 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 
 from app.core.base import utcnow, uuid7
+from app.core.periods import local_today
 from app.core.bulk import BulkIn, BulkResultOut
 from app.core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
 from app.core.security import Actor
@@ -181,6 +182,19 @@ class CustomerService(EntityService):
             "collect_payment",
             {"amount": data.amount, "balance_after": entry.balance_after},
         )
+        # التحصيل نقدية داخلة للخزنة في نفس المعاملة.
+        from app.modules.treasury.service import TreasuryService
+        from app.modules.treasury.types import CashDirection, CashKind
+
+        TreasuryService(self.session, self.actor).post_entry(
+            direction=CashDirection.IN,
+            kind=CashKind.CUSTOMER_PAYMENT,
+            amount=data.amount,
+            occurred_at=local_today(),
+            note=f"تحصيل من {customer.name}",
+            source_entity=ENTITY_LEDGER_ENTRY,
+            source_id=entry.id,
+        )
         self._commit()
         return self._to_out(customer)
 
@@ -192,6 +206,36 @@ class CustomerService(EntityService):
 
     def bulk_deactivate(self, data: BulkIn) -> BulkResultOut:
         return self._bulk_deactivate(data, self._get_or_404)
+
+    # ================= واجهة للموديولات الأخرى (بدون commit) =================
+    def get_for_update(self, customer_id: str) -> Customer:
+        return self._get_or_404(customer_id)
+
+    def post_entry(
+        self,
+        customer: Customer,
+        entry_type: LedgerType,
+        *,
+        debit: int = 0,
+        credit: int = 0,
+        note: str | None = None,
+        ref_type: str | None = None,
+        ref_id: str | None = None,
+    ) -> CustomerLedgerEntry:
+        return self._post_entry(
+            customer,
+            entry_type,
+            debit=debit,
+            credit=credit,
+            note=note,
+            ref_type=ref_type,
+            ref_id=ref_id,
+        )
+
+    def record_purchase(self, customer: Customer, amount: int) -> None:
+        """إحصائيات العميل بعد فاتورة (لا تغيّر version لأنها أرصدة مخزّنة)."""
+        customer.total_sales += amount
+        customer.last_purchase_at = utcnow()
 
     # ================= داخلي =================
     def _get_or_404(self, customer_id: str) -> Customer:

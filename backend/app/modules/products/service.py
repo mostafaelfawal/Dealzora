@@ -257,6 +257,61 @@ class ProductService(EntityService):
     def bulk_deactivate(self, data: BulkIn) -> BulkResultOut:
         return self._bulk_deactivate(data, self._get_or_404)
 
+    # ================= واجهة للموديولات الأخرى (بدون commit) =================
+    def get_for_update(self, product_id: str) -> Product:
+        """الصنف الحي (حتى لو معطّلاً) لعمليات البيع والشراء. 404 لو محذوف."""
+        return self._get_or_404(product_id)
+
+    def move_stock(
+        self,
+        product: Product,
+        movement_type: MovementType,
+        delta: int,
+        *,
+        unit_cost: int | None = None,
+        note: str | None = None,
+        ref_type: str | None = None,
+        ref_id: str | None = None,
+    ) -> StockMovement:
+        """حركة مخزون مرتبطة بمستند (فاتورة بيع/شراء/مرتجع). الموديول المستدعي يملك المعاملة."""
+        return self._record_movement(
+            product,
+            movement_type,
+            delta,
+            note=note,
+            unit_cost=unit_cost,
+            ref_type=ref_type,
+            ref_id=ref_id,
+        )
+
+    def apply_purchase_prices(
+        self,
+        product: Product,
+        *,
+        received_qty: int,
+        unit_cost: int,
+        new_sale_price: int | None,
+        ref_id: str,
+    ) -> None:
+        """متوسط تكلفة مرجّح بعد الشراء (+ سعر بيع جديد اختياري). يُستدعى قبل move_stock."""
+        before = {"cost_price": product.cost_price, "sale_price": product.sale_price}
+        old_qty = max(product.stock_qty, 0)
+        total_qty = old_qty + received_qty
+        if old_qty > 0 and total_qty > 0:
+            cost = (old_qty * product.cost_price + received_qty * unit_cost + total_qty // 2) // total_qty
+        else:
+            cost = unit_cost
+        product.cost_price = cost
+        if new_sale_price:
+            product.sale_price = new_sale_price
+        after = {"cost_price": product.cost_price, "sale_price": product.sale_price}
+        if after == before:
+            return
+        base_version = product.version
+        product.mark_modified()
+        self._audit(product, "price_from_purchase", {**diff_snapshots(before, after), "purchase_id": ref_id})
+        self._enqueue(product, base_version=base_version)
+
     # ================= داخلي =================
     def _get_or_404(self, product_id: str) -> Product:
         product = self.repo.get(product_id)
@@ -332,6 +387,9 @@ class ProductService(EntityService):
         delta: int,
         *,
         note: str | None = None,
+        unit_cost: int | None = None,
+        ref_type: str | None = None,
+        ref_id: str | None = None,
     ) -> StockMovement:
         balance = product.stock_qty + delta
         movement = StockMovement(
@@ -342,8 +400,10 @@ class ProductService(EntityService):
             movement_type=movement_type.value,
             qty_delta=delta,
             balance_after=balance,
-            unit_cost=product.cost_price,
+            unit_cost=product.cost_price if unit_cost is None else unit_cost,
             note=note,
+            ref_type=ref_type,
+            ref_id=ref_id,
         )
         product.stock_qty = balance  # الرصيد المخزّن، داخل نفس المعاملة
         self.repo.add_movement(movement)
@@ -358,6 +418,8 @@ class ProductService(EntityService):
                 "balance_after": balance,
                 "unit_cost": movement.unit_cost,
                 "note": note,
+                "ref_type": ref_type,
+                "ref_id": ref_id,
             },
         )
         return movement

@@ -146,8 +146,8 @@ export function TreasuryScreen() {
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold">الخزنة</h1>
           <p className="text-xs text-muted-foreground">
-            تابع رصيد الخزنة وكل ما دخلها وخرج منها. المصروفات تُسجَّل هنا
-            تلقائياً.
+            تابع رصيد الخزنة وكل ما دخلها وخرج منها. المبيعات والمشتريات
+            والمصروفات والتحصيل تُسجَّل هنا تلقائياً.
           </p>
         </div>
         <Button size="lg" onClick={openForm} className="h-10 gap-2">

@@ -5,3 +5,5 @@ MAX_QUERY_LEN = 100  # أقصى طول لنص البحث
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 500
 MAX_BULK_ITEMS = 200  # أقصى عدد عناصر في طلب جماعي واحد
+QTY_SCALE = 1000  # الكميات INTEGER بوحدة الأساس × 1000 (1.5 كجم = 1500)
+RETURN_WINDOW_DAYS = 14  # مهلة المرتجع للكاشير (المدير بلا مهلة)

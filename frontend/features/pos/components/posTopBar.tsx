@@ -2,11 +2,13 @@
 
 import {
   IconArrowRight,
+  IconLogout,
   IconKeyboard,
   IconPlayerPause,
   IconReceiptRefund,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { ShiftStatus } from "@/components/layout/header/ShiftStatus";
 import { SyncStatus } from "@/components/layout/header/SyncStatus";
@@ -24,25 +26,51 @@ import { posUiActions } from "../store/posUiSlice";
 import { selectHeld } from "../store/selectors";
 import { BRAND } from "@/config/brand";
 import { requestReturn } from "../store/posActions";
+import { AUTH_ROUTES } from "@/features/auth/config/authRoutes";
+import { clearSession } from "@/features/auth/lib/authStorage";
+import { logout } from "@/features/settings/api/settings.api";
 
 export function PosTopBar() {
   const dispatch = useAppDispatch();
-  const { shift, sync } = useShellData();
+  const { shift, sync, user } = useShellData();
+  const router = useRouter();
+
+  // الكاشير يخرج بتسجيل الخروج (لوحة التحكم للمدير فقط).
+  async function signOut() {
+    try {
+      await logout();
+    } catch {}
+    clearSession();
+    router.replace(AUTH_ROUTES.login);
+  }
   const heldCount = useAppSelector(selectHeld).length;
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-1 border-b px-2 sm:gap-2 sm:px-3">
-      <AppTooltip message="خروج من الكاشير">
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          nativeButton={false}
-          render={<Link href="/admin/dashboard" />}
-          aria-label="خروج من الكاشير"
-        >
-          <IconArrowRight className="size-5" />
-        </Button>
-      </AppTooltip>
+      {user.role === "manager" ? (
+        <AppTooltip message="رجوع للوحة التحكم">
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            nativeButton={false}
+            render={<Link href="/admin/dashboard" />}
+            aria-label="رجوع للوحة التحكم"
+          >
+            <IconArrowRight className="size-5" />
+          </Button>
+        </AppTooltip>
+      ) : (
+        <AppTooltip message="تسجيل الخروج">
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            onClick={() => void signOut()}
+            aria-label="تسجيل الخروج"
+          >
+            <IconLogout className="size-5" />
+          </Button>
+        </AppTooltip>
+      )}
       <h1 className="text-lg font-bold">{BRAND.name}</h1>
       <BrandLogo variant="icon" />
       <h2 className="hidden text-sm font-semibold sm:block">الكاشير</h2>

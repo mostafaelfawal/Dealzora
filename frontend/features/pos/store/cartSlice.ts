@@ -18,8 +18,8 @@ import type {
 
 /** أقصى عدد من خطوات التراجع المحفوظة. */
 const HISTORY_LIMIT = 50;
-/** TODO: الرقم الحقيقي يأتي من الـ API وقت الحفظ. */
-const FIRST_INVOICE_NUMBER = 1043;
+/** رقم مبدئي للعرض فقط؛ الرقم الحقيقي يأتي من الـ backend عند تحميل الكاشير والحفظ. */
+const FIRST_INVOICE_NUMBER = 1;
 
 const EMPTY_INVOICE: PosInvoice = { lines: [], customer: null, discount: null };
 
@@ -227,6 +227,22 @@ const cartSlice = createSlice({
       state.selectedId = ids[next];
     },
 
+    /** خصم مبلغ ثابت على سطر (0 = إزالة). */
+    setLineDiscount(state, action: PayloadAction<{ id: string; amount: number }>) {
+      const { id, amount } = action.payload;
+      commit(state, (prev) => {
+        const target = prev.lines.find((l) => l.productId === id);
+        if (!target || (target.discount ?? 0) === amount) return prev;
+        return {
+          ...prev,
+          lines: prev.lines.map((l) =>
+            l.productId === id ? { ...l, discount: amount } : l,
+          ),
+        };
+      });
+      state.selectedId = id;
+    },
+
     /* ---------- بيانات الفاتورة ---------- */
 
     setCustomer(state, action: PayloadAction<PosCustomer | null>) {
@@ -293,10 +309,15 @@ const cartSlice = createSlice({
       resetTo(state, EMPTY_INVOICE);
     },
 
-    /** يقفل الفاتورة بعد الدفع. TODO: استبدلها بحفظ حقيقي عبر الـ API. */
-    completeInvoice(state) {
-      state.nextNumber += 1;
+    /** يقفل الفاتورة بعد حفظها في الـ backend. savedNumber = الرقم الذي أعطاه السيرفر. */
+    completeInvoice(state, action: PayloadAction<number | undefined>) {
+      state.nextNumber = (action.payload ?? state.nextNumber) + 1;
       resetTo(state, EMPTY_INVOICE);
+    },
+
+    /** آخر رقم فاتورة في الـ backend + 1 (عند فتح الكاشير). */
+    syncNextNumber(state, action: PayloadAction<number>) {
+      state.nextNumber = action.payload;
     },
 
     /* ---------- تراجع / إعادة ---------- */

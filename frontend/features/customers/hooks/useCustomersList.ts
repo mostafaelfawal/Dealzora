@@ -21,7 +21,14 @@ const NONE: Customer[] = [];
 export function useCustomersList() {
   const query = useGetCustomers();
   const all = query.data ?? NONE;
-  const [filters, setFilters] = useState<CustomerFilters>(DEFAULT_FILTERS);
+  // ?q= من البحث الشامل (Ctrl+K) يفتح الصفحة على العميل المطلوب مباشرة.
+  const [filters, setFilters] = useState<CustomerFilters>(() => {
+    const q =
+      typeof window === "undefined"
+        ? null
+        : new URLSearchParams(window.location.search).get("q");
+    return q ? { ...DEFAULT_FILTERS, query: q } : DEFAULT_FILTERS;
+  });
 
   const summary = useMemo(() => summarize(all), [all]);
 

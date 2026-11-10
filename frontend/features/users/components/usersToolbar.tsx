@@ -53,6 +53,7 @@ export function UsersToolbar({
             <IconSearch className="mr-2 size-5" />
           </InputGroupAddon>
           <InputGroupInput
+            data-page-search
             id={USERS_SEARCH_ID}
             value={filters.query}
             onChange={(event) => onChange({ query: event.target.value })}

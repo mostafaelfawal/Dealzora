@@ -32,7 +32,7 @@ export function SubscriptionBadge({ subscription }: SubscriptionBadgeProps) {
   return (
     <Badge
       variant="outline"
-      render={<Link href="/settings/subscription" />}
+      render={<Link href="/admin/settings" />}
       className={cn(
         "h-7 px-2.5 font-normal",
         critical

@@ -40,6 +40,8 @@ export interface CartLine {
   qty: number;
   allowDecimal: boolean;
   stock: number;
+  /** خصم على السطر بالجنيه (مبلغ ثابت). */
+  discount?: number;
 }
 
 export type DiscountType = "amount" | "percent";
@@ -78,6 +80,8 @@ export interface PaymentResult {
 
 /** صنف في فاتورة مكتملة (سعره وقت البيع، لا السعر الحالي). */
 export interface SoldLine {
+  /** id سطر الفاتورة في الـ backend (المرتجع يُرسل به). */
+  lineId: string;
   productId: string;
   name: string;
   barcode: string;
@@ -104,6 +108,7 @@ export type ReturnReason =
   "wrong_item" | "defective" | "customer_changed" | "other";
 
 export interface ReturnLine {
+  lineId: string;
   productId: string;
   name: string;
   unit: string;

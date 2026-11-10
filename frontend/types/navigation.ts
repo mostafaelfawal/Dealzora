@@ -8,6 +8,8 @@ export interface NavItem {
   icon: Icon;
   /** الأدوار المسموح لها برؤية العنصر. لو متحددش يظهر للكل. */
   roles?: UserRole[];
+  /** رقم الاختصار: Alt + الرقم ينقل للصفحة من أي مكان. */
+  hotkey?: number;
 }
 
 export interface NavGroup {

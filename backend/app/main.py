@@ -1,5 +1,6 @@
 import os
 import subprocess
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
 from app.core.init_db import init_db
+from app.modules.backup.service import auto_backup_if_due
 
 
 def prepare_data_dir(db_path: str) -> None:
@@ -42,6 +44,8 @@ async def lifespan(_: FastAPI):
     settings = get_settings()
     prepare_data_dir(settings.db_path)
     init_db()
+    # نسخة احتياطية تلقائية في الخلفية (لا تؤخر الإقلاع).
+    threading.Thread(target=auto_backup_if_due, name="auto-backup", daemon=True).start()
     yield
 
 

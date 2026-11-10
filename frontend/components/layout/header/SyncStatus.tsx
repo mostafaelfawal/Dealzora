@@ -25,7 +25,7 @@ const STATUS_CONFIG: Record<
   synced: {
     tone: "success",
     pulse: false,
-    description: "بياناتك محفوظة في السحابة",
+    description: "بياناتك محفوظة في نسخة احتياطية مشفّرة",
   },
   syncing: {
     tone: "warning",
@@ -35,12 +35,12 @@ const STATUS_CONFIG: Record<
   offline: {
     tone: "neutral",
     pulse: false,
-    description: "لا انترنت. يتم حفظ البيانات محليا و رفعها بعد الأتصال",
+    description: "تعذّر الاتصال بالخادم المحلي. أعد تشغيل البرنامج لو استمرت المشكلة",
   },
   error: {
     tone: "danger",
     pulse: false,
-    description: "فشل النسخ الاحتياطي. تأكد من الاتصال وحاول مجددا",
+    description: "مرّ وقت طويل على آخر نسخة احتياطية. أنشئ نسخة الآن",
   },
 };
 
@@ -64,6 +64,7 @@ export function SyncStatus({
   const label = (() => {
     switch (sync.status) {
       case "synced":
+        if (!sync.lastSyncedAt) return "لا توجد نسخة بعد";
         return now === null
           ? "آخر نسخة احتياطية"
           : `آخر نسخة ${formatMinutesAgo(sync.lastSyncedAt, now)}`;
@@ -72,7 +73,7 @@ export function SyncStatus({
       case "offline":
         return "غير متصل";
       case "error":
-        return "تعذّر النسخ الاحتياطي";
+        return "النسخة الاحتياطية قديمة";
     }
   })();
 
@@ -113,6 +114,7 @@ export function SyncStatus({
             <p className="pt-1 text-xs text-muted-foreground">{description}</p>
           )}
         </div>
+        {onBackup && (
         <Button
           variant="outline"
           size="lg"
@@ -127,6 +129,7 @@ export function SyncStatus({
           )}
           {isSyncing ? "جارٍ النسخ الاحتياطي..." : "إنشاء نسخة احتياطية"}
         </Button>
+        )}
       </PopoverContent>
     </Popover>
   );

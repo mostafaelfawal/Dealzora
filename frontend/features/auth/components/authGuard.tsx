@@ -24,7 +24,8 @@ export function AuthGuard({
   role,
 }: {
   children: ReactNode;
-  role?: UserRole;
+  /** دور واحد أو أكثر مسموح لهم (الكاشير والمدير كلاهما يبيعان). */
+  role?: UserRole | UserRole[];
 }) {
   const router = useRouter();
   const sessionRole = useSyncExternalStore(
@@ -33,16 +34,18 @@ export function AuthGuard({
     getServerSnapshot,
   );
 
-  const allowed = sessionRole !== null && (!role || sessionRole === role);
+  const roles = role === undefined ? null : Array.isArray(role) ? role : [role];
+  const roleOk = sessionRole !== null && (!roles || roles.includes(sessionRole));
+  const allowed = sessionRole !== null && roleOk;
 
   useEffect(() => {
     if (sessionRole === null) {
       clearSession(); // يمسح الـ cookie أيضاً
       router.replace(AUTH_ROUTES.login);
-    } else if (role && sessionRole !== role) {
+    } else if (!roleOk) {
       router.replace(AUTH_ROUTES.home[sessionRole]);
     }
-  }, [sessionRole, role, router]);
+  }, [sessionRole, roleOk, router]);
 
   return allowed ? <>{children}</> : null;
 }

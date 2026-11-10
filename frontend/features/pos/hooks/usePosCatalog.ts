@@ -8,6 +8,7 @@ import { extractErrorMessage } from "@/lib/errors";
 import { useAppDispatch } from "@/lib/store/hooks";
 
 import { fetchPosCatalog } from "../api/posCatalog.api";
+import { cartActions } from "../store/cartSlice";
 import { catalogActions } from "../store/catalogSlice";
 
 /** يحمّل الأصناف والعملاء من الـ API ويضعهم في الـ store. */
@@ -22,7 +23,10 @@ export function usePosCatalog() {
   const { data, isError, error } = query;
 
   useEffect(() => {
-    if (data) dispatch(catalogActions.setCatalog(data));
+    if (!data) return;
+    const { nextNumber, ...catalog } = data;
+    dispatch(catalogActions.setCatalog(catalog));
+    dispatch(cartActions.syncNextNumber(nextNumber));
   }, [data, dispatch]);
 
   useEffect(() => {

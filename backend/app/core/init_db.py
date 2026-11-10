@@ -16,8 +16,11 @@ import app.modules.auth.model  # noqa: F401
 import app.modules.products.model  # noqa: F401
 import app.modules.shop.model  # noqa: F401
 import app.modules.expenses.model  # noqa: F401
-import app.modules.suppliers.model # noqa: F401
-import app.modules.treasury.model # noqa: F401
+import app.modules.suppliers.model  # noqa: F401
+import app.modules.treasury.model  # noqa: F401
+import app.modules.shifts.model  # noqa: F401
+import app.modules.sales.model  # noqa: F401
+import app.modules.purchases.model  # noqa: F401
 
 def init_db() -> None:
     Base.metadata.create_all(get_engine())

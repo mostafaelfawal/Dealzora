@@ -20,7 +20,13 @@ import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { round2 } from "../lib/posCalc";
 import { applyDiscount } from "../store/posActions";
 import { posUiActions } from "../store/posUiSlice";
-import { selectInvoiceDiscount, selectTotals } from "../store/selectors";
+import { lineDiscount, lineGross } from "../lib/posCalc";
+import {
+  selectInvoiceDiscount,
+  selectLines,
+  selectSelectedId,
+  selectTotals,
+} from "../store/selectors";
 
 type Mode = "amount" | "percent" | "final";
 
@@ -33,6 +39,11 @@ const MODES: { id: Mode; label: string }[] = [
 export function PosDiscountDialog() {
   const dispatch = useAppDispatch();
   const open = useAppSelector((s) => s.posUi.dialog === "discount");
+  const isLine = useAppSelector((s) => s.posUi.discountTarget === "line");
+  const lineName = useAppSelector((s) => {
+    const id = selectSelectedId(s);
+    return selectLines(s).find((l) => l.productId === id)?.name ?? "";
+  });
   const valueInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -46,12 +57,19 @@ export function PosDiscountDialog() {
         className="gap-3 sm:max-w-sm"
       >
         <DialogHeader className="text-start">
-          <DialogTitle>خصم على الفاتورة</DialogTitle>
+          <DialogTitle>
+            {isLine ? `خصم على «${lineName}»` : "خصم على الفاتورة"}
+          </DialogTitle>
           <DialogDescription>
-            يُحتسب الخصم على مجموع الفاتورة بأكملها.
+            {isLine
+              ? "يُخصم من قيمة هذا الصنف فقط. للخصم على الفاتورة كلها اضغط F8."
+              : "يُحتسب الخصم على مجموع الفاتورة بأكملها. للخصم على صنف واحد اضغط F5."}
           </DialogDescription>
         </DialogHeader>
-        <DiscountForm valueInputRef={valueInputRef} />
+        <DiscountForm
+          key={isLine ? "line" : "invoice"}
+          valueInputRef={valueInputRef}
+        />
       </DialogContent>
     </Dialog>
   );
@@ -63,8 +81,20 @@ function DiscountForm({
   valueInputRef: RefObject<HTMLInputElement | null>;
 }) {
   const dispatch = useAppDispatch();
-  const { subtotal } = useAppSelector(selectTotals);
-  const current = useAppSelector(selectInvoiceDiscount);
+  const isLine = useAppSelector((s) => s.posUi.discountTarget === "line");
+  const totals = useAppSelector(selectTotals);
+  const invoiceDiscount = useAppSelector(selectInvoiceDiscount);
+  const selectedLine = useAppSelector((s) => {
+    const id = selectSelectedId(s);
+    return selectLines(s).find((l) => l.productId === id) ?? null;
+  });
+  // في خصم الصنف: الأساس قيمة السطر، والخصم الحالي مبلغ ثابت.
+  const subtotal = isLine && selectedLine ? lineGross(selectedLine) : totals.subtotal;
+  const lineCurrent =
+    selectedLine && lineDiscount(selectedLine) > 0
+      ? { type: "amount" as const, value: lineDiscount(selectedLine) }
+      : null;
+  const current = isLine ? lineCurrent : invoiceDiscount;
 
   // حالة الفورم نفسها (النوع والنص المكتوب) محلية، فمفيش سبب تروح الـ store.
   const [mode, setMode] = useState<Mode>(
@@ -96,7 +126,7 @@ function DiscountForm({
     if (!valid) return;
     dispatch(
       applyDiscount(
-        mode === "percent"
+        mode === "percent" && !isLine
           ? { type: "percent", value }
           : { type: "amount", value: discountAmount },
       ),

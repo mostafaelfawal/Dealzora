@@ -57,6 +57,18 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
 
+  /* أدوار الرسوم (من نفس درجات --chart-*، مختارة لكل وضع حسب التباين مع السطح):
+     main = السلسلة الأساسية، muted = المقارنة/الفترة السابقة، grid = خطوط الشبكة،
+     seq-1..5 = تدرّج المقدار (فاتح ← غامق) لخريطة أوقات الذروة. */
+  --chart-main: var(--chart-4);
+  --chart-muted: var(--chart-1);
+  --chart-grid: var(--border);
+  --chart-seq-1: oklch(0.95 0 0);
+  --chart-seq-2: var(--chart-1);
+  --chart-seq-3: var(--chart-2);
+  --chart-seq-4: var(--chart-3);
+  --chart-seq-5: var(--chart-5);
+
   /* Radius */
   --radius: 0.625rem;
 
@@ -121,6 +133,16 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+
+  /* في الداكن: الأفتح هو الأوضح على السطح الغامق، والتدرّج ينعكس. */
+  --chart-main: var(--chart-1);
+  --chart-muted: var(--chart-3);
+  --chart-grid: var(--border);
+  --chart-seq-1: oklch(0.25 0 0);
+  --chart-seq-2: var(--chart-4);
+  --chart-seq-3: var(--chart-2);
+  --chart-seq-4: oklch(0.72 0 0);
+  --chart-seq-5: var(--chart-1);
 
   /* Sidebar */
   --sidebar: oklch(0.205 0 0);

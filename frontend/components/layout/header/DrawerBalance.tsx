@@ -16,12 +16,12 @@ export function DrawerBalance({
   showLabels = false,
 }: DrawerBalanceProps) {
   return (
-    <AppTooltip message="رصيد الدرج الحالي">
+    <AppTooltip message="المتوقع في الدرج الآن">
       <Button
         variant="ghost"
         size="lg"
         nativeButton={false}
-        render={<Link href="/shifts" />}
+        render={<Link href="/admin/shifts" />}
         className="gap-2 px-2 font-normal"
       >
         <IconCash className="size-4 text-muted-foreground" />

@@ -1,5 +1,15 @@
 export type CashDirection = "in" | "out";
-export type CashKind = "expense" | "manual_in" | "manual_out";
+export type CashKind =
+  | "expense"
+  | "manual_in"
+  | "manual_out"
+  | "sale"
+  | "sale_return"
+  | "purchase"
+  | "purchase_return"
+  | "customer_payment"
+  | "supplier_payment"
+  | "shift_diff";
 
 export interface CashEntry {
   id: string;

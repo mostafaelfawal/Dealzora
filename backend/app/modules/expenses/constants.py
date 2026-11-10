@@ -17,6 +17,20 @@ ENTITY_EXPENSE = "expense"
 
 EXPENSE_SNAPSHOT_FIELDS = ("category", "amount", "note", "spent_at")
 
+# أسماء البنود في ملاحظة حركة الخزنة (طابقها مع EXPENSE_CATEGORIES في الواجهة)
+CATEGORY_LABELS = {
+    "rent": "إيجار",
+    "electricity": "كهرباء",
+    "water": "مياه",
+    "salaries": "رواتب",
+    "transport": "نقل ومواصلات",
+    "maintenance": "صيانة",
+    "supplies": "مستلزمات",
+    "marketing": "دعاية وتسويق",
+    "taxes": "ضرائب ورسوم",
+    "other": "مصروفات أخرى",
+}
+
 
 class ExpenseError(StrEnum):
     NOT_FOUND = "expense_not_found"

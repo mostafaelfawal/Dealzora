@@ -129,3 +129,18 @@ export function formatTimeAgo(from: number, now: number): string {
 
   return formatTime(from);
 }
+
+/* ---------- إدخال أرقام ---------- */
+
+/** نص من خانة رقمية (يقبل الأرقام العربية والفواصل) → رقم. NaN لو فاضي أو غير صالح. */
+export function parseNumberInput(text: string): number {
+  const cleaned = normalizeDigits(text).replace(/[,\s]/g, "");
+  if (cleaned === "") return NaN;
+  return Number(cleaned);
+}
+
+/** نفس parseNumberInput لكن الفاضي/غير الصالح = 0، ومقرّب لقرشين. */
+export function moneyInputOrZero(text: string): number {
+  const n = parseNumberInput(text);
+  return Number.isFinite(n) ? Math.round((n + Number.EPSILON) * 100) / 100 : 0;
+}

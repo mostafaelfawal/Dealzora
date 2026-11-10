@@ -17,6 +17,10 @@ export type PosDialog =
 export type MobileView = "products" | "cart";
 
 export interface PosUiState {
+  /** طلب حفظ جارٍ للـ backend: يمنع الحفظ المزدوج. */
+  saving: boolean;
+  /** هدف نافذة الخصم: الفاتورة كلها أو الصنف المحدد. */
+  discountTarget: "invoice" | "line";
   query: string;
   activeIndex: number;
   notFound: string | null;
@@ -29,6 +33,8 @@ export interface PosUiState {
 }
 
 const initialState: PosUiState = {
+  saving: false,
+  discountTarget: "invoice",
   query: "",
   activeIndex: 0,
   notFound: null,
@@ -76,6 +82,14 @@ const posUiSlice = createSlice({
 
     openDialog(state, action: PayloadAction<PosDialog>) {
       state.dialog = action.payload;
+      if (action.payload === "discount") state.discountTarget = "invoice";
+    },
+    openLineDiscount(state) {
+      state.dialog = "discount";
+      state.discountTarget = "line";
+    },
+    setSaving(state, action: PayloadAction<boolean>) {
+      state.saving = action.payload;
     },
     closeDialog(state) {
       state.dialog = null;

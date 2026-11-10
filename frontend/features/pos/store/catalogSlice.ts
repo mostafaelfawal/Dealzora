@@ -11,7 +11,7 @@ export interface CatalogState {
   products: PosProduct[];
   categories: PosCategory[];
   customers: PosCustomer[];
-  /** TODO: لا يوجد endpoint للفواتير بعد. */
+  /** فواتير مهلة الإرجاع (من GET /sales) للمرتجع والاستبدال. */
   invoices: CompletedInvoice[];
 }
 
@@ -31,7 +31,16 @@ const catalogSlice = createSlice({
     setCatalog(state, action: PayloadAction<Partial<CatalogState>>) {
       Object.assign(state, action.payload);
     },
-    /** يسجّل ما أُرجع على الفاتورة الأصلية (عدّاد المرتجع فقط). */
+    /** بعد حفظ فاتورة: تُضاف أولاً، ويُخصم المباع من الرصيد المحلي فوراً (بدون انتظار إعادة التحميل). */
+    addInvoice(state, action: PayloadAction<CompletedInvoice>) {
+      const invoice = action.payload;
+      state.invoices = [invoice, ...state.invoices.filter((i) => i.id !== invoice.id)];
+      for (const line of invoice.lines) {
+        const product = state.products.find((p) => p.id === line.productId);
+        if (product) product.stock = round3(product.stock - line.qty);
+      }
+    },
+    /** يسجّل ما أُرجع على الفاتورة الأصلية ويُرجعه للرصيد المحلي. */
     applyReturn(
       state,
       action: PayloadAction<{
@@ -46,6 +55,8 @@ const catalogSlice = createSlice({
       for (const r of action.payload.lines) {
         const line = invoice.lines.find((l) => l.productId === r.productId);
         if (line) line.returnedQty = round3(line.returnedQty + r.qty);
+        const product = state.products.find((p) => p.id === r.productId);
+        if (product) product.stock = round3(product.stock + r.qty);
       }
     },
   },

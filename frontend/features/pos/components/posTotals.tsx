@@ -57,6 +57,15 @@ export function PosTotals() {
             {totals.itemCount} · {formatQty(totals.qtyCount)} وحدة
           </dd>
         </div>
+        {totals.linesDiscount > 0 && (
+          <div className="flex items-center justify-between">
+            <dt className="text-muted-foreground">خصم الأصناف</dt>
+            <dd className="flex items-baseline gap-1 text-warning">
+              <span aria-hidden>−</span>
+              <Money amount={totals.linesDiscount} />
+            </dd>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">المجموع</dt>
           <dd>

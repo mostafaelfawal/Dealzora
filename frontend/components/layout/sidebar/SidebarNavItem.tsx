@@ -61,13 +61,25 @@ export function SidebarNavItem({
         )}
       />
       {!collapsed && <span className="truncate">{item.title}</span>}
+      {!collapsed && item.hotkey !== undefined && (
+        <kbd
+          dir="ltr"
+          aria-hidden
+          className="ms-auto hidden font-mono text-[10px] text-muted-foreground/70 opacity-0 transition-opacity group-hover/item:opacity-100 lg:inline"
+        >
+          Alt {item.hotkey}
+        </kbd>
+      )}
     </Link>
   );
 
   if (!collapsed) return link;
 
   return (
-    <AppTooltip message={item.title} side="left">
+    <AppTooltip
+      message={item.hotkey !== undefined ? `${item.title} (Alt ${item.hotkey})` : item.title}
+      side="left"
+    >
       {link}
     </AppTooltip>
   );

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useNow } from "@/hooks/useNow";
+import { useSessionUser } from "@/hooks/useShellData";
 import { formatQty } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
@@ -59,11 +60,14 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
   const [qtys, setQtys] = useState<Record<string, number>>({});
   const [reason, setReason] = useState<ReturnReason | null>(null);
 
-  const expired = now !== null && isReturnExpired(invoice.soldAt, now);
+  // المدير يرجّع بدون مهلة (الـ backend يطبّق نفس القاعدة).
+  const isManager = useSessionUser().role === "manager";
+  const expired = !isManager && now !== null && isReturnExpired(invoice.soldAt, now);
 
   const lines: ReturnLine[] = invoice.lines
     .filter((l) => (qtys[l.productId] ?? 0) > 0)
     .map((l) => ({
+      lineId: l.lineId,
       productId: l.productId,
       name: l.name,
       unit: l.unit,

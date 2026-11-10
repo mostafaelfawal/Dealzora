@@ -1,3 +1,3 @@
 export const CUSTOMER_ROUTES = {
-  list: "/customers",
+  list: "/admin/customers",
 } as const;

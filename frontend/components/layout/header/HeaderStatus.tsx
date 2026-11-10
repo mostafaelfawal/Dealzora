@@ -1,6 +1,7 @@
 "use client";
 
 import { ROLE_PERMISSIONS } from "@/config/roles";
+import { useCreateBackup } from "@/features/settings/hooks/useSettings";
 import { useShellData } from "@/hooks/useShellData";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,8 @@ export function HeaderStatus({
 }: HeaderStatusProps) {
   const { user, shift, drawerBalance, sync, subscription } = useShellData();
   const canViewDrawerBalance = ROLE_PERMISSIONS[user.role].canViewDrawerBalance;
+  const backup = useCreateBackup();
+  const isManager = user.role === "manager";
 
   return (
     <div className={cn("items-center gap-1", className)}>
@@ -29,7 +32,11 @@ export function HeaderStatus({
       {canViewDrawerBalance && shift && (
         <DrawerBalance amount={drawerBalance} showLabels={showLabels} />
       )}
-      <SyncStatus sync={sync} showLabels={showLabels} />
+      <SyncStatus
+        sync={backup.isPending ? { ...sync, status: "syncing" } : sync}
+        showLabels={showLabels}
+        onBackup={isManager ? () => backup.mutate() : undefined}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { IconPrinter } from "@tabler/icons-react";
+import { IconLoader2, IconPrinter } from "@tabler/icons-react";
 
 import { Money } from "@/components/shared/Money";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
@@ -67,12 +67,13 @@ function ExchangeForm({
 }) {
   const dispatch = useAppDispatch();
   const { newTotal, returnTotal, net, kind } = useAppSelector(selectSettlement);
+  const saving = useAppSelector((s) => s.posUi.saving);
   const [print, setPrint] = useState(true);
   const copy = COPY[kind];
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    dispatch(confirmExchange());
+    void dispatch(confirmExchange(print));
   }
 
   return (
@@ -136,8 +137,10 @@ function ExchangeForm({
           ref={submitRef}
           type="submit"
           size="lg"
+          disabled={saving}
           className="h-11 gap-2 px-5 text-sm"
         >
+          {saving && <IconLoader2 className="size-4 animate-spin" />}
           {copy.confirm}
           <ShortcutBadge className="rounded-none border-primary-foreground/30 text-primary-foreground/80">
             Enter

@@ -5,7 +5,7 @@ import {
   IconLockDollar,
   IconPlayerPlay,
 } from "@tabler/icons-react";
-import Link from "next/link";
+import { useState } from "react";
 
 import { StatusDot } from "@/components/shared/StatusDot";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/popover";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import {
+  CloseShiftDialog,
+  OpenShiftDialog,
+} from "@/features/shifts/components/shiftDialogs";
 import type { Shift } from "@/types/shell";
 
 interface ShiftStatusProps {
@@ -25,9 +29,17 @@ interface ShiftStatusProps {
 
 export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
   const isOpen = shift !== null;
+  const [popover, setPopover] = useState(false);
+  const [dialog, setDialog] = useState<"open" | "close" | null>(null);
+
+  function openDialog(next: "open" | "close") {
+    setPopover(false);
+    setDialog(next);
+  }
 
   return (
-    <Popover>
+    <>
+    <Popover open={popover} onOpenChange={setPopover}>
       <PopoverTrigger
         render={
           <Button
@@ -71,14 +83,14 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
                 className="text-sm text-muted-foreground"
                 suppressHydrationWarning
               >
-                {shift.cashierName} · فُتحت {formatTime(shift.openedAt)}
+                {shift.cashierName ?? "—"} · فُتحت {formatTime(shift.openedAt)} ·{" "}
+                {shift.salesCount} فاتورة
               </p>
             </div>
             <Button
               variant="outline"
               size="lg"
-              nativeButton={false}
-              render={<Link href="/shifts/close" />}
+              onClick={() => openDialog("close")}
               className="w-full"
             >
               <IconLockDollar className="size-4" />
@@ -92,8 +104,7 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
             </p>
             <Button
               size="lg"
-              nativeButton={false}
-              render={<Link href="/shifts/open" />}
+              onClick={() => openDialog("open")}
               className="w-full"
             >
               <IconPlayerPlay className="size-4" />
@@ -103,5 +114,12 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
         )}
       </PopoverContent>
     </Popover>
+    <OpenShiftDialog open={dialog === "open"} onClose={() => setDialog(null)} />
+    <CloseShiftDialog
+      shift={shift}
+      open={dialog === "close"}
+      onClose={() => setDialog(null)}
+    />
+    </>
   );
 }

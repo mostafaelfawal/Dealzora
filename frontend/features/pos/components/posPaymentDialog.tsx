@@ -1,6 +1,6 @@
 "use client";
 
-import { IconAlertTriangle, IconPrinter } from "@tabler/icons-react";
+import { IconAlertTriangle, IconLoader2, IconPrinter } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, RefObject } from "react";
 
@@ -78,6 +78,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
   const customer = useAppSelector(selectInvoiceCustomer);
   // الطريقة اللي اتفتحت بيها النافذة (أو اللي رجعنا بيها من اختيار العميل).
   const initialMethod = useAppSelector((s) => s.posUi.paymentMethod);
+  const saving = useAppSelector((s) => s.posUi.saving);
 
   // حالة الفورم (الطريقة الحالية والمبلغ المكتوب) محلية عمداً.
   const [method, setMethod] = useState<PaymentMethod>(initialMethod);
@@ -138,8 +139,8 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
   }
 
   function confirm() {
-    if (error) return;
-    dispatch(
+    if (error || saving) return;
+    void dispatch(
       confirmPayment({
         method,
         received: method === "cash" ? cash : applied,
@@ -353,10 +354,11 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
           ref={submitRef}
           type="submit"
           size="lg"
-          disabled={error !== null}
+          disabled={error !== null || saving}
           className="h-11 gap-2 px-5 text-sm"
         >
-          تأكيد وحفظ الفاتورة
+          {saving && <IconLoader2 className="size-4 animate-spin" />}
+          {saving ? "جارٍ الحفظ…" : "تأكيد وحفظ الفاتورة"}
           <ShortcutBadge className="rounded-none border-primary-foreground/30 text-primary-foreground/80">
             Enter
           </ShortcutBadge>

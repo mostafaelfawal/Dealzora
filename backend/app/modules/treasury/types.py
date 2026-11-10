@@ -16,7 +16,13 @@ class CashKind(StrEnum):
     EXPENSE = "expense"  # تلقائي من المصروفات
     MANUAL_IN = "manual_in"  # إيداع يدوي (رصيد افتتاحي، تمويل...)
     MANUAL_OUT = "manual_out"  # سحب يدوي
-    # لاحقاً: SALE, PURCHASE, CUSTOMER_PAYMENT, SUPPLIER_PAYMENT, REFUND, SHIFT_ADJUST
+    SALE = "sale"  # الجزء الكاش من فاتورة بيع
+    SALE_RETURN = "sale_return"  # رد نقدية لعميل في مرتجع
+    PURCHASE = "purchase"  # المدفوع كاش في فاتورة شراء
+    PURCHASE_RETURN = "purchase_return"  # نقدية رجعت من المورد
+    CUSTOMER_PAYMENT = "customer_payment"  # تحصيل من عميل
+    SUPPLIER_PAYMENT = "supplier_payment"  # سداد لمورد
+    SHIFT_DIFF = "shift_diff"  # عجز/زيادة الدرج عند قفل الوردية
 
 
 MANUAL_KINDS = frozenset({CashKind.MANUAL_IN, CashKind.MANUAL_OUT})
