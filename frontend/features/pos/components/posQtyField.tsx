@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatQty, normalizeDigits } from "@/lib/format";
 import { useAppDispatch } from "@/lib/store/hooks";
+import { lineKey } from "../lib/posCalc";
 import { focusSearch } from "../lib/posFocus";
 import { cartActions } from "../store/cartSlice";
 import type { CartLine } from "../types/pos";
@@ -16,7 +17,7 @@ import { AppTooltip } from "@/components/shared/AppTooltip";
 export function PosQtyField({ line }: { line: CartLine }) {
   const dispatch = useAppDispatch();
   const [draft, setDraft] = useState<string | null>(null);
-  const id = line.productId;
+  const id = lineKey(line);
 
   function commit() {
     if (draft === null) return;

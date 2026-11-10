@@ -52,8 +52,10 @@ export const toSale = (d: SaleDto): Sale => ({
   lines: d.lines.map((l) => ({
     id: l.id,
     productId: l.product_id,
+    unitId: l.unit_id,
     name: l.name,
     unitName: l.unit_name,
+    factor: fromQty(l.factor),
     qty: fromQty(l.qty),
     unitPrice: toPounds(l.unit_price),
     discount: toPounds(l.discount),
@@ -93,6 +95,7 @@ const toSalePayload = (s: SaleInput) => ({
   customer_id: s.customerId,
   lines: s.lines.map((l) => ({
     product_id: l.productId,
+    unit_id: l.unitId ?? null,
     qty: toQty(l.qty),
     unit_price: toCents(l.unitPrice),
     discount: toCents(l.discount),

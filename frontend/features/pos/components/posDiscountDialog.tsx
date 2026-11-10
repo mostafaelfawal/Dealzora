@@ -20,7 +20,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { round2 } from "../lib/posCalc";
 import { applyDiscount } from "../store/posActions";
 import { posUiActions } from "../store/posUiSlice";
-import { lineDiscount, lineGross } from "../lib/posCalc";
+import { lineDiscount, lineGross, lineKey } from "../lib/posCalc";
 import {
   selectInvoiceDiscount,
   selectLines,
@@ -42,7 +42,7 @@ export function PosDiscountDialog() {
   const isLine = useAppSelector((s) => s.posUi.discountTarget === "line");
   const lineName = useAppSelector((s) => {
     const id = selectSelectedId(s);
-    return selectLines(s).find((l) => l.productId === id)?.name ?? "";
+    return selectLines(s).find((l) => lineKey(l) === id)?.name ?? "";
   });
   const valueInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +86,7 @@ function DiscountForm({
   const invoiceDiscount = useAppSelector(selectInvoiceDiscount);
   const selectedLine = useAppSelector((s) => {
     const id = selectSelectedId(s);
-    return selectLines(s).find((l) => l.productId === id) ?? null;
+    return selectLines(s).find((l) => lineKey(l) === id) ?? null;
   });
   // في خصم الصنف: الأساس قيمة السطر، والخصم الحالي مبلغ ثابت.
   const subtotal =

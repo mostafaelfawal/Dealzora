@@ -1,23 +1,115 @@
 "use client";
 
-import { IconAlertTriangle, IconBarcode, IconX } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconBarcode,
+  IconCheck,
+  IconChevronDown,
+  IconX,
+} from "@tabler/icons-react";
 import { useEffect } from "react";
 
 import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatQty } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
-import { lineDiscount, lineTotal } from "../lib/posCalc";
+import { lineDiscount, lineKey, lineTotal, unitOptions } from "../lib/posCalc";
 import { cartActions } from "../store/cartSlice";
-import { removeLineWithUndo } from "../store/posActions";
-import { selectLines, selectSelectedId } from "../store/selectors";
+import { changeLineUnit, removeLineWithUndo } from "../store/posActions";
+import {
+  selectLines,
+  selectProducts,
+  selectSelectedId,
+} from "../store/selectors";
 import type { CartLine } from "../types/pos";
 
 import { PosQtyField } from "./posQtyField";
 
 const th = "h-8 px-2 text-start text-xs font-normal text-muted-foreground";
+
+/**
+ * مبدّل وحدة البيع (قطعة <-> كرتونة) لصنف له وحدات إضافية.
+ * بدون وحدات إضافية: يعرض اسم الوحدة كنص فقط.
+ */
+function UnitSwitcher({ line, id }: { line: CartLine; id: string }) {
+  const dispatch = useAppDispatch();
+  const product = useAppSelector((s) =>
+    selectProducts(s).find((p) => p.id === line.productId),
+  );
+  const options = product ? unitOptions(product) : [];
+  const current = line.unitId ?? null;
+
+  if (options.length < 2) {
+    return (
+      <span className="text-[11px] text-muted-foreground">{line.unit}</span>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            aria-label={`وحدة البيع: ${line.unit}. اضغط للتغيير`}
+            onClick={(event) => event.stopPropagation()}
+            className={cn(
+              "inline-flex h-6 items-center gap-0.5 rounded-sm border px-1.5 text-[11px]",
+              "outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/40",
+              current
+                ? "border-primary/50 bg-primary/10 font-medium text-primary"
+                : "",
+            )}
+          />
+        }
+      >
+        {line.unit}
+        <IconChevronDown className="size-3" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="w-52"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs">وحدة البيع</DropdownMenuLabel>
+          {options.map((u) => (
+            <DropdownMenuItem
+              key={u.id ?? "base"}
+              onClick={() => dispatch(changeLineUnit(id, u.id))}
+              className="justify-between gap-3"
+            >
+              <span className="flex items-center gap-1.5">
+                {u.id === current ? (
+                  <IconCheck className="size-3.5" />
+                ) : (
+                  <span className="size-3.5" />
+                )}
+                {u.name}
+                {u.factor !== 1 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    ({formatQty(u.factor)} {product?.unit})
+                  </span>
+                )}
+              </span>
+              <Money amount={u.price} className="text-xs" />
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function CartRow({
   line,
@@ -29,13 +121,17 @@ function CartRow({
   selected: boolean;
 }) {
   const dispatch = useAppDispatch();
-  const overStock = line.qty > line.stock;
+  const id = lineKey(line);
+  const factor = line.factor ?? 1;
+  // المخزون بالوحدة الأساسية، والسطر بوحدة البيع (الكرتونة = 12 قطعة).
+  const overStock = line.qty * factor > line.stock;
+  const available = factor === 1 ? line.stock : Math.floor(line.stock / factor);
 
   return (
     <tr
-      id={`pos-line-${line.productId}`}
+      id={`pos-line-${id}`}
       aria-selected={selected}
-      onClick={() => dispatch(cartActions.selectLine(line.productId))}
+      onClick={() => dispatch(cartActions.selectLine(id))}
       className={cn(
         "h-14 scroll-mt-8 cursor-pointer border-b lg:h-12",
         selected && "bg-muted",
@@ -53,17 +149,18 @@ function CartRow({
         )}
         <span className="block truncate text-xs font-medium">{line.name}</span>
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <UnitSwitcher line={line} id={id} />
           <span className="hidden font-mono sm:flex sm:gap-1">
             <IconBarcode className="size-4" />
             {line.barcode}
           </span>
           <span className="sm:hidden">
-            <Money amount={line.price} className="text-[11px]" /> / {line.unit}
+            <Money amount={line.price} className="text-[11px]" />
           </span>
           {overStock && (
             <span className="inline-flex items-center gap-1 text-warning">
               <IconAlertTriangle className="size-3" />
-              أكثر من المتاح ({formatQty(line.stock)})
+              أكثر من المتاح ({formatQty(available)})
             </span>
           )}
         </span>
@@ -91,7 +188,7 @@ function CartRow({
             aria-label={`حذف ${line.name}`}
             onClick={(event) => {
               event.stopPropagation();
-              dispatch(removeLineWithUndo(line.productId));
+              dispatch(removeLineWithUndo(id));
             }}
             className="size-9 lg:size-7"
           >
@@ -156,10 +253,10 @@ export function PosCartTable() {
         <tbody>
           {lines.map((line, index) => (
             <CartRow
-              key={line.productId}
+              key={lineKey(line)}
               line={line}
               index={index}
-              selected={line.productId === selectedId}
+              selected={lineKey(line) === selectedId}
             />
           ))}
         </tbody>

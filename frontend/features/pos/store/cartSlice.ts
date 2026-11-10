@@ -6,7 +6,7 @@ import {
   type PayloadAction,
 } from "@reduxjs/toolkit";
 
-import { clampQty } from "../lib/posCalc";
+import { clampQty, lineKey, unitOptions } from "../lib/posCalc";
 import type {
   CartLine,
   HeldInvoice,
@@ -76,23 +76,36 @@ export function resolveSelectedId(
   lines: CartLine[],
   raw: string | null,
 ): string | null {
-  return lines.some((l) => l.productId === raw)
-    ? raw
-    : (lines.at(-1)?.productId ?? null);
+  if (lines.some((l) => lineKey(l) === raw)) return raw;
+  const last = lines.at(-1);
+  return last ? lineKey(last) : null;
 }
 
-function toLine(product: PosProduct, qty: number): CartLine {
+/** سطر جديد بوحدة معيّنة (null = الأساسية). الوحدات الإضافية بالعدد الصحيح دائماً. */
+function toLine(
+  product: PosProduct,
+  qty: number,
+  unitId: string | null = null,
+): CartLine {
+  const extra = unitId
+    ? (unitOptions(product).find((u) => u.id === unitId) ?? null)
+    : null;
+  const allowDecimal = extra ? false : product.allowDecimal;
   return {
     productId: product.id,
+    unitId: extra ? extra.id : null,
+    factor: extra ? extra.factor : 1,
     name: product.name,
     barcode: product.barcode,
-    unit: product.unit,
-    price: product.price,
-    qty: clampQty(qty, product.allowDecimal),
-    allowDecimal: product.allowDecimal,
+    unit: extra ? extra.name : product.unit,
+    price: extra ? extra.price : product.price,
+    qty: clampQty(qty, allowDecimal),
+    allowDecimal,
     stock: product.stock,
   };
 }
+
+const keyOf = (line: CartLine) => lineKey(line);
 
 /** تعديل قابل للتراجع. لو `update` رجّعت نفس المرجع يبقى مفيش تغيير ومش بيتسجّل. */
 function commit(state: CartState, update: (prev: PosInvoice) => PosInvoice) {
@@ -110,20 +123,19 @@ function resetTo(state: CartState, invoice: PosInvoice) {
   state.past = [];
   state.present = invoice;
   state.future = [];
-  state.selectedId = invoice.lines.at(-1)?.productId ?? null;
+  const last = invoice.lines.at(-1);
+  state.selectedId = last ? keyOf(last) : null;
 }
 
 function applyQty(state: CartState, id: string, qty: number) {
   commit(state, (prev) => {
-    const target = prev.lines.find((l) => l.productId === id);
+    const target = prev.lines.find((l) => keyOf(l) === id);
     if (!target) return prev;
     const next = clampQty(qty, target.allowDecimal);
     if (next === target.qty) return prev;
     return {
       ...prev,
-      lines: prev.lines.map((l) =>
-        l.productId === id ? { ...l, qty: next } : l,
-      ),
+      lines: prev.lines.map((l) => (keyOf(l) === id ? { ...l, qty: next } : l)),
     };
   });
   state.selectedId = id;
@@ -147,21 +159,70 @@ const cartSlice = createSlice({
 
     addProduct(
       state,
-      action: PayloadAction<{ product: PosProduct; qty?: number }>,
+      action: PayloadAction<{
+        product: PosProduct;
+        qty?: number;
+        /** وحدة إضافية (مسح باركود الكرتونة). الغياب = الأساسية. */
+        unitId?: string | null;
+      }>,
     ) {
-      const { product, qty = 1 } = action.payload;
+      const { product, qty = 1, unitId = null } = action.payload;
+      const line = toLine(product, qty, unitId);
+      const key = keyOf(line);
       commit(state, (prev) => {
-        const exists = prev.lines.some((l) => l.productId === product.id);
+        const exists = prev.lines.some((l) => keyOf(l) === key);
         const lines = exists
           ? prev.lines.map((l) =>
-              l.productId === product.id
+              keyOf(l) === key
                 ? { ...l, qty: clampQty(l.qty + qty, l.allowDecimal) }
                 : l,
             )
-          : [...prev.lines, toLine(product, qty)];
+          : [...prev.lines, line];
         return { ...prev, lines };
       });
-      state.selectedId = product.id;
+      state.selectedId = key;
+    },
+
+    /**
+     * تغيير وحدة بيع السطر (قطعة <-> كرتونة). السعر يتبع الوحدة الجديدة وخصم السطر يُلغى.
+     * لو الصنف موجود بالفعل بالوحدة الجديدة، يندمج السطران.
+     */
+    setLineUnit(
+      state,
+      action: PayloadAction<{
+        id: string;
+        product: PosProduct;
+        unitId: string | null;
+      }>,
+    ) {
+      const { id, product, unitId } = action.payload;
+      let selected = id;
+      commit(state, (prev) => {
+        const index = prev.lines.findIndex((l) => keyOf(l) === id);
+        if (index < 0) return prev;
+        const old = prev.lines[index];
+        if ((old.unitId ?? null) === unitId) return prev;
+        const next = toLine(product, old.qty, unitId);
+        const key = keyOf(next);
+        selected = key;
+        const twin = prev.lines.some((l) => keyOf(l) === key);
+        if (twin) {
+          return {
+            ...prev,
+            lines: prev.lines
+              .filter((l) => keyOf(l) !== id)
+              .map((l) =>
+                keyOf(l) === key
+                  ? { ...l, qty: clampQty(l.qty + next.qty, l.allowDecimal) }
+                  : l,
+              ),
+          };
+        }
+        const lines = [...prev.lines];
+        lines[index] = next;
+        return { ...prev, lines };
+      });
+      state.selectedId = selected;
     },
 
     setQty(state, action: PayloadAction<{ id: string; qty: number }>) {
@@ -171,7 +232,7 @@ const cartSlice = createSlice({
     /** +/- : القطعة بخطوة 1، والوزن بخطوة 0.5. لا ينزل تحت الحد الأدنى. */
     changeQty(state, action: PayloadAction<{ id: string; direction: 1 | -1 }>) {
       const { id, direction } = action.payload;
-      const line = state.present.lines.find((l) => l.productId === id);
+      const line = state.present.lines.find((l) => keyOf(l) === id);
       if (!line) return;
       const step = line.allowDecimal ? 0.5 : 1;
       const next = line.qty + direction * step;
@@ -182,13 +243,13 @@ const cartSlice = createSlice({
     removeLine(state, action: PayloadAction<string>) {
       const id = action.payload;
       const prev = plain(state.present);
-      const index = prev.lines.findIndex((l) => l.productId === id);
+      const index = prev.lines.findIndex((l) => keyOf(l) === id);
       if (index < 0) return;
-      const rest = prev.lines.filter((l) => l.productId !== id);
+      const rest = prev.lines.filter((l) => keyOf(l) !== id);
       state.lastRemoved = { line: prev.lines[index], index };
       commit(state, (p) => ({ ...p, lines: rest }));
-      state.selectedId =
-        rest[Math.min(index, rest.length - 1)]?.productId ?? null;
+      const next = rest[Math.min(index, rest.length - 1)];
+      state.selectedId = next ? keyOf(next) : null;
     },
 
     /** زر «تراجع» في إشعار الحذف: يعيد الصنف المحذوف في مكانه. */
@@ -197,13 +258,13 @@ const cartSlice = createSlice({
       if (!removed) return;
       state.lastRemoved = null;
       commit(state, (prev) => {
-        if (prev.lines.some((l) => l.productId === removed.line.productId))
+        if (prev.lines.some((l) => keyOf(l) === keyOf(removed.line)))
           return prev;
         const lines = [...prev.lines];
         lines.splice(Math.min(removed.index, lines.length), 0, removed.line);
         return { ...prev, lines };
       });
-      state.selectedId = removed.line.productId;
+      state.selectedId = keyOf(removed.line);
     },
 
     selectLine(state, action: PayloadAction<string | null>) {
@@ -211,7 +272,7 @@ const cartSlice = createSlice({
     },
 
     moveSelection(state, action: PayloadAction<1 | -1>) {
-      const ids = state.present.lines.map((l) => l.productId);
+      const ids = state.present.lines.map(keyOf);
       if (ids.length === 0) return;
       const selected = resolveSelectedId(
         plain(state.present).lines,
@@ -234,12 +295,12 @@ const cartSlice = createSlice({
     ) {
       const { id, amount } = action.payload;
       commit(state, (prev) => {
-        const target = prev.lines.find((l) => l.productId === id);
+        const target = prev.lines.find((l) => keyOf(l) === id);
         if (!target || (target.discount ?? 0) === amount) return prev;
         return {
           ...prev,
           lines: prev.lines.map((l) =>
-            l.productId === id ? { ...l, discount: amount } : l,
+            keyOf(l) === id ? { ...l, discount: amount } : l,
           ),
         };
       });

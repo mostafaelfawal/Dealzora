@@ -42,7 +42,7 @@ export function PosExchangeBanner() {
       <ul className="max-h-20 space-y-0.5 overflow-y-auto">
         {exchange.lines.map((l) => (
           <li
-            key={l.productId}
+            key={l.lineId}
             className="flex items-center justify-between gap-2 text-muted-foreground"
           >
             <span className="truncate">

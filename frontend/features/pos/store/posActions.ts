@@ -10,7 +10,7 @@ import { extractErrorMessage } from "@/lib/errors";
 import { formatItemCount, formatMoneyText } from "@/lib/format";
 import type { AppThunk, RootState } from "@/lib/store";
 import { fetchPosProducts, toCompletedInvoice } from "../api/posCatalog.api";
-import { lineDiscount } from "../lib/posCalc";
+import { findByBarcode, lineDiscount, lineKey } from "../lib/posCalc";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
 import { focusSearch, selectSearchText } from "../lib/posFocus";
 import type {
@@ -49,16 +49,30 @@ import { selectExchange } from "./selectors";
 /* ---------- الأصناف ---------- */
 
 export const addToCart =
-  (product: PosProduct, qty = 1): AppThunk =>
+  (product: PosProduct, qty = 1, unitId: string | null = null): AppThunk =>
   (dispatch) => {
-    dispatch(cartActions.addProduct({ product, qty }));
+    dispatch(cartActions.addProduct({ product, qty, unitId }));
+    focusSearch();
+  };
+
+/** تبديل وحدة سطر في الفاتورة (قطعة <-> كرتونة). */
+export const changeLineUnit =
+  (id: string, unitId: string | null): AppThunk =>
+  (dispatch, getState) => {
+    const state = getState();
+    const line = selectLines(state).find((l) => lineKey(l) === id);
+    const product = line
+      ? selectProducts(state).find((p) => p.id === line.productId)
+      : undefined;
+    if (!product) return;
+    dispatch(cartActions.setLineUnit({ id, product, unitId }));
     focusSearch();
   };
 
 export const removeLineWithUndo =
   (id: string): AppThunk =>
   (dispatch, getState) => {
-    const line = selectLines(getState()).find((l) => l.productId === id);
+    const line = selectLines(getState()).find((l) => lineKey(l) === id);
     if (!line) return;
     dispatch(cartActions.removeLine(id));
     toast(`أُزيل «${line.name}»`, {
@@ -95,8 +109,13 @@ export const submitEntry = (): AppThunk => (dispatch, getState) => {
     return;
   }
 
-  const exact = selectProducts(state).find((p) => p.barcode === entry.term);
-  const product = exact ?? selectSearchResults(state)[selectSafeIndex(state)];
+  // باركود مطابق تماماً (للصنف أو لوحدة إضافية مثل الكرتونة) يُضاف بوحدته.
+  const exact = findByBarcode(selectProducts(state), entry.term);
+  if (exact) {
+    dispatch(addToCart(exact.product, entry.qty ?? 1, exact.unit?.id ?? null));
+    return;
+  }
+  const product = selectSearchResults(state)[selectSafeIndex(state)];
   if (!product) {
     dispatch(posUiActions.setNotFound(`لا يوجد صنف مطابق لـ «${entry.term}»`));
     selectSearchText();
@@ -278,6 +297,7 @@ function buildSaleInput(
     customerId: invoice.customer?.id ?? null,
     lines: invoice.lines.map((l) => ({
       productId: l.productId,
+      unitId: l.unitId ?? null,
       qty: l.qty,
       unitPrice: l.price,
       discount: lineDiscount(l),
@@ -313,7 +333,11 @@ const recordSaved =
     const cartLines = state.cart.present.lines;
     const invoice = toCompletedInvoice(sale);
     invoice.lines = invoice.lines.map((l) => {
-      const cartLine = cartLines.find((c) => c.productId === l.productId);
+      const cartLine = cartLines.find(
+        (c) =>
+          c.productId === l.productId &&
+          (c.unitId ?? null) === (l.unitId ?? null),
+      );
       return cartLine
         ? {
             ...l,
@@ -479,8 +503,10 @@ export const confirmExchange =
         catalogActions.applyReturn({
           invoiceId: draft.invoiceId,
           lines: draft.lines.map((l) => ({
+            lineId: l.lineId,
             productId: l.productId,
             qty: l.qty,
+            factor: l.factor,
           })),
         }),
       );

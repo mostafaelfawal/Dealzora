@@ -5,6 +5,17 @@ export interface PosCategory {
   label: string;
 }
 
+/** وحدة بيع إضافية (كرتونة، دستة…). المخزون دائماً بالوحدة الأساسية. */
+export interface PosUnit {
+  id: string;
+  name: string;
+  /** عدد الوحدات الأساسية فيها (كرتونة 12 = 12). */
+  factor: number;
+  /** سعر الوحدة بالجنيه. */
+  price: number;
+  barcode: string;
+}
+
 export interface PosProduct {
   id: string;
   name: string;
@@ -18,6 +29,8 @@ export interface PosProduct {
   stock: number;
   /** الحد الأدنى للمخزون (تحته يظهر تنبيه "باقي قليل"). */
   minStock: number;
+  /** وحدات البيع الإضافية. */
+  units: PosUnit[];
 }
 
 export interface PosCustomer {
@@ -33,12 +46,19 @@ export interface PosCustomer {
 /** صنف جوه الفاتورة (نسخة من بيانات الصنف وقت الإضافة). */
 export interface CartLine {
   productId: string;
+  /** وحدة البيع الإضافية. null/غائب = الوحدة الأساسية (والفواتير المحفوظة قبل دعم الوحدات). */
+  unitId?: string | null;
+  /** الوحدات الأساسية في وحدة البيع (1 للأساسية). */
+  factor?: number;
   name: string;
   barcode: string;
+  /** اسم وحدة البيع. */
   unit: string;
+  /** سعر وحدة البيع. */
   price: number;
   qty: number;
   allowDecimal: boolean;
+  /** رصيد الصنف بالوحدة الأساسية. */
   stock: number;
   /** خصم على السطر بالجنيه (مبلغ ثابت). */
   discount?: number;
@@ -91,6 +111,10 @@ export interface SoldLine {
   /** ما سبق إرجاعه من هذا السطر. */
   returnedQty: number;
   allowDecimal: boolean;
+  /** الوحدات الأساسية في وحدة البيع (1 للأساسية). */
+  factor: number;
+  /** null = الوحدة الأساسية. */
+  unitId: string | null;
 }
 
 /** فاتورة مكتملة (للقراءة فقط، لا تُعدَّل أبداً). */
@@ -110,6 +134,8 @@ export type ReturnReason =
 export interface ReturnLine {
   lineId: string;
   productId: string;
+  /** الوحدات الأساسية في وحدة البيع (لإرجاع الرصيد المحلي). */
+  factor: number;
   name: string;
   unit: string;
   price: number;

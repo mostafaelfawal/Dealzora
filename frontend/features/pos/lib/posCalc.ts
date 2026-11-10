@@ -4,6 +4,7 @@ import type {
   InvoiceDiscount,
   PosInvoice,
   PosProduct,
+  PosUnit,
   StockLevel,
 } from "../types/pos";
 
@@ -22,6 +23,47 @@ export function clampQty(qty: number, allowDecimal: boolean) {
   return allowDecimal
     ? Math.max(round3(bounded), 0.001)
     : Math.max(Math.round(bounded), 1);
+}
+
+/* ---------- وحدات البيع ---------- */
+
+/** مفتاح سطر الفاتورة: نفس الصنف بوحدتين مختلفتين = سطران. */
+export const lineKey = (line: Pick<CartLine, "productId" | "unitId">) =>
+  line.unitId ? `${line.productId}:${line.unitId}` : line.productId;
+
+/** خيار وحدة للعرض والاختيار. id = null للوحدة الأساسية. */
+export interface UnitOption {
+  id: string | null;
+  name: string;
+  factor: number;
+  price: number;
+}
+
+/** الوحدة الأساسية أولاً ثم الإضافية. */
+export function unitOptions(product: PosProduct): UnitOption[] {
+  return [
+    { id: null, name: product.unit, factor: 1, price: product.price },
+    ...(product.units ?? []).map((u) => ({
+      id: u.id,
+      name: u.name,
+      factor: u.factor,
+      price: u.price,
+    })),
+  ];
+}
+
+/** الصنف (ووحدته لو الباركود لوحدة إضافية) المطابق للباركود تماماً. */
+export function findByBarcode(
+  products: PosProduct[],
+  code: string,
+): { product: PosProduct; unit: PosUnit | null } | null {
+  for (const product of products) {
+    if (product.barcode && product.barcode === code)
+      return { product, unit: null };
+    const unit = product.units?.find((u) => u.barcode && u.barcode === code);
+    if (unit) return { product, unit };
+  }
+  return null;
 }
 
 export function getStockLevel(
@@ -120,8 +162,13 @@ export function searchProducts(
   for (const product of products) {
     const name = normalizeSearch(product.name);
     let score = -1;
-    if (product.barcode === query) score = 0;
-    else if (digitsOnly && product.barcode.includes(query)) score = 1;
+    const unitCodes = (product.units ?? []).map((u) => u.barcode);
+    if (product.barcode === query || unitCodes.includes(query)) score = 0;
+    else if (
+      digitsOnly &&
+      [product.barcode, ...unitCodes].some((c) => c && c.includes(query))
+    )
+      score = 1;
     else if (tokens.every((t) => name.includes(t)))
       score = name.startsWith(query) ? 2 : 3;
     if (score >= 0) scored.push({ product, score });

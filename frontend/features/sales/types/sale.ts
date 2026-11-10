@@ -8,8 +8,12 @@ export type SaleSort = "newest" | "oldest" | "total_desc" | "total_asc";
 export interface SaleLine {
   id: string;
   productId: string;
+  /** null = الوحدة الأساسية. */
+  unitId: string | null;
   name: string;
   unitName: string;
+  /** عدد الوحدات الأساسية في وحدة البيع (الكرتونة 12 = 12). */
+  factor: number;
   qty: number;
   unitPrice: number;
   discount: number;
@@ -97,6 +101,8 @@ export interface SaleFilters {
 
 export interface SaleLineInput {
   productId: string;
+  /** null/غائب = الوحدة الأساسية. */
+  unitId?: string | null;
   qty: number;
   unitPrice: number;
   discount: number;

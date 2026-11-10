@@ -79,8 +79,10 @@ class ExchangeCreate(BaseModel):
 class SaleLineOut(BaseModel):
     id: str
     product_id: str
+    unit_id: str | None  # None = الوحدة الأساسية
     name: str
     unit_name: str
+    factor: int  # وحدات أساسية × 1000 لكل وحدة بيع (كرتونة 12 = 12000)
     qty: int
     unit_price: int
     discount: int

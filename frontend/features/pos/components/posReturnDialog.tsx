@@ -66,14 +66,15 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
     !isManager && now !== null && isReturnExpired(invoice.soldAt, now);
 
   const lines: ReturnLine[] = invoice.lines
-    .filter((l) => (qtys[l.productId] ?? 0) > 0)
+    .filter((l) => (qtys[l.lineId] ?? 0) > 0)
     .map((l) => ({
       lineId: l.lineId,
       productId: l.productId,
+      factor: l.factor,
       name: l.name,
       unit: l.unit,
       price: l.price,
-      qty: qtys[l.productId],
+      qty: qtys[l.lineId],
       allowDecimal: l.allowDecimal,
     }));
 
@@ -125,11 +126,11 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
       <ul className="divide-y border">
         {invoice.lines.map((line) => {
           const max = returnableQty(line);
-          const qty = qtys[line.productId] ?? 0;
+          const qty = qtys[line.lineId] ?? 0;
           const step = line.allowDecimal ? 0.5 : 1;
           return (
             <li
-              key={line.productId}
+              key={line.lineId}
               className={cn(
                 "flex items-center gap-3 p-2.5",
                 max === 0 && "opacity-60",
@@ -158,7 +159,7 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
                   size="icon-sm"
                   disabled={max === 0 || qty <= 0}
                   aria-label={`تقليل مرتجع ${line.name}`}
-                  onClick={() => setQty(line.productId, qty - step, max)}
+                  onClick={() => setQty(line.lineId, qty - step, max)}
                   className="size-9"
                 >
                   <IconMinus />
@@ -172,7 +173,7 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
                   size="icon-sm"
                   disabled={max === 0 || qty >= max}
                   aria-label={`زيادة مرتجع ${line.name}`}
-                  onClick={() => setQty(line.productId, qty + step, max)}
+                  onClick={() => setQty(line.lineId, qty + step, max)}
                   className="size-9"
                 >
                   <IconPlus />
@@ -182,7 +183,7 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
                   variant="ghost"
                   size="sm"
                   disabled={max === 0 || qty === max}
-                  onClick={() => setQty(line.productId, max, max)}
+                  onClick={() => setQty(line.lineId, max, max)}
                   className="font-normal"
                 >
                   الكل

@@ -623,8 +623,10 @@ class SaleService(EntityService):
                         SaleLineOut(
                             id=l.id,
                             product_id=l.product_id,
+                            unit_id=l.unit_id,
                             name=l.name,
                             unit_name=l.unit_name,
+                            factor=l.factor,
                             qty=l.qty,
                             unit_price=l.unit_price,
                             discount=l.discount,

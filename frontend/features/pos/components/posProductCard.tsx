@@ -18,7 +18,8 @@ export function PosProductCard({ product }: { product: PosProduct }) {
   /** الكمية الموجودة من هذا الصنف في الفاتورة الحالية (0 = غير مضاف). */
   const inCartQty = useAppSelector(
     (s) =>
-      s.cart.present.lines.find((l) => l.productId === product.id)?.qty ?? 0,
+      s.cart.present.lines.find((l) => l.productId === product.id && !l.unitId)
+        ?.qty ?? 0,
   );
 
   const level = getStockLevel(product);

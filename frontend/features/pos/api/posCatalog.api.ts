@@ -8,6 +8,7 @@ import { fetchSales } from "@/features/sales/api/sales.api";
 import type { Sale } from "@/features/sales/types/sale";
 import type { Product } from "@/features/products/types/product";
 
+import { round2 } from "../lib/posCalc";
 import type { CompletedInvoice, PosCustomer, PosProduct } from "../types/pos";
 import type { CatalogState } from "../store/catalogSlice";
 
@@ -25,6 +26,14 @@ const toPosProduct = (p: Product): PosProduct => ({
   allowDecimal: p.allowDecimal,
   stock: p.stock,
   minStock: p.minStock,
+  // سعر الوحدة الفارغ = سعر الأساسية × العدد (نفس حساب الـ backend).
+  units: p.extraUnits.map((u) => ({
+    id: u.id,
+    name: u.name,
+    factor: u.factor,
+    price: u.salePrice ?? round2(p.salePrice * u.factor),
+    barcode: u.barcode,
+  })),
 });
 
 const toPosCustomer = (c: Customer): PosCustomer => ({
@@ -63,6 +72,8 @@ export function toCompletedInvoice(sale: Sale): CompletedInvoice {
       qty: l.qty,
       returnedQty: l.returnedQty,
       allowDecimal: !Number.isInteger(l.qty),
+      factor: l.factor,
+      unitId: l.unitId,
     })),
   };
 }
@@ -96,7 +107,11 @@ export async function fetchPosCatalog(): Promise<
     lines: inv.lines.map((l) => ({
       ...l,
       barcode: productMap.get(l.productId)?.barcode ?? "",
-      allowDecimal: productMap.get(l.productId)?.allowDecimal ?? l.allowDecimal,
+      // الوحدات الإضافية بالعدد الصحيح دائماً.
+      allowDecimal:
+        l.factor === 1
+          ? (productMap.get(l.productId)?.allowDecimal ?? l.allowDecimal)
+          : false,
     })),
   }));
   return {

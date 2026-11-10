@@ -4,8 +4,10 @@ import type { PaymentMethod, ReturnReason } from "./sale";
 export interface SaleLineDto {
   id: string;
   product_id: string;
+  unit_id: string | null;
   name: string;
   unit_name: string;
+  factor: number;
   qty: number;
   unit_price: number;
   discount: number;

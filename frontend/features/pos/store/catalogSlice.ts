@@ -40,7 +40,8 @@ const catalogSlice = createSlice({
       ];
       for (const line of invoice.lines) {
         const product = state.products.find((p) => p.id === line.productId);
-        if (product) product.stock = round3(product.stock - line.qty);
+        if (product)
+          product.stock = round3(product.stock - line.qty * line.factor);
       }
     },
     /** يسجّل ما أُرجع على الفاتورة الأصلية ويُرجعه للرصيد المحلي. */
@@ -48,7 +49,13 @@ const catalogSlice = createSlice({
       state,
       action: PayloadAction<{
         invoiceId: string;
-        lines: { productId: string; qty: number }[];
+        /** qty بوحدة البيع، وfactor لتحويلها للوحدة الأساسية. */
+        lines: {
+          lineId: string;
+          productId: string;
+          qty: number;
+          factor: number;
+        }[];
       }>,
     ) {
       const invoice = state.invoices.find(
@@ -56,10 +63,10 @@ const catalogSlice = createSlice({
       );
       if (!invoice) return;
       for (const r of action.payload.lines) {
-        const line = invoice.lines.find((l) => l.productId === r.productId);
+        const line = invoice.lines.find((l) => l.lineId === r.lineId);
         if (line) line.returnedQty = round3(line.returnedQty + r.qty);
         const product = state.products.find((p) => p.id === r.productId);
-        if (product) product.stock = round3(product.stock + r.qty);
+        if (product) product.stock = round3(product.stock + r.qty * r.factor);
       }
     },
   },
