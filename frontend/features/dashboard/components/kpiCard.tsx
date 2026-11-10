@@ -7,7 +7,10 @@ import {
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
-import { Sparkline, type SparkPoint } from "@/components/shared/charts/MiscCharts";
+import {
+  Sparkline,
+  type SparkPoint,
+} from "@/components/shared/charts/MiscCharts";
 import { listItem, MotionDiv } from "@/components/shared/motion";
 import { cn } from "@/lib/utils";
 

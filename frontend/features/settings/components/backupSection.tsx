@@ -54,11 +54,6 @@ function BackupInfo({ status: s }: { status: BackupStatus | undefined }) {
         تشغيل البرنامج، ونحتفظ بآخر {s?.keep ?? DEFAULTS.keep} نسخة. كل نسخة
         مشفّرة بنفس مفتاح قاعدة البيانات.
       </p>
-      {s && s.pendingSync > 0 && (
-        <p className="text-muted-foreground">
-          {s.pendingSync} تغيير بانتظار الرفع للسحابة عند ربط الحساب.
-        </p>
-      )}
     </div>
   );
 }

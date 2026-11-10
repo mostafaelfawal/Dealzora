@@ -2,7 +2,7 @@ import {
   IconBuildingStore,
   IconCashRegister,
   IconChartBar,
-  IconCloudUpload,
+  IconDatabaseExport,
   IconPackage,
   IconShieldLock,
   IconTruckDelivery,
@@ -59,8 +59,8 @@ export const SHOWCASE_FEATURES: ShowcaseFeature[] = [
   },
   {
     title: "نسخ احتياطي",
-    description: "نسخ تلقائي للسحابة لتبقى بياناتك آمنة.",
-    icon: IconCloudUpload,
+    description: "نسخة مشفّرة تلقائية كل يوم، واستعادة بضغطة.",
+    icon: IconDatabaseExport,
   },
 ];
 

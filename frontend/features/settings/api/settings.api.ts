@@ -21,7 +21,6 @@ export interface BackupLocation {
 export interface BackupStatus {
   lastBackupAt: number | null;
   count: number;
-  pendingSync: number;
   autoEveryHours: number;
   keep: number;
   /** للمدير فقط. */
@@ -76,7 +75,6 @@ export const fetchBackupStatus = async (): Promise<BackupStatus> => {
   return {
     lastBackupAt: toMsOrNull(data.last_backup_at),
     count: data.count,
-    pendingSync: data.pending_sync,
     autoEveryHours: data.auto_every_hours,
     keep: data.keep,
     location: data.location ? toLocation(data.location) : null,

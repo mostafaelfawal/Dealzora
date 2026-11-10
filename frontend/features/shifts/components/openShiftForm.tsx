@@ -42,7 +42,9 @@ export function OpenShiftForm({
       className="space-y-4"
     >
       <div className="space-y-1.5">
-        <Label htmlFor="shift-float">فكّة الدرج في بداية الوردية (<CurrencyLabel />)</Label>
+        <Label htmlFor="shift-float">
+          فكّة الدرج في بداية الوردية (<CurrencyLabel />)
+        </Label>
         <Input
           id="shift-float"
           autoFocus

@@ -26,7 +26,10 @@ export function ChartTooltipBox({
 }) {
   // dir صريح: الرسوم داخل حاوية LTR (لحسابات Recharts)، والتلميح نص عربي.
   return (
-    <div dir="rtl" className="max-w-64 min-w-40 border bg-popover px-3 py-2 text-xs shadow-lg">
+    <div
+      dir="rtl"
+      className="max-w-64 min-w-40 border bg-popover px-3 py-2 text-xs shadow-lg"
+    >
       <p className="mb-1.5 font-medium">{title}</p>
       <ul className="space-y-1">
         {rows.map((r) => (

@@ -202,7 +202,9 @@ function CustomerForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor={IDS.creditLimit}>الحد الائتماني (<CurrencyLabel />)</Label>
+          <Label htmlFor={IDS.creditLimit}>
+            الحد الائتماني (<CurrencyLabel />)
+          </Label>
           <Input
             id={IDS.creditLimit}
             {...register("creditLimit")}

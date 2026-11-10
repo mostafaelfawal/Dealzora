@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  IconCloudUpload,
+  IconDatabase,
   IconDatabaseExport,
   IconLoader2,
 } from "@tabler/icons-react";
@@ -30,7 +30,7 @@ const STATUS_CONFIG: Record<
   syncing: {
     tone: "warning",
     pulse: true,
-    description: "يتم رفع التغييرات الأخيرة",
+    description: "جارٍ إنشاء نسخة احتياطية على هذا الجهاز",
   },
   offline: {
     tone: "neutral",
@@ -101,7 +101,7 @@ export function SyncStatus({
           {label}
         </span>
         {!showLabels && (
-          <IconCloudUpload className="size-4 text-muted-foreground 2xl:hidden" />
+          <IconDatabase className="size-4 text-muted-foreground 2xl:hidden" />
         )}
       </PopoverTrigger>
 

@@ -61,28 +61,60 @@ export function Sparkline({
 }) {
   if (points.length < 2) return null;
   return (
-    <div style={{ height }} dir="ltr" role="img" aria-label={`${seriesLabel}: ${note}`}>
+    <div
+      style={{ height }}
+      dir="ltr"
+      role="img"
+      aria-label={`${seriesLabel}: ${note}`}
+    >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={points} margin={{ top: 3, right: 2, bottom: 3, left: 2 }}>
+        <AreaChart
+          data={points}
+          margin={{ top: 3, right: 2, bottom: 3, left: 2 }}
+        >
           <XAxis dataKey="label" reversed hide />
           <YAxis hide domain={["dataMin", "dataMax"]} />
           <Tooltip
-            cursor={{ stroke: CHART.axis, strokeWidth: 1, strokeDasharray: "3 3" }}
+            cursor={{
+              stroke: CHART.axis,
+              strokeWidth: 1,
+              strokeDasharray: "3 3",
+            }}
             // فوق الرسم مباشرة حتى لا يغطي الخط ولا الرقم الكبير.
             position={{ y: -8 }}
             allowEscapeViewBox={{ x: false, y: true }}
-            wrapperStyle={{ zIndex: 50, transform: "translateY(-100%)", pointerEvents: "none" }}
+            wrapperStyle={{
+              zIndex: 50,
+              transform: "translateY(-100%)",
+              pointerEvents: "none",
+            }}
             content={({ active, payload }) => {
-              const p = active && payload?.[0] ? (payload[0].payload as SparkPoint) : null;
+              const p =
+                active && payload?.[0]
+                  ? (payload[0].payload as SparkPoint)
+                  : null;
               if (!p) return null;
               return (
                 <ChartTooltipBox
                   title={p.label}
                   note={note}
                   rows={[
-                    { label: seriesLabel, value: p.value, color: CHART.main, kind },
+                    {
+                      label: seriesLabel,
+                      value: p.value,
+                      color: CHART.main,
+                      kind,
+                    },
                     ...(p.previous !== undefined
-                      ? [{ label: "نفس اليوم في الفترة السابقة", value: p.previous, color: CHART.muted, kind, dashed: true }]
+                      ? [
+                          {
+                            label: "نفس اليوم في الفترة السابقة",
+                            value: p.previous,
+                            color: CHART.muted,
+                            kind,
+                            dashed: true,
+                          },
+                        ]
                       : []),
                   ]}
                 />
@@ -97,7 +129,12 @@ export function Sparkline({
             fill={CHART.main}
             fillOpacity={0.08}
             dot={false}
-            activeDot={{ r: 3, fill: CHART.main, stroke: CHART.surface, strokeWidth: 2 }}
+            activeDot={{
+              r: 3,
+              fill: CHART.main,
+              stroke: CHART.surface,
+              strokeWidth: 2,
+            }}
             isAnimationActive={false}
           />
         </AreaChart>

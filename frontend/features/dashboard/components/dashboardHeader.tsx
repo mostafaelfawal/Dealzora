@@ -35,7 +35,7 @@ export function DashboardHeader({
     <header className="flex flex-wrap items-center gap-3">
       <div className="min-w-0 flex-1">
         <h1 className="text-lg font-bold">
-          {greeting()}، {userName} نظرة سريعه!
+          {greeting()}، {userName}
         </h1>
         <p className="text-xs text-muted-foreground">{shiftLine(shift)}</p>
       </div>
