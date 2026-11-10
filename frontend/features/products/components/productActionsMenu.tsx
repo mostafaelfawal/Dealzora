@@ -6,9 +6,11 @@ import {
   IconEye,
   IconEyeOff,
   IconPencil,
+  IconPrinter,
   IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +23,7 @@ import {
 
 import { PRODUCT_ROUTES } from "../config/productRoutes";
 import type { Product } from "../types/product";
+import { BarcodeLabelDialog, productLabelOptions } from "./barcodeLabelDialog";
 
 export interface ProductActions {
   onToggleActive: (id: string) => void;
@@ -35,49 +38,65 @@ export function ProductActionsMenu({
   onDuplicate,
   onRemove,
 }: { product: Product } & ProductActions) {
+  const [printing, setPrinting] = useState(false);
+  const hasBarcode = productLabelOptions(product).length > 0;
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`إجراءات ${product.name}`}
-            className="size-8"
-          />
-        }
-      >
-        <IconDots />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-44"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <DropdownMenuItem
-          render={<Link href={PRODUCT_ROUTES.edit(product.id)} />}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`إجراءات ${product.name}`}
+              className="size-8"
+            />
+          }
         >
-          <IconPencil />
-          تعديل
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDuplicate(product.id)}>
-          <IconCopy />
-          تكرار الصنف
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onToggleActive(product.id)}>
-          {product.isActive ? <IconEyeOff /> : <IconEye />}
-          {product.isActive ? "تعطيل" : "تفعيل"}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={() => onRemove(product.id)}
+          <IconDots />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-44"
+          onClick={(event) => event.stopPropagation()}
         >
-          <IconTrash />
-          حذف
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem
+            render={<Link href={PRODUCT_ROUTES.edit(product.id)} />}
+          >
+            <IconPencil />
+            تعديل
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onDuplicate(product.id)}>
+            <IconCopy />
+            تكرار الصنف
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!hasBarcode}
+            onClick={() => setPrinting(true)}
+          >
+            <IconPrinter />
+            طباعة باركود
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onToggleActive(product.id)}>
+            {product.isActive ? <IconEyeOff /> : <IconEye />}
+            {product.isActive ? "تعطيل" : "تفعيل"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => onRemove(product.id)}
+          >
+            <IconTrash />
+            حذف
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <BarcodeLabelDialog
+        product={printing ? product : null}
+        onClose={() => setPrinting(false)}
+      />
+    </>
   );
 }

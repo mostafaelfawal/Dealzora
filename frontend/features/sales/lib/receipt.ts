@@ -1,6 +1,7 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 
 import { formatDateTime } from "@/lib/dates";
+import { printHtml } from "@/lib/print";
 import { CURRENCY_LABEL, formatNumber, formatQty } from "@/lib/format";
 
 import { PAYMENT_LABEL } from "../config/saleOptions";
@@ -70,29 +71,9 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
 </body></html>`;
 }
 
-/** يطبع عبر iframe مخفي (نافذة الطباعة الأصلية للنظام، تشمل الطابعة الحرارية). */
+/** يطبع الإيصال بنافذة الطباعة الأصلية للنظام. */
 export function printReceipt(sale: Sale, shopName: string) {
-  const frame = document.createElement("iframe");
-  frame.setAttribute("aria-hidden", "true");
-  frame.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;";
-  document.body.appendChild(frame);
-  const doc = frame.contentDocument;
-  if (!doc || !frame.contentWindow) {
-    frame.remove();
-    return;
-  }
-  doc.open();
-  doc.write(buildReceiptHtml(sale, shopName));
-  doc.close();
-  const win = frame.contentWindow;
-  const cleanup = () => setTimeout(() => frame.remove(), 1000);
-  win.addEventListener("afterprint", cleanup, { once: true });
-  // ننتظر رسم الصفحة قبل الطباعة.
-  setTimeout(() => {
-    win.focus();
-    win.print();
-    cleanup();
-  }, 50);
+  printHtml(buildReceiptHtml(sale, shopName));
 }
 
 /* ---------- واتساب ---------- */
