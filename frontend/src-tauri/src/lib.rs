@@ -147,6 +147,8 @@ pub fn run() {
 
     tauri::Builder
         ::default()
+        // نافذة اختيار مجلد/ملف (مكان النسخ الاحتياطي والاستعادة).
+        .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
             session_token,
             permit_secret,

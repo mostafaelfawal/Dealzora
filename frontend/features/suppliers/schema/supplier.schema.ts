@@ -11,6 +11,7 @@ import {
 } from "../config/supplierLimits";
 import { parseNumber } from "../lib/supplierCalc";
 import { MONEY_SCALE } from "../lib/supplierMapper";
+import { currencyName } from "@/lib/currency";
 
 const EPSILON = 1e-6;
 
@@ -59,7 +60,7 @@ function openingError(text: string) {
   if (scaled === null || scaled < 0)
     return "الرصيد يجب أن يكون رقماً صحيحاً (حتى خانتين عشريتين).";
   if (scaled > MAX_MONEY)
-    return `الرصيد لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} جنيه.`;
+    return `الرصيد لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} ${currencyName()}.`;
   return null;
 }
 
@@ -79,6 +80,6 @@ export function paymentAmountError(text: string): string | null {
   const scaled = toScaled(text, MONEY_SCALE);
   if (scaled === null || scaled <= 0) return "أدخل مبلغاً أكبر من صفر.";
   if (scaled > MAX_MONEY)
-    return `المبلغ لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} جنيه.`;
+    return `المبلغ لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} ${currencyName()}.`;
   return null;
 }

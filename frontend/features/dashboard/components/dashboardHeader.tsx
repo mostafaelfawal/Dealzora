@@ -8,13 +8,14 @@ import { formatNumber, formatTime } from "@/lib/format";
 
 import { greeting } from "../lib/dashboardSeries";
 import type { Overview } from "../types/dashboard";
+import { currencySymbol } from "@/lib/currency";
 
 function shiftLine(shift: Overview["shift"] | undefined) {
   if (!shift) return "لا توجد وردية مفتوحة الآن.";
   return [
     `الوردية مفتوحة مع ${shift.cashierName ?? "—"} منذ ${formatTime(shift.openedAt)}`,
     `${shift.salesCount} فاتورة`,
-    `في الدرج ${formatNumber(shift.expectedCash)} ج.م`,
+    `في الدرج ${formatNumber(shift.expectedCash)} ${currencySymbol()}`,
   ].join(" · ");
 }
 

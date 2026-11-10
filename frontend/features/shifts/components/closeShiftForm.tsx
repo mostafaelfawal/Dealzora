@@ -24,6 +24,7 @@ import {
   type DenominationCounts,
 } from "../lib/shiftCount";
 import type { Shift } from "../types/shift";
+import { currencyName } from "@/lib/currency";
 
 const NOTE_ID = "shift-note";
 
@@ -51,7 +52,7 @@ function CashCountGrid({
           </span>
           <Input
             autoFocus={i === 0}
-            aria-label={`عدد فئة ${d} جنيه`}
+            aria-label={`عدد فئة ${d} ${currencyName()}`}
             dir="ltr"
             inputMode="numeric"
             autoComplete="off"
@@ -69,7 +70,7 @@ function CashCountGrid({
           فكّة / أخرى
         </span>
         <Input
-          aria-label="مبالغ أخرى بالجنيه"
+          aria-label={`مبالغ أخرى (${currencyName()})`}
           dir="ltr"
           inputMode="decimal"
           autoComplete="off"

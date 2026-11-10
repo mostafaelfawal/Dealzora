@@ -1,6 +1,6 @@
 "use client";
 
-import { CURRENCY_LABEL } from "@/lib/format";
+import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
 import { formatFull } from "./chartTheme";
 
@@ -49,7 +49,7 @@ export function ChartTooltipBox({
               {formatFull(r.value)}
               {(r.kind ?? "money") === "money" && (
                 <span className="ms-1 text-[10px] font-normal text-muted-foreground">
-                  {CURRENCY_LABEL}
+                  <CurrencyLabel />
                 </span>
               )}
             </span>

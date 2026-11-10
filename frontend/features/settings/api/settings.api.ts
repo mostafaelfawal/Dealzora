@@ -2,10 +2,21 @@ import { isTauri } from "@tauri-apps/api/core";
 
 import { toMs, toMsOrNull } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
+import type { Currency } from "@/lib/currency";
 import { getLicenseStatus } from "@/features/setup/lib/license";
 import type { LicenseStatus } from "@/features/setup/types/setup";
 
 /* ---------- النسخ الاحتياطي ---------- */
+
+export interface BackupLocation {
+  /** المجلد المستخدم فعلاً الآن. */
+  path: string;
+  defaultPath: string;
+  isDefault: boolean;
+  /** المجلد المحدد غير متاح (فلاشة مفصولة)، والنسخ تُكتب مؤقتاً في الافتراضي. */
+  fallback: boolean;
+  configured: string | null;
+}
 
 export interface BackupStatus {
   lastBackupAt: number | null;
@@ -13,6 +24,8 @@ export interface BackupStatus {
   pendingSync: number;
   autoEveryHours: number;
   keep: number;
+  /** للمدير فقط. */
+  location: BackupLocation | null;
 }
 
 export interface BackupFile {
@@ -21,13 +34,30 @@ export interface BackupFile {
   createdAt: number;
 }
 
+interface BackupLocationDto {
+  path: string;
+  default_path: string;
+  is_default: boolean;
+  fallback: boolean;
+  configured: string | null;
+}
+
 interface BackupStatusDto {
   last_backup_at: string | null;
   count: number;
   pending_sync: number;
   auto_every_hours: number;
   keep: number;
+  location: BackupLocationDto | null;
 }
+
+const toLocation = (d: BackupLocationDto): BackupLocation => ({
+  path: d.path,
+  defaultPath: d.default_path,
+  isDefault: d.is_default,
+  fallback: d.fallback,
+  configured: d.configured,
+});
 
 interface BackupDto {
   name: string;
@@ -49,6 +79,7 @@ export const fetchBackupStatus = async (): Promise<BackupStatus> => {
     pendingSync: data.pending_sync,
     autoEveryHours: data.auto_every_hours,
     keep: data.keep,
+    location: data.location ? toLocation(data.location) : null,
   };
 };
 
@@ -57,6 +88,29 @@ export const fetchBackups = async (): Promise<BackupFile[]> =>
 
 export const createBackup = async (): Promise<BackupFile> =>
   toBackup((await api.post<BackupDto>("/backup")).data);
+
+/** null = الرجوع للمجلد الافتراضي. السيرفر يتأكد أنه قابل للكتابة ويأخذ نسخة فيه فوراً. */
+export const setBackupLocation = async (
+  path: string | null,
+): Promise<BackupLocation> =>
+  toLocation(
+    (await api.put<BackupLocationDto>("/backup/location", { path })).data,
+  );
+
+/** نسخة من القائمة (name) أو ملف من مكان آخر (path). يرجع اسم نسخة الأمان. */
+export const restoreBackup = async (
+  source: { name: string } | { path: string },
+): Promise<string> =>
+  (await api.post<{ safety_backup: string }>("/backup/restore", source)).data
+    .safety_backup;
+
+/* ---------- العملة ---------- */
+
+export const fetchCurrency = async (): Promise<Currency> =>
+  (await api.get<{ currency: Currency }>("/settings")).data.currency;
+
+export const saveCurrency = async (currency: Currency): Promise<Currency> =>
+  (await api.put<Currency>("/settings/currency", currency)).data;
 
 /* ---------- المحل ---------- */
 

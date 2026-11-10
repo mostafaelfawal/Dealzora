@@ -2,7 +2,8 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 
 import { formatDateTime } from "@/lib/dates";
 import { printHtml } from "@/lib/print";
-import { CURRENCY_LABEL, formatNumber, formatQty } from "@/lib/format";
+import { currencySymbol } from "@/lib/currency";
+import { formatNumber, formatQty } from "@/lib/format";
 
 import { PAYMENT_LABEL } from "../config/saleOptions";
 import type { Sale } from "../types/sale";
@@ -61,7 +62,7 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
   <hr><table>${rows}</table><hr>
   ${line("الإجمالي قبل الخصم", money(sale.subtotal))}
   ${discount > 0 ? line("الخصم", money(discount)) : ""}
-  ${line(`الإجمالي (${CURRENCY_LABEL})`, money(sale.total), "total")}
+  ${line(`الإجمالي (${currencySymbol()})`, money(sale.total), "total")}
   ${line("طريقة الدفع", PAYMENT_LABEL[sale.paymentMethod])}
   ${sale.cashAmount > 0 ? line("المدفوع كاش", money(sale.received || sale.cashAmount)) : ""}
   ${sale.change > 0 ? line("الباقي", money(sale.change)) : ""}
@@ -101,10 +102,10 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
     "",
     lines,
     "",
-    discount > 0 ? `الخصم: ${money(discount)} ${CURRENCY_LABEL}` : null,
-    `*الإجمالي: ${money(sale.total)} ${CURRENCY_LABEL}*`,
+    discount > 0 ? `الخصم: ${money(discount)} ${currencySymbol()}` : null,
+    `*الإجمالي: ${money(sale.total)} ${currencySymbol()}*`,
     sale.creditAmount > 0
-      ? `آجل على الحساب: ${money(sale.creditAmount)} ${CURRENCY_LABEL}`
+      ? `آجل على الحساب: ${money(sale.creditAmount)} ${currencySymbol()}`
       : null,
     "",
     FOOTER,

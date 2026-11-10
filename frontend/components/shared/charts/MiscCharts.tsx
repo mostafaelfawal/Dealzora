@@ -31,6 +31,7 @@ import {
   formatFull,
 } from "./chartTheme";
 import { ChartLegend, ChartTooltipBox } from "./ChartTooltip";
+import { currencySymbol } from "@/lib/currency";
 
 /* ================= خط صغير داخل بطاقة رقم (بدون محاور) ================= */
 export interface SparkPoint {
@@ -523,7 +524,7 @@ export function PeakHeatmap({
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
         <span aria-live="polite" className="min-h-4">
           {hover
-            ? `${WEEKDAYS[hover.weekday]} ${hourLabel(hover.hour)}: ${hovered?.invoices ?? 0} فاتورة · ${formatFull(hovered?.net ?? 0)} ج.م`
+            ? `${WEEKDAYS[hover.weekday]} ${hourLabel(hover.hour)}: ${hovered?.invoices ?? 0} فاتورة · ${formatFull(hovered?.net ?? 0)} ${currencySymbol()}`
             : "مرّر على أي خانة لرؤية الأرقام"}
         </span>
         <span className="flex items-center gap-1.5">

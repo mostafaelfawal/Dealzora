@@ -33,6 +33,7 @@ import {
   type CustomerSchemaType,
 } from "../schema/customer.schema";
 import type { Customer } from "../types/customer";
+import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
 const IDS = {
   name: "cf-name",
@@ -201,7 +202,7 @@ function CustomerForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor={IDS.creditLimit}>الحد الائتماني (ج.م)</Label>
+          <Label htmlFor={IDS.creditLimit}>الحد الائتماني (<CurrencyLabel />)</Label>
           <Input
             id={IDS.creditLimit}
             {...register("creditLimit")}

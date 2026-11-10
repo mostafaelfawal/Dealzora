@@ -34,6 +34,7 @@ import { confirmPayment } from "../store/posActions";
 import { posUiActions } from "../store/posUiSlice";
 import { selectInvoiceCustomer, selectTotals } from "../store/selectors";
 import type { PaymentMethod } from "../types/pos";
+import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
 const METHODS: { id: PaymentMethod; label: string; key: string }[] = [
   { id: "cash", label: "كاش", key: "F1" },
@@ -236,7 +237,9 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
               className="h-full text-center font-mono text-xl tabular-nums md:text-xl"
             />
             <InputGroupAddon align="inline-end" className="ml-2">
-              <InputGroupText>ج.م</InputGroupText>
+              <InputGroupText>
+                <CurrencyLabel />
+              </InputGroupText>
             </InputGroupAddon>
           </InputGroup>
 

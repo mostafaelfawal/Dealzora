@@ -28,6 +28,7 @@ import { round2 } from "@/features/pos/lib/posCalc";
 import { useCollectPayment } from "../hooks/useCustomerMutations";
 import { parseAmount } from "../lib/customerCalc";
 import type { Customer } from "../types/customer";
+import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
 /** تحصيل دفعة من عميل عليه دين: المبلغ معبّأ بالدين كاملاً، فالتحصيل الكامل ضغطة Enter واحدة. */
 export function CollectPaymentDialog({
@@ -134,7 +135,9 @@ function CollectForm({
             className="h-full text-center font-mono text-xl tabular-nums md:text-xl"
           />
           <InputGroupAddon align="inline-end" className="ml-2">
-            <InputGroupText>ج.م</InputGroupText>
+            <InputGroupText>
+              <CurrencyLabel />
+            </InputGroupText>
           </InputGroupAddon>
         </InputGroup>
         <div className="flex flex-wrap gap-1.5">

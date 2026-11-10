@@ -1,6 +1,7 @@
 import JsBarcode from "jsbarcode";
 
-import { CURRENCY_LABEL, formatNumber } from "@/lib/format";
+import { currencySymbol } from "@/lib/currency";
+import { formatNumber } from "@/lib/format";
 import { printHtml } from "@/lib/print";
 
 import { getLabelSize, type LabelPrefs } from "../config/barcodeLabel";
@@ -63,7 +64,7 @@ function labelMarkup(data: LabelData, prefs: LabelPrefs, shopName: string) {
   <div class="bars">${svg}</div>
   <div class="foot${prefs.showPrice ? "" : " center"}">
     <span class="code">${esc(data.barcode)}</span>
-    ${prefs.showPrice ? `<span class="price">${formatNumber(data.price)} ${CURRENCY_LABEL}</span>` : ""}
+    ${prefs.showPrice ? `<span class="price">${formatNumber(data.price)} ${currencySymbol()}</span>` : ""}
   </div>
 </div>`;
 }

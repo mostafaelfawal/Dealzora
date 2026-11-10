@@ -8,6 +8,7 @@ import { StoreProvider } from "./StoreProvider";
 import { QueryProvider } from "./QueryProvider";
 import { MotionProvider } from "@/components/shared/motion";
 import { FileDropGuard } from "./FileDropGuard";
+import { CurrencySync } from "./CurrencySync";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <QueryProvider>
+          <CurrencySync />
           <StoreProvider>
             <TooltipProvider delay={200}>
               <MotionProvider>{children}</MotionProvider>

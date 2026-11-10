@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { moneyInputOrZero, parseNumberInput } from "@/lib/format";
 
 import { useOpenShift } from "../hooks/useShifts";
+import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
 const QUICK_FLOATS = [0, 200, 500, 1000];
 
@@ -41,7 +42,7 @@ export function OpenShiftForm({
       className="space-y-4"
     >
       <div className="space-y-1.5">
-        <Label htmlFor="shift-float">فكّة الدرج في بداية الوردية (ج.م)</Label>
+        <Label htmlFor="shift-float">فكّة الدرج في بداية الوردية (<CurrencyLabel />)</Label>
         <Input
           id="shift-float"
           autoFocus

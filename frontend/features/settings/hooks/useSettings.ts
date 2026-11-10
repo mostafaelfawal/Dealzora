@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { setCurrency, type Currency } from "@/lib/currency";
 import { extractErrorMessage } from "@/lib/errors";
 
 import {
@@ -9,14 +10,19 @@ import {
   fetchBackups,
   fetchBackupStatus,
   fetchLicense,
+  fetchCurrency,
   fetchShopName,
   renameShop,
+  restoreBackup,
+  saveCurrency,
+  setBackupLocation,
 } from "../api/settings.api";
 
 export const settingsKeys = {
   backupStatus: ["backup", "status"] as const,
   backups: ["backup", "list"] as const,
   shop: ["shop"] as const,
+  currency: ["settings", "currency"] as const,
   license: ["license"] as const,
 };
 
@@ -85,5 +91,62 @@ export function useLicense() {
     queryFn: fetchLicense,
     staleTime: 30 * 60_000,
     retry: false,
+  });
+}
+
+/* ---------- العملة ---------- */
+
+/** يقرأ عملة المحل من القاعدة ويطبّقها على كل الشاشات. */
+export function useCurrencySetting() {
+  return useQuery({
+    queryKey: settingsKeys.currency,
+    queryFn: async () => {
+      const currency = await fetchCurrency();
+      setCurrency(currency);
+      return currency;
+    },
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useSaveCurrency() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (currency: Currency) => saveCurrency(currency),
+    onSuccess: (currency) => {
+      setCurrency(currency);
+      qc.setQueryData(settingsKeys.currency, currency);
+      toast.success(`العملة الآن: ${currency.name} (${currency.symbol})`);
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ العملة")),
+  });
+}
+
+/* ---------- مكان النسخ والاستعادة ---------- */
+
+export function useSetBackupLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (path: string | null) => setBackupLocation(path),
+    onSuccess: (loc) => {
+      void qc.invalidateQueries({ queryKey: ["backup"] });
+      toast.success(
+        loc.isDefault
+          ? "رجعنا للمجلد الافتراضي، وأُخذت نسخة فيه الآن"
+          : "تم حفظ المكان الجديد، وأُخذت أول نسخة فيه الآن",
+        { description: loc.path },
+      );
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ المكان")),
+  });
+}
+
+export function useRestoreBackup() {
+  return useMutation({
+    mutationFn: restoreBackup,
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّرت الاستعادة"), {
+        duration: 10_000,
+      }),
   });
 }

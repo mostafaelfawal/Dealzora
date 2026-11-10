@@ -13,6 +13,7 @@ import {
 import { MAX_EXTRA_UNITS } from "../config/productOptions";
 import { parseNumber } from "../lib/productCalc";
 import { MONEY_SCALE, QTY_SCALE } from "../lib/productMapper";
+import { currencyName } from "@/lib/currency";
 
 const EPSILON = 1e-6;
 
@@ -65,7 +66,7 @@ function costError(text: string) {
   if (scaled === null || scaled < 0)
     return "سعر الشراء يجب أن يكون رقماً صحيحاً (حتى خانتين عشريتين).";
   if (scaled > MAX_MONEY)
-    return `سعر الشراء لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} جنيه.`;
+    return `سعر الشراء لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} ${currencyName()}.`;
   return null;
 }
 
@@ -73,7 +74,7 @@ function saleError(text: string) {
   const scaled = toScaled(text, MONEY_SCALE);
   if (scaled === null || scaled <= 0) return "أدخل سعر بيع أكبر من صفر.";
   if (scaled > MAX_MONEY)
-    return `سعر البيع لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} جنيه.`;
+    return `سعر البيع لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} ${currencyName()}.`;
   return null;
 }
 
@@ -83,7 +84,7 @@ function unitSaleError(text: string) {
   if (scaled === null || scaled < 0)
     return "سعر الوحدة يجب أن يكون رقماً صحيحاً (حتى خانتين عشريتين).";
   if (scaled > MAX_MONEY)
-    return `سعر الوحدة لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} جنيه.`;
+    return `سعر الوحدة لا يتجاوز ${format(MAX_MONEY / MONEY_SCALE)} ${currencyName()}.`;
   return null;
 }
 

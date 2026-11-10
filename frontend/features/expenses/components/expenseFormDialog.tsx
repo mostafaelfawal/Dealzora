@@ -26,6 +26,7 @@ import {
   type ExpenseSchemaType,
 } from "../schema/expense.schema";
 import type { Expense } from "../types/expense";
+import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
 const IDS = {
   amount: "ef-amount",
@@ -157,7 +158,7 @@ function ExpenseForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor={IDS.amount}>المبلغ (ج.م) *</Label>
+          <Label htmlFor={IDS.amount}>المبلغ (<CurrencyLabel />) *</Label>
           <Input
             id={IDS.amount}
             {...register("amount")}

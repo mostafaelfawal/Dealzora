@@ -2,14 +2,18 @@
 
 import {
   IconBuildingStore,
+  IconCoins,
   IconDatabaseExport,
   IconLicense,
+  IconPalette,
   IconShieldLock,
 } from "@tabler/icons-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 
+import { AppearanceSection } from "./appearanceSection";
 import { BackupSection } from "./backupSection";
+import { CurrencySection } from "./currencySection";
 import { DemoDataSection } from "./demoDataSection";
 import { LicenseSection } from "./licenseSection";
 import { PasswordSection } from "./passwordSection";
@@ -24,6 +28,18 @@ const SECTIONS = [
     content: <ShopSection />,
   },
   {
+    icon: <IconCoins />,
+    title: "العملة",
+    description: "تظهر مع كل الأسعار والفواتير والتقارير، لكل المستخدمين.",
+    content: <CurrencySection />,
+  },
+  {
+    icon: <IconPalette />,
+    title: "المظهر",
+    description: "فاتح أو داكن أو حسب إعداد الجهاز.",
+    content: <AppearanceSection />,
+  },
+  {
     icon: <IconShieldLock />,
     title: "كلمة المرور",
     description: "غيّرها دورياً ولا تشاركها مع الكاشير.",
@@ -32,7 +48,7 @@ const SECTIONS = [
   {
     icon: <IconDatabaseExport />,
     title: "النسخ الاحتياطي",
-    description: "حماية بياناتك من الأعطال وانقطاع الكهرباء.",
+    description: "حماية بياناتك من الأعطال: مكان الحفظ، والاستعادة بضغطة.",
     content: <BackupSection />,
   },
   {
@@ -43,13 +59,13 @@ const SECTIONS = [
   },
 ];
 
-/** الإعدادات: بيانات المحل، كلمة المرور، النسخ الاحتياطي، والترخيص. */
+/** الإعدادات: المحل، العملة، المظهر، كلمة المرور، النسخ الاحتياطي، والترخيص. */
 export function SettingsScreen() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <PageHeader
         title="الإعدادات"
-        description="بيانات المحل، كلمة المرور، النسخ الاحتياطي، والترخيص."
+        description="المحل، العملة، المظهر، كلمة المرور، النسخ الاحتياطي، والترخيص."
       />
       {SECTIONS.map((s, index) => (
         <SettingsSection

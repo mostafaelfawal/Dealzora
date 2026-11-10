@@ -36,6 +36,7 @@ import {
   type TreasurySchemaType,
 } from "../schema/treasury.schema";
 import type { CashDirection } from "../types/treasury";
+import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
 const IDS = {
   amount: "tf-amount",
@@ -177,7 +178,7 @@ function ManualEntryForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor={IDS.amount}>المبلغ (ج.م) *</Label>
+          <Label htmlFor={IDS.amount}>المبلغ (<CurrencyLabel />) *</Label>
           <Input
             id={IDS.amount}
             {...register("amount")}

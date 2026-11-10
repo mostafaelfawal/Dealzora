@@ -1,3 +1,5 @@
+import { currencySymbol } from "@/lib/currency";
+
 /** أرقام لاتينية (1,2,3) في كل التطبيق لسهولة القراءة والمقارنة. */
 const numberFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
@@ -14,8 +16,6 @@ const timeFormatter = new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
   hour12: true,
 });
 
-export const CURRENCY_LABEL = "ج.م";
-
 /* ---------- أرقام ومبالغ ---------- */
 
 export function formatNumber(value: number): string {
@@ -24,7 +24,7 @@ export function formatNumber(value: number): string {
 
 /** مبلغ كنص عادي (للـ toast والرسائل): "1,250.00 ج.م". في الواجهة استخدم <Money />. */
 export function formatMoneyText(value: number): string {
-  return `${formatNumber(value)} ${CURRENCY_LABEL}`;
+  return `${formatNumber(value)} ${currencySymbol()}`;
 }
 
 /** كمية: أرقام صحيحة للقطعة، وحتى 3 كسور للوزن. */
