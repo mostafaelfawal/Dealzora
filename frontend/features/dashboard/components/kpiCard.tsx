@@ -7,7 +7,7 @@ import {
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
-import { Sparkline } from "@/components/shared/charts/MiscCharts";
+import { Sparkline, type SparkPoint } from "@/components/shared/charts/MiscCharts";
 import { listItem, MotionDiv } from "@/components/shared/motion";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,8 @@ export function KpiCard({
   current: number;
   previous: number;
   inverse?: boolean;
-  spark?: number[];
+  /** خط الاتجاه اليومي + شرح يظهر في التلميح عند المرور عليه. */
+  spark?: { points: SparkPoint[]; note: string; kind?: "money" | "count" };
   hint?: ReactNode;
   index: number;
   icon: ReactNode;
@@ -76,7 +77,14 @@ export function KpiCard({
         </span>
       </div>
       <div className="text-xl leading-none font-semibold">{children}</div>
-      {spark && <Sparkline values={spark} />}
+      {spark && (
+        <Sparkline
+          points={spark.points}
+          seriesLabel={label}
+          note={spark.note}
+          kind={spark.kind}
+        />
+      )}
       {hint && (
         <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
       )}

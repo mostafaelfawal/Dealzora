@@ -74,7 +74,16 @@ const greeting = () =>
 function KpiGrid({ o }: { o: Overview }) {
   const k = o.kpis;
   const prev = o.prev;
-  const net = o.trend.map((t) => t.net);
+  // نقاط خط الاتجاه لكل بطاقة: التاريخ + قيمة اليوم + نفس اليوم في الفترة السابقة.
+  const points = (
+    pick: (t: Overview["trend"][number]) => number,
+    prevPick?: (t: Overview["trend"][number]) => number,
+  ) =>
+    o.trend.map((t) => ({
+      label: formatDate(t.day),
+      value: pick(t),
+      previous: prevPick?.(t),
+    }));
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
       <KpiCard
@@ -83,7 +92,10 @@ function KpiGrid({ o }: { o: Overview }) {
         label="صافي المبيعات"
         current={k.netSales}
         previous={prev.netSales}
-        spark={net}
+        spark={{
+          points: points((t) => t.net, (t) => t.prevNet),
+          note: "صافي المبيعات لكل يوم في الفترة (بعد خصم المرتجعات). مرّر على الخط لترى أي يوم.",
+        }}
         hint={`كاش ${formatNumber(k.cashSales)} · آجل ${formatNumber(k.creditSales)}`}
       >
         <Money amount={k.netSales} className="text-xl" />
@@ -94,7 +106,10 @@ function KpiGrid({ o }: { o: Overview }) {
         label="مجمل الربح"
         current={k.grossProfit}
         previous={prev.grossProfit}
-        spark={o.trend.map((t) => t.profit)}
+        spark={{
+          points: points((t) => t.profit, (t) => t.prevProfit),
+          note: "الربح اليومي = المبيعات − تكلفة البضاعة المباعة (قبل المصروفات).",
+        }}
         hint={`هامش ${marginPct(k)}% من المبيعات`}
       >
         <Money amount={k.grossProfit} className="text-xl" />
@@ -118,7 +133,11 @@ function KpiGrid({ o }: { o: Overview }) {
         label="عدد الفواتير"
         current={k.invoices}
         previous={prev.invoices}
-        spark={o.trend.map((t) => t.invoices)}
+        spark={{
+          points: points((t) => t.invoices),
+          note: "عدد فواتير البيع في كل يوم. انخفاضه مع ثبات المبيعات = فواتير أكبر.",
+          kind: "count",
+        }}
         hint={`${formatQty(k.itemsSold)} وحدة مباعة`}
       >
         <span className="font-mono">{k.invoices}</span>

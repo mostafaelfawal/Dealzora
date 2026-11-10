@@ -77,9 +77,10 @@ const toRow = (p: Product): Cell[] => [
 export async function exportProducts(
   params: GetProductsParams,
   onProgress?: (loaded: number, total: number) => void,
-): Promise<number> {
+): Promise<{ count: number; fileName: string }> {
   const products = await fetchAllProducts(params, onProgress);
-  if (products.length === 0) return 0;
+  const fileName = `products-${today()}.xlsx`;
+  if (products.length === 0) return { count: 0, fileName };
 
   await saveWorkbook(
     [
@@ -89,9 +90,9 @@ export async function exportProducts(
         widths: WIDTHS,
       },
     ],
-    `products-${today()}.xlsx`,
+    fileName,
   );
-  return products.length;
+  return { count: products.length, fileName };
 }
 
 /** نموذج جاهز للتعبئة: ورقة بيانات بمثالين + ورقة تعليمات. */

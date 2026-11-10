@@ -33,31 +33,70 @@ import {
 import { ChartLegend, ChartTooltipBox } from "./ChartTooltip";
 
 /* ================= خط صغير داخل بطاقة رقم (بدون محاور) ================= */
+export interface SparkPoint {
+  /** عنوان النقطة في التلميح (التاريخ). */
+  label: string;
+  value: number;
+  /** نفس اليوم في الفترة السابقة (اختياري للمقارنة). */
+  previous?: number;
+}
+
+/**
+ * خط اتجاه صغير داخل بطاقة رقم. بلا محاور، لكن المرور عليه يعرض تلميحاً فوقه
+ * بالتاريخ والقيمة وشرح ما تمثله السلسلة، ونقطة على اليوم المحدد.
+ */
 export function Sparkline({
-  values,
-  height = 32,
+  points,
+  seriesLabel,
+  note,
+  kind = "money",
+  height = 36,
 }: {
-  values: number[];
+  points: SparkPoint[];
+  seriesLabel: string;
+  note: string;
+  kind?: "money" | "count";
   height?: number;
 }) {
-  if (values.length < 2) return null;
-  const data = values.map((v, i) => ({ i, v }));
+  if (points.length < 2) return null;
   return (
-    <div style={{ height }} aria-hidden dir="ltr">
+    <div style={{ height }} dir="ltr" role="img" aria-label={`${seriesLabel}: ${note}`}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{ top: 2, right: 0, bottom: 2, left: 0 }}
-        >
-          <XAxis dataKey="i" reversed hide />
+        <AreaChart data={points} margin={{ top: 3, right: 2, bottom: 3, left: 2 }}>
+          <XAxis dataKey="label" reversed hide />
+          <YAxis hide domain={["dataMin", "dataMax"]} />
+          <Tooltip
+            cursor={{ stroke: CHART.axis, strokeWidth: 1, strokeDasharray: "3 3" }}
+            // فوق الرسم مباشرة حتى لا يغطي الخط ولا الرقم الكبير.
+            position={{ y: -8 }}
+            allowEscapeViewBox={{ x: false, y: true }}
+            wrapperStyle={{ zIndex: 50, transform: "translateY(-100%)", pointerEvents: "none" }}
+            content={({ active, payload }) => {
+              const p = active && payload?.[0] ? (payload[0].payload as SparkPoint) : null;
+              if (!p) return null;
+              return (
+                <ChartTooltipBox
+                  title={p.label}
+                  note={note}
+                  rows={[
+                    { label: seriesLabel, value: p.value, color: CHART.main, kind },
+                    ...(p.previous !== undefined
+                      ? [{ label: "نفس اليوم في الفترة السابقة", value: p.previous, color: CHART.muted, kind, dashed: true }]
+                      : []),
+                  ]}
+                />
+              );
+            }}
+          />
           <Area
             type="monotone"
-            dataKey="v"
+            dataKey="value"
             stroke={CHART.main}
             strokeWidth={1.5}
             fill={CHART.main}
             fillOpacity={0.08}
             dot={false}
+            activeDot={{ r: 3, fill: CHART.main, stroke: CHART.surface, strokeWidth: 2 }}
             isAnimationActive={false}
           />
         </AreaChart>

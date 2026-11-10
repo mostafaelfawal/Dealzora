@@ -17,12 +17,16 @@ export interface TooltipRow {
 export function ChartTooltipBox({
   title,
   rows,
+  note,
 }: {
   title: string;
   rows: TooltipRow[];
+  /** سطر شرح صغير أسفل التلميح (ماذا تعني هذه البيانات). */
+  note?: string;
 }) {
+  // dir صريح: الرسوم داخل حاوية LTR (لحسابات Recharts)، والتلميح نص عربي.
   return (
-    <div className="min-w-40 border bg-popover px-3 py-2 text-xs shadow-lg">
+    <div dir="rtl" className="max-w-64 min-w-40 border bg-popover px-3 py-2 text-xs shadow-lg">
       <p className="mb-1.5 font-medium">{title}</p>
       <ul className="space-y-1">
         {rows.map((r) => (
@@ -52,6 +56,11 @@ export function ChartTooltipBox({
           </li>
         ))}
       </ul>
+      {note && (
+        <p className="mt-1.5 border-t pt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+          {note}
+        </p>
+      )}
     </div>
   );
 }
