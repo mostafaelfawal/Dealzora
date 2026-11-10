@@ -1,3 +1,4 @@
+import { getUnits } from "@/features/catalog/api/catalog.api";
 import { extractErrorMessage } from "@/lib/errors";
 import { normalizeDigits } from "@/lib/format";
 
@@ -16,7 +17,6 @@ import {
   BACKEND_DECIMAL_UNITS,
   BARCODE_PATTERN,
 } from "../config/productLimits";
-import { DECIMAL_UNITS } from "../config/productOptions";
 import type { Product } from "../types/product";
 import { numberOrZero, parseNumber } from "./productCalc";
 import { MONEY_SCALE, QTY_SCALE } from "./productMapper";
@@ -48,7 +48,11 @@ export async function importProducts({
     if (key !== IGNORE) cols[key as ImportFieldKey] = column;
   }
 
-  const categories = await getCategories();
+  const [categories, units] = await Promise.all([getCategories(), getUnits()]);
+  // الوحدات الموزونة حسب إعداد المدير في قائمة الوحدات.
+  const decimalUnits = new Set(
+    units.filter((u) => u.allowDecimal).map((u) => u.name),
+  );
   const categoryByName = new Map(
     categories.map((c) => [c.label.trim().toLowerCase(), c.id]),
   );
@@ -92,7 +96,7 @@ export async function importProducts({
       const decimal =
         existing?.allowDecimal ||
         BACKEND_DECIMAL_UNITS.has(unit) ||
-        DECIMAL_UNITS.has(unit);
+        decimalUnits.has(unit);
       const qty = (value: number) =>
         Math.max(
           0,

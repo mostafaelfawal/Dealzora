@@ -30,6 +30,11 @@ export const PRODUCTS_SHORTCUTS = {
     description: "تصدير إلى Excel",
     match: plain("F7"),
   },
+  catalog: {
+    label: "F8",
+    description: "إدارة الأقسام والوحدات",
+    match: plain("F8"),
+  },
 } as const satisfies Record<string, Shortcut>;
 
 /** اختصارات صفحة إضافة/تعديل صنف. */

@@ -53,6 +53,9 @@ export interface ProductFilters {
 export interface ProductCategory {
   id: string;
   label: string;
+  /** عدد الأصناف (غير المحذوفة) في القسم. */
+  productCount: number;
+  version: number;
 }
 
 export interface ProductsPage {

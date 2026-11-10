@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { unitKeys } from "@/features/catalog/config/catalogQueryKeys";
 import { extractErrorMessage } from "@/lib/errors";
 
 import { updateProduct } from "../api/products.api";
@@ -22,6 +23,8 @@ export default function useUpdateProduct() {
       updateProduct(id, toUpdatePayload(values, baseVersion)),
     onSuccess: (product) => {
       toast.success(`تم حفظ تعديلات «${product.name}»`);
+      // الحفظ قد يضيف وحدة جديدة لقائمة الوحدات.
+      void queryClient.invalidateQueries({ queryKey: unitKeys.all });
       return queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
     onError: (error) => toast.error(extractErrorMessage(error)),

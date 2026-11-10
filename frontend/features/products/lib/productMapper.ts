@@ -51,4 +51,6 @@ export const toSummary = (dto: ProductsSummaryDto): ProductsSummary => ({
 export const toCategory = (dto: CategoryDto): ProductCategory => ({
   id: dto.id,
   label: dto.name,
+  productCount: dto.product_count,
+  version: dto.version,
 });

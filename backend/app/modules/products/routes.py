@@ -1,6 +1,6 @@
 """طبقة HTTP فقط: استقبال الطلب، حماية الدور، استدعاء الـ service. لا منطق عمل هنا.
 
-ترتيب المسارات مهم: الثابتة (categories/summary/by-barcode) قبل /{product_id}.
+ترتيب المسارات مهم: الثابتة (summary/by-barcode) قبل /{product_id}.
 """
 
 from typing import Annotated
@@ -14,7 +14,6 @@ from app.core.security import Actor, get_actor
 from app.core.permissions import require_admin, require_admin_write, require_cashier
 from .schema import (
     BarcodeLookupOut,
-    CategoryOut,
     LedgerQuery,
     ProductCreate,
     ProductListOut,
@@ -52,11 +51,6 @@ def list_products(service: Service, query: Annotated[ProductListQuery, Query()])
 @router.get("/summary", response_model=ProductsSummaryOut, dependencies=[Depends(require_cashier)])
 def products_summary(service: Service):
     return service.summary()
-
-
-@router.get("/categories", response_model=list[CategoryOut], dependencies=[Depends(require_cashier)])
-def list_categories(service: Service):
-    return service.list_categories()
 
 
 @router.get("/by-barcode/{barcode}", response_model=BarcodeLookupOut, dependencies=[Depends(require_cashier)])

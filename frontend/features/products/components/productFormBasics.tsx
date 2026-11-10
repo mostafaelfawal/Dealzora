@@ -1,7 +1,7 @@
 "use client";
 
-import { IconBarcode, IconSparkles } from "@tabler/icons-react";
-import { useMemo } from "react";
+import { IconBarcode, IconSettings, IconSparkles } from "@tabler/icons-react";
+import { useMemo, useState } from "react";
 import { useWatch } from "react-hook-form";
 
 import {
@@ -10,6 +10,7 @@ import {
   FormSection,
   SwitchField,
 } from "@/components/shared/form";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,17 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CatalogDialog } from "@/features/catalog/components/catalogDialog";
+import { useUnits } from "@/features/catalog/hooks/useCatalog";
+import type { CatalogTab } from "@/features/catalog/types/catalog";
 
 import {
   NO_CATEGORY,
   PRODUCT_FIELD_IDS as IDS,
 } from "../config/productFormFields";
-import { BASE_UNITS, DECIMAL_UNITS } from "../config/productOptions";
 import useGetCategories from "../hooks/useGetCategories";
 import { useProductFormFields } from "../hooks/useProductFormFields";
 import { generateBarcode } from "../lib/productCalc";
-
-const UNIT_ITEMS = BASE_UNITS.map((u) => ({ value: u, label: u }));
 
 type Item = { value: string; label: string };
 
@@ -67,6 +68,30 @@ function FieldSelect({
   );
 }
 
+/** زر صغير بجانب القائمة يفتح إدارة الأقسام/الوحدات. */
+function ManageButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <AppTooltip message={label}>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label={label}
+        onClick={onClick}
+        className="shrink-0"
+      >
+        <IconSettings />
+      </Button>
+    </AppTooltip>
+  );
+}
+
 export function ProductFormBasics() {
   const { form, setField, isEditing } = useProductFormFields();
   const {
@@ -88,9 +113,23 @@ export function ProductFormBasics() {
     [categories],
   );
 
+  const { data: units = [] } = useUnits();
+  const unitItems = useMemo<Item[]>(() => {
+    const items = units.map((u) => ({ value: u.name, label: u.name }));
+    // وحدة قديمة/مستوردة غير موجودة في القائمة تظهر كما هي.
+    if (unit && !units.some((u) => u.name === unit)) {
+      items.unshift({ value: unit, label: unit });
+    }
+    return items;
+  }, [units, unit]);
+
+  const [catalogTab, setCatalogTab] = useState<CatalogTab | null>(null);
+
   function changeUnit(next: string) {
     setField("unit", next);
-    if (DECIMAL_UNITS.has(next)) setField("allowDecimal", true);
+    if (units.find((u) => u.name === next)?.allowDecimal) {
+      setField("allowDecimal", true);
+    }
   }
 
   return (
@@ -143,14 +182,20 @@ export function ProductFormBasics() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField id={IDS.category} label="القسم">
-          <FieldSelect
-            id={IDS.category}
-            items={categoryItems}
-            value={category || NO_CATEGORY}
-            onChange={(next) =>
-              setField("category", next === NO_CATEGORY ? "" : next)
-            }
-          />
+          <div className="flex gap-2">
+            <FieldSelect
+              id={IDS.category}
+              items={categoryItems}
+              value={category || NO_CATEGORY}
+              onChange={(next) =>
+                setField("category", next === NO_CATEGORY ? "" : next)
+              }
+            />
+            <ManageButton
+              label="إدارة الأقسام"
+              onClick={() => setCatalogTab("categories")}
+            />
+          </div>
         </FormField>
 
         <FormField
@@ -158,12 +203,18 @@ export function ProductFormBasics() {
           label="وحدة البيع الأساسية"
           error={errors.unit?.message}
         >
-          <FieldSelect
-            id={IDS.unit}
-            items={UNIT_ITEMS}
-            value={unit}
-            onChange={changeUnit}
-          />
+          <div className="flex gap-2">
+            <FieldSelect
+              id={IDS.unit}
+              items={unitItems}
+              value={unit}
+              onChange={changeUnit}
+            />
+            <ManageButton
+              label="إدارة الوحدات"
+              onClick={() => setCatalogTab("units")}
+            />
+          </div>
         </FormField>
       </div>
 
@@ -174,6 +225,12 @@ export function ProductFormBasics() {
         checked={allowDecimal}
         onCheckedChange={(checked) => setField("allowDecimal", checked)}
         className="border-t pt-3"
+      />
+
+      <CatalogDialog
+        open={catalogTab !== null}
+        onOpenChange={(open) => !open && setCatalogTab(null)}
+        initialTab={catalogTab ?? "categories"}
       />
     </FormSection>
   );

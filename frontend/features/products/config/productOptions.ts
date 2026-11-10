@@ -1,21 +1,8 @@
 import type { SortKey } from "../types/product";
 
-/** وحدات البيع الأساسية الشائعة. */
-export const BASE_UNITS = [
-  "قطعة",
-  "كجم",
-  "لتر",
-  "متر",
-  "علبة",
-  "كيس",
-  "زجاجة",
-  "عبوة",
-];
+/* قائمة الوحدات نفسها يديرها المدير (features/catalog، endpoint /units). */
 
-/** وحدات بتقبل كسور غالباً: بنفعّل مفتاح الكسور تلقائياً عند اختيارها. */
-export const DECIMAL_UNITS = new Set(["كجم", "لتر", "متر"]);
-
-/** اقتراحات سريعة للوحدات الإضافية. */
+/** اقتراحات احتياطية للوحدات الإضافية لحين تحميل قائمة الوحدات. */
 export const EXTRA_UNIT_PRESETS = ["كرتونة", "دستة", "علبة"];
 
 export const MAX_EXTRA_UNITS = 5; // نفس الـ backend

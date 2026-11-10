@@ -100,14 +100,6 @@ class ProductRepository:
         total, low, out, value = self.session.execute(stmt).one()
         return ProductsSummary(total=total, low=low, out=out, stock_value=value)
 
-    def list_categories(self) -> list[Category]:
-        stmt = (
-            select(Category)
-            .where(Category.deleted_at.is_(None))
-            .order_by(Category.sort_order, Category.name)
-        )
-        return list(self.session.scalars(stmt).all())
-
     def get_category(self, category_id: str) -> Category | None:
         stmt = select(Category).where(Category.id == category_id, Category.deleted_at.is_(None))
         return self.session.scalars(stmt).first()

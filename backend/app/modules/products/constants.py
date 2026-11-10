@@ -20,8 +20,9 @@ MAX_PAGE_SIZE = 500
 BARCODE_PATTERN = r"[0-9A-Za-z\-]{3,32}"
 EAN_PREFIX = "622"  # مصر
 
-# الوحدات التي تقبل كسوراً فيُفعَّل "يُباع بالوزن" تلقائياً (نفس سلوك الفورم).
-DECIMAL_UNITS = frozenset({"كيلو", "جرام", "لتر", "متر"})
+# وحدات موزونة معروفة تتجاوز فحص الكسور في الـ schema. المرجع الكامل علم allow_decimal
+# في قائمة الوحدات (catalog.MeasureUnit) ويطبّقه ProductService._register_units.
+DECIMAL_UNITS = frozenset({"كيلو", "كجم", "جرام", "لتر", "متر"})
 DEFAULT_UNIT = "قطعة"
 COPY_SUFFIX = " (نسخة)"
 

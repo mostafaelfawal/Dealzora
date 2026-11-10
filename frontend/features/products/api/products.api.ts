@@ -48,7 +48,7 @@ export const getProductsSummary = async (): Promise<ProductsSummary> =>
   toSummary((await api.get<ProductsSummaryDto>("/products/summary")).data);
 
 export const getCategories = async (): Promise<ProductCategory[]> =>
-  (await api.get<CategoryDto[]>("/products/categories")).data.map(toCategory);
+  (await api.get<CategoryDto[]>("/categories")).data.map(toCategory);
 
 export const createProduct = async (payload: ProductCreatePayload) =>
   toProduct((await api.post<ProductDto>("/products", payload)).data);

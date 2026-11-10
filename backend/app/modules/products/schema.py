@@ -143,13 +143,6 @@ class BarcodeLookupOut(BaseModel):
     matched_unit_id: str | None  # لو الباركود لوحدة إضافية (كرتونة مثلاً)
 
 
-class CategoryOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    name: str
-
-
 # ================= المخزون =================
 class StockAdjustIn(BaseModel):
     """تعديل مخزون يدوي. معنى qty يتبع السبب:

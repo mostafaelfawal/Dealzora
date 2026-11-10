@@ -1,5 +1,6 @@
 """قواعد العمل. كل أمر كتابة = معاملة واحدة: المنتج + الحركة + Audit + Outbox ثم commit واحد."""
 
+from collections.abc import Callable
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -11,6 +12,7 @@ from app.core.security import Actor
 from app.core.service_base import EntityService
 from app.core.snapshots import diff_snapshots
 from app.core.text import build_search_text, normalize_digits
+from app.modules.catalog.registry import ensure_units
 
 from .constants import (
     COPY_SUFFIX,
@@ -31,7 +33,6 @@ from .model import Product, ProductUnit, StockMovement
 from .repository import ProductRepository
 from .schema import (
     BarcodeLookupOut,
-    CategoryOut,
     LedgerQuery,
     ProductBase,
     ProductCreate,
@@ -109,9 +110,6 @@ class ProductService(EntityService):
             product=self._to_out(product), matched_unit_id=unit.id if unit else None
         )
 
-    def list_categories(self) -> list[CategoryOut]:
-        return [CategoryOut.model_validate(c) for c in self.repo.list_categories()]
-
     def list_ledger(self, product_id: str, query: LedgerQuery) -> StockLedgerOut:
         self._get_or_404(product_id)
         rows, total = self.repo.list_movements(product_id, query.page, query.page_size)
@@ -134,6 +132,7 @@ class ProductService(EntityService):
             stock_qty=0,
         )
         self._apply_fields(product, data)
+        self._register_units(product, data)
         self._sync_units(product, data.extra_units)
         self._refresh_search_text(product)
         self.repo.add(product)
@@ -157,6 +156,7 @@ class ProductService(EntityService):
 
         before = self._snapshot(product)
         self._apply_fields(product, data)
+        self._register_units(product, data)
         self._sync_units(product, data.extra_units)
         self._refresh_search_text(product)
         product.mark_modified()
@@ -312,7 +312,30 @@ class ProductService(EntityService):
         self._audit(product, "price_from_purchase", {**diff_snapshots(before, after), "purchase_id": ref_id})
         self._enqueue(product, base_version=base_version)
 
+    def cascade_update(self, products: list[Product], mutate: Callable[[Product], None]) -> None:
+        """تعديل جماعي يطلبه موديول آخر (حذف قسم، إعادة تسمية وحدة) داخل معاملته:
+        كل صنف يأخذ نسخة جديدة + Audit + Outbox. لا commit هنا."""
+        for product in products:
+            before = self._snapshot(product)
+            base_version = product.version
+            mutate(product)
+            after = self._snapshot(product)
+            if after == before:
+                continue
+            product.mark_modified()
+            self._refresh_search_text(product)
+            self._audit(product, "update", diff_snapshots(before, after))
+            self._enqueue(product, base_version=base_version)
+
     # ================= داخلي =================
+    def _register_units(self, product: Product, data: ProductBase) -> None:
+        """يضيف أي وحدة جديدة لقائمة الوحدات، والوحدة الموزونة تفعّل الكسور."""
+        decimals = ensure_units(
+            self.session, self.actor, [data.unit, *(u.name for u in data.extra_units)]
+        )
+        if decimals.get(data.unit):
+            product.allow_decimal = True
+
     def _get_or_404(self, product_id: str) -> Product:
         product = self.repo.get(product_id)
         if product is None:

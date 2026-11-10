@@ -6,6 +6,7 @@ import { useWatch, type FieldErrors } from "react-hook-form";
 import { errorId, FieldError, FormSection } from "@/components/shared/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useUnits } from "@/features/catalog/hooks/useCatalog";
 
 import {
   PRODUCT_FIELD_IDS as IDS,
@@ -14,6 +15,9 @@ import {
   type UnitKey,
 } from "../config/productFormFields";
 import { EXTRA_UNIT_PRESETS, MAX_EXTRA_UNITS } from "../config/productOptions";
+
+const UNIT_LIST_ID = "extra-unit-names";
+const MAX_PRESETS = 6;
 import { useProductFormFields } from "../hooks/useProductFormFields";
 import { newLocalId } from "../lib/productCalc";
 import type { UnitSchemaType } from "../schema/product.schema";
@@ -66,6 +70,7 @@ function UnitRow({
             id={unitFieldId(key, index)}
             aria-label={ariaLabel[key]}
             aria-invalid={Boolean(errors?.[key])}
+            list={key === "name" ? UNIT_LIST_ID : undefined}
             dir={col.ltr ? "ltr" : undefined}
             inputMode={col.decimal ? "decimal" : undefined}
             value={unit[key]}
@@ -94,10 +99,16 @@ function UnitRow({
   );
 }
 
-function AddUnitButtons({ onAdd }: { onAdd: (name?: string) => void }) {
+function AddUnitButtons({
+  presets,
+  onAdd,
+}: {
+  presets: string[];
+  onAdd: (name?: string) => void;
+}) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {EXTRA_UNIT_PRESETS.map((preset) => (
+      {presets.map((preset) => (
         <Button
           key={preset}
           type="button"
@@ -136,6 +147,14 @@ export function ProductFormUnits() {
     name: ["extraUnits", "unit"],
   });
   const canAdd = units.length < MAX_EXTRA_UNITS;
+
+  // الاقتراحات من قائمة الوحدات (غير الموزونة)، بدون الأساسية والمضافة بالفعل.
+  const { data: catalog } = useUnits();
+  const used = new Set([baseUnit, ...units.map((u) => u.name.trim())]);
+  const names = catalog
+    ? catalog.filter((u) => !u.allowDecimal).map((u) => u.name)
+    : EXTRA_UNIT_PRESETS;
+  const available = names.filter((n) => !used.has(n));
 
   function addUnit(name = "") {
     if (!canAdd) return;
@@ -183,7 +202,17 @@ export function ProductFormUnits() {
         message={errors.extraUnits?.root?.message ?? errors.extraUnits?.message}
       />
 
-      {canAdd && <AddUnitButtons onAdd={addUnit} />}
+      {canAdd && (
+        <AddUnitButtons
+          presets={available.slice(0, MAX_PRESETS)}
+          onAdd={addUnit}
+        />
+      )}
+      <datalist id={UNIT_LIST_ID}>
+        {available.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
     </FormSection>
   );
 }

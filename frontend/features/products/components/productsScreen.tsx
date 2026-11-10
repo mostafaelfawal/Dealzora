@@ -5,6 +5,7 @@ import {
   IconFileSpreadsheet,
   IconLoader2,
   IconPlus,
+  IconTags,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,7 @@ import { useState } from "react";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
+import { CatalogDialog } from "@/features/catalog/components/catalogDialog";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,7 @@ export function ProductsScreen() {
   const list = useProductsList();
   const { view, setView } = useProductsView();
   const [importOpen, setImportOpen] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   // ملف مُفلَت على الصفحة: تفتح النافذة عليه مباشرة بدل خطوة اختيار الملف.
   const [droppedSheet, setDroppedSheet] = useState<LoadedSheet | null>(null);
   const exportMutation = useExportProducts();
@@ -62,7 +65,7 @@ export function ProductsScreen() {
   };
   // الاختصارات لا تعمل والنافذة مفتوحة.
   const whenIdle = (fn: () => void) => () => {
-    if (!importOpen) fn();
+    if (!importOpen && !catalogOpen) fn();
   };
 
   useHotkey(
@@ -80,6 +83,10 @@ export function ProductsScreen() {
     whenIdle(() => openImport()),
   );
   useHotkey(PRODUCTS_SHORTCUTS.exportExcel.match, whenIdle(exportToExcel));
+  useHotkey(
+    PRODUCTS_SHORTCUTS.catalog.match,
+    whenIdle(() => setCatalogOpen(true)),
+  );
   useHotkey(
     PRODUCTS_SHORTCUTS.newProduct.match,
     whenIdle(() => router.push(PRODUCT_ROUTES.new)),
@@ -207,6 +214,20 @@ export function ProductsScreen() {
           type="button"
           variant="outline"
           size="lg"
+          onClick={() => setCatalogOpen(true)}
+          className="h-10 gap-2 font-normal"
+        >
+          <IconTags className="size-4" aria-hidden />
+          <span className="hidden sm:inline">الأقسام والوحدات</span>
+          <span className="sm:hidden">الأقسام</span>
+          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+            {PRODUCTS_SHORTCUTS.catalog.label}
+          </ShortcutBadge>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
           disabled={exportMutation.isPending}
           onClick={exportToExcel}
           className="h-10 gap-2 font-normal"
@@ -313,6 +334,7 @@ export function ProductsScreen() {
         onOpenChange={setImportOpen}
         initial={droppedSheet}
       />
+      <CatalogDialog open={catalogOpen} onOpenChange={setCatalogOpen} />
       <ProductsDropOverlay visible={dragging} />
     </div>
   );

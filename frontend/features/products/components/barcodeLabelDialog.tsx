@@ -57,6 +57,22 @@ export function productLabelOptions(product: Product): LabelData[] {
   return options;
 }
 
+/**
+ * الرصيد الحالي بوحدة الباركود المختار (ملصق لكل قطعة/كرتونة في المخزون).
+ * الوحدة الأساسية الموزونة (كجم…) = null، لأن عدد الملصقات لا يساوي الوزن.
+ */
+function stockInUnit(product: Product, barcode: string): number | null {
+  const unit = product.extraUnits.find((u) => u.barcode === barcode);
+  if (unit) return Math.floor(product.stock / unit.factor);
+  return product.allowDecimal ? null : Math.floor(product.stock);
+}
+
+/** عدد النسخ الافتراضي = الرصيد، في حدود 1..الحد الأقصى. */
+function defaultCopies(product: Product, barcode: string): string {
+  const stock = stockInUnit(product, barcode) ?? 1;
+  return String(Math.min(Math.max(stock, 1), LABEL_COPIES_MAX));
+}
+
 /** طباعة ملصقات باركود للصنف على طابعة الملصقات (أفقي). */
 export function BarcodeLabelDialog({
   product,
@@ -100,10 +116,19 @@ function LabelForm({
   const { prefs, patch } = useLabelPrefs();
   const options = useMemo(() => productLabelOptions(product), [product]);
   const [selected, setSelected] = useState(options[0]?.barcode ?? "");
-  const [copiesText, setCopiesText] = useState("1");
+  const [copiesText, setCopiesText] = useState(() =>
+    defaultCopies(product, options[0]?.barcode ?? ""),
+  );
 
   const data = options.find((o) => o.barcode === selected) ?? options[0];
   const copies = Number.parseInt(copiesText, 10);
+  const stock = data ? stockInUnit(product, data.barcode) : null;
+
+  // تغيير الوحدة يعيد عدد النسخ لرصيدها.
+  function selectUnit(barcode: string) {
+    setSelected(barcode);
+    setCopiesText(defaultCopies(product, barcode));
+  }
 
   const printable = useMemo(
     () => !!data && renderBarcodeSvg(data.barcode) !== null,
@@ -150,7 +175,7 @@ function LabelForm({
               label: `${o.unitName ?? product.unit} — ${o.barcode}`,
             }))}
             value={data?.barcode ?? ""}
-            onChange={setSelected}
+            onChange={selectUnit}
             className="w-full"
           />
         </div>
@@ -167,7 +192,7 @@ function LabelForm({
             className="w-full"
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <label
             htmlFor="label-copies"
             className="text-xs text-muted-foreground"
@@ -187,6 +212,15 @@ function LabelForm({
             maxLength={3}
             className="h-10 w-24 text-center font-mono tabular-nums"
           />
+          {stock !== null && (
+            <span className="text-[11px] text-muted-foreground">
+              بالمخزون:{" "}
+              <bdi dir="ltr" className="font-mono tabular-nums">
+                {stock}
+              </bdi>
+              {stock > LABEL_COPIES_MAX && ` (الحد ${LABEL_COPIES_MAX})`}
+            </span>
+          )}
         </div>
       </div>
 

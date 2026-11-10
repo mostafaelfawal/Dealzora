@@ -44,6 +44,8 @@ export interface ProductsSummaryDto {
 export interface CategoryDto {
   id: string;
   name: string;
+  product_count: number;
+  version: number;
 }
 
 export interface ProductUnitPayload {
