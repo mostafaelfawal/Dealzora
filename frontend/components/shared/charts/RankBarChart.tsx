@@ -1,8 +1,8 @@
 "use client";
 
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState } from "react";
 
-import { ANIMATION, BAR_RADIUS_H, CHART, formatCompact } from "./chartTheme";
+import { CHART, formatCompact } from "./chartTheme";
 import { ChartTooltipBox, type TooltipRow } from "./ChartTooltip";
 
 export interface RankItem {
@@ -15,18 +15,21 @@ export interface RankItem {
   color?: string;
 }
 
-const ROW = 30; // ارتفاع كل صف (الاسم والعمود بنفس الارتفاع فيتطابقان)
-const BAR = 14;
-const VALUE_SPACE = 48; // مساحة رقم القيمة عند طرف العمود
+const ROW = 30; // ارتفاع كل صف
+const BAR = 14; // سُمك العمود
+const MIN_BAR = 2; // أصغر طول ظاهر حتى لا تختفي القيم الصغيرة
 
-const colorOf = (i: RankItem) => i.color ?? (i.value < 0 ? CHART.bad : CHART.main);
+const colorOf = (i: RankItem) =>
+  i.color ?? (i.value < 0 ? CHART.bad : CHART.main);
 
 /**
- * ترتيب أفقي بالاتجاه العربي: الاسم على اليمين (HTML حقيقي RTL، يُقصّ بـ … ويظهر كاملاً بالمرور)،
- * والعمود يبدأ بجوار الاسم ويمتد لليسار، والقيمة مكتوبة عند طرفه.
+ * ترتيب أفقي بالاتجاه العربي، بـ HTML/CSS خالص:
+ * الاسم على اليمين، والعمود يبدأ بجواره ويمتد لليسار بطول نسبي، والقيمة عند طرفه.
  *
- * الأسماء خارج SVG عمداً: نص SVG داخل حاوية LTR (التي يحتاجها Recharts لحساباته)
- * يكسر اتجاه العربي والأقواس ويقص الأسماء الطويلة.
+ * لماذا ليس Recharts؟ لأنه يرسم من اليسار لليمين، وقلب المحور (reversed) داخل حاوية LTR
+ * كان يعكس بداية العمود ونهايته (الطرف المدوّر والقيمة في الجهة الخطأ).
+ * الـ flex في RTL يعطي الاتجاه الصحيح مباشرة، و rounded-e يدوّر نهاية العمود فقط.
+ * القيم السالبة تُعرض بطولها المطلق وبلون الخسارة.
  */
 export function RankBarChart({
   items,
@@ -39,76 +42,83 @@ export function RankBarChart({
   kind?: TooltipRow["kind"];
   labelWidth?: number;
 }) {
-  const height = items.length * ROW;
+  const [active, setActive] = useState<string | null>(null);
+  const max = Math.max(...items.map((i) => Math.abs(i.value)), 0) || 1;
 
   return (
-    <div className="flex items-stretch gap-2" dir="rtl">
-      <ul className="shrink-0" style={{ width: labelWidth }}>
-        {items.map((item, i) => (
+    <ul dir="rtl" className="relative" onMouseLeave={() => setActive(null)}>
+      {items.map((item, i) => {
+        const pct = (Math.abs(item.value) / max) * 100;
+        const isActive = active === item.key;
+        return (
           <li
             key={item.key}
-            title={item.label}
-            className="flex items-center gap-1.5 text-xs"
-            style={{ height: ROW }}
+            tabIndex={0}
+            aria-label={`${item.label}: ${item.value}`}
+            onMouseEnter={() => setActive(item.key)}
+            onFocus={() => setActive(item.key)}
+            onBlur={() => setActive(null)}
+            className="relative flex items-center gap-2 outline-none focus-visible:bg-muted/60"
+            style={{
+              height: ROW,
+              background: isActive ? "var(--muted)" : undefined,
+            }}
           >
-            <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground">{i + 1}</span>
-            <span className="truncate">{item.label}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="min-w-0 flex-1" style={{ height }} dir="ltr">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={items}
-            layout="vertical"
-            barSize={BAR}
-            margin={{ top: 0, right: 0, bottom: 0, left: VALUE_SPACE }}
-          >
-            {/* reversed: الصفر على اليمين بجوار الأسماء، والقيم تكبر نحو اليسار. */}
-            <XAxis
-              type="number"
-              reversed
-              hide
-              domain={[(min: number) => Math.min(0, min), (max: number) => Math.max(0, max)]}
-            />
-            <YAxis type="category" dataKey="key" hide />
-            <Tooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.6 }}
-              content={({ active, payload }) => {
-                const p = active && payload?.[0] ? (payload[0].payload as RankItem) : null;
-                if (!p) return null;
-                return (
-                  <ChartTooltipBox
-                    title={p.label}
-                    rows={[
-                      { label: valueLabel, value: p.value, color: colorOf(p), kind },
-                      ...(p.extra ?? []).map((e) => ({ ...e, color: CHART.muted })),
-                    ]}
-                  />
-                );
-              }}
-            />
-            <Bar
-              dataKey="value"
-              radius={BAR_RADIUS_H}
-              minPointSize={2}
-              label={{
-                position: "left",
-                offset: 6,
-                fill: "var(--muted-foreground)",
-                fontSize: 11,
-                formatter: (v: unknown) => formatCompact(Number(v)),
-              }}
-              {...ANIMATION}
+            <span
+              className="flex shrink-0 items-center gap-1.5 text-xs"
+              style={{ width: labelWidth }}
+              title={item.label}
             >
-              {items.map((d) => (
-                <Cell key={d.key} fill={colorOf(d)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+              <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground">
+                {i + 1}
+              </span>
+              <span className="truncate">{item.label}</span>
+            </span>
+
+            <span className="flex min-w-0 flex-1 items-center gap-1.5">
+              <span
+                aria-hidden
+                className="rounded-e-[4px] transition-[width] duration-500 ease-out"
+                style={{
+                  width: `max(${MIN_BAR}px, ${pct}%)`,
+                  maxWidth: "calc(100% - 3.5rem)",
+                  height: BAR,
+                  background: colorOf(item),
+                }}
+              />
+              <span
+                dir="ltr"
+                className="shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums"
+              >
+                {formatCompact(item.value)}
+              </span>
+            </span>
+
+            {isActive && (
+              <div
+                className="pointer-events-none absolute bottom-full z-20 mb-1"
+                style={{ insetInlineStart: labelWidth }}
+              >
+                <ChartTooltipBox
+                  title={item.label}
+                  rows={[
+                    {
+                      label: valueLabel,
+                      value: item.value,
+                      color: colorOf(item),
+                      kind,
+                    },
+                    ...(item.extra ?? []).map((e) => ({
+                      ...e,
+                      color: CHART.muted,
+                    })),
+                  ]}
+                />
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

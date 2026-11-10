@@ -39,8 +39,11 @@ export const formatFull = (n: number) => full.format(n);
 export const AXIS_TICK = { fill: CHART.axis, fontSize: 11 } as const;
 
 /** إعدادات مشتركة: الأعمدة رفيعة بأطراف مدوّرة 4px، والحركة سريعة. */
+/**
+ * زوايا الأعمدة العمودية. Recharts يطبّق [0,1,2,3] نسبةً لنقطة بداية الرسم (x,y)
+ * وليس لزوايا الشاشة، لذلك نفس القيمة صحيحة للأعمدة الموجبة والسالبة (انظر CashFlowChart).
+ */
 export const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
-export const BAR_RADIUS_H: [number, number, number, number] = [4, 0, 0, 4]; // أفقي في RTL: الطرف على اليسار
 export const ANIMATION = {
   isAnimationActive: true,
   animationDuration: 450,

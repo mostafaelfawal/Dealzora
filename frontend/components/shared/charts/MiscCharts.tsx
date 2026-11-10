@@ -199,7 +199,7 @@ export function Donut({
             <span className="flex items-center gap-2">
               <span
                 aria-hidden
-                className="size-2.5 rounded-[2px]"
+                className="size-2.5 rounded-xs"
                 style={{ background: s.color }}
               />
               {s.label}
@@ -308,11 +308,15 @@ export function CashFlowChart({
               maxBarSize={22}
               {...ANIMATION}
             />
+            {/*
+              نفس BAR_RADIUS عمداً: Recharts يرسم العمود السالب من طرفه (أسفل) نحو الصفر
+              بارتفاع سالب، فالزاويتان 0 و1 هما طرفه السفلي. [0,0,4,4] كان يدوّر جهة الصفر.
+            */}
             <Bar
               dataKey="out"
               stackId="flow"
               fill={CHART.bad}
-              radius={[0, 0, 4, 4]}
+              radius={BAR_RADIUS}
               maxBarSize={22}
               {...ANIMATION}
             />
@@ -457,7 +461,7 @@ export function PeakHeatmap({
     <div className="space-y-2">
       <div className="overflow-x-auto">
         <table
-          className="w-full min-w-[520px] border-separate"
+          className="w-full min-w-130 border-separate"
           style={{ borderSpacing: 2 }}
         >
           <thead>
@@ -528,7 +532,7 @@ export function PeakHeatmap({
             <span
               key={c}
               aria-hidden
-              className="size-3 rounded-[2px] border border-border/50"
+              className="size-3 rounded-xs border border-border/50"
               style={{ background: c }}
             />
           ))}
