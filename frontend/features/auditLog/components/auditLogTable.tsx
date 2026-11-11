@@ -10,12 +10,7 @@ import { formatWhen } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
-import {
-  ACTION_LABEL,
-  AUDIT_PAGE_SIZES,
-  DANGER_ACTIONS,
-  ENTITY_LABEL,
-} from "../config/auditLogOptions";
+import { AUDIT_PAGE_SIZES } from "../config/auditLogOptions";
 import type { AuditLogState } from "../hooks/useAuditLog";
 import type { AuditEntry } from "../types/auditLog";
 import { AuditChanges } from "./auditChanges";
@@ -30,26 +25,40 @@ function buildColumns(expanded: string | null): AppTableColumn<AuditEntry>[] {
         const open = expanded === e.id;
         return (
           <div className="min-w-0 space-y-1.5">
-            <p className="flex flex-wrap items-center gap-1.5 text-xs">
+            <p className="flex items-start gap-1.5 text-xs">
+              <span
+                className={cn(
+                  "min-w-0 flex-1 leading-relaxed",
+                  e.danger && "text-destructive",
+                )}
+              >
+                {e.summary}
+              </span>
+              {e.details.length > 0 && (
+                <IconChevronDown
+                  aria-label={open ? "إخفاء التفاصيل" : "عرض التفاصيل"}
+                  className={cn(
+                    "mt-0.5 size-3.5 shrink-0 text-muted-foreground transition-transform",
+                    open && "rotate-180",
+                  )}
+                />
+              )}
+            </p>
+            <p className="flex flex-wrap items-center gap-1.5">
               <Badge
                 variant="outline"
                 className={cn(
                   "font-normal",
-                  DANGER_ACTIONS.has(e.action) &&
-                    "border-destructive/50 text-destructive",
+                  e.danger && "border-destructive/50 text-destructive",
                 )}
               >
-                {ACTION_LABEL[e.action] ?? e.action}
+                {e.actionLabel}
               </Badge>
-              <span>{ENTITY_LABEL[e.entity] ?? e.entity}</span>
-              <IconChevronDown
-                className={cn(
-                  "size-3.5 text-muted-foreground transition-transform",
-                  open && "rotate-180",
-                )}
-              />
+              <span className="text-[11px] text-muted-foreground">
+                {e.entityLabel}
+              </span>
             </p>
-            {open && <AuditChanges changes={e.changes} />}
+            {open && <AuditChanges details={e.details} />}
           </div>
         );
       },

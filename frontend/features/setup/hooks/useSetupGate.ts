@@ -10,11 +10,12 @@ import { SETUP_ROUTE } from "../config/setupOptions";
 /** expect="setup": تبقى هنا فقط لو النظام يحتاج إعداداً. expect="login": العكس. */
 export function useSetupGate(expect: "setup" | "login") {
   const router = useRouter();
-  const { data: setupRequired } = useQuery({
+  const { data: setupRequired, isError } = useQuery({
     queryKey: ["setup-status"],
     queryFn: fetchSetupRequired,
-    retry: 10, // الـ backend قد يحتاج ثوانٍ ليقلع
-    retryDelay: 500,
+    // الـ backend قد يحتاج ثوانٍ ليقلع (أول تشغيل لنسخة الـ exe + مضاد الفيروسات): حتى دقيقة.
+    retry: 60,
+    retryDelay: 1000,
     staleTime: 0,
     refetchOnWindowFocus: false,
   });
@@ -25,5 +26,12 @@ export function useSetupGate(expect: "setup" | "login") {
     if (expect === "login" && setupRequired) router.replace(SETUP_ROUTE);
   }, [setupRequired, expect, router]);
 
-  return setupRequired !== undefined && setupRequired === (expect === "setup");
+  return {
+    ready:
+      setupRequired !== undefined && setupRequired === (expect === "setup"),
+    /** الخادم لم يرد بعد كل المحاولات. */
+    failed: isError,
+    /** وصل رد من الخادم (حتى لو سننتقل لصفحة أخرى). */
+    answered: setupRequired !== undefined,
+  };
 }

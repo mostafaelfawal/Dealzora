@@ -6,9 +6,10 @@ import { OptionSelect } from "@/components/shared/OptionSelect";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
 
-import { ACTION_OPTIONS, ALL, ENTITY_OPTIONS } from "../config/auditLogOptions";
+import { ALL } from "../config/auditLogOptions";
 import {
   useAuditActors,
+  useAuditFilterOptions,
   useAuditLog,
   type AuditLogState,
 } from "../hooks/useAuditLog";
@@ -16,6 +17,21 @@ import { AuditLogTable } from "./auditLogTable";
 
 function AuditLogToolbar({ state: s }: { state: AuditLogState }) {
   const actors = useAuditActors();
+  const options = useAuditFilterOptions();
+  const entityOptions = useMemo(
+    () => [
+      { value: ALL, label: "كل الأنواع" },
+      ...(options.data?.entities ?? []),
+    ],
+    [options.data],
+  );
+  const actionOptions = useMemo(
+    () => [
+      { value: ALL, label: "كل العمليات" },
+      ...(options.data?.actions ?? []),
+    ],
+    [options.data],
+  );
   const actorOptions = useMemo(
     () => [
       { value: ALL, label: "كل المستخدمين" },
@@ -29,14 +45,14 @@ function AuditLogToolbar({ state: s }: { state: AuditLogState }) {
       <PeriodPicker value={s.period} onChange={s.setPeriod} />
       <OptionSelect
         label="النوع"
-        items={ENTITY_OPTIONS}
+        items={entityOptions}
         value={s.entity}
         onChange={s.setEntity}
         className="w-40"
       />
       <OptionSelect
         label="العملية"
-        items={ACTION_OPTIONS}
+        items={actionOptions}
         value={s.action}
         onChange={s.setAction}
         className="w-40"

@@ -3,6 +3,7 @@ import { api } from "@/lib/axios";
 
 import type {
   AuditActor,
+  AuditOption,
   AuditEntry,
   AuditEntryDto,
   AuditFilters,
@@ -11,9 +12,14 @@ import type {
 const toAuditEntry = (r: AuditEntryDto): AuditEntry => ({
   id: r.id,
   entity: r.entity,
+  entityLabel: r.entity_label,
   entityId: r.entity_id,
   action: r.action,
+  actionLabel: r.action_label,
   actorName: r.actor_name,
+  summary: r.summary,
+  details: r.details,
+  danger: r.danger,
   changes: r.changes,
   createdAt: toMs(r.created_at),
 });
@@ -38,3 +44,11 @@ export async function fetchAuditLog(f: AuditFilters) {
 
 export const fetchAuditActors = async () =>
   (await api.get<AuditActor[]>("/audit-log/actors")).data;
+
+/** الأنواع والعمليات الموجودة فعلاً في السجل بأسمائها العربية (من الـ backend). */
+export const fetchAuditFilters = async () =>
+  (
+    await api.get<{ entities: AuditOption[]; actions: AuditOption[] }>(
+      "/audit-log/filters",
+    )
+  ).data;

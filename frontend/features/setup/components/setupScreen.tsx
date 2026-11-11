@@ -7,12 +7,14 @@ import { BRAND } from "@/config/brand";
 import { ConnectLink } from "@/features/devices/components/connectLink";
 
 import { useSetupGate } from "../hooks/useSetupGate";
+import { BackendStartup } from "./backendStartup";
 import { SetupForm } from "./setupForm";
 import { SetupShowcase } from "./setupShowcase";
 import { resetLicenseDev } from "../lib/license";
 
 export function SetupScreen() {
-  const ready = useSetupGate("setup");
+  const { ready, failed, answered } = useSetupGate("setup");
+  if (!answered) return <BackendStartup failed={failed} />;
 
   return (
     <main className="grid min-h-dvh bg-background lg:grid-cols-2">

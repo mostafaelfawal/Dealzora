@@ -49,3 +49,4 @@ build
 target
 .cargo
 *.key
+frontend/src-tauri/binaries/dealzora-backend-x86_64-pc-windows-msvc.exe

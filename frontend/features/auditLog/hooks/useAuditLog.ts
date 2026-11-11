@@ -3,17 +3,31 @@ import { useState } from "react";
 
 import { periodOf, type PeriodValue } from "@/components/shared/PeriodPicker";
 
-import { fetchAuditActors, fetchAuditLog } from "../api/auditLog.api";
+import {
+  fetchAuditActors,
+  fetchAuditFilters,
+  fetchAuditLog,
+} from "../api/auditLog.api";
 import { ALL, AUDIT_DEFAULT_PAGE_SIZE } from "../config/auditLogOptions";
 
 export const auditKeys = {
   all: ["audit"] as const,
   actors: () => [...auditKeys.all, "actors"] as const,
+  filters: () => [...auditKeys.all, "filters"] as const,
   list: (f: object) => [...auditKeys.all, "list", f] as const,
 };
 
 export function useAuditActors() {
   return useQuery({ queryKey: auditKeys.actors(), queryFn: fetchAuditActors });
+}
+
+/** قوائم «النوع» و«العملية» من الـ backend (الموجود فعلاً في السجل وبأسمائه العربية). */
+export function useAuditFilterOptions() {
+  return useQuery({
+    queryKey: auditKeys.filters(),
+    queryFn: fetchAuditFilters,
+    staleTime: 5 * 60_000,
+  });
 }
 
 /** فلاتر السجل + القائمة. أي تغيير في فلتر يرجع للصفحة الأولى. */

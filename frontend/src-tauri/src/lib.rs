@@ -167,12 +167,29 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
     if cfg.mode == device::Mode::Terminal {
         return None; // جهاز كاشير: البيانات على الجهاز الأساسي
     }
-    let exe = std::env::current_exe().ok()?.parent()?.join("dealzora-backend.exe");
-    let db_password = license::db_password().ok()?;
-    let device_id = license::device_id().ok()?;
+    // كل سبب فشل يُكتب في logs\app.log (بدلاً من واجهة لا تستجيب بلا تفسير).
+    let fail = |why: String| {
+        app_log(&format!("backend not started: {why}"));
+        None
+    };
+    let exe = match std::env::current_exe() {
+        Ok(p) => p.with_file_name("dealzora-backend.exe"),
+        Err(e) => return fail(e.to_string()),
+    };
+    if !exe.is_file() {
+        return fail(format!("missing {}", exe.display()));
+    }
+    let db_password = match license::db_password() {
+        Ok(p) => p,
+        Err(e) => return fail(format!("db_password: {e}")),
+    };
+    let device_id = match license::device_id() {
+        Ok(d) => d,
+        Err(e) => return fail(format!("device_id: {e}")),
+    };
     // 0.0.0.0 فقط لو المدير سمح لأجهزة الكاشير. كل طلب يحتاج توكن جهاز في الحالتين.
     let host = if cfg.lan_enabled { "0.0.0.0" } else { "127.0.0.1" };
-    Command::new(exe)
+    let spawned = Command::new(&exe)
         .env("POS_SESSION_TOKEN", session_token)
         .env("POS_WRITE_PERMIT_SECRET", permit_secret)
         .env("POS_DB_PASSWORD", db_password)
@@ -180,8 +197,62 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
         .env("POS_HOST", host)
         .env("POS_DEBUG", "false")
         .creation_flags(CREATE_NO_WINDOW)
-        .spawn()
+        .spawn();
+    match spawned {
+        Ok(child) => {
+            app_log(&format!("backend started pid={} host={host}", child.id()));
+            Some(child)
+        }
+        Err(e) => fail(format!("spawn: {e}")),
+    }
+}
+
+/// سطر في %LOCALAPPDATA%\Dealzora\logs\app.log (تشخيص مشاكل التشغيل عند العميل).
+#[cfg_attr(debug_assertions, allow(dead_code))]
+fn app_log(msg: &str) {
+    use std::io::Write;
+    let Some(dir) = std::env::var("LOCALAPPDATA").ok().map(|p| std::path::PathBuf::from(p).join("Dealzora").join("logs")) else {
+        return;
+    };
+    let _ = std::fs::create_dir_all(&dir);
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(dir.join("app.log")) {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        let _ = writeln!(f, "{now} {msg}");
+    }
+}
+
+/// حالة الـ backend المحلي للواجهة: لو توقف نعرض سبباً واضحاً بدل شاشة معلّقة.
+#[derive(serde::Serialize)]
+struct BackendState {
+    /// running | exited | not_started | external (التطوير: يعمل من VS Code) | terminal
+    state: &'static str,
+    exit_code: Option<i32>,
+    log_dir: Option<String>,
+}
+
+#[tauri::command]
+fn get_backend_state(state: State<AppState>) -> BackendState {
+    let log_dir = std::env::var("LOCALAPPDATA")
         .ok()
+        .map(|p| format!("{p}\\Dealzora\\logs"));
+    if device::load().mode == device::Mode::Terminal {
+        return BackendState { state: "terminal", exit_code: None, log_dir };
+    }
+    if cfg!(debug_assertions) {
+        return BackendState { state: "external", exit_code: None, log_dir };
+    }
+    let mut slot = state.backend.lock().unwrap();
+    match slot.as_mut() {
+        None => BackendState { state: "not_started", exit_code: None, log_dir },
+        Some(child) =>
+            match child.try_wait() {
+                Ok(Some(status)) => BackendState { state: "exited", exit_code: status.code(), log_dir },
+                _ => BackendState { state: "running", exit_code: None, log_dir },
+            }
+    }
 }
 
 #[cfg(debug_assertions)]
@@ -257,6 +328,7 @@ pub fn run() {
                 get_license_status,
                 get_license_lease,
                 get_device_config,
+                get_backend_state,
                 connect_to_main,
                 disconnect_from_main,
                 set_lan_enabled,

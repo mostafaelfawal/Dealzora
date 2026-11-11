@@ -1,9 +1,11 @@
+import logging
 import os
 import subprocess
 import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import sqlcipher3
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -43,7 +45,18 @@ def prepare_data_dir(db_path: str) -> None:
 async def lifespan(_: FastAPI):
     settings = get_settings()
     prepare_data_dir(settings.db_path)
-    init_db()
+    try:
+        init_db()
+    except sqlcipher3.DatabaseError as exc:
+        # أشهر سبب: ملف قاعدة أُنشئ بكلمة سر أخرى (نسخة تطوير على نفس المسار، أو تغيّر
+        # DEALZORA_DB_SECRET بين إصدارين، أو نُقلت القاعدة من جهاز آخر). رسالة صريحة في السجل.
+        logging.getLogger("dealzora").critical(
+            "cannot open database %s: %s. The file was created with a different key "
+            "(dev build on the same path, changed DEALZORA_DB_SECRET, or copied from another PC).",
+            settings.db_path,
+            exc,
+        )
+        raise
     # نسخة احتياطية تلقائية في الخلفية (لا تؤخر الإقلاع).
     threading.Thread(target=auto_backup_if_due, name="auto-backup", daemon=True).start()
     yield
