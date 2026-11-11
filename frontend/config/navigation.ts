@@ -58,6 +58,7 @@ export const NAVIGATION: NavGroup[] = [
       {
         title: "المشتريات",
         href: "/admin/purchases",
+        feature: "suppliers",
         icon: IconTruckDelivery,
         hotkey: 5,
       },
@@ -70,23 +71,27 @@ export const NAVIGATION: NavGroup[] = [
       {
         title: "العملاء",
         href: "/admin/customers",
+        feature: "customers",
         icon: IconUsers,
         hotkey: 6,
       },
       {
         title: "الموردين",
         href: "/admin/suppliers",
+        feature: "suppliers",
         icon: IconBuildingStore,
         hotkey: 7,
       },
       {
         title: "المصروفات",
         href: "/admin/expenses",
+        feature: "expenses",
         icon: IconCash,
       },
       {
         title: "الخزنة",
         href: "/admin/treasury",
+        feature: "expenses",
         icon: IconBuildingBank,
         hotkey: 8,
       },
@@ -110,6 +115,7 @@ export const NAVIGATION: NavGroup[] = [
       {
         title: "سجل العمليات",
         href: "/admin/audit-log",
+        feature: "audit_log",
         icon: IconHistory,
       },
       {

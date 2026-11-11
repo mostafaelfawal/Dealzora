@@ -13,6 +13,7 @@ from app.core.database import get_sessionmaker
 from app.core.deps import ActorDep, SessionDep
 from app.core.init_db import init_db
 from app.core.outbox import OutboxEvent, OutboxStatus
+from app.core.plan import Feature, ensure_feature
 from app.core.permissions import require_authenticated, require_manager, require_manager_write
 from app.core.security import Role
 from app.modules.settings.schema import BackupLocationIn
@@ -128,6 +129,7 @@ def make_backup(session: SessionDep, actor: ActorDep):
 )
 def set_location(data: BackupLocationIn, session: SessionDep, actor: ActorDep):
     """يحفظ المجلد بعد التأكد أنه قابل للكتابة، ثم يأخذ نسخة فيه فوراً."""
+    ensure_feature(Feature.BACKUP_LOCATION)  # بَسطة: المجلد الافتراضي فقط
     path = str(ensure_writable(data.path)) if data.path else None
     if path and ensure_writable(path) == default_backup_dir():
         path = None  # اختيار المجلد الافتراضي نفسه = الافتراضي
@@ -144,6 +146,8 @@ def set_location(data: BackupLocationIn, session: SessionDep, actor: ActorDep):
 )
 def restore(data: RestoreIn, session: SessionDep, actor: ActorDep):
     """يستبدل كل البيانات بالنسخة المختارة. الجلسات الحالية قد تنتهي فيُعاد تسجيل الدخول."""
+    if data.path:  # بَسطة: الاستعادة من نسخ هذا الجهاز فقط (لا من فلاشة/ملف خارجي)
+        ensure_feature(Feature.BACKUP_LOCATION)
     source = resolve_backup(data.name, data.path)
     session.close()  # نحرر اتصال هذا الطلب قبل الكتابة على القاعدة كلها
     safety = restore_backup(source)

@@ -19,6 +19,15 @@ import { ProductsReportTab } from "./productsReportTab";
 import { SalesReportTab } from "./salesReportTab";
 import { StockReportTab } from "./stockReportTab";
 import { TreasuryReportTab } from "./treasuryReportTab";
+import { UpgradeNotice } from "@/components/shared/PlanGate";
+import { usePlan, useFeature } from "@/lib/plan";
+
+/** تاريخ قبل n يوم بتوقيت الجهاز (YYYY-MM-DD) لمقارنته بـ range.from. */
+function daysAgoISO(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 function PrintButton() {
   return (
@@ -58,7 +67,19 @@ function ReportTabContent({
 /** التقارير: فترة واحدة تتحكم في كل التبويبات، وكل رقم له جدول تحته. */
 export function ReportsScreen() {
   const [tab, setTab] = useState<ReportTab>("sales");
-  const [period, setPeriod] = useState<PeriodValue>(periodOf("month"));
+  const plan = usePlan().data;
+  // بَسطة: آخر 7 أيام فقط، فنبدأ بـ «أسبوع» بدل «شهر».
+  const [period, setPeriod] = useState<PeriodValue>(
+    periodOf(plan?.isFree ? "week" : "month"),
+  );
+  const fullReports = useFeature("full_reports");
+  const cutoff = plan?.limits.reportDays
+    ? daysAgoISO(plan.limits.reportDays - 1)
+    : null;
+  const outOfPlan =
+    !fullReports &&
+    (tab === "debts" ||
+      (PERIOD_TABS.has(tab) && cutoff !== null && period.range.from < cutoff));
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
@@ -78,7 +99,11 @@ export function ReportsScreen() {
           <PeriodPicker value={period} onChange={setPeriod} />
         )}
       </div>
-      <ReportTabContent tab={tab} period={period} />
+      {outOfPlan ? (
+        <UpgradeNotice feature="full_reports" className="mt-4" />
+      ) : (
+        <ReportTabContent tab={tab} period={period} />
+      )}
     </div>
   );
 }

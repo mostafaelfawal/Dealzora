@@ -11,15 +11,19 @@ export function SettingsSection({
   description,
   children,
   index,
+  id,
 }: {
   icon: ReactNode;
   title: string;
   description: string;
   children: ReactNode;
   index: number;
+  /** مرساة للروابط المباشرة (مثل /admin/settings#license). */
+  id?: string;
 }) {
   return (
     <MotionDiv
+      id={id}
       variants={fadeUp}
       initial="hidden"
       animate="show"

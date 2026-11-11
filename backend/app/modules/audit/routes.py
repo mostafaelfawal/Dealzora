@@ -13,11 +13,16 @@ from app.core.lookups import user_names
 from app.core.pagination import Page, PageQuery, make_page
 from app.core.periods import day_bounds_utc
 from app.core.permissions import require_manager
+from app.core.plan import Feature, require_feature
 from app.core.repository import fetch_page
 
 from .describe import ACTION_LABELS, DANGER_ACTIONS, ENTITY_LABELS, describe_rows
 
-router = APIRouter(prefix="/audit-log", tags=["audit"], dependencies=[Depends(require_manager)])
+router = APIRouter(
+    prefix="/audit-log",
+    tags=["audit"],
+    dependencies=[Depends(require_manager), require_feature(Feature.AUDIT_LOG)],
+)
 
 MAX_ENTITY_LEN = 40
 

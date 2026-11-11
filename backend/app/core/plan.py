@@ -1,0 +1,134 @@
+"""خطط Dealzora وحدودها. المصدر الوحيد للحقيقة في الـ backend (الواجهة تقرأه من GET /plan).
+
+الخطة يمررها Rust عند تشغيل الـ backend (POS_PLAN) من الترخيص المحلي:
+- بلا ترخيص مدفوع ← «بَسطة» المجانية للأبد بحدودها.
+- ترخيص مدفوع ← خطته (التراخيص القديمة بلا خطة = كل الميزات).
+الإنفاذ هنا (لا في الواجهة فقط): أي طلب يتجاوز الخطة يُرفض برسالة ترقية واضحة.
+"""
+
+from enum import StrEnum
+from typing import Annotated
+
+from fastapi import Depends, Request
+
+from .config import get_settings
+from .errors import ForbiddenError
+
+
+class Plan(StrEnum):
+    FREE = "free"
+    BASIC = "basic"
+    PRO = "pro"
+    ENTERPRISE = "enterprise"
+
+
+PLAN_NAMES: dict[Plan, str] = {
+    Plan.FREE: "بَسطة",
+    Plan.BASIC: "دُكّان",
+    Plan.PRO: "سوق",
+    Plan.ENTERPRISE: "سلسلة",
+}
+
+
+class Feature(StrEnum):
+    CUSTOMERS = "customers"  # العملاء والآجل والتحصيل
+    SUPPLIERS = "suppliers"  # الموردين والمشتريات
+    EXPENSES = "expenses"  # المصروفات وحركات الخزنة اليدوية
+    EXTRA_UNITS = "extra_units"  # كرتونة/دستة
+    BARCODE_LABELS = "barcode_labels"
+    EXCEL = "excel"  # استيراد وتصدير
+    WHATSAPP = "whatsapp"
+    BACKUP_LOCATION = "backup_location"  # مكان النسخ + الاستعادة من ملف
+    AUDIT_LOG = "audit_log"
+    FULL_REPORTS = "full_reports"  # التقارير أبعد من 7 أيام + تقرير الديون
+    MULTI_USER = "multi_user"
+    TERMINALS = "terminals"  # أجهزة كاشير إضافية
+
+
+FEATURE_NAMES: dict[Feature, str] = {
+    Feature.CUSTOMERS: "العملاء والبيع الآجل",
+    Feature.SUPPLIERS: "الموردين والمشتريات",
+    Feature.EXPENSES: "المصروفات والخزنة",
+    Feature.EXTRA_UNITS: "وحدات البيع الإضافية (كرتونة/دستة)",
+    Feature.BARCODE_LABELS: "طباعة ملصقات الباركود",
+    Feature.EXCEL: "الاستيراد والتصدير من Excel",
+    Feature.WHATSAPP: "إرسال الفاتورة على واتساب",
+    Feature.BACKUP_LOCATION: "اختيار مكان النسخ والاستعادة من ملف",
+    Feature.AUDIT_LOG: "سجل العمليات",
+    Feature.FULL_REPORTS: "التقارير الكاملة",
+    Feature.MULTI_USER: "أكثر من مستخدم",
+    Feature.TERMINALS: "أجهزة كاشير إضافية",
+}
+
+# بَسطة: المالك يبيع بنفسه على جهاز واحد.
+FREE_LIMITS = {"products": 300, "users": 1, "report_days": 7}
+# أقل خطة مدفوعة تفتح الميزة (لرسالة الترقية). سجل العمليات وأجهزة الكاشير من «سوق».
+_UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
+    Feature.AUDIT_LOG: Plan.PRO,
+    Feature.TERMINALS: Plan.PRO,
+}
+
+
+def current_plan() -> Plan:
+    try:
+        return Plan(get_settings().plan)
+    except ValueError:
+        return Plan.FREE  # قيمة غير معروفة = الأضيق (لا نفتح ميزة بالخطأ)
+
+
+def is_free() -> bool:
+    return current_plan() is Plan.FREE
+
+
+def has_feature(feature: Feature) -> bool:
+    # الآن: أي خطة مدفوعة = كل الميزات (الحدود بين دكان/سوق/سلسلة تُضاف لاحقاً هنا فقط).
+    return not is_free()
+
+
+def enabled_features() -> list[Feature]:
+    return [f for f in Feature if has_feature(f)]
+
+
+def upgrade_error(feature: Feature) -> ForbiddenError:
+    plan = PLAN_NAMES[_UNLOCKED_IN[feature]]
+    return ForbiddenError(
+        "plan_upgrade_required",
+        f"{FEATURE_NAMES[feature]} غير متاحة في خطة «{PLAN_NAMES[Plan.FREE]}» المجانية. "
+        f"متاحة من خطة «{plan}».",
+        {"feature": feature.value, "plan": current_plan().value},
+    )
+
+
+def limit_error(what: str, limit: int) -> ForbiddenError:
+    return ForbiddenError(
+        "plan_limit_reached",
+        f"وصلت لحد خطة «{PLAN_NAMES[Plan.FREE]}» المجانية ({limit} {what}). رقِّ خطتك للمزيد.",
+        {"limit": limit, "plan": current_plan().value},
+    )
+
+
+def ensure_feature(feature: Feature) -> None:
+    if not has_feature(feature):
+        raise upgrade_error(feature)
+
+
+def require_feature(feature: Feature):  # noqa: ANN201 - dependency factory
+    """الميزة كلها (قراءة وكتابة)، مثل سجل العمليات."""
+
+    def dep() -> None:
+        ensure_feature(feature)
+
+    return Depends(dep)
+
+
+def require_feature_for_writes(feature: Feature):  # noqa: ANN201
+    """الكتابة فقط: القراءة تبقى (مثلاً قائمة العملاء الفارغة لشاشة الكاشير لا تتعطل)."""
+
+    def dep(request: Request) -> None:
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            ensure_feature(feature)
+
+    return Depends(dep)
+
+
+PlanDep = Annotated[Plan, Depends(current_plan)]

@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 
 import {
   SETUP_FIELD_IDS,
-  TRIAL_DAYS,
   TRIAL_PERKS,
 } from "../config/setupOptions";
 import { useSetupFormContext } from "../context/SetupFormContext";
@@ -18,8 +17,8 @@ import type { SetupStep } from "../types/setup";
 import { PasswordStrength } from "./passwordStrength";
 
 const STEP_LABEL: Record<SetupStep, string> = {
-  idle: `ابدأ التجربة المجانية (${TRIAL_DAYS} أيام)`,
-  trial: "جارٍ تفعيل التجربة…",
+  idle: "ابدأ مجاناً بخطة «بَسطة»",
+  trial: "جارٍ تجهيز خطة «بَسطة» المجانية…",
   account: "جارٍ إنشاء حسابك…",
   login: "جارٍ تجهيز لوحة التحكم…",
 };

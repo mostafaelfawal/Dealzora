@@ -12,6 +12,7 @@ from app.core.security import Actor
 from app.core.service_base import EntityService
 from app.core.snapshots import diff_snapshots
 from app.core.text import build_search_text, normalize_digits
+from app.core.plan import FREE_LIMITS, Feature, ensure_feature, is_free, limit_error
 from app.modules.catalog.registry import ensure_units
 
 from .constants import (
@@ -122,6 +123,7 @@ class ProductService(EntityService):
 
     # ================= كتابة =================
     def create_product(self, data: ProductCreate) -> ProductOut:
+        self._check_plan(data, new_product=True)
         self._check_category(data.category_id)
         self._check_barcodes(data)
 
@@ -149,6 +151,7 @@ class ProductService(EntityService):
         return self._to_out(product)
 
     def update_product(self, product_id: str, data: ProductUpdate) -> ProductOut:
+        self._check_plan(data, new_product=False)
         product = self._get_or_404(product_id)
         self._check_version(product, data.base_version)
         self._check_category(data.category_id)
@@ -168,6 +171,7 @@ class ProductService(EntityService):
         return self._to_out(product)
 
     def duplicate_product(self, product_id: str) -> ProductOut:
+        self._check_product_limit()
         src = self._get_or_404(product_id)
         copy = Product(
             id=uuid7(),
@@ -328,6 +332,19 @@ class ProductService(EntityService):
             self._enqueue(product, base_version=base_version)
 
     # ================= داخلي =================
+    def _check_product_limit(self) -> None:
+        if is_free():
+            limit = FREE_LIMITS["products"]
+            if self.repo.summary().total >= limit:
+                raise limit_error("صنف", limit)
+
+    def _check_plan(self, data: ProductBase, *, new_product: bool) -> None:
+        """بَسطة: حد عدد الأصناف، وبدون وحدات إضافية (حذفها مسموح دائماً)."""
+        if new_product:
+            self._check_product_limit()
+        if data.extra_units:
+            ensure_feature(Feature.EXTRA_UNITS)
+
     def _register_units(self, product: Product, data: ProductBase) -> None:
         """يضيف أي وحدة جديدة لقائمة الوحدات، والوحدة الموزونة تفعّل الكسور."""
         decimals = ensure_units(

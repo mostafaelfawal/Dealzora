@@ -28,6 +28,7 @@ import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
 
 interface Section {
+  id?: string;
   icon: ReactNode;
   title: string;
   description: string;
@@ -77,6 +78,7 @@ const MAIN_ONLY: Section[] = [
     content: <BackupSection />,
   },
   {
+    id: "license",
     icon: <IconLicense />,
     title: "الترخيص والاشتراك",
     description: "الترخيص مرتبط بهذا الجهاز.",
@@ -119,6 +121,7 @@ export function SettingsScreen() {
       {sections.map((s, index) => (
         <SettingsSection
           key={s.title}
+          id={s.id}
           index={index}
           icon={s.icon}
           title={s.title}

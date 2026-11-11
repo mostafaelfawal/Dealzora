@@ -126,9 +126,12 @@ fn start_trial(shop_name: String) -> Result<license::Status, String> {
     license::start_trial(&shop_name)
 }
 
+/// بعد التفعيل تتغير الخطة (بَسطة ← مدفوعة): نعيد تشغيل الـ backend ليقرأ POS_PLAN الجديد.
 #[tauri::command]
-fn activate_license(key: String) -> Result<license::Status, String> {
-    license::activate(&key)
+fn activate_license(app: AppHandle, key: String) -> Result<license::Status, String> {
+    let status = license::activate(&key)?;
+    restart_backend(&app);
+    Ok(status)
 }
 
 /// يضع عملية التطبيق في Job عليه KILL_ON_JOB_CLOSE: كل عملية نشغّلها بعد كده (الـ backend
@@ -195,6 +198,7 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
         .env("POS_DB_PASSWORD", db_password)
         .env("POS_DEVICE_ID", device_id)
         .env("POS_HOST", host)
+        .env("POS_PLAN", license::plan_name())
         .env("POS_DEBUG", "false")
         .creation_flags(CREATE_NO_WINDOW)
         .spawn();

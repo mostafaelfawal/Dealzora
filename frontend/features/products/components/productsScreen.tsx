@@ -4,15 +4,18 @@ import {
   IconDownload,
   IconFileSpreadsheet,
   IconLoader2,
+  IconLock,
   IconPlus,
   IconTags,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
+import { upgradeMessage, useFeature, usePlan } from "@/lib/plan";
 import { CatalogDialog } from "@/features/catalog/components/catalogDialog";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
@@ -48,13 +51,18 @@ export function ProductsScreen() {
   // ملف مُفلَت على الصفحة: تفتح النافذة عليه مباشرة بدل خطوة اختيار الملف.
   const [droppedSheet, setDroppedSheet] = useState<LoadedSheet | null>(null);
   const exportMutation = useExportProducts();
+  const plan = usePlan().data;
+  const excel = useFeature("excel");
+  // ميزة مقفولة في الخطة: الزر ظاهر بقفل، والضغط يشرح الخطة المطلوبة بدل لا شيء.
+  const ifExcel = (fn: () => void) => () =>
+    excel ? fn() : toast.info(upgradeMessage("excel"), { duration: 6000 });
 
   const openImport = (sheet: LoadedSheet | null = null) => {
     setDroppedSheet(sheet);
     setImportOpen(true);
   };
   const { dragging } = useProductsFileDrop({
-    enabled: !importOpen,
+    enabled: !importOpen && excel,
     onLoaded: openImport,
   });
 
@@ -80,9 +88,12 @@ export function ProductsScreen() {
   );
   useHotkey(
     PRODUCTS_SHORTCUTS.importExcel.match,
-    whenIdle(() => openImport()),
+    whenIdle(ifExcel(() => openImport())),
   );
-  useHotkey(PRODUCTS_SHORTCUTS.exportExcel.match, whenIdle(exportToExcel));
+  useHotkey(
+    PRODUCTS_SHORTCUTS.exportExcel.match,
+    whenIdle(ifExcel(exportToExcel)),
+  );
   useHotkey(
     PRODUCTS_SHORTCUTS.catalog.match,
     whenIdle(() => setCatalogOpen(true)),
@@ -229,10 +240,12 @@ export function ProductsScreen() {
           variant="outline"
           size="lg"
           disabled={exportMutation.isPending}
-          onClick={exportToExcel}
+          onClick={ifExcel(exportToExcel)}
           className="h-10 gap-2 font-normal"
         >
-          {exportMutation.isPending ? (
+          {!excel ? (
+            <IconLock className="size-4" aria-hidden />
+          ) : exportMutation.isPending ? (
             <IconLoader2 className="size-4 animate-spin" aria-hidden />
           ) : (
             <IconDownload className="size-4" aria-hidden />
@@ -249,10 +262,14 @@ export function ProductsScreen() {
           type="button"
           variant="outline"
           size="lg"
-          onClick={() => openImport()}
+          onClick={ifExcel(() => openImport())}
           className="h-10 gap-2 font-normal"
         >
-          <IconFileSpreadsheet className="size-4" />
+          {excel ? (
+            <IconFileSpreadsheet className="size-4" />
+          ) : (
+            <IconLock className="size-4" aria-hidden />
+          )}
           <span className="hidden sm:inline">استيراد من Excel</span>
           <span className="sm:hidden">استيراد</span>
           <ShortcutBadge className="hidden rounded-none lg:inline-flex">
@@ -272,6 +289,25 @@ export function ProductsScreen() {
           </ShortcutBadge>
         </Button>
       </header>
+
+      {plan?.isFree && plan.limits.products !== null && (
+        <p
+          className={cn(
+            "border px-3 py-2 text-xs",
+            list.summary.total >= plan.limits.products
+              ? "border-destructive/40 bg-destructive/5 text-destructive"
+              : "bg-muted/40 text-muted-foreground",
+          )}
+        >
+          خطة «بَسطة» المجانية:{" "}
+          <b className="font-mono">
+            {list.summary.total} / {plan.limits.products}
+          </b>{" "}
+          صنف.
+          {list.summary.total >= plan.limits.products &&
+            " وصلت للحد — رقِّ خطتك من الإعدادات لإضافة المزيد."}
+        </p>
+      )}
 
       <ProductsStats
         summary={list.summary}

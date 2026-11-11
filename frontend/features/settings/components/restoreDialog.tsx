@@ -148,8 +148,8 @@ function RestoreForm({
         <li className="flex gap-2">
           <IconCircleCheck className="size-4 shrink-0 text-primary" />
           <span>
-            قبل الاستعادة نأخذ نسخة أمان من الوضع الحالي تلقائياً، فتقدر ترجع
-            لها من نفس القائمة لو غيّرت رأيك.
+            قبل الاستعادة نأخذ نسخة أمان من الوضع الحالي تلقائياً، فتقدر ترجع لها
+            من نفس القائمة لو غيّرت رأيك.
           </span>
         </li>
         <li className="flex gap-2">

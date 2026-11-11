@@ -8,6 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.core.plan import Feature, require_feature_for_writes
 from app.core.database import get_session
 from app.core.security import Actor, get_actor
 
@@ -27,7 +28,12 @@ from .schema import (
 )
 from .service import CustomerService
 
-router = APIRouter(prefix="/customers", tags=["customers"])
+# خطة «بَسطة» المجانية: القراءة متاحة، والكتابة تحتاج خطة مدفوعة.
+router = APIRouter(
+    prefix="/customers",
+    tags=["customers"],
+    dependencies=[require_feature_for_writes(Feature.CUSTOMERS)],
+)
 
 
 def get_customer_service(

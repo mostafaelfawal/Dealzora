@@ -35,6 +35,7 @@ import { posUiActions } from "../store/posUiSlice";
 import { selectInvoiceCustomer, selectTotals } from "../store/selectors";
 import type { PaymentMethod } from "../types/pos";
 import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
+import { upgradeMessage, useFeature } from "@/lib/plan";
 
 const METHODS: { id: PaymentMethod; label: string; key: string }[] = [
   { id: "cash", label: "كاش", key: "F1" },
@@ -112,6 +113,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
     setCashText(initialCashText(next, total));
   }
 
+  const customersAllowed = useFeature("customers");
   const typed = round2(Number(normalizeDigits(cashText)) || 0);
   const cash = method === "credit" ? 0 : typed;
   const applied = method === "cash" ? total : cash;
@@ -123,7 +125,10 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
 
   let error: string | null = null;
   let needsCustomer = false;
-  if (method === "cash") {
+  if (method !== "cash" && !customersAllowed) {
+    // بَسطة: البيع كاش فقط (السيرفر يرفض الآجل أيضاً).
+    error = upgradeMessage("customers");
+  } else if (method === "cash") {
     if (cash < total)
       error = `المبلغ ناقص ${formatMoneyText(round2(total - cash))}`;
   } else if (!customer) {

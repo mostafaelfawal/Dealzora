@@ -26,6 +26,9 @@ import {
   PosPickerHeader,
   pickerItemClass,
 } from "./posPickerChrome";
+import { UpgradeNotice } from "@/components/shared/PlanGate";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useFeature } from "@/lib/plan";
 
 function Avatar({
   selected,
@@ -105,6 +108,24 @@ export function PosCustomerDialog() {
   const open = useAppSelector((s) => s.posUi.dialog === "customer");
   const customers = useAppSelector(selectCustomers);
   const selectedId = useAppSelector(selectInvoiceCustomer)?.id ?? null;
+  const allowed = useFeature("customers");
+
+  // بَسطة: البيع لعميل نقدي فقط. نفس النافذة (زر أو اختصار) تشرح الخطة المطلوبة.
+  if (!allowed) {
+    return (
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) dispatch(posUiActions.closeCustomerDialog());
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle className="sr-only">العملاء</DialogTitle>
+          <UpgradeNotice feature="customers" className="border-0 p-2" />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <CommandDialog

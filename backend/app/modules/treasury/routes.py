@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.core.plan import Feature, require_feature_for_writes
 from app.core.database import get_session
 from app.core.security import Actor, get_actor
 
@@ -18,7 +19,12 @@ from .schema import (
 )
 from .service import TreasuryService
 
-router = APIRouter(prefix="/treasury", tags=["treasury"])
+# خطة «بَسطة» المجانية: القراءة متاحة، والكتابة تحتاج خطة مدفوعة.
+router = APIRouter(
+    prefix="/treasury",
+    tags=["treasury"],
+    dependencies=[require_feature_for_writes(Feature.EXPENSES)],
+)
 
 
 def get_treasury_service(

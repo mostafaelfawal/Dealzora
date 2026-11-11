@@ -7,17 +7,21 @@ import {
   IconFolderOpen,
   IconHistory,
   IconLoader2,
+  IconLock,
   IconRestore,
 } from "@tabler/icons-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { listItem, MotionLi } from "@/components/shared/motion";
+import { PlanLock } from "@/components/shared/PlanGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNow } from "@/hooks/useNow";
 import { formatWhen } from "@/lib/dates";
 import { formatMinutesAgo } from "@/lib/format";
+import { upgradeMessage, useFeature } from "@/lib/plan";
 
 import type {
   BackupFile,
@@ -207,17 +211,16 @@ function HowItWorks() {
       </summary>
       <ol className="mt-2 list-decimal space-y-1 ps-5 text-muted-foreground">
         <li>
-          البرنامج ينسخ بياناتك تلقائياً كل يوم. اضغط «نسخة احتياطية الآن» قبل
-          أي تعديل كبير (استيراد Excel مثلاً).
+          البرنامج ينسخ بياناتك تلقائياً كل يوم. اضغط «نسخة احتياطية الآن» قبل أي
+          تعديل كبير (استيراد Excel مثلاً).
         </li>
         <li>
-          اختر «مكان حفظ النسخ» على قرص آخر أو فلاشة، حتى تبقى النسخ لو تعطّل
-          قرص الجهاز.
+          اختر «مكان حفظ النسخ» على قرص آخر أو فلاشة، حتى تبقى النسخ لو تعطّل قرص
+          الجهاز.
         </li>
         <li>
           حصل خطأ أو حُذفت بيانات؟ اضغط «استعادة» بجانب نسخة بتاريخ قبل المشكلة.
-          البرنامج يأخذ نسخة من الوضع الحالي أولاً، فتقدر ترجع لها لو غيّرت
-          رأيك.
+          البرنامج يأخذ نسخة من الوضع الحالي أولاً، فتقدر ترجع لها لو غيّرت رأيك.
         </li>
         <li>
           النسخة على فلاشة أو مجلد آخر؟ استخدم «استعادة من ملف» واختر الملف.
@@ -234,6 +237,8 @@ export function BackupSection() {
   const files = backups.data ?? [];
   const location = status.data?.location ?? null;
   const [restoring, setRestoring] = useState<RestoreSource | null>(null);
+  // بَسطة: نسخ تلقائية في المجلد الافتراضي فقط (الاستعادة من نسخ هذا الجهاز متاحة).
+  const locationAllowed = useFeature("backup_location");
 
   return (
     <div className="space-y-3">
@@ -254,7 +259,14 @@ export function BackupSection() {
         </Button>
       </div>
 
-      {location && <LocationEditor location={location} />}
+      {location && locationAllowed && <LocationEditor location={location} />}
+      {location && !locationAllowed && (
+        <p className="flex items-center gap-1.5 border-t pt-3 text-xs text-muted-foreground">
+          <PlanLock feature="backup_location" />
+          النسخ تُحفظ في المجلد الافتراضي على هذا الجهاز. اختيار فلاشة أو قرص آخر
+          متاح من خطة «دُكّان».
+        </p>
+      )}
 
       <div className="flex items-center justify-between gap-2 border-t pt-3">
         <span className="text-xs font-medium">النسخ المحفوظة</span>
@@ -262,10 +274,20 @@ export function BackupSection() {
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => setRestoring({ kind: "file" })}
+          onClick={() =>
+            locationAllowed
+              ? setRestoring({ kind: "file" })
+              : toast.info(upgradeMessage("backup_location"), {
+                  duration: 6000,
+                })
+          }
           className="gap-1.5 font-normal"
         >
-          <IconFolderOpen className="size-3.5" />
+          {locationAllowed ? (
+            <IconFolderOpen className="size-3.5" />
+          ) : (
+            <IconLock className="size-3.5" />
+          )}
           استعادة من ملف…
         </Button>
       </div>

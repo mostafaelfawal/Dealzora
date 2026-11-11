@@ -62,10 +62,17 @@ def generate_keypair(path: Path) -> str:
 
 
 MAX_TERMINALS = 50
+# الخطط المدفوعة (المجانية «بَسطة» لا تحتاج مفتاحاً). الاسم المعروض ← القيمة في الترخيص.
+PLANS = {"دُكّان": "basic", "سوق": "pro", "سلسلة": "enterprise"}
 
 
 def issue_license(
-    key: Ed25519PrivateKey, machine_id: str, shop: str, expires: int, terminals: int = 0
+    key: Ed25519PrivateKey,
+    machine_id: str,
+    shop: str,
+    expires: int,
+    terminals: int = 0,
+    plan: str = "pro",
 ) -> tuple[str, dict]:
     payload = {
         "license_id": str(uuid.uuid4()),
@@ -74,6 +81,7 @@ def issue_license(
         "expires_at": expires,
         # أجهزة الكاشير الإضافية المسموح باتصالها بالجهاز الأساسي (للتسعير).
         "terminals": terminals,
+        "plan": plan,  # basic | pro | enterprise
     }
     body = b64(json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode())
     return f"{body}.{b64(key.sign(body.encode()))}", payload
@@ -117,6 +125,7 @@ class App(ctk.CTk):
         self.preset = ctk.StringVar(value="سنة")
         self.custom_days = ctk.StringVar(value="365")
         self.terminals = ctk.StringVar(value="0")
+        self.plan = ctk.StringVar(value="سوق")
         self.status = ctk.StringVar(value="")
 
         tabs = ctk.CTkTabview(self)
@@ -172,6 +181,9 @@ class App(ctk.CTk):
         self.custom_entry = ctk.CTkEntry(self.custom_row, textvariable=self.custom_days, width=100, justify="center")
         self.custom_entry.pack(side="right")
         self.custom_entry.configure(state="disabled")
+
+        self._label(t, "الخطة").pack(fill="x", padx=10, pady=(14, 2))
+        ctk.CTkSegmentedButton(t, values=list(PLANS), variable=self.plan).pack(fill="x", padx=10)
 
         row = ctk.CTkFrame(t, fg_color="transparent")
         row.pack(fill="x", padx=10, pady=(14, 0))
@@ -234,7 +246,7 @@ class App(ctk.CTk):
 
         try:
             key = load_private_key(Path(self.key_path.get().strip()))
-            license_key, payload = issue_license(key, mid, shop, expires, terminals)
+            license_key, payload = issue_license(key, mid, shop, expires, terminals, PLANS[self.plan.get()])
             append_history(payload, license_key)
         except Exception as exc:
             return self._set_status(f"فشل الإصدار: {exc}", ok=False)
@@ -242,7 +254,7 @@ class App(ctk.CTk):
         self.output.delete("1.0", "end")
         self.output.insert("1.0", license_key)
         self.copy_btn.configure(state="normal")
-        self._set_status(f"تم الإصدار لـ «{shop}» - ينتهي: {fmt_date(expires)} - أجهزة كاشير: {terminals}")
+        self._set_status(f"تم الإصدار لـ «{shop}» - ينتهي: {fmt_date(expires)} - {self.plan.get()} - أجهزة كاشير: {terminals}")
 
     def copy_output(self) -> None:
         text = self.output.get("1.0", "end").strip()

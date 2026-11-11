@@ -14,6 +14,7 @@ from app.core.caller import Caller, CallerDep, require_main_device
 from app.core.config import get_settings
 from app.core.deps import ActorDep, SessionDep
 from app.core.errors import BadRequestError
+from app.core.plan import Feature, ensure_feature
 from app.core.permissions import require_manager, require_manager_write
 from app.core.text import collapse_spaces
 
@@ -154,6 +155,7 @@ def network(session: SessionDep):
     dependencies=[Depends(require_manager_write)],
 )
 def pairing_code(_main: MainDevice):
+    ensure_feature(Feature.TERMINALS)  # بَسطة: جهاز واحد فقط
     code, expires = runtime.new_pairing_code()
     return PairingCodeOut(code=code, expires_at=_ts(expires))
 

@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     # (Rust يحدده من إعداد «السماح لأجهزة الكاشير»). كل طلب يحتاج توكن جهاز في الحالتين.
     host: str = "127.0.0.1"
     port: int = 8000
+    # الخطة من الترخيص (Rust). الافتراضي الأضيق «بَسطة» المجانية. للتطوير: POS_PLAN=pro في .env
+    plan: str = "free"
     debug: bool = False
     cors_origins: list[str] = [
         "tauri://localhost",

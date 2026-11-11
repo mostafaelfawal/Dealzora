@@ -1,5 +1,3 @@
-export const TRIAL_DAYS = 10;
-
 export const SHOP_NAME_MIN = 2;
 export const SHOP_NAME_MAX = 100;
 export const USERNAME_MIN = 3;
@@ -16,8 +14,9 @@ export const SETUP_FIELD_IDS = {
 
 export const SETUP_ROUTE = "/setup";
 
+/** خطة «بَسطة» المجانية للأبد (نفس حدود backend/app/core/plan.py). */
 export const TRIAL_PERKS = [
-  `${TRIAL_DAYS} أيام تجربة كاملة بكل المزايا`,
-  "بدون بطاقة بنكية ولا التزام",
+  "خطة «بَسطة» مجانية للأبد: بيع كاش وطباعة ومرتجع حتى 300 صنف",
+  "بدون بطاقة بنكية ولا التزام، ورقِّ خطتك وقت ما تحتاج",
   "بياناتك مشفّرة ومحفوظة على جهازك فقط",
 ] as const;

@@ -42,8 +42,7 @@ export function ProductsDropOverlay({ visible }: { visible: boolean }) {
         <div className="space-y-1.5">
           <p className="text-xl font-bold">أفلت ملف Excel هنا</p>
           <p className="text-sm text-muted-foreground">
-            سنقرأ الأعمدة ونربطها بحقول الأصناف تلقائياً، وتراجعها قبل
-            الاستيراد.
+            سنقرأ الأعمدة ونربطها بحقول الأصناف تلقائياً، وتراجعها قبل الاستيراد.
           </p>
         </div>
 

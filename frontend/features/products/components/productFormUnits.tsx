@@ -6,7 +6,9 @@ import { useWatch, type FieldErrors } from "react-hook-form";
 import { errorId, FieldError, FormSection } from "@/components/shared/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PlanLock } from "@/components/shared/PlanGate";
 import { useUnits } from "@/features/catalog/hooks/useCatalog";
+import { upgradeMessage, useFeature } from "@/lib/plan";
 
 import {
   PRODUCT_FIELD_IDS as IDS,
@@ -146,7 +148,8 @@ export function ProductFormUnits() {
     control,
     name: ["extraUnits", "unit"],
   });
-  const canAdd = units.length < MAX_EXTRA_UNITS;
+  const allowed = useFeature("extra_units");
+  const canAdd = allowed && units.length < MAX_EXTRA_UNITS;
 
   // الاقتراحات من قائمة الوحدات (غير الموزونة)، بدون الأساسية والمضافة بالفعل.
   const { data: catalog } = useUnits();
@@ -202,6 +205,12 @@ export function ProductFormUnits() {
         message={errors.extraUnits?.root?.message ?? errors.extraUnits?.message}
       />
 
+      {!allowed && (
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <PlanLock feature="extra_units" />
+          {upgradeMessage("extra_units")}
+        </p>
+      )}
       {canAdd && (
         <AddUnitButtons
           presets={available.slice(0, MAX_PRESETS)}

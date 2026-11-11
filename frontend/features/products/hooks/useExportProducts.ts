@@ -36,9 +36,8 @@ export default function useExportProducts() {
       });
     },
     onError: (error) =>
-      toast.error(
-        extractErrorMessage(error, "تعذّر تصدير المنتجات إلى Excel"),
-        { id: TOAST_ID },
-      ),
+      toast.error(extractErrorMessage(error, "تعذّر تصدير المنتجات إلى Excel"), {
+        id: TOAST_ID,
+      }),
   });
 }

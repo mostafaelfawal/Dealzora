@@ -6,6 +6,7 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.plan import FREE_LIMITS, is_free, limit_error
 from app.core.audit import record_audit
 from app.core.base import utcnow, uuid7
 from app.core.config import get_settings
@@ -66,6 +67,8 @@ class UserService:
 
     def create_user(self, data: UserCreate) -> UserOut:
         actor = self._require_manager()
+        if is_free() and self.repo.count_users() >= FREE_LIMITS["users"]:
+            raise limit_error("مستخدم — المالك يبيع بنفسه", FREE_LIMITS["users"])
         if self.repo.username_taken(data.username):
             raise _err(ConflictError, UserError.USERNAME_TAKEN)
         user = self._new_user(data.username, data.password, data.role, created_by=actor.user_id)

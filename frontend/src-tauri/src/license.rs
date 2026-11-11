@@ -17,13 +17,18 @@ type R<T> = Result<T, String>;
 
 const SCHEMA: u8 = 1;
 const DAY: u64 = 86_400;
-const TRIAL_DAYS: u64 = 10;
+/// «بَسطة» المجانية لا تنتهي (Kind::Trial يبقى اسمها الداخلي لتوافق السجلات المحفوظة).
+/// تاريخ الانتهاء المخزّن رمزي فقط؛ التقييم يتجاهله للخطة المجانية.
+const FREE_EXPIRES_AT: u64 = 4_102_444_800; // 2100
 const PERMIT_TTL: u64 = 300; // 5 دقائق
 /// عقد ترخيص أجهزة الكاشير: يُجدَّد كل دقيقتين، فلو أُغلق البرنامج أو انتهى الترخيص
 /// تتوقف أجهزة الكاشير عن الكتابة خلال هذه المدة كحد أقصى.
 const LEASE_TTL: u64 = 15 * 60;
-/// أجهزة كاشير مسموحة في فترة التجربة (ليجرب العميل الميزة). الترخيص المدفوع: الحقل terminals.
-const TRIAL_TERMINALS: u32 = 1;
+/// «بَسطة» المجانية: جهاز واحد بلا أجهزة كاشير إضافية. الترخيص المدفوع: الحقل terminals.
+const TRIAL_TERMINALS: u32 = 0;
+/// ترخيص مدفوع صادر قبل إضافة حقل plan = كل الميزات (لا نسحب ميزة من عميل دفع).
+const DEFAULT_PAID_PLAN: &str = "pro";
+const PAID_PLANS: [&str; 3] = ["basic", "pro", "enterprise"];
 const CLOCK_TOLERANCE: u64 = 600; // سماح لفروق الساعة
 const TOUCH_INTERVAL: u64 = 60; // لا نكتب last_seen أكثر من مرة في الدقيقة
 /// أي وقت أقدم من هذا مرفوض. ارفعه مع كل إصدار (الحالي ≈ 20 سبتمبر 2026).
@@ -67,6 +72,9 @@ struct Record {
     /// default: السجلات المحفوظة قبل إضافة الحقل تبقى صالحة (= 0).
     #[serde(default)]
     terminals: Option<u32>,
+    /// خطة الترخيص المدفوع (basic | pro | enterprise). None في السجلات القديمة = DEFAULT_PAID_PLAN.
+    #[serde(default)]
+    plan: Option<String>,
 }
 
 #[derive(Serialize, Clone, Copy, PartialEq)]
@@ -100,6 +108,9 @@ struct KeyPayload {
     /// عدد أجهزة الكاشير (التسعير). غيابه في المفاتيح القديمة = 0.
     #[serde(default)]
     terminals: Option<u32>,
+    /// basic | pro | enterprise. غيابه في المفاتيح القديمة = كل الميزات.
+    #[serde(default)]
+    plan: Option<String>,
 }
 
 enum Loaded {
@@ -256,7 +267,10 @@ fn status_of(
         kind: rec.map(|r| r.kind),
         shop_name: rec.map(|r| r.shop_name.clone()),
         expires_at: rec.map(|r| r.expires_at),
-        days_left: rec.filter(|_| active).map(|r| r.expires_at.saturating_sub(now).div_ceil(DAY)),
+        // المجانية بلا عداد أيام (لا شارة «باقي X يوم»).
+        days_left: rec
+            .filter(|r| active && r.kind != Kind::Trial)
+            .map(|r| r.expires_at.saturating_sub(now).div_ceil(DAY)),
         machine_id: mid.to_string(),
     }
 }
@@ -284,10 +298,11 @@ fn evaluate(mid: &str, loaded: Loaded, now: u64) -> (Status, Option<Record>) {
     if now >= rec.last_seen + TOUCH_INTERVAL {
         rec.last_seen = now;
     }
-    let state = if now >= rec.expires_at {
-        State::Expired
-    } else if rec.kind == Kind::Trial {
+    // «بَسطة» المجانية لا تنتهي أبداً (حتى سجلات التجربة القديمة ذات الـ 10 أيام).
+    let state = if rec.kind == Kind::Trial {
         State::Trial
+    } else if now >= rec.expires_at {
+        State::Expired
     } else {
         State::Licensed
     };
@@ -332,9 +347,10 @@ pub fn start_trial(shop_name: &str) -> R<Status> {
             shop_name: shop,
             license_id: None,
             started_at: now,
-            expires_at: now + TRIAL_DAYS * DAY,
+            expires_at: FREE_EXPIRES_AT,
             last_seen: now,
             terminals: None,
+            plan: None,
         })
     );
     Ok(refresh(mid, now).0)
@@ -386,6 +402,7 @@ pub fn activate(key: &str) -> R<Status> {
             expires_at: lic.expires_at,
             last_seen: now,
             terminals: lic.terminals,
+            plan: lic.plan.filter(|p| PAID_PLANS.contains(&p.as_str())),
         })
     );
     Ok(refresh(mid, now).0)
@@ -396,7 +413,8 @@ pub fn permit_expiry() -> R<u64> {
     let _g = lock();
     let now = now_secs()?;
     match refresh(machine_id()?, now) {
-        (Status { state: State::Trial | State::Licensed, .. }, Some(r)) => {
+        (Status { state: State::Trial, .. }, Some(_)) => Ok(now + PERMIT_TTL),
+        (Status { state: State::Licensed, .. }, Some(r)) => {
             Ok((now + PERMIT_TTL).min(r.expires_at))
         }
         (s, _) =>
@@ -411,14 +429,24 @@ pub fn permit_expiry() -> R<u64> {
     }
 }
 
+/// الخطة الحالية للـ backend (POS_PLAN): free لأي حالة غير ترخيص مدفوع فعّال.
+pub fn plan_name() -> String {
+    let _g = lock();
+    let Ok(now) = now_secs() else { return "free".into() };
+    let Ok(mid) = machine_id() else { return "free".into() };
+    match refresh(mid, now) {
+        (Status { state: State::Licensed, .. }, Some(r)) =>
+            r.plan.unwrap_or_else(|| DEFAULT_PAID_PLAN.into()),
+        _ => "free".into(),
+    }
+}
+
 /// شروط عقد أجهزة الكاشير: (وقت الانتهاء، عدد الأجهزة). نفس شروط تصريح الكتابة.
 pub fn lease_terms() -> R<(u64, u32)> {
     let _g = lock();
     let now = now_secs()?;
     match refresh(machine_id()?, now) {
-        (Status { state: State::Trial, .. }, Some(r)) => {
-            Ok(((now + LEASE_TTL).min(r.expires_at), TRIAL_TERMINALS))
-        }
+        (Status { state: State::Trial, .. }, Some(_)) => Ok((now + LEASE_TTL, TRIAL_TERMINALS)),
         (Status { state: State::Licensed, .. }, Some(r)) => {
             Ok(((now + LEASE_TTL).min(r.expires_at), r.terminals.unwrap_or(0)))
         }

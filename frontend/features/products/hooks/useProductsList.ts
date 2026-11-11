@@ -92,9 +92,7 @@ export function useProductsList() {
         return;
       }
       toast(
-        updated.isActive
-          ? `فُعّل «${updated.name}»`
-          : `عُطّل «${updated.name}»`,
+        updated.isActive ? `فُعّل «${updated.name}»` : `عُطّل «${updated.name}»`,
         {
           description: updated.isActive
             ? "أصبح متاحاً في الكاشير"
@@ -165,8 +163,7 @@ export function useProductsList() {
   const bulkDeactivateMutation = useMutation({
     mutationFn: (rows: Product[]) => bulkDeactivateProducts(toItems(rows)),
     onSuccess: (result) => showBulkResult(result, "تم تعطيل", "صنف"),
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
+    onError: (error) => toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
     onSettled: refresh,
   });
 

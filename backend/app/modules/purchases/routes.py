@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.core.plan import Feature, require_feature_for_writes
 from app.core.deps import service_dependency
 from app.core.permissions import require_manager, require_manager_write
 
@@ -18,7 +19,12 @@ from .schema import (
 )
 from .service import PurchaseService
 
-router = APIRouter(prefix="/purchases", tags=["purchases"])
+# خطة «بَسطة» المجانية: القراءة متاحة، والكتابة تحتاج خطة مدفوعة.
+router = APIRouter(
+    prefix="/purchases",
+    tags=["purchases"],
+    dependencies=[require_feature_for_writes(Feature.SUPPLIERS)],
+)
 Service = service_dependency(PurchaseService)
 
 

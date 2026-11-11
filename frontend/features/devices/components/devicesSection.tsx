@@ -11,7 +11,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { UpgradeNotice } from "@/components/shared/PlanGate";
 import { Button } from "@/components/ui/button";
+import { useFeature } from "@/lib/plan";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useNow } from "@/hooks/useNow";
@@ -37,6 +39,15 @@ import {
 
 /** الجهاز الأساسي: السماح لأجهزة الكاشير، كود الاقتران، وقائمة الأجهزة. */
 export function DevicesSection() {
+  const allowed = useFeature("terminals");
+  return allowed ? (
+    <DevicesPanel />
+  ) : (
+    <UpgradeNotice feature="terminals" className="border-0 p-2" />
+  );
+}
+
+function DevicesPanel() {
   const network = useNetwork();
   const n = network.data;
 

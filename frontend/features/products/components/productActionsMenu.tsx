@@ -6,11 +6,15 @@ import {
   IconEye,
   IconEyeOff,
   IconPencil,
+  IconLock,
   IconPrinter,
   IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
+
+import { upgradeMessage, useFeature } from "@/lib/plan";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +42,7 @@ export function ProductActionsMenu({
   onDuplicate,
   onRemove,
 }: { product: Product } & ProductActions) {
+  const labels = useFeature("barcode_labels");
   const [printing, setPrinting] = useState(false);
   const hasBarcode = productLabelOptions(product).length > 0;
 
@@ -74,9 +79,15 @@ export function ProductActionsMenu({
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={!hasBarcode}
-            onClick={() => setPrinting(true)}
+            onClick={() =>
+              labels
+                ? setPrinting(true)
+                : toast.info(upgradeMessage("barcode_labels"), {
+                    duration: 6000,
+                  })
+            }
           >
-            <IconPrinter />
+            {labels ? <IconPrinter /> : <IconLock />}
             طباعة باركود
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onToggleActive(product.id)}>

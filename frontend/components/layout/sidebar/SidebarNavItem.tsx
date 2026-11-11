@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AppTooltip } from "@/components/shared/AppTooltip";
+import { PlanLock } from "@/components/shared/PlanGate";
+import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/types/navigation";
 
@@ -30,6 +32,8 @@ export function SidebarNavItem({
     ? pendingHref === item.href
     : isActivePath(pathname, item.href);
   const Icon = item.icon;
+  // useFeature يرجع true للعناصر بلا ميزة (لا نقفل شيئاً بالخطأ).
+  const unlocked = useFeature(item.feature ?? "customers") || !item.feature;
 
   const link = (
     <Link
@@ -61,6 +65,9 @@ export function SidebarNavItem({
         )}
       />
       {!collapsed && <span className="truncate">{item.title}</span>}
+      {!collapsed && !unlocked && item.feature && (
+        <PlanLock feature={item.feature} className="ms-auto" />
+      )}
       {!collapsed && item.hotkey !== undefined && (
         <kbd
           dir="ltr"

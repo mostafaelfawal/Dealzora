@@ -1,5 +1,6 @@
 import type { Icon } from "@tabler/icons-react";
 
+import type { PlanFeature } from "@/lib/plan";
 import type { UserRole } from "@/types/auth";
 
 export interface NavItem {
@@ -10,6 +11,8 @@ export interface NavItem {
   roles?: UserRole[];
   /** رقم الاختصار: Alt + الرقم ينقل للصفحة من أي مكان. */
   hotkey?: number;
+  /** ميزة الخطة المطلوبة: يظهر قفل صغير لو غير متاحة (الصفحة تعرض رسالة الترقية). */
+  feature?: PlanFeature;
 }
 
 export interface NavGroup {

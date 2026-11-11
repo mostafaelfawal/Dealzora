@@ -1,6 +1,8 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { toast } from "sonner";
 
 import { formatDateTime } from "@/lib/dates";
+import { getCachedPlan, upgradeMessage } from "@/lib/plan";
 import { printHtml } from "@/lib/print";
 import { currencySymbol } from "@/lib/currency";
 import { formatNumber, formatQty } from "@/lib/format";
@@ -11,6 +13,8 @@ import type { Sale } from "../types/sale";
 /** عرض ورق الطابعة الحرارية. 80mm هو الأشهر، و58mm للطابعات الصغيرة. */
 export const RECEIPT_WIDTH_MM = 80;
 const FOOTER = "شكراً لزيارتكم";
+/** خطة «بَسطة» المجانية: سطر صغير في آخر الإيصال (إعلان يساعد على انتشار البرنامج). */
+const FREE_FOOTER = "بواسطة Dealzora";
 const EG_COUNTRY = "20";
 
 const esc = (text: string) =>
@@ -69,6 +73,7 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
   ${sale.creditAmount > 0 ? line("آجل على الحساب", money(sale.creditAmount)) : ""}
   ${sale.returnedTotal > 0 ? line("مرتجع من الفاتورة", money(sale.returnedTotal)) : ""}
   <hr><div class="center">${FOOTER}</div>
+  ${getCachedPlan()?.isFree ? `<div class="center muted" style="margin-top:4px">${FREE_FOOTER}</div>` : ""}
 </body></html>`;
 }
 
@@ -120,6 +125,12 @@ export async function sendWhatsapp(
   shopName: string,
   phone?: string | null,
 ) {
+  // مكان واحد يغطي كل أزرار واتساب (الكاشير وتفاصيل الفاتورة).
+  const plan = getCachedPlan();
+  if (plan && !plan.features.includes("whatsapp")) {
+    toast.info(upgradeMessage("whatsapp"), { duration: 6000 });
+    return;
+  }
   const number = phone ? toWhatsappNumber(phone) : null;
   const url = `https://wa.me/${number ?? ""}?text=${encodeURIComponent(buildWhatsappText(sale, shopName))}`;
   if (isTauri()) await invoke("open_whatsapp", { url });

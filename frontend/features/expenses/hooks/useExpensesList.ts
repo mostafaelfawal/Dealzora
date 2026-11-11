@@ -39,6 +39,7 @@ export function useExpensesList() {
   // لو الصفحة الحالية فضيت (بعد حذف مثلاً) ارجع لآخر صفحة موجودة.
   useEffect(() => {
     if (!expensesQuery.isFetching && total > 0 && filters.page > pageCount) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilters((current) => ({ ...current, page: pageCount }));
     }
   }, [expensesQuery.isFetching, total, filters.page, pageCount]);

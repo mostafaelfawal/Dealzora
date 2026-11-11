@@ -13,6 +13,7 @@ from datetime import timedelta
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.plan import Feature, is_free, upgrade_error
 from app.core.base import uuid7
 from app.core.constants import QTY_SCALE, RETURN_WINDOW_DAYS
 from app.core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
@@ -236,6 +237,9 @@ class SaleService(EntityService):
             )
         total = after_lines - data.invoice_discount
 
+        # بَسطة: بيع كاش فقط بدون عميل (العملاء والآجل من خطة دُكّان).
+        if is_free() and (data.customer_id or data.payment_method is not PaymentMethod.CASH):
+            raise upgrade_error(Feature.CUSTOMERS)
         customer = self._customer(data.customer_id)
         cash, credit, received, change = self._payment(data, total, customer)
 

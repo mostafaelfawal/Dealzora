@@ -12,7 +12,7 @@ export const isLicenseActive = (l: LicenseStatus) =>
   l.state === "trial" || l.state === "licensed";
 
 export function licenseKindLabel(l: LicenseStatus) {
-  if (l.kind === "trial") return "تجربة مجانية";
-  if (l.kind === "licensed") return "اشتراك مفعّل";
+  if (l.kind === "trial") return "«بَسطة» المجانية";
+  if (l.kind === "licensed") return "اشتراك مدفوع مفعّل";
   return "غير مفعّل";
 }
