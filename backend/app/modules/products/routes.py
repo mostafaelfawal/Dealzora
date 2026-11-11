@@ -48,6 +48,12 @@ def list_products(service: Service, query: Annotated[ProductListQuery, Query()])
     return service.list_products(query)
 
 
+@router.get("/catalog-version", dependencies=[Depends(require_cashier)])
+def catalog_version(service: Service):
+    """أجهزة الكاشير تعيد تحميل الأصناف والأسعار فقط عند تغيّر هذه القيمة."""
+    return {"version": service.repo.catalog_version()}
+
+
 @router.get("/summary", response_model=ProductsSummaryOut, dependencies=[Depends(require_cashier)])
 def products_summary(service: Service):
     return service.summary()

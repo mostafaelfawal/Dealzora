@@ -3,6 +3,7 @@ export interface ShiftDto {
   id: string;
   cashier_id: string;
   cashier_name: string | null;
+  device_name: string | null;
   is_open: boolean;
   opened_at: string;
   closed_at: string | null;

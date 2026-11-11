@@ -11,8 +11,11 @@ from .types import ShiftTotals
 class ShiftRepository(BaseRepository[Shift]):
     model = Shift
 
-    def current(self) -> Shift | None:
-        stmt = select(Shift).where(Shift.is_open.is_(True), live(Shift))
+    def current(self, device_id: str) -> Shift | None:
+        """الوردية المفتوحة على هذا الجهاز (لكل جهاز كاشير درجه ووردياته)."""
+        stmt = select(Shift).where(
+            Shift.is_open.is_(True), Shift.device_id == device_id, live(Shift)
+        )
         return self.session.scalars(stmt).first()
 
     def list_shifts(self, page: int, page_size: int) -> tuple[list[Shift], int]:

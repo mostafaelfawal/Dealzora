@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_session
+from app.core.caller import Caller
 from app.core.security import Actor, get_actor, require_app_token
 from app.modules.users.schema import UserOut
 
@@ -26,6 +27,9 @@ def get_public_service(
     return AuthService(session)
 
 
+Device = Annotated[Caller, Depends(require_app_token)]
+
+
 def get_auth_service(
     session: Annotated[Session, Depends(get_session)],
     actor: Annotated[Actor, Depends(get_actor)],
@@ -40,8 +44,8 @@ Token = Annotated[str, Depends(get_bearer_token)]
 
 # ---------- بدون تسجيل دخول ----------
 @router.post("/login", response_model=LoginOut)
-def login(data: LoginIn, service: PublicService):
-    return service.login(data)
+def login(data: LoginIn, service: PublicService, device: Device):
+    return service.login(data, device.device_id)
 
 
 # ---------- أي مستخدم مسجّل ----------

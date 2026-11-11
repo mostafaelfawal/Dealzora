@@ -7,6 +7,7 @@ from app.modules.auth.routes import router as auth_router
 from app.modules.backup.routes import router as backup_router
 from app.modules.catalog.routes import router as catalog_router
 from app.modules.customers.routes import router as customers_router
+from app.modules.devices.routes import router as devices_router
 from app.modules.expenses.routes import router as expenses_router
 from app.modules.products.routes import router as products_router
 from app.modules.purchases.routes import router as purchases_router
@@ -25,6 +26,7 @@ routes = [
     shop_router,
     settings_router,
     users_router,
+    devices_router,
     products_router,
     catalog_router,
     customers_router,

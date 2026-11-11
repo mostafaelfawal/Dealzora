@@ -100,6 +100,20 @@ class ProductRepository:
         total, low, out, value = self.session.execute(stmt).one()
         return ProductsSummary(total=total, low=low, out=out, stock_value=value)
 
+    def catalog_version(self) -> str:
+        """بصمة رخيصة لكل ما تعرضه شاشة الكاشير (أصناف، وحداتها، أقسام، عملاء).
+        تتغير مع أي إضافة أو تعديل أو حذف (الحذف ناعم: يرفع version و updated_at).
+        أجهزة الكاشير تسأل عنها كل ثوانٍ وتعيد التحميل الكامل فقط عند تغيّرها."""
+        from app.modules.customers.model import Customer  # متأخر: لا اعتماد دائري
+
+        parts = []
+        for model in (Product, ProductUnit, Category, Customer):
+            count, versions, latest = self.session.execute(
+                select(func.count(), func.coalesce(func.sum(model.version), 0), func.max(model.updated_at))
+            ).one()
+            parts.append(f"{count}:{versions}:{latest.isoformat() if latest else '-'}")
+        return "|".join(parts)
+
     def get_category(self, category_id: str) -> Category | None:
         stmt = select(Category).where(Category.id == category_id, Category.deleted_at.is_(None))
         return self.session.scalars(stmt).first()

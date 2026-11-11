@@ -1,3 +1,4 @@
+mod device;
 mod downloads;
 mod license;
 
@@ -7,7 +8,7 @@ use std::sync::Mutex;
 use hmac::{ Hmac, Mac };
 use rand::{ distributions::Alphanumeric, Rng };
 use sha2::Sha256;
-use tauri::{ Manager, RunEvent, State };
+use tauri::{ AppHandle, Manager, RunEvent, State };
 
 struct AppState {
     session_token: String,
@@ -33,6 +34,86 @@ fn get_write_permit(state: State<AppState>) -> Result<String, String> {
         .map_err(|e| e.to_string())?;
     mac.update(expires.to_string().as_bytes());
     Ok(format!("{}.{}", expires, hex::encode(mac.finalize().into_bytes())))
+}
+
+/// عقد ترخيص لأجهزة الكاشير، تسلّمه واجهة الجهاز الأساسي للـ backend كل دقيقتين.
+/// الصيغة: "<expires>.<max_terminals>.<hmac(permit_secret, "lease|exp|max")>".
+#[tauri::command]
+fn get_license_lease(state: State<AppState>) -> Result<String, String> {
+    if device::load().mode != device::Mode::Main {
+        return Err("not_main_device".into());
+    }
+    let (expires, terminals) = license::lease_terms()?;
+    let mut mac = Hmac::<Sha256>
+        ::new_from_slice(state.permit_secret.as_bytes())
+        .map_err(|e| e.to_string())?;
+    mac.update(format!("lease|{expires}|{terminals}").as_bytes());
+    Ok(format!("{expires}.{terminals}.{}", hex::encode(mac.finalize().into_bytes())))
+}
+
+/* ---------- وضع الجهاز (أساسي / كاشير) ---------- */
+
+#[tauri::command]
+fn get_device_config() -> device::DeviceConfig {
+    device::load()
+}
+
+/// يوقف الـ backend المحلي ويشغّله من جديد حسب device.json الحالي (أو لا يشغّله لجهاز الكاشير).
+/// نفس توكن الجلسة وسر التصريح: الواجهة المفتوحة وجلسة المستخدم تبقى صالحة (لا خروج ولا إعادة تشغيل للبرنامج).
+/// في التطوير الـ backend يعمل من VS Code فلا شيء يتغير هنا (POS_HOST من .env).
+fn restart_backend(app: &AppHandle) {
+    let state: State<AppState> = app.state();
+    let mut slot = state.backend.lock().unwrap();
+    if let Some(mut child) = slot.take() {
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+    *slot = spawn_backend(&state.session_token, &state.permit_secret);
+}
+
+/// بعد نجاح الاقتران مع الجهاز الأساسي: يتحول هذا الجهاز لكاشير (يتوقف الـ backend المحلي).
+/// الواجهة تعيد تحميل الصفحة بعدها لتقرأ الوضع الجديد.
+#[tauri::command]
+fn connect_to_main(
+    app: AppHandle,
+    main_url: String,
+    device_token: String,
+    device_name: String
+) -> Result<(), String> {
+    if device_token.len() < 20 || device_token.len() > 200 {
+        return Err("invalid_device_token".into());
+    }
+    let cfg = device::DeviceConfig {
+        mode: device::Mode::Terminal,
+        lan_enabled: false,
+        main_url: Some(device::validate_main_url(&main_url)?),
+        device_token: Some(device_token),
+        device_name: Some(device::validate_name(&device_name)?),
+    };
+    device::save(&cfg)?;
+    restart_backend(&app);
+    Ok(())
+}
+
+/// فصل جهاز الكاشير والرجوع لجهاز مستقل/أساسي (قاعدة بيانات محلية).
+#[tauri::command]
+fn disconnect_from_main(app: AppHandle) -> Result<(), String> {
+    device::save(&device::DeviceConfig::default())?;
+    restart_backend(&app); // يرجع الـ backend المحلي بقاعدة هذا الجهاز
+    Ok(())
+}
+
+/// الجهاز الأساسي: السماح لأجهزة الكاشير بالاتصال عبر الشبكة (يعيد تشغيل الـ backend على 0.0.0.0).
+#[tauri::command]
+fn set_lan_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut cfg = device::load();
+    if cfg.mode != device::Mode::Main {
+        return Err("not_main_device".into());
+    }
+    cfg.lan_enabled = enabled;
+    device::save(&cfg)?;
+    restart_backend(&app); // يستمع الآن على 0.0.0.0 (أو 127.0.0.1)
+    Ok(())
 }
 
 #[tauri::command]
@@ -82,14 +163,21 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
     use std::process::Command;
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
+    let cfg = device::load();
+    if cfg.mode == device::Mode::Terminal {
+        return None; // جهاز كاشير: البيانات على الجهاز الأساسي
+    }
     let exe = std::env::current_exe().ok()?.parent()?.join("dealzora-backend.exe");
     let db_password = license::db_password().ok()?;
     let device_id = license::device_id().ok()?;
+    // 0.0.0.0 فقط لو المدير سمح لأجهزة الكاشير. كل طلب يحتاج توكن جهاز في الحالتين.
+    let host = if cfg.lan_enabled { "0.0.0.0" } else { "127.0.0.1" };
     Command::new(exe)
         .env("POS_SESSION_TOKEN", session_token)
         .env("POS_WRITE_PERMIT_SECRET", permit_secret)
         .env("POS_DB_PASSWORD", db_password)
         .env("POS_DEVICE_ID", device_id)
+        .env("POS_HOST", host)
         .env("POS_DEBUG", "false")
         .creation_flags(CREATE_NO_WINDOW)
         .spawn()
@@ -105,6 +193,14 @@ fn spawn_backend(_: &str, _: &str) -> Option<Child> {
 #[tauri::command]
 fn reset_license_dev() -> Result<(), String> {
     license::reset_dev()
+}
+
+/// نسخة الإنتاج: الأمر مسجّل في generate_handler لكل البنايات، فلازم يوجد، لكنه مرفوض دائماً.
+/// (بدونه يفشل `tauri build`.)
+#[cfg(not(debug_assertions))]
+#[tauri::command]
+fn reset_license_dev() -> Result<(), String> {
+    Err("not_available".into())
 }
 
 /// يفتح رابط واتساب فقط (قائمة بيضاء) في المتصفح/التطبيق الافتراضي لإرسال الفاتورة.
@@ -159,6 +255,11 @@ pub fn run() {
                 get_session_token,
                 get_write_permit,
                 get_license_status,
+                get_license_lease,
+                get_device_config,
+                connect_to_main,
+                disconnect_from_main,
+                set_lan_enabled,
                 start_trial,
                 activate_license,
                 reset_license_dev,

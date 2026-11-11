@@ -17,6 +17,7 @@ import app.modules.products.model  # noqa: F401
 import app.modules.catalog.model  # noqa: F401
 import app.modules.shop.model  # noqa: F401
 import app.modules.settings.model  # noqa: F401
+import app.modules.devices.model  # noqa: F401
 import app.modules.expenses.model  # noqa: F401
 import app.modules.suppliers.model  # noqa: F401
 import app.modules.treasury.model  # noqa: F401
@@ -25,5 +26,18 @@ import app.modules.sales.model  # noqa: F401
 import app.modules.purchases.model  # noqa: F401
 import app.modules.devtools.model  # noqa: F401
 
+# تعديلات على جداول موجودة (create_all لا يعدّل جدولاً قائماً). كل خطوة آمنة للتكرار.
+_UPGRADES = (
+    # وردية واحدة للنظام كله ← وردية لكل جهاز (تعدد أجهزة الكاشير).
+    "DROP INDEX IF EXISTS uq_shifts_single_open",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_shifts_open_per_device "
+    "ON shifts (device_id) WHERE is_open = 1 AND deleted_at IS NULL",
+)
+
+
 def init_db() -> None:
-    Base.metadata.create_all(get_engine())
+    engine = get_engine()
+    Base.metadata.create_all(engine)
+    with engine.begin() as conn:
+        for sql in _UPGRADES:
+            conn.exec_driver_sql(sql)

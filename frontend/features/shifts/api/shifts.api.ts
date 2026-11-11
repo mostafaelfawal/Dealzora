@@ -14,6 +14,7 @@ export const toShift = (d: ShiftDto): Shift => ({
   id: d.id,
   cashierId: d.cashier_id,
   cashierName: d.cashier_name,
+  deviceName: d.device_name,
   isOpen: d.is_open,
   openedAt: toMs(d.opened_at),
   closedAt: toMsOrNull(d.closed_at),

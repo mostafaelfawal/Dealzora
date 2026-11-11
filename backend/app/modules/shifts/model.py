@@ -26,10 +26,10 @@ class Shift(SyncMixin, Base):
     note: Mapped[str | None] = mapped_column(String(MAX_NOTE_LEN), nullable=True)
 
     __table_args__ = (
-        # يمنع فتح ورديتين معاً حتى لو وصل طلبان في نفس اللحظة.
+        # وردية مفتوحة واحدة لكل جهاز (لكل كاشير درجه)، حتى لو وصل طلبان في نفس اللحظة.
         Index(
-            "uq_shifts_single_open",
-            "is_open",
+            "uq_shifts_open_per_device",
+            "device_id",
             unique=True,
             sqlite_where=text("is_open = 1 AND deleted_at IS NULL"),
         ),

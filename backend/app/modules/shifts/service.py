@@ -33,7 +33,7 @@ class ShiftService(EntityService):
 
     # ================= قراءة =================
     def current(self) -> ShiftOut | None:
-        shift = self.repo.current()
+        shift = self.repo.current(self.actor.device_id)
         return self._to_out(shift) if shift else None
 
     def list_shifts(self, query: ShiftListQuery) -> ShiftListOut:
@@ -52,7 +52,7 @@ class ShiftService(EntityService):
 
     # ================= كتابة =================
     def open_shift(self, data: ShiftOpenIn) -> ShiftOut:
-        if self.repo.current() is not None:
+        if self.repo.current(self.actor.device_id) is not None:
             raise self._err(ConflictError, ShiftError.ALREADY_OPEN)
         shift = Shift(
             id=uuid7(),
@@ -71,7 +71,7 @@ class ShiftService(EntityService):
         return self._to_out(shift)
 
     def close_current(self, data: ShiftCloseIn) -> ShiftOut:
-        shift = self.repo.current()
+        shift = self.repo.current(self.actor.device_id)
         if shift is None:
             raise self._err(NotFoundError, ShiftError.NO_OPEN_SHIFT)
         if not self.is_manager and shift.cashier_id != self.actor.user_id:
@@ -108,7 +108,7 @@ class ShiftService(EntityService):
     # ================= واجهة للموديولات الأخرى =================
     def require_open(self) -> Shift:
         """البيع والمرتجع لا يتمّان بدون وردية مفتوحة."""
-        shift = self.repo.current()
+        shift = self.repo.current(self.actor.device_id)
         if shift is None:
             raise self._err(ConflictError, ShiftError.NO_OPEN_SHIFT)
         return shift
@@ -136,6 +136,13 @@ class ShiftService(EntityService):
             source_id=shift.id,
         )
 
+    def _device_names(self) -> dict[str, str]:
+        if not hasattr(self, "_names_cache"):
+            from app.modules.devices.service import device_names  # متأخر: تفادي الدوران
+
+            self._names_cache = device_names(self.session)
+        return self._names_cache
+
     def _to_out(
         self,
         s: Shift,
@@ -152,6 +159,7 @@ class ShiftService(EntityService):
             id=s.id,
             cashier_id=s.cashier_id,
             cashier_name=names.get(s.cashier_id),
+            device_name=self._device_names().get(s.device_id),
             is_open=s.is_open,
             opened_at=s.opened_at,
             closed_at=s.closed_at,

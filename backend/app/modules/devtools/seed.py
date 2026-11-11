@@ -275,7 +275,7 @@ class DemoSeeder:
         # قفل الوردية: غالباً مطابق، وأحياناً عجز/زيادة بسيطة.
         self._at(day, 23, self.rng.randint(0, 30))
         shifts = ShiftService(self.s, self.manager)
-        current = shifts.repo.current()
+        current = shifts.repo.current(self.device)
         if current is not None:
             expected = shifts.repo.totals([current.id])[current.id].expected(current.opening_float)
             diff = 0 if self.rng.random() < 0.7 else self.rng.choice([-2000, -1000, -500, 500, 1000])

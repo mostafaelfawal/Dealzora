@@ -1,6 +1,8 @@
 import { isTauri } from "@tauri-apps/api/core";
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
+import { getDeviceConfig, isTerminal } from "./device";
+
 const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 // ---------- Tauri helpers ----------
@@ -43,6 +45,18 @@ export const authStore = {
 
 export const AUTH_EXPIRED_EVENT = "dz:auth-expired";
 
+/** جهاز الكاشير: حالة الاتصال بالجهاز الأساسي (لشريط «غير متصل»). */
+export const MAIN_CONNECTION_EVENT = "dz:main-connection";
+/** جهاز الكاشير: الجهاز الأساسي ألغى اقتران هذا الجهاز. */
+export const DEVICE_UNPAIRED_EVENT = "dz:device-unpaired";
+
+function emitConnection(online: boolean) {
+  if (typeof window !== "undefined")
+    window.dispatchEvent(
+      new CustomEvent(MAIN_CONNECTION_EVENT, { detail: online }),
+    );
+}
+
 // ---------- Write permit (من Rust بعد فحص الترخيص) ----------
 const WRITE_METHODS = new Set(["post", "put", "patch", "delete"]);
 const NO_PERMIT_PATHS = ["/auth/"];
@@ -66,6 +80,18 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  const device = await getDeviceConfig();
+
+  // جهاز كاشير: كل الطلبات للجهاز الأساسي بتوكن الجهاز. لا ترخيص محلي:
+  // الكتابة مسموحة طالما ترخيص الجهاز الأساسي فعّال (يتحقق منه السيرفر).
+  if (isTerminal(device)) {
+    config.baseURL = `${device.main_url}/api/v1`;
+    config.headers.set("X-Device-Token", device.device_token!);
+    const user = authStore.get();
+    if (user) config.headers.set("Authorization", `Bearer ${user}`);
+    return config;
+  }
+
   const [app, permit] = await Promise.all([
     getAppToken(),
     WRITE_METHODS.has((config.method ?? "get").toLowerCase()) &&
@@ -97,7 +123,10 @@ export class ApiError extends Error {
 }
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    emitConnection(true);
+    return res;
+  },
   (
     err: AxiosError<{
       error?: {
@@ -111,6 +140,9 @@ api.interceptors.response.use(
     const status = err.response?.status ?? 0;
     const body = err.response?.data?.error;
 
+    // أي رد من السيرفر (حتى لو خطأ) = الاتصال سليم. لا رد إطلاقاً = الجهاز الأساسي غير متاح.
+    emitConnection(status !== 0);
+
     if (
       status === 401 &&
       body?.code === "unauthorized" &&
@@ -118,6 +150,13 @@ api.interceptors.response.use(
     ) {
       authStore.clear();
       window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+    if (
+      status === 401 &&
+      body?.code === "device_not_paired" &&
+      typeof window !== "undefined"
+    ) {
+      window.dispatchEvent(new Event(DEVICE_UNPAIRED_EVENT));
     }
 
     if (body)
@@ -131,7 +170,11 @@ api.interceptors.response.use(
       );
     }
     return Promise.reject(
-      new ApiError(status, "network_error", "تعذّر الاتصال بالخادم المحلي"),
+      new ApiError(
+        status,
+        "network_error",
+        "تعذّر الاتصال بالجهاز الأساسي أو الخادم المحلي. تأكد أن البرنامج مفتوح عليه وأن الشبكة تعمل",
+      ),
     );
   },
 );

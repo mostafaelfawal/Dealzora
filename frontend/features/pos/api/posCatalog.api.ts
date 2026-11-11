@@ -1,3 +1,4 @@
+import { api } from "@/lib/axios";
 import { fetchCustomers } from "@/features/customers/api/customers.api";
 import {
   getCategories,
@@ -127,3 +128,8 @@ export async function fetchPosCatalog(): Promise<
 export async function fetchPosProducts(): Promise<PosProduct[]> {
   return (await fetchAllProducts()).filter((p) => p.isActive).map(toPosProduct);
 }
+
+/** بصمة رخيصة لكل ما تعرضه شاشة الكاشير (أصناف، أسعار، أقسام، عملاء). */
+export const fetchCatalogVersion = async (): Promise<string> =>
+  (await api.get<{ version: string }>("/products/catalog-version")).data
+    .version;

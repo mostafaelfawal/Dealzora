@@ -29,6 +29,9 @@ const COLUMNS: AppTableColumn<Shift>[] = [
           {s.isOpen && <Badge className="font-normal">مفتوحة الآن</Badge>}
         </p>
         <p className="mt-0.5 text-[11px] text-muted-foreground">
+          {s.deviceName && (
+            <span className="text-foreground/80">{s.deviceName} · </span>
+          )}
           {formatWhen(s.openedAt)}
           {s.closedAt && ` ← ${formatWhen(s.closedAt)}`}
         </p>

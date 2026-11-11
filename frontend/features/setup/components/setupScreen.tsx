@@ -4,6 +4,7 @@ import { IconLoader2 } from "@tabler/icons-react";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { BRAND } from "@/config/brand";
+import { ConnectLink } from "@/features/devices/components/connectLink";
 
 import { useSetupGate } from "../hooks/useSetupGate";
 import { SetupForm } from "./setupForm";
@@ -24,9 +25,12 @@ export function SetupScreen() {
           </span>
         </div>
 
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-sm space-y-4">
           {ready ? (
-            <SetupForm />
+            <>
+              <SetupForm />
+              <ConnectLink />
+            </>
           ) : (
             <div
               className="flex justify-center p-10 text-muted-foreground"

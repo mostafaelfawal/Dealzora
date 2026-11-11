@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     session_token: str  # توكن الجلسة العشوائي من Rust
     write_permit_secret: str  # سر توقيع "تصريح الكتابة" (الترخيص)
     device_id: str
+    # 127.0.0.1 = هذا الجهاز فقط. 0.0.0.0 = يقبل أجهزة الكاشير على شبكة المحل
+    # (Rust يحدده من إعداد «السماح لأجهزة الكاشير»). كل طلب يحتاج توكن جهاز في الحالتين.
+    host: str = "127.0.0.1"
+    port: int = 8000
     debug: bool = False
     cors_origins: list[str] = [
         "tauri://localhost",

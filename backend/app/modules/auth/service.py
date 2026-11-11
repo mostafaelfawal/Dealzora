@@ -5,13 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit
 from app.core.base import utcnow
-from app.core.config import get_settings
 from app.core.errors import BadRequestError, ForbiddenError, UnauthorizedError
 from app.core.passwords import DUMMY_HASH, hash_password, needs_rehash, verify_password
 from app.core.security import Actor, Role
 from app.modules.users.constants import ENTITY_USER
 from app.modules.users.helper import (
-    actor_for,
     parse_role,
     password_contains_username,
     set_password,
@@ -49,7 +47,7 @@ class AuthService:
         self.users = UserRepository(session)  # قراءة المستخدمين فقط
 
     # ================= الدخول والخروج =================
-    def login(self, data: LoginIn) -> LoginOut:
+    def login(self, data: LoginIn, device_id: str) -> LoginOut:
         now = utcnow()
         user = self.users.get_by_username(data.username)
 
@@ -65,7 +63,7 @@ class AuthService:
         if not (valid and user and user.is_active and role):
             if user:
                 now_locked = self._register_failure(user, now)
-                actor = Actor(user.id, role or Role.CASHIER, get_settings().device_id)
+                actor = Actor(user.id, role or Role.CASHIER, device_id)
                 self._audit(
                     actor, user.id, AuditAction.LOGIN_FAILED, {"locked": now_locked}
                 )
@@ -93,13 +91,13 @@ class AuthService:
         )
         self.repo.flush()
         self.repo.trim_user_sessions(user.id, MAX_SESSIONS_PER_USER)
-        self._audit(actor_for(user), user.id, AuditAction.LOGIN)
+        self._audit(Actor(user.id, role, device_id), user.id, AuditAction.LOGIN)
         self.session.commit()
         return LoginOut(
             token=token, expires_at=expires_at, user=UserOut.model_validate(user)
         )
 
-    def authenticate(self, token: str) -> Actor:
+    def authenticate(self, token: str, device_id: str) -> Actor:
         """يُستدعى من get_actor في كل طلب محمي. الدور يُقرأ من القاعدة دائماً."""
         now = utcnow()
         row = self.repo.get_session(hash_token(token))
@@ -117,7 +115,7 @@ class AuthService:
         if user is None or not user.is_active or role is None:
             raise _err(UnauthorizedError, AuthError.UNAUTHORIZED)
 
-        actor = Actor(user_id=user.id, role=role, device_id=get_settings().device_id)
+        actor = Actor(user_id=user.id, role=role, device_id=device_id)
         if (
             now - last_seen > SESSION_TOUCH_INTERVAL
         ):  # نحدّث آخر نشاط بدون كتابة في كل طلب

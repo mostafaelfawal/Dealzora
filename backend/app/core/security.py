@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.bearer import get_bearer_token
 from app.core.clock_guard import ensure_clock_sane
+from app.core.caller import Caller, CallerDep
 from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.errors import ForbiddenError, UnauthorizedError
@@ -30,31 +31,41 @@ class Actor:
     device_id: str
 
 
-def require_app_token(
-    x_session_token: Annotated[str | None, Header()] = None,
-) -> None:
-    """App-instance gate (Rust token). It is NOT an identity, only 'this request came from our app'."""
-    if not x_session_token or not hmac.compare_digest(
-        x_session_token, get_settings().session_token
-    ):
-        raise UnauthorizedError("unauthorized", "جلسة غير صالحة")
+def require_app_token(caller: CallerDep) -> Caller:
+    """بوابة الجهاز: الجهاز الأساسي (توكن Rust) أو جهاز كاشير مقترن (توكن الجهاز).
+    ليست هوية مستخدم؛ المستخدم يأتي من جلسة الدخول (get_actor)."""
+    return caller
 
 
 def get_actor(
     session: Annotated[Session, Depends(get_session)],
-    _app: Annotated[None, Depends(require_app_token)],
+    caller: CallerDep,
     token: Annotated[str, Depends(get_bearer_token)],
 ) -> Actor:
     from app.modules.auth.service import AuthService  # استيراد متأخر لتفادي الدوران
 
-    return AuthService(session).authenticate(token)
+    return AuthService(session).authenticate(token, caller.device_id)
 
 
 def require_write_permit(
     session: Annotated[Session, Depends(get_session)],
+    caller: CallerDep,
     x_write_permit: Annotated[str | None, Header()] = None,
 ) -> None:
-    """تصريح كتابة قصير العمر يصدره Rust بعد فحص الترخيص. الصيغة: '<expires_unix>.<hmac_sha256_hex>'."""
+    """تصريح كتابة قصير العمر يصدره Rust بعد فحص الترخيص. الصيغة: '<expires_unix>.<hmac_sha256_hex>'.
+
+    جهاز الكاشير ليس لديه ترخيص: يكتب طالما عقد ترخيص الجهاز الأساسي ساري (devices.runtime).
+    """
+    if not caller.is_main:
+        from app.modules.devices.runtime import active_lease  # متأخر: تفادي الدوران
+
+        if active_lease() is None:
+            raise ForbiddenError(
+                "main_license_inactive",
+                "ترخيص الجهاز الأساسي غير فعّال أو البرنامج مغلق عليه: النظام للقراءة فقط",
+            )
+        ensure_clock_sane(session)
+        return
     if not x_write_permit or "." not in x_write_permit:
         raise ForbiddenError(
             "write_permit_required", "الترخيص منتهٍ: النظام في وضع القراءة فقط"

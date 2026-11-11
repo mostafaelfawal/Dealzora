@@ -2,6 +2,8 @@ export interface Shift {
   id: string;
   cashierId: string;
   cashierName: string | null;
+  /** الجهاز الذي فُتحت عليه (لكل جهاز كاشير درجه). */
+  deviceName: string | null;
   isOpen: boolean;
   openedAt: number;
   closedAt: number | null;

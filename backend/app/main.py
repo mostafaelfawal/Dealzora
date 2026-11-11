@@ -64,6 +64,9 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
+        # أجهزة الكاشير تتصل بالجهاز الأساسي على عنوان شبكة محلية (192.168.x.x):
+        # Chromium/WebView2 يطلب هذا الإذن (Private Network Access) قبل الطلب.
+        allow_private_network=True,
     )
     register_error_handlers(app)
     app.include_router(api_router, prefix="/api/v1")

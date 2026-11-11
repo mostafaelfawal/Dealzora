@@ -154,7 +154,7 @@ class SaleService(EntityService):
 
     def create_return(self, sale_id: str, data: ReturnCreate) -> ReturnOut:
         sale = self._get_or_404(sale_id)
-        shift = self.shifts.repo.current()
+        shift = self.shifts.repo.current(self.actor.device_id)
         if shift is None and not self.is_manager:
             shift = self.shifts.require_open()  # يرفع خطأ "لا توجد وردية"
         ret = self._create_return(sale, data, shift, force_cash=False)

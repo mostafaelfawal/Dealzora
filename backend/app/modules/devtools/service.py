@@ -81,7 +81,7 @@ class DemoService:
     def seed(self) -> DemoSeedOut:
         if self.session.scalar(select(func.count()).select_from(DemoRecord)):
             raise ConflictError("demo_exists", "البيانات التجريبية موجودة بالفعل. احذفها أولاً")
-        if ShiftRepository(self.session).current() is not None:
+        if ShiftRepository(self.session).current(self.actor.device_id) is not None:
             raise ConflictError("shift_open", "اقفل الوردية المفتوحة أولاً، فالمولّد يفتح ويقفل ورديات")
         self.session.commit()  # إنهاء معاملة القراءة قبل البدء
 

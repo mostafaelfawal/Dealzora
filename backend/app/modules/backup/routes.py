@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select
 
 from app.core.audit import record_audit
+from app.core.caller import CallerDep, require_main_device
 from app.core.base import uuid7
 from app.core.database import get_sessionmaker
 from app.core.deps import ActorDep, SessionDep
@@ -83,7 +84,7 @@ def _out(f) -> BackupOut:  # noqa: ANN001
 
 
 @router.get("/status", response_model=BackupStatusOut, dependencies=[Depends(require_authenticated)])
-def backup_status(session: SessionDep, actor: ActorDep):
+def backup_status(session: SessionDep, actor: ActorDep, caller: CallerDep):
     files = list_backups()
     pending = session.scalar(
         select(func.count()).select_from(OutboxEvent).where(OutboxEvent.status != OutboxStatus.DONE.value)
@@ -94,7 +95,8 @@ def backup_status(session: SessionDep, actor: ActorDep):
         pending_sync=int(pending or 0),
         auto_every_hours=AUTO_BACKUP_HOURS,
         keep=KEEP_BACKUPS,
-        location=_location_out() if actor.role is Role.MANAGER else None,
+        # المجلد على قرص الجهاز الأساسي: يُعرض للمدير على الجهاز الأساسي فقط.
+        location=_location_out() if actor.role is Role.MANAGER and caller.is_main else None,
     )
 
 
@@ -119,7 +121,11 @@ def make_backup(session: SessionDep, actor: ActorDep):
     return _out(created)
 
 
-@router.put("/location", response_model=BackupLocationOut, dependencies=[Depends(require_manager_write)])
+@router.put(
+    "/location",
+    response_model=BackupLocationOut,
+    dependencies=[Depends(require_manager_write), Depends(require_main_device)],
+)
 def set_location(data: BackupLocationIn, session: SessionDep, actor: ActorDep):
     """يحفظ المجلد بعد التأكد أنه قابل للكتابة، ثم يأخذ نسخة فيه فوراً."""
     path = str(ensure_writable(data.path)) if data.path else None
@@ -131,7 +137,11 @@ def set_location(data: BackupLocationIn, session: SessionDep, actor: ActorDep):
     return _location_out()
 
 
-@router.post("/restore", response_model=RestoreOut, dependencies=[Depends(require_manager_write)])
+@router.post(
+    "/restore",
+    response_model=RestoreOut,
+    dependencies=[Depends(require_manager_write), Depends(require_main_device)],
+)
 def restore(data: RestoreIn, session: SessionDep, actor: ActorDep):
     """يستبدل كل البيانات بالنسخة المختارة. الجلسات الحالية قد تنتهي فيُعاد تسجيل الدخول."""
     source = resolve_backup(data.name, data.path)

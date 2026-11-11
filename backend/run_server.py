@@ -10,8 +10,9 @@ import uvicorn
 
 from app.core.config import get_settings
 
-HOST = "127.0.0.1"  # محلي فقط، مش متاح للشبكة
-PORT = 8000  # لازم يطابق البورت اللي الـ frontend بيكلمه
+# المضيف والبورت من الإعدادات (POS_HOST / POS_PORT). الافتراضي 127.0.0.1:8000 (هذا الجهاز فقط).
+HOST = get_settings().host
+PORT = get_settings().port  # لازم يطابق البورت اللي الـ frontend بيكلمه
 
 FROZEN = getattr(sys, "frozen", False)  # True جوا exe بتاع PyInstaller
 

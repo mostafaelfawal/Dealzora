@@ -85,6 +85,26 @@ export const removeLineWithUndo =
     focusSearch();
   };
 
+/** يطابق الفاتورة المفتوحة مع أحدث كتالوج، وينبّه الكاشير لو تغيّر سعر صنف فيها. */
+export const syncCartWithCatalog =
+  (products: PosProduct[]): AppThunk =>
+  (dispatch, getState) => {
+    const before = selectLines(getState());
+    dispatch(cartActions.applyCatalog(products));
+    const after = selectLines(getState());
+    const changed = after.filter(
+      (l, i) => before[i] && before[i].price !== l.price,
+    );
+    if (changed.length) {
+      toast.warning("تغيّر سعر صنف في الفاتورة المفتوحة", {
+        description: changed
+          .map((l) => `${l.name}: ${formatMoneyText(l.price)}`)
+          .join("، "),
+        duration: 10_000,
+      });
+    }
+  };
+
 /* ---------- خانة الباركود ---------- */
 
 /** Enter في خانة الباركود. */
@@ -320,7 +340,10 @@ const handleSaveError =
     });
     if (error instanceof ApiError && error.code === "sale_price_changed") {
       void fetchPosProducts()
-        .then((products) => dispatch(catalogActions.setCatalog({ products })))
+        .then((products) => {
+          dispatch(catalogActions.setCatalog({ products }));
+          dispatch(syncCartWithCatalog(products));
+        })
         .catch(() => undefined);
     }
   };

@@ -30,6 +30,8 @@ class ShiftOut(BaseModel):
     id: str
     cashier_id: str
     cashier_name: str | None
+    # الجهاز الذي فُتحت عليه (لكل جهاز كاشير درجه ووردياته).
+    device_name: str | None
     is_open: bool
     opened_at: datetime
     closed_at: datetime | None

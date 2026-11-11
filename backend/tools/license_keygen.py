@@ -61,12 +61,19 @@ def generate_keypair(path: Path) -> str:
     return public_key_b64(key)
 
 
-def issue_license(key: Ed25519PrivateKey, machine_id: str, shop: str, expires: int) -> tuple[str, dict]:
+MAX_TERMINALS = 50
+
+
+def issue_license(
+    key: Ed25519PrivateKey, machine_id: str, shop: str, expires: int, terminals: int = 0
+) -> tuple[str, dict]:
     payload = {
         "license_id": str(uuid.uuid4()),
-        "machine_id": machine_id,
+        "machine_id": machine_id,  # الجهاز الأساسي
         "shop_name": shop,
         "expires_at": expires,
+        # أجهزة الكاشير الإضافية المسموح باتصالها بالجهاز الأساسي (للتسعير).
+        "terminals": terminals,
     }
     body = b64(json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode())
     return f"{body}.{b64(key.sign(body.encode()))}", payload
@@ -109,6 +116,7 @@ class App(ctk.CTk):
         self.shop = ctk.StringVar()
         self.preset = ctk.StringVar(value="سنة")
         self.custom_days = ctk.StringVar(value="365")
+        self.terminals = ctk.StringVar(value="0")
         self.status = ctk.StringVar(value="")
 
         tabs = ctk.CTkTabview(self)
@@ -165,6 +173,11 @@ class App(ctk.CTk):
         self.custom_entry.pack(side="right")
         self.custom_entry.configure(state="disabled")
 
+        row = ctk.CTkFrame(t, fg_color="transparent")
+        row.pack(fill="x", padx=10, pady=(14, 0))
+        self._label(row, "عدد أجهزة الكاشير الإضافية (0 = الجهاز الأساسي فقط)").pack(side="right", padx=(8, 0))
+        ctk.CTkEntry(row, textvariable=self.terminals, width=100, justify="center").pack(side="right")
+
         ctk.CTkButton(
             t, text="إصدار المفتاح", height=42, font=(FONT, 15, "bold"), command=self.issue
         ).pack(fill="x", padx=10, pady=(18, 6))
@@ -212,10 +225,16 @@ class App(ctk.CTk):
             except ValueError:
                 return self._set_status("عدد الأيام لازم يكون رقم من 1 إلى 36500", ok=False)
         expires = LIFETIME_UNIX if days == 0 else int(time.time()) + days * DAY
+        try:
+            terminals = int(self.terminals.get())
+            if not 0 <= terminals <= MAX_TERMINALS:
+                raise ValueError
+        except ValueError:
+            return self._set_status(f"عدد أجهزة الكاشير من 0 إلى {MAX_TERMINALS}", ok=False)
 
         try:
             key = load_private_key(Path(self.key_path.get().strip()))
-            license_key, payload = issue_license(key, mid, shop, expires)
+            license_key, payload = issue_license(key, mid, shop, expires, terminals)
             append_history(payload, license_key)
         except Exception as exc:
             return self._set_status(f"فشل الإصدار: {exc}", ok=False)
@@ -223,7 +242,7 @@ class App(ctk.CTk):
         self.output.delete("1.0", "end")
         self.output.insert("1.0", license_key)
         self.copy_btn.configure(state="normal")
-        self._set_status(f"تم الإصدار لـ «{shop}» - ينتهي: {fmt_date(expires)}")
+        self._set_status(f"تم الإصدار لـ «{shop}» - ينتهي: {fmt_date(expires)} - أجهزة كاشير: {terminals}")
 
     def copy_output(self) -> None:
         text = self.output.get("1.0", "end").strip()
@@ -253,7 +272,10 @@ class App(ctk.CTk):
         for r in rows:
             card = ctk.CTkFrame(self.history_box)
             card.pack(fill="x", pady=4)
-            title = f"{r.get('shop_name', '?')}  |  ينتهي: {fmt_date(r.get('expires_at', 0))}"
+            title = (
+                f"{r.get('shop_name', '?')}  |  ينتهي: {fmt_date(r.get('expires_at', 0))}"
+                f"  |  أجهزة كاشير: {r.get('terminals', 0)}"
+            )
             self._label(card, title).pack(fill="x", padx=10, pady=(8, 0))
             sub = f"صدر: {datetime.fromtimestamp(r.get('issued_at', 0)).strftime('%Y-%m-%d %H:%M')}  |  {r.get('machine_id', '')[:16]}..."
             ctk.CTkLabel(card, text=sub, anchor="e", font=("Consolas", 11), text_color="gray").pack(fill="x", padx=10)

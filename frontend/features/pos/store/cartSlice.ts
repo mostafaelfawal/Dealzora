@@ -380,6 +380,25 @@ const cartSlice = createSlice({
     },
 
     /** آخر رقم فاتورة في الـ backend + 1 (عند فتح الكاشير). */
+    /**
+     * الكتالوج اتحدث (المدير غيّر سعراً من جهاز آخر، أو كاشير آخر باع فتغيّر الرصيد):
+     * نحدّث سعر ورصيد سطور الفاتورة المفتوحة ليطابق السيرفر. ليس تعديلاً من المستخدم فلا يدخل التراجع.
+     * الصنف المحذوف/المعطّل أو الوحدة المحذوفة: يبقى السطر كما هو والسيرفر يرفضه برسالة واضحة.
+     */
+    applyCatalog(state, action: PayloadAction<PosProduct[]>) {
+      const byId = new Map(action.payload.map((p) => [p.id, p]));
+      for (const line of state.present.lines) {
+        const product = byId.get(line.productId);
+        if (!product) continue;
+        const unit = unitOptions(product).find(
+          (u) => u.id === (line.unitId ?? null),
+        );
+        if (!unit) continue;
+        line.price = unit.price;
+        line.stock = product.stock;
+      }
+    },
+
     syncNextNumber(state, action: PayloadAction<number>) {
       state.nextNumber = action.payload;
     },
