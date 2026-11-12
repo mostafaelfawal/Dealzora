@@ -7,6 +7,7 @@ import { listItem, MotionLi } from "@/components/shared/motion";
 import { Separator } from "@/components/ui/separator";
 import { formatQty } from "@/lib/format";
 
+import { PAYMENT_LABEL } from "../config/saleOptions";
 import type { Sale } from "../types/sale";
 
 /** أجزاء عرض الفاتورة داخل SaleDetailSheet. */
@@ -93,6 +94,18 @@ export function SaleTotals({ sale }: { sale: Sale }) {
       {sale.creditAmount > 0 && (
         <Row label={`آجل على ${sale.customerName ?? "العميل"}`}>
           <Money amount={sale.creditAmount} className="text-warning" />
+        </Row>
+      )}
+      {sale.walletAmount > 0 && (
+        <Row label={PAYMENT_LABEL[sale.paymentMethod]}>
+          <Money amount={sale.walletAmount} />
+        </Row>
+      )}
+      {sale.walletAmount > 0 && sale.paymentRef && (
+        <Row label="رقم العملية">
+          <bdi dir="ltr" className="font-mono">
+            {sale.paymentRef}
+          </bdi>
         </Row>
       )}
       {sale.returnedTotal > 0 && (

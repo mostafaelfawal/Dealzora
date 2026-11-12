@@ -46,20 +46,31 @@ export function PeakHoursCard({ heatmap }: { heatmap: Overview["heatmap"] }) {
   );
 }
 
+const PAYMENT_COLORS: Record<string, string> = {
+  cash: CHART.main,
+  credit: CHART.muted,
+  vodafone_cash: CHART.seq[1],
+  instapay: CHART.seq[3],
+};
+
 export function PaymentsCard({ payments }: { payments: NamedValue[] }) {
   const total = payments.reduce((sum, p) => sum + p.value, 0);
+  // المحافظ تظهر فقط لو استُخدمت في الفترة (لا شرائح صفرية للمحل الذي لا يستخدمها).
+  const shown = payments.filter(
+    (p) => p.key === "cash" || p.key === "credit" || p.value > 0,
+  );
   return (
     <ChartCard
       index={4}
-      title="كاش أم آجل؟"
-      subtitle="الآجل سيولة مؤجلة؛ تابع تحصيله"
+      title="طرق الدفع"
+      subtitle="الآجل سيولة مؤجلة؛ تابع تحصيله. المحافظ خارج الدرج."
     >
       <Donut
-        slices={payments.map((p) => ({
+        slices={shown.map((p) => ({
           key: p.key,
           label: p.label,
           value: p.value,
-          color: p.key === "cash" ? CHART.main : CHART.muted,
+          color: PAYMENT_COLORS[p.key] ?? CHART.muted,
         }))}
         centerLabel="إجمالي المبيعات"
         centerValue={formatNumber(total)}

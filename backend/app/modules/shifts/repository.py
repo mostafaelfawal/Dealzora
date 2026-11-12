@@ -1,6 +1,6 @@
 """الوصول لقاعدة البيانات فقط. لا commit هنا."""
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 
 from app.core.repository import BaseRepository, fetch_page, live
 
@@ -34,27 +34,35 @@ class ShiftRepository(BaseRepository[Shift]):
 
         if not shift_ids:
             return {}
+        def wallet(method: str):
+            return func.coalesce(
+                func.sum(case((Sale.payment_method == method, Sale.wallet_amount), else_=0)), 0
+            )
+
         sales = {
-            sid: (cnt, total, cash, credit)
-            for sid, cnt, total, cash, credit in self.session.execute(
+            sid: tuple(vals)
+            for sid, *vals in self.session.execute(
                 select(
                     Sale.shift_id,
                     func.count(),
                     func.coalesce(func.sum(Sale.total), 0),
                     func.coalesce(func.sum(Sale.cash_amount), 0),
                     func.coalesce(func.sum(Sale.credit_amount), 0),
+                    wallet("vodafone_cash"),
+                    wallet("instapay"),
                 )
                 .where(Sale.shift_id.in_(shift_ids), live(Sale))
                 .group_by(Sale.shift_id)
             ).all()
         }
         returns = {
-            sid: (cnt, cash)
-            for sid, cnt, cash in self.session.execute(
+            sid: (cnt, cash, wallet_back)
+            for sid, cnt, cash, wallet_back in self.session.execute(
                 select(
                     SaleReturn.shift_id,
                     func.count(),
                     func.coalesce(func.sum(SaleReturn.cash_refund), 0),
+                    func.coalesce(func.sum(SaleReturn.wallet_refund), 0),
                 )
                 .where(SaleReturn.shift_id.in_(shift_ids), live(SaleReturn))
                 .group_by(SaleReturn.shift_id)
@@ -62,8 +70,8 @@ class ShiftRepository(BaseRepository[Shift]):
         }
         out: dict[str, ShiftTotals] = {}
         for sid in shift_ids:
-            s_cnt, s_total, s_cash, s_credit = sales.get(sid, (0, 0, 0, 0))
-            r_cnt, r_cash = returns.get(sid, (0, 0))
+            s_cnt, s_total, s_cash, s_credit, s_vf, s_ip = sales.get(sid, (0, 0, 0, 0, 0, 0))
+            r_cnt, r_cash, r_wallet = returns.get(sid, (0, 0, 0))
             out[sid] = ShiftTotals(
                 sales_count=s_cnt,
                 sales_total=s_total,
@@ -71,5 +79,8 @@ class ShiftRepository(BaseRepository[Shift]):
                 credit_sales=s_credit,
                 returns_count=r_cnt,
                 cash_refunds=r_cash,
+                vodafone_sales=s_vf,
+                instapay_sales=s_ip,
+                wallet_refunds=r_wallet,
             )
         return out

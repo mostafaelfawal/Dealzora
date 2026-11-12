@@ -35,6 +35,14 @@ _UPGRADES = (
     "ON shifts (device_id) WHERE is_open = 1 AND deleted_at IS NULL",
 )
 
+# أعمدة جديدة في جداول قائمة: (الجدول، العمود، التعريف). تُضاف فقط إن لم تكن موجودة.
+_NEW_COLUMNS = (
+    # فودافون كاش وإنستاباي
+    ("sales", "wallet_amount", "INTEGER NOT NULL DEFAULT 0"),
+    ("sales", "payment_ref", "VARCHAR(40)"),
+    ("sale_returns", "wallet_refund", "INTEGER NOT NULL DEFAULT 0"),
+)
+
 
 def init_db() -> None:
     engine = get_engine()
@@ -42,3 +50,7 @@ def init_db() -> None:
     with engine.begin() as conn:
         for sql in _UPGRADES:
             conn.exec_driver_sql(sql)
+        for table, column, ddl in _NEW_COLUMNS:
+            existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+            if column not in existing:
+                conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")

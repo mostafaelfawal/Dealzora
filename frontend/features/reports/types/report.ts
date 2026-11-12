@@ -23,6 +23,8 @@ export interface SalesReport {
   discounts: number;
   cash: number;
   credit: number;
+  vodafoneCash: number;
+  instapay: number;
   expenses: number;
   netProfit: number;
 }

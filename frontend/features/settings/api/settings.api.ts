@@ -3,6 +3,7 @@ import { isTauri } from "@tauri-apps/api/core";
 import { toMs, toMsOrNull } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
 import type { Currency } from "@/lib/currency";
+import { setPaymentAccounts, type PaymentAccounts } from "@/lib/payments";
 import { getLicenseStatus } from "@/features/setup/lib/license";
 import type { LicenseStatus } from "@/features/setup/types/setup";
 
@@ -104,8 +105,39 @@ export const restoreBackup = async (
 
 /* ---------- العملة ---------- */
 
-export const fetchCurrency = async (): Promise<Currency> =>
-  (await api.get<{ currency: Currency }>("/settings")).data.currency;
+interface PaymentAccountsDto {
+  vodafone_cash: string | null;
+  instapay: string | null;
+}
+
+const toAccounts = (d: PaymentAccountsDto | undefined): PaymentAccounts => ({
+  vodafoneCash: d?.vodafone_cash ?? null,
+  instapay: d?.instapay ?? null,
+});
+
+/** GET /settings يرجّع العملة وحسابات الدفع معاً، فنحدّث مخزن الحسابات هنا أيضاً. */
+export const fetchCurrency = async (): Promise<Currency> => {
+  const { data } = await api.get<{
+    currency: Currency;
+    payments?: PaymentAccountsDto;
+  }>("/settings");
+  setPaymentAccounts(toAccounts(data.payments));
+  return data.currency;
+};
+
+/* ---------- حسابات الدفع الإلكتروني ---------- */
+
+export const savePaymentAccounts = async (
+  accounts: PaymentAccounts,
+): Promise<PaymentAccounts> =>
+  toAccounts(
+    (
+      await api.put<PaymentAccountsDto>("/settings/payments", {
+        vodafone_cash: accounts.vodafoneCash,
+        instapay: accounts.instapay,
+      })
+    ).data,
+  );
 
 export const saveCurrency = async (currency: Currency): Promise<Currency> =>
   (await api.put<Currency>("/settings/currency", currency)).data;

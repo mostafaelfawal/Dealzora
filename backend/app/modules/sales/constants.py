@@ -5,6 +5,7 @@ from enum import StrEnum
 # ---- الحدود ----
 MAX_LINES = 300  # أقصى عدد أصناف في فاتورة واحدة
 MAX_NOTE_LEN = 200
+MAX_PAYMENT_REF_LEN = 40
 MAX_QUERY_LEN = 100
 DEFAULT_PAGE_SIZE = 24
 MAX_PAGE_SIZE = 200
@@ -40,6 +41,7 @@ class SaleError(StrEnum):
     CREDIT_LIMIT = "sale_credit_limit"
     PAYMENT_MISMATCH = "sale_payment_mismatch"
     CASH_SHORT = "sale_cash_short"
+    WALLET_NOT_CONFIGURED = "sale_wallet_not_configured"
     RETURN_NOT_FOUND = "sale_return_not_found"
     RETURN_EMPTY = "sale_return_empty"
     RETURN_LINE_NOT_FOUND = "sale_return_line_not_found"
@@ -65,6 +67,7 @@ ERROR_MESSAGES: dict[SaleError, str] = {
     SaleError.CREDIT_LIMIT: "المبلغ الآجل أكبر من الحد المتاح للعميل",
     SaleError.PAYMENT_MISMATCH: "المدفوع لا يطابق إجمالي الفاتورة",
     SaleError.CASH_SHORT: "المبلغ المستلم أقل من المطلوب",
+    SaleError.WALLET_NOT_CONFIGURED: "{method} غير مفعّل. أضف رقم المحل من الإعدادات ← طرق الدفع",
     SaleError.RETURN_NOT_FOUND: "لم نجد هذا المرتجع",
     SaleError.RETURN_EMPTY: "اختر صنفاً واحداً على الأقل للإرجاع",
     SaleError.RETURN_LINE_NOT_FOUND: "الصنف ليس في هذه الفاتورة",

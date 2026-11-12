@@ -6,6 +6,7 @@ import {
   IconDatabaseExport,
   IconDevices,
   IconCrown,
+  IconWallet,
   IconPalette,
   IconShieldLock,
 } from "@tabler/icons-react";
@@ -24,6 +25,7 @@ import { CurrencySection } from "./currencySection";
 import { DemoDataSection } from "./demoDataSection";
 import { LicenseSection } from "./licenseSection";
 import { PasswordSection } from "./passwordSection";
+import { PaymentsSection } from "./paymentsSection";
 import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
 
@@ -47,6 +49,13 @@ const SHARED: Section[] = [
     title: "العملة",
     description: "تظهر مع كل الأسعار والفواتير والتقارير، لكل المستخدمين.",
     content: <CurrencySection />,
+  },
+  {
+    icon: <IconWallet />,
+    title: "طرق الدفع",
+    description:
+      "فودافون كاش وإنستاباي: رقم المحل الذي يحوّل عليه العميل ويظهر للكاشير.",
+    content: <PaymentsSection />,
   },
   {
     icon: <IconPalette />,
@@ -117,7 +126,7 @@ export function SettingsScreen() {
         description={
           terminal
             ? "إعدادات المحل المشتركة. النسخ الاحتياطي والترخيص من الجهاز الأساسي."
-            : "المحل، العملة، المظهر، كلمة المرور، أجهزة الكاشير، النسخ الاحتياطي، والترخيص."
+            : "المحل، العملة، طرق الدفع، المظهر، كلمة المرور، أجهزة الكاشير، النسخ الاحتياطي، والترخيص."
         }
       />
       {sections.map((s, index) => (

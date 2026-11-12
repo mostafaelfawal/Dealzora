@@ -165,8 +165,8 @@ export function CloseShiftForm({
       <DialogHeader className="text-start">
         <DialogTitle>قفل الوردية وجرد الدرج</DialogTitle>
         <DialogDescription>
-          {shift.cashierName ?? "الكاشير"} · فُتحت {formatTime(shift.openedAt)}{" "}
-          · {shift.salesCount} فاتورة. عدّ النقدية في الدرج واكتب عدد كل فئة.
+          {shift.cashierName ?? "الكاشير"} · فُتحت {formatTime(shift.openedAt)} ·{" "}
+          {shift.salesCount} فاتورة. عدّ النقدية في الدرج واكتب عدد كل فئة.
         </DialogDescription>
       </DialogHeader>
 
@@ -189,6 +189,8 @@ export function CloseShiftForm({
       </div>
 
       <Separator />
+
+      <WalletSummary shift={shift} />
 
       <CountSummary counted={counted} expected={shift.expectedCash} />
 
@@ -224,5 +226,44 @@ export function CloseShiftForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/** فودافون كاش وإنستاباي: خارج الدرج، يطابقها المدير مع رسائل المحفظة (للمدير فقط). */
+function WalletSummary({ shift }: { shift: Shift }) {
+  const vodafone = shift.vodafoneSales ?? 0;
+  const instapay = shift.instapaySales ?? 0;
+  const refunds = shift.walletRefunds ?? 0;
+  if (!vodafone && !instapay && !refunds) return null;
+  return (
+    <dl className="space-y-1 border bg-muted/40 p-3 text-xs">
+      <p className="pb-1 text-muted-foreground">
+        دفع إلكتروني (لا يُعدّ في الدرج، راجعه على المحفظة)
+      </p>
+      {vodafone > 0 && (
+        <div className="flex items-center justify-between">
+          <dt>فودافون كاش</dt>
+          <dd>
+            <Money amount={vodafone} />
+          </dd>
+        </div>
+      )}
+      {instapay > 0 && (
+        <div className="flex items-center justify-between">
+          <dt>إنستاباي</dt>
+          <dd>
+            <Money amount={instapay} />
+          </dd>
+        </div>
+      )}
+      {refunds > 0 && (
+        <div className="flex items-center justify-between text-muted-foreground">
+          <dt>رُدّ للمحافظ</dt>
+          <dd>
+            <Money amount={refunds} />
+          </dd>
+        </div>
+      )}
+    </dl>
   );
 }

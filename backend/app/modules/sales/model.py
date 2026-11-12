@@ -24,13 +24,16 @@ class Sale(SyncMixin, Base):
     customer_id: Mapped[str | None] = mapped_column(ForeignKey("customers.id"), nullable=True)
     customer_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     sold_on: Mapped[date] = mapped_column(Date)  # يوم الجهاز المحلي (للتقارير)
-    payment_method: Mapped[str] = mapped_column(String(8))
+    payment_method: Mapped[str] = mapped_column(String(16))
     subtotal: Mapped[int] = mapped_column(Integer)  # قبل أي خصم
     lines_discount: Mapped[int] = mapped_column(Integer, default=0)
     invoice_discount: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer)
     cash_amount: Mapped[int] = mapped_column(Integer, default=0)  # الجزء الكاش من الإجمالي
     credit_amount: Mapped[int] = mapped_column(Integer, default=0)  # الجزء الآجل
+    # المدفوع بفودافون كاش/إنستاباي (لا يدخل الدرج). رقم العملية اختياري للمراجعة.
+    wallet_amount: Mapped[int] = mapped_column(Integer, default=0)
+    payment_ref: Mapped[str | None] = mapped_column(String(40), nullable=True)
     received: Mapped[int] = mapped_column(Integer, default=0)  # ما سلّمه العميل فعلاً
     change: Mapped[int] = mapped_column(Integer, default=0)
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
@@ -83,6 +86,7 @@ class SaleReturn(SyncMixin, Base):
     total: Mapped[int] = mapped_column(Integer)
     cash_refund: Mapped[int] = mapped_column(Integer, default=0)  # خرج من الدرج
     credit_refund: Mapped[int] = mapped_column(Integer, default=0)  # خُصم من دين العميل
+    wallet_refund: Mapped[int] = mapped_column(Integer, default=0)  # رُدّ لمحفظة العميل
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
 
     lines: Mapped[list["SaleReturnLine"]] = relationship(

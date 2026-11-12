@@ -11,6 +11,19 @@ class PaymentMethod(StrEnum):
     CASH = "cash"
     CREDIT = "credit"
     MIXED = "mixed"
+    VODAFONE_CASH = "vodafone_cash"  # محفظة: الفلوس في محفظة المحل لا في الدرج
+    INSTAPAY = "instapay"
+
+
+# الدفع الإلكتروني: المبلغ كامل بلا باقٍ، ولا يدخل الدرج ولا الخزنة النقدية.
+WALLET_METHODS = frozenset({PaymentMethod.VODAFONE_CASH, PaymentMethod.INSTAPAY})
+
+
+class RefundVia(StrEnum):
+    """رد مرتجع فاتورة مدفوعة إلكترونياً: لنفس المحفظة (افتراضي) أو كاش من الدرج."""
+
+    WALLET = "wallet"
+    CASH = "cash"
 
 
 class ReturnReason(StrEnum):
@@ -23,6 +36,7 @@ class ReturnReason(StrEnum):
 class SaleStatusFilter(StrEnum):
     ALL = "all"
     CREDIT = "credit"  # فيها جزء آجل
+    WALLET = "wallet"  # فودافون كاش أو إنستاباي
     RETURNED = "returned"  # عليها مرتجع (كلي أو جزئي)
 
 

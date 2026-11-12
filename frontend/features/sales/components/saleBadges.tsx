@@ -16,7 +16,9 @@ export function SaleBadges({ sale }: { sale: Sale }) {
           "font-normal",
           sale.paymentMethod === "cash"
             ? "border-success/50 text-success"
-            : "border-warning/50 text-warning",
+            : sale.walletAmount > 0
+              ? "border-primary/50 text-primary"
+              : "border-warning/50 text-warning",
         )}
       >
         {PAYMENT_LABEL[sale.paymentMethod]}

@@ -16,7 +16,8 @@ type KpisDto = Record<
   | "returns"
   | "discounts"
   | "cash_sales"
-  | "credit_sales",
+  | "credit_sales"
+  | "wallet_sales",
   number
 >;
 interface NamedDto {
@@ -86,6 +87,7 @@ const toKpis = (k: KpisDto): Kpis => ({
   discounts: p(k.discounts),
   cashSales: p(k.cash_sales),
   creditSales: p(k.credit_sales),
+  walletSales: p(k.wallet_sales ?? 0),
 });
 
 /** money: القيمتان مبالغ؟ (الأصناف: value ربح وextra إيراد؛ المصروفات: extra عدد). */

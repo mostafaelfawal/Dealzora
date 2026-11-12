@@ -145,7 +145,13 @@ _ENUMS: dict[str, dict[str, str]] = {
         "shift_diff": "عجز/زيادة درج",
     },
     "refund_method": {"balance": "خصم من مستحقات المورد", "cash": "نقدية للخزنة"},
-    "payment_method": {"cash": "كاش", "credit": "آجل", "mixed": "مختلط"},
+    "payment_method": {
+        "cash": "كاش",
+        "credit": "آجل",
+        "mixed": "مختلط",
+        "vodafone_cash": "فودافون كاش",
+        "instapay": "إنستاباي",
+    },
     "adjust_reason": {"count": "جرد", "damage": "تالف", "gift": "هدية", "other": "سبب آخر"},
     "return_reason": {
         "wrong_item": "صنف خطأ",
@@ -202,6 +208,12 @@ _LABELS: dict[str, str] = {
     "discount": "الخصم",
     "cash_refund": "رد نقدي",
     "credit_refund": "خصم من الحساب",
+    "wallet": "محفظة إلكترونية",
+    "wallet_refund": "رد للمحفظة",
+    "payment_method": "طريقة الدفع",
+    "payment_ref": "رقم العملية",
+    "vodafone_cash": "رقم فودافون كاش",
+    "instapay": "عنوان إنستاباي",
     "refund_method": "طريقة الرد",
     "customer_id": "العميل",
     "supplier_id": "المورد",
@@ -223,7 +235,7 @@ _MONEY = frozenset(
     {
         "cost_price", "sale_price", "credit_limit", "amount", "opening_float", "expected_cash",
         "counted_cash", "difference", "total", "paid", "cash", "credit", "discount",
-        "cash_refund", "credit_refund",
+        "cash_refund", "credit_refund", "wallet", "wallet_refund",
     }
 )  # fmt: skip
 _QTY = frozenset({"min_stock", "stock_qty", "qty_delta"})
@@ -506,7 +518,9 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
     if r.entity == "backup" and a == "create":
         return "أنشأ نسخة احتياطية"
     if r.entity == "sale" and a == "create":
-        method = "آجل" if c.get("credit") and not c.get("cash") else ("مختلط" if c.get("credit") else "كاش")
+        method = _ENUMS["payment_method"].get(c.get("payment_method") or "") or (
+            "آجل" if c.get("credit") and not c.get("cash") else ("مختلط" if c.get("credit") else "كاش")
+        )
         who = fmt.names.get("customer", c.get("customer_id"))
         return f"باع فاتورة {name or ''} بقيمة {fmt.money(c.get('total'))} ({method})" + (
             f" للعميل{_quoted(who)}" if who else ""
@@ -522,6 +536,8 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
             return f"غيّر عملة المحل إلى {fmt.value('currency', to, r)}"
         if "backup_dir" in c:
             return "غيّر مكان حفظ النسخ الاحتياطية"
+        if "vodafone_cash" in c or "instapay" in c:
+            return "غيّر حسابات الدفع الإلكتروني (فودافون كاش/إنستاباي)"
     if r.entity == "cash_entry":
         kind = c.get("kind")
         kind = kind.get("to") if _is_diff(kind) else kind
@@ -549,7 +565,9 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
 
 # ================= التفاصيل =================
 # في الإضافة/الحذف (قيمة واحدة) نخفي ما لا يضيف معلومة: الفارغ، الأصفار الاختيارية، والقيم الافتراضية.
-_OPTIONAL_ZERO = frozenset({"discount", "cash", "credit", "cash_refund", "credit_refund", "opening_float"})
+_OPTIONAL_ZERO = frozenset(
+    {"discount", "cash", "credit", "wallet", "cash_refund", "credit_refund", "wallet_refund", "opening_float"}
+)
 
 
 def _is_noise(key: str, value: Any, shown: str) -> bool:

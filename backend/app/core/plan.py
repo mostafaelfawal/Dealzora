@@ -33,6 +33,7 @@ PLAN_NAMES: dict[Plan, str] = {
 
 class Feature(StrEnum):
     CUSTOMERS = "customers"  # العملاء والآجل والتحصيل
+    WALLETS = "wallets"  # فودافون كاش وإنستاباي
     SUPPLIERS = "suppliers"  # الموردين والمشتريات
     EXPENSES = "expenses"  # المصروفات وحركات الخزنة اليدوية
     EXTRA_UNITS = "extra_units"  # كرتونة/دستة
@@ -48,6 +49,7 @@ class Feature(StrEnum):
 
 FEATURE_NAMES: dict[Feature, str] = {
     Feature.CUSTOMERS: "العملاء والبيع الآجل",
+    Feature.WALLETS: "الدفع بفودافون كاش وإنستاباي",
     Feature.SUPPLIERS: "الموردين والمشتريات",
     Feature.EXPENSES: "المصروفات والخزنة",
     Feature.EXTRA_UNITS: "وحدات البيع الإضافية (كرتونة/دستة)",

@@ -15,7 +15,7 @@ from app.core.security import Actor
 
 from .constants import DEFAULT_CURRENCY, ENTITY_SETTING, SettingKey
 from .model import AppSetting
-from .schema import CurrencyIn, CurrencyOut
+from .schema import CurrencyIn, CurrencyOut, PaymentAccountsIn, PaymentAccountsOut
 
 # مفاتيح خاصة بالجهاز لا تُرفع للسحابة.
 _LOCAL_KEYS = frozenset({SettingKey.BACKUP_DIR})
@@ -52,7 +52,30 @@ class SettingsService:
             name=self.get(SettingKey.CURRENCY_NAME) or DEFAULT_CURRENCY["name"],
         )
 
+    def payment_accounts(self) -> PaymentAccountsOut:
+        return PaymentAccountsOut(
+            vodafone_cash=self.get(SettingKey.PAY_VODAFONE_CASH),
+            instapay=self.get(SettingKey.PAY_INSTAPAY),
+        )
+
     # ---------- كتابة ----------
+    def set_payment_accounts(self, actor: Actor, data: PaymentAccountsIn) -> PaymentAccountsOut:
+        before = self.payment_accounts()
+        self._set(actor, SettingKey.PAY_VODAFONE_CASH, data.vodafone_cash or "")
+        self._set(actor, SettingKey.PAY_INSTAPAY, data.instapay or "")
+        after = self.payment_accounts()
+        if after != before:
+            record_audit(
+                self.session, actor, entity=ENTITY_SETTING, entity_id="payments", action="update",
+                changes={
+                    k: {"from": getattr(before, k), "to": getattr(after, k)}
+                    for k in ("vodafone_cash", "instapay")
+                    if getattr(before, k) != getattr(after, k)
+                },
+            )  # fmt: skip
+        self.session.commit()
+        return after
+
     def set_currency(self, actor: Actor, data: CurrencyIn) -> CurrencyOut:
         before = self.currency()
         self._set(actor, SettingKey.CURRENCY_CODE, data.code.upper())

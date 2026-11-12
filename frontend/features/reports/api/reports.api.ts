@@ -57,6 +57,8 @@ export async function fetchSalesReport(r: Range): Promise<SalesReport> {
     discounts: p(data.discounts),
     cash: p(data.cash),
     credit: p(data.credit),
+    vodafoneCash: p(data.vodafone_cash ?? 0),
+    instapay: p(data.instapay ?? 0),
     expenses: p(data.expenses),
     netProfit: p(data.net_profit),
   };

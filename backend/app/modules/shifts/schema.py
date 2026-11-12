@@ -43,6 +43,9 @@ class ShiftOut(BaseModel):
     cash_sales: int | None
     credit_sales: int | None
     cash_refunds: int | None
+    vodafone_sales: int | None
+    instapay_sales: int | None
+    wallet_refunds: int | None
     expected_cash: int | None
     counted_cash: int | None
     difference: int | None

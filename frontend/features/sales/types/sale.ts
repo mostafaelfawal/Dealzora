@@ -1,7 +1,11 @@
-export type PaymentMethod = "cash" | "credit" | "mixed";
+export type PaymentMethod =
+  "cash" | "credit" | "mixed" | "vodafone_cash" | "instapay";
+
+/** رد مرتجع فاتورة مدفوعة إلكترونياً: لنفس المحفظة أو كاش من الدرج. */
+export type RefundVia = "wallet" | "cash";
 export type ReturnReason =
   "wrong_item" | "defective" | "customer_changed" | "other";
-export type SaleStatusFilter = "all" | "credit" | "returned";
+export type SaleStatusFilter = "all" | "credit" | "wallet" | "returned";
 export type SaleSort = "newest" | "oldest" | "total_desc" | "total_asc";
 
 /** المال بالجنيه والكميات عادية (الـ mapper يحوّل من قروش و× 1000). */
@@ -40,6 +44,10 @@ export interface Sale {
   total: number;
   cashAmount: number;
   creditAmount: number;
+  /** المدفوع بفودافون كاش/إنستاباي (لا يدخل الدرج). */
+  walletAmount: number;
+  /** رقم العملية أو رقم المحوِّل (اختياري). */
+  paymentRef: string | null;
   received: number;
   change: number;
   returnedTotal: number;
@@ -72,6 +80,7 @@ export interface SaleReturn {
   total: number;
   cashRefund: number;
   creditRefund: number;
+  walletRefund: number;
   lines: SaleReturnLine[];
 }
 
@@ -116,6 +125,7 @@ export interface SaleInput {
   paymentMethod: PaymentMethod;
   cashAmount: number;
   received: number;
+  paymentRef?: string;
   note?: string;
 }
 
@@ -123,4 +133,6 @@ export interface ReturnInput {
   reason: ReturnReason;
   note?: string;
   lines: { saleLineId: string; qty: number }[];
+  /** للفواتير المدفوعة إلكترونياً فقط (الافتراضي: لنفس المحفظة). */
+  refundVia?: RefundVia;
 }

@@ -16,6 +16,10 @@ export interface Shift {
   cashSales: number | null;
   creditSales: number | null;
   cashRefunds: number | null;
+  /** الدفع الإلكتروني (للمدير فقط): يُطابق مع المحفظة لا مع الدرج. */
+  vodafoneSales: number | null;
+  instapaySales: number | null;
+  walletRefunds: number | null;
   expectedCash: number | null;
   countedCash: number | null;
   /** موجب = زيادة، سالب = عجز. */

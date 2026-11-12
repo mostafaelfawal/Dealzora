@@ -65,10 +65,16 @@ export function useCreateReturn() {
     onSuccess: (ret) => {
       refresh();
       toast.success(`تم تسجيل المرتجع #${ret.number}`, {
-        description:
-          ret.cashRefund > 0
-            ? `رُدّ للعميل ${formatMoneyText(ret.cashRefund)} نقداً`
-            : `خُصم ${formatMoneyText(ret.creditRefund)} من حساب العميل`,
+        description: [
+          ret.cashRefund > 0 &&
+            `رُدّ للعميل ${formatMoneyText(ret.cashRefund)} نقداً`,
+          ret.walletRefund > 0 &&
+            `حوّل للعميل ${formatMoneyText(ret.walletRefund)} على محفظته`,
+          ret.creditRefund > 0 &&
+            `خُصم ${formatMoneyText(ret.creditRefund)} من حساب العميل`,
+        ]
+          .filter(Boolean)
+          .join(" · "),
         duration: 8000,
       });
     },

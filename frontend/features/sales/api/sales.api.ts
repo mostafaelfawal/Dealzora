@@ -43,6 +43,8 @@ export const toSale = (d: SaleDto): Sale => ({
   total: toPounds(d.total),
   cashAmount: toPounds(d.cash_amount),
   creditAmount: toPounds(d.credit_amount),
+  walletAmount: toPounds(d.wallet_amount ?? 0),
+  paymentRef: d.payment_ref ?? null,
   received: toPounds(d.received),
   change: toPounds(d.change),
   returnedTotal: toPounds(d.returned_total),
@@ -79,6 +81,7 @@ export const toSaleReturn = (d: ReturnDto): SaleReturn => ({
   total: toPounds(d.total),
   cashRefund: toPounds(d.cash_refund),
   creditRefund: toPounds(d.credit_refund),
+  walletRefund: toPounds(d.wallet_refund ?? 0),
   lines: d.lines.map((l) => ({
     id: l.id,
     saleLineId: l.sale_line_id,
@@ -104,6 +107,7 @@ const toSalePayload = (s: SaleInput) => ({
   payment_method: s.paymentMethod,
   cash_amount: toCents(s.cashAmount),
   received: toCents(s.received),
+  payment_ref: s.paymentRef?.trim() || null,
   note: s.note || null,
 });
 
@@ -114,6 +118,7 @@ const toReturnPayload = (r: ReturnInput) => ({
     sale_line_id: l.saleLineId,
     qty: toQty(l.qty),
   })),
+  ...(r.refundVia ? { refund_via: r.refundVia } : {}),
 });
 
 /* ---------- endpoints ---------- */

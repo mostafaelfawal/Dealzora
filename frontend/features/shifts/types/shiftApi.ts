@@ -14,6 +14,9 @@ export interface ShiftDto {
   cash_sales: number | null;
   credit_sales: number | null;
   cash_refunds: number | null;
+  vodafone_sales?: number | null;
+  instapay_sales?: number | null;
+  wallet_refunds?: number | null;
   expected_cash: number | null;
   counted_cash: number | null;
   difference: number | null;

@@ -1,3 +1,5 @@
+import type { PaymentMethod } from "@/features/sales/types/sale";
+
 export type StockLevel = "ok" | "low" | "out";
 
 export interface PosCategory {
@@ -87,7 +89,7 @@ export interface HeldInvoice {
   deviceName?: string | null;
 }
 
-export type PaymentMethod = "cash" | "credit" | "mixed";
+export type { PaymentMethod };
 
 export interface PaymentResult {
   method: PaymentMethod;
@@ -99,6 +101,8 @@ export interface PaymentResult {
   credit: number;
   /** الباقي اللي يرجع للعميل. */
   change: number;
+  /** فودافون كاش/إنستاباي: رقم العملية أو رقم المحوِّل (اختياري). */
+  paymentRef?: string;
   print: boolean;
 }
 

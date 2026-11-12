@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 
 import { createExchange, createSale } from "@/features/sales/api/sales.api";
+import { PAYMENT_LABEL } from "@/features/sales/config/saleOptions";
 import { printReceipt, sendWhatsapp } from "@/features/sales/lib/receipt";
 import type { Sale, SaleInput } from "@/features/sales/types/sale";
 import { fetchShopName } from "@/features/settings/api/settings.api";
@@ -376,7 +377,10 @@ async function shopName(): Promise<string> {
 /** سطور الفاتورة الحالية بالشكل الذي يتوقعه الـ backend. */
 function buildSaleInput(
   state: RootState,
-  payment: Pick<SaleInput, "paymentMethod" | "cashAmount" | "received">,
+  payment: Pick<
+    SaleInput,
+    "paymentMethod" | "cashAmount" | "received" | "paymentRef"
+  >,
 ): SaleInput {
   const invoice = state.cart.present;
   return {
@@ -463,6 +467,7 @@ export const confirmPayment =
       paymentMethod: result.method,
       cashAmount: result.cash,
       received: result.method === "cash" ? result.received : result.cash,
+      paymentRef: result.paymentRef,
     });
 
     dispatch(posUiActions.setSaving(true));
@@ -475,13 +480,18 @@ export const confirmPayment =
       if (result.print) printReceipt(sale, name);
 
       const description =
-        sale.change > 0
-          ? "الباقي للعميل: " + formatMoneyText(sale.change)
-          : sale.creditAmount > 0
-            ? formatMoneyText(sale.creditAmount) +
-              " آجل على " +
-              (sale.customerName ?? "العميل")
-            : "تم استلام " + formatMoneyText(sale.cashAmount);
+        sale.walletAmount > 0
+          ? "تم استلام " +
+            formatMoneyText(sale.walletAmount) +
+            " على " +
+            PAYMENT_LABEL[sale.paymentMethod]
+          : sale.change > 0
+            ? "الباقي للعميل: " + formatMoneyText(sale.change)
+            : sale.creditAmount > 0
+              ? formatMoneyText(sale.creditAmount) +
+                " آجل على " +
+                (sale.customerName ?? "العميل")
+              : "تم استلام " + formatMoneyText(sale.cashAmount);
       toast.success("تم حفظ الفاتورة #" + sale.number, {
         description,
         duration: sale.change > 0 ? 10_000 : 5000,

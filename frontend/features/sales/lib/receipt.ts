@@ -71,6 +71,8 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
   ${sale.cashAmount > 0 ? line("المدفوع كاش", money(sale.received || sale.cashAmount)) : ""}
   ${sale.change > 0 ? line("الباقي", money(sale.change)) : ""}
   ${sale.creditAmount > 0 ? line("آجل على الحساب", money(sale.creditAmount)) : ""}
+  ${sale.walletAmount > 0 ? line(`مدفوع ${PAYMENT_LABEL[sale.paymentMethod]}`, money(sale.walletAmount)) : ""}
+  ${sale.walletAmount > 0 && sale.paymentRef ? line("رقم العملية", esc(sale.paymentRef)) : ""}
   ${sale.returnedTotal > 0 ? line("مرتجع من الفاتورة", money(sale.returnedTotal)) : ""}
   <hr><div class="center">${FOOTER}</div>
   ${getCachedPlan()?.isFree ? `<div class="center muted" style="margin-top:4px">${FREE_FOOTER}</div>` : ""}
@@ -111,6 +113,9 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
     `*الإجمالي: ${money(sale.total)} ${currencySymbol()}*`,
     sale.creditAmount > 0
       ? `آجل على الحساب: ${money(sale.creditAmount)} ${currencySymbol()}`
+      : null,
+    sale.walletAmount > 0
+      ? `مدفوع ${PAYMENT_LABEL[sale.paymentMethod]}: ${money(sale.walletAmount)} ${currencySymbol()}`
       : null,
     "",
     FOOTER,

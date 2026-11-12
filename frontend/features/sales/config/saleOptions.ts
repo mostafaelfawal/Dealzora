@@ -15,7 +15,15 @@ export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   cash: "كاش",
   credit: "آجل",
   mixed: "مختلط",
+  vodafone_cash: "فودافون كاش",
+  instapay: "إنستاباي",
 };
+
+/** الدفع الإلكتروني: المبلغ كامل في محفظة المحل، لا في الدرج. */
+export const WALLET_METHODS = ["vodafone_cash", "instapay"] as const;
+export type WalletMethod = (typeof WALLET_METHODS)[number];
+export const isWalletMethod = (m: PaymentMethod): m is WalletMethod =>
+  (WALLET_METHODS as readonly PaymentMethod[]).includes(m);
 
 export const METHOD_OPTIONS: { value: PaymentMethod | "all"; label: string }[] =
   [
@@ -23,11 +31,14 @@ export const METHOD_OPTIONS: { value: PaymentMethod | "all"; label: string }[] =
     { value: "cash", label: "كاش" },
     { value: "credit", label: "آجل" },
     { value: "mixed", label: "مختلط" },
+    { value: "vodafone_cash", label: "فودافون كاش" },
+    { value: "instapay", label: "إنستاباي" },
   ];
 
 export const STATUS_TABS: { id: SaleStatusFilter; label: string }[] = [
   { id: "all", label: "كل الفواتير" },
   { id: "credit", label: "فيها آجل" },
+  { id: "wallet", label: "دفع إلكتروني" },
   { id: "returned", label: "عليها مرتجع" },
 ];
 

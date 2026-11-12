@@ -14,6 +14,17 @@ import { formatWhen } from "@/lib/dates";
 import type { Shift } from "../types/shift";
 import { ShiftDifference } from "./shiftDifference";
 
+/** المحافظ خارج الدرج: نذكرها حتى لا يظن المدير أن الدرج ناقص. */
+function walletHint(shift: Shift | null) {
+  const wallets = (shift?.vodafoneSales ?? 0) + (shift?.instapaySales ?? 0);
+  if (!wallets) return undefined;
+  return (
+    <span className="inline-flex items-center gap-1">
+      + محافظ <Money amount={wallets} /> خارج الدرج
+    </span>
+  );
+}
+
 const differenceTone = (diff: number | null | undefined) =>
   !diff ? "default" : diff > 0 ? "warning" : "danger";
 
@@ -43,7 +54,12 @@ export function ShiftsStats({
       <StatTile index={1} icon={<IconReceipt />} label="مبيعات الوردية">
         <Money amount={current?.salesTotal ?? 0} className="text-lg" />
       </StatTile>
-      <StatTile index={2} icon={<IconCash />} label="المتوقع في الدرج الآن">
+      <StatTile
+        index={2}
+        icon={<IconCash />}
+        label="المتوقع في الدرج الآن"
+        hint={walletHint(current)}
+      >
         <Money amount={current?.expectedCash ?? 0} className="text-lg" />
       </StatTile>
       <StatTile

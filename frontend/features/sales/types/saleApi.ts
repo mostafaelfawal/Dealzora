@@ -33,6 +33,8 @@ export interface SaleDto {
   total: number;
   cash_amount: number;
   credit_amount: number;
+  wallet_amount: number;
+  payment_ref: string | null;
   received: number;
   change: number;
   returned_total: number;
@@ -73,6 +75,7 @@ export interface ReturnDto {
   total: number;
   cash_refund: number;
   credit_refund: number;
+  wallet_refund: number;
   lines: ReturnLineDto[];
 }
 

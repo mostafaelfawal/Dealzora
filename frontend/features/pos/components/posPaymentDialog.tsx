@@ -4,6 +4,7 @@ import {
   IconAlertTriangle,
   IconLoader2,
   IconPrinter,
+  IconWallet,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, RefObject } from "react";
@@ -35,13 +36,21 @@ import { posUiActions } from "../store/posUiSlice";
 import { selectInvoiceCustomer, selectTotals } from "../store/selectors";
 import type { PaymentMethod } from "../types/pos";
 import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
+import { usePaymentAccounts } from "@/lib/payments";
 import { upgradeMessage, useFeature } from "@/lib/plan";
+import {
+  isWalletMethod,
+  PAYMENT_LABEL,
+} from "@/features/sales/config/saleOptions";
 
 const METHODS: { id: PaymentMethod; label: string; key: string }[] = [
   { id: "cash", label: "كاش", key: "F1" },
   { id: "credit", label: "آجل", key: "F2" },
   { id: "mixed", label: "مختلط", key: "F3" },
+  { id: "vodafone_cash", label: "فودافون كاش", key: "F4" },
+  { id: "instapay", label: "إنستاباي", key: "F5" },
 ];
+const REF_MAX = 40;
 
 const initialCashText = (method: PaymentMethod, total: number) =>
   method === "cash" ? String(total) : "";
@@ -91,8 +100,10 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
   const [cashText, setCashText] = useState(() =>
     initialCashText(initialMethod, total),
   );
+  const [paymentRef, setPaymentRef] = useState("");
   const [print, setPrint] = useState(true);
   const submitRef = useRef<HTMLButtonElement>(null);
+  const refInputRef = useRef<HTMLInputElement>(null);
   const firstRender = useRef(true);
 
   // بعد تغيير الطريقة: نقل التركيز إلى خانة المبلغ (أو زر التأكيد في الآجل).
@@ -102,6 +113,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
       return;
     }
     if (method === "credit") submitRef.current?.focus();
+    else if (isWalletMethod(method)) refInputRef.current?.focus();
     else {
       cashInputRef.current?.focus();
       cashInputRef.current?.select();
@@ -114,10 +126,19 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
   }
 
   const customersAllowed = useFeature("customers");
+  const walletsAllowed = useFeature("wallets");
+  const accounts = usePaymentAccounts();
+  const wallet = isWalletMethod(method);
+  const walletAccount =
+    method === "vodafone_cash"
+      ? accounts.vodafoneCash
+      : method === "instapay"
+        ? accounts.instapay
+        : null;
   const typed = round2(Number(normalizeDigits(cashText)) || 0);
-  const cash = method === "credit" ? 0 : typed;
+  const cash = method === "credit" || wallet ? 0 : typed;
   const applied = method === "cash" ? total : cash;
-  const credit = method === "cash" ? 0 : round2(total - applied);
+  const credit = method === "cash" || wallet ? 0 : round2(total - applied);
   const change = method === "cash" ? round2(Math.max(cash - total, 0)) : 0;
   const available = customer
     ? Math.max(customer.creditLimit - customer.balance, 0)
@@ -125,7 +146,11 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
 
   let error: string | null = null;
   let needsCustomer = false;
-  if (method !== "cash" && !customersAllowed) {
+  if (wallet) {
+    if (!walletsAllowed) error = upgradeMessage("wallets");
+    else if (!walletAccount)
+      error = `${PAYMENT_LABEL[method]} غير مفعّل. يضيف المدير رقم المحل من الإعدادات ← طرق الدفع.`;
+  } else if (method !== "cash" && !customersAllowed) {
     // بَسطة: البيع كاش فقط (السيرفر يرفض الآجل أيضاً).
     error = upgradeMessage("customers");
   } else if (method === "cash") {
@@ -154,9 +179,10 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
       confirmPayment({
         method,
         received: method === "cash" ? cash : applied,
-        cash: applied,
+        cash: wallet ? 0 : applied,
         credit,
         change,
+        paymentRef: wallet ? paymentRef.trim() || undefined : undefined,
         print,
       }),
     );
@@ -194,7 +220,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
       <div
         role="group"
         aria-label="طريقة الدفع"
-        className="grid grid-cols-3 gap-2"
+        className="grid grid-cols-6 gap-2"
       >
         {METHODS.map((m) => (
           <Button
@@ -204,7 +230,10 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
             variant={method === m.id ? "default" : "outline"}
             aria-pressed={method === m.id}
             onClick={() => changeMethod(m.id)}
-            className="gap-2 font-normal"
+            className={cn(
+              "gap-2 font-normal",
+              isWalletMethod(m.id) ? "col-span-3" : "col-span-2",
+            )}
           >
             {m.label}
             <ShortcutBadge
@@ -220,7 +249,44 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         ))}
       </div>
 
-      {method !== "credit" && (
+      {wallet && walletAccount && walletsAllowed && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 border bg-muted/40 p-3">
+            <IconWallet className="size-6 shrink-0 text-primary" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">
+                يحوّل العميل على {PAYMENT_LABEL[method]}
+              </p>
+              <bdi
+                dir="ltr"
+                className="block truncate font-mono text-lg font-semibold select-all"
+              >
+                {walletAccount}
+              </bdi>
+            </div>
+          </div>
+          <label htmlFor="pos-ref" className="text-xs text-muted-foreground">
+            رقم العملية أو رقم المحوِّل (اختياري)
+          </label>
+          <InputGroup className="h-11">
+            <InputGroupInput
+              id="pos-ref"
+              ref={refInputRef}
+              dir="ltr"
+              autoComplete="off"
+              value={paymentRef}
+              onChange={(event) => setPaymentRef(event.target.value)}
+              maxLength={REF_MAX}
+              className="h-full text-center font-mono"
+            />
+          </InputGroup>
+          <p className="text-[11px] text-muted-foreground">
+            أكّد بعد وصول رسالة التحويل للمحل. المبلغ لا يدخل الدرج.
+          </p>
+        </div>
+      )}
+
+      {method !== "credit" && !wallet && (
         <div className="space-y-2">
           <label htmlFor="pos-cash" className="text-xs text-muted-foreground">
             {method === "cash" ? "المبلغ المستلم" : "المدفوع كاش"}
@@ -290,7 +356,15 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
             </dd>
           </div>
         )}
-        {method !== "cash" && (
+        {wallet && (
+          <div className="flex items-end justify-between">
+            <dt className="pb-0.5 text-sm font-medium">المطلوب تحويله</dt>
+            <dd>
+              <Money amount={total} className="text-3xl leading-none" />
+            </dd>
+          </div>
+        )}
+        {method !== "cash" && !wallet && (
           <>
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">كاش</dt>

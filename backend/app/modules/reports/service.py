@@ -61,9 +61,13 @@ class ReportService:
         sales = self.repo.sales_by_day(q.date_from, q.date_to)
         returns = self.repo.returns_by_day(q.date_from, q.date_to)
         days: list[SalesDayOut] = []
-        tot = dict(count=0, revenue=0, returns=0, cost=0, discounts=0, cash=0, credit=0)
+        tot = dict(
+            count=0, revenue=0, returns=0, cost=0, discounts=0, cash=0, credit=0, vodafone=0, instapay=0
+        )
         for day in iter_days(q.date_from, q.date_to):
-            count, revenue, cost, discounts, cash, credit = sales.get(day, (0, 0, 0, 0, 0, 0))
+            count, revenue, cost, discounts, cash, credit, vodafone, instapay = sales.get(
+                day, (0, 0, 0, 0, 0, 0, 0, 0)
+            )
             r_total, r_cost = returns.get(day, (0, 0))
             net_cost = cost - r_cost
             net = revenue - r_total
@@ -86,6 +90,8 @@ class ReportService:
                 ("discounts", discounts),
                 ("cash", cash),
                 ("credit", credit),
+                ("vodafone", vodafone),
+                ("instapay", instapay),
             ):
                 tot[key] += val
         net = tot["revenue"] - tot["returns"]
@@ -102,6 +108,8 @@ class ReportService:
             discounts=tot["discounts"],
             cash=tot["cash"],
             credit=tot["credit"],
+            vodafone_cash=tot["vodafone"],
+            instapay=tot["instapay"],
             expenses=expenses,
             net_profit=profit - expenses,
         )
@@ -333,6 +341,8 @@ class ReportService:
             payments=[
                 NamedValueOut(key="cash", label="كاش", value=cur.cash),
                 NamedValueOut(key="credit", label="آجل", value=cur.credit),
+                NamedValueOut(key="vodafone_cash", label="فودافون كاش", value=cur.vodafone_cash),
+                NamedValueOut(key="instapay", label="إنستاباي", value=cur.instapay),
             ],
             top_products=top_products,
             categories=categories,
@@ -386,6 +396,7 @@ class ReportService:
             discounts=r.discounts,
             cash_sales=r.cash,
             credit_sales=r.credit,
+            wallet_sales=r.vodafone_cash + r.instapay,
         )
 
 

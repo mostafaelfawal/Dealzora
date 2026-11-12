@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { formatQty } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { RETURN_REASONS } from "../config/saleOptions";
+import { PAYMENT_LABEL, RETURN_REASONS } from "../config/saleOptions";
 import { useCreateReturn } from "../hooks/useSales";
 import {
   clampReturnQty,
@@ -31,7 +31,7 @@ import {
   saleReturnSelection,
   type SaleReturnQtys,
 } from "../lib/saleReturn";
-import type { ReturnReason, Sale, SaleLine } from "../types/sale";
+import type { RefundVia, ReturnReason, Sale, SaleLine } from "../types/sale";
 
 const NOTE_MAX = 200;
 
@@ -112,6 +112,8 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   const [qtys, setQtys] = useState<SaleReturnQtys>({});
   const [reason, setReason] = useState<ReturnReason>("customer_changed");
   const [note, setNote] = useState("");
+  const paidByWallet = sale.walletAmount > 0;
+  const [refundVia, setRefundVia] = useState<RefundVia>("wallet");
   const selection = saleReturnSelection(sale, qtys);
   const canSubmit = selection.chosen.length > 0 && !create.isPending;
 
@@ -120,7 +122,12 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
     create.mutate(
       {
         saleId: sale.id,
-        input: { reason, note: note.trim(), lines: selection.lines },
+        input: {
+          reason,
+          note: note.trim(),
+          lines: selection.lines,
+          ...(paidByWallet ? { refundVia } : {}),
+        },
       },
       { onSuccess: onClose },
     );
@@ -163,6 +170,25 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
           onChange={setReason}
         />
       </div>
+      {paidByWallet && (
+        <div className="space-y-1.5">
+          <span className="text-xs text-muted-foreground">
+            رد المبلغ (الفاتورة مدفوعة {PAYMENT_LABEL[sale.paymentMethod]})
+          </span>
+          <SegmentedTabs
+            label="طريقة رد المبلغ"
+            items={[
+              {
+                id: "wallet" as const,
+                label: `تحويل على ${PAYMENT_LABEL[sale.paymentMethod]}`,
+              },
+              { id: "cash" as const, label: "كاش من الدرج" },
+            ]}
+            value={refundVia}
+            onChange={setRefundVia}
+          />
+        </div>
+      )}
       <Input
         aria-label="ملاحظة"
         value={note}

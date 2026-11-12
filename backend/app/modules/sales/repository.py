@@ -67,6 +67,8 @@ class SaleRepository(BaseRepository[Sale]):
             conds.append(Sale.payment_method == f.method.value)
         if f.status is SaleStatusFilter.CREDIT:
             conds.append(Sale.credit_amount > 0)
+        elif f.status is SaleStatusFilter.WALLET:
+            conds.append(Sale.wallet_amount > 0)
         elif f.status is SaleStatusFilter.RETURNED:
             conds.append(Sale.returned_total > 0)
         if f.date_from:
@@ -112,6 +114,17 @@ class SaleRepository(BaseRepository[Sale]):
             return {}
         rows = self.session.execute(select(Sale.id, Sale.number).where(Sale.id.in_(sale_ids)))
         return {sid: num for sid, num in rows.all()}
+
+    def wallet_refunded(self, sale_id: str) -> int:
+        """ما رُدّ للمحفظة من مرتجعات سابقة لهذه الفاتورة."""
+        return int(
+            self.session.scalar(
+                select(func.coalesce(func.sum(SaleReturn.wallet_refund), 0)).where(
+                    SaleReturn.sale_id == sale_id, live(SaleReturn)
+                )
+            )
+            or 0
+        )
 
     def customer_names(self, sale_ids: set[str]) -> dict[str, str | None]:
         if not sale_ids:

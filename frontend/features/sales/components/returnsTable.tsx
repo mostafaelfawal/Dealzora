@@ -27,6 +27,11 @@ function RefundBadges({ ret: r }: { ret: SaleReturn }) {
           من الدين <Money amount={r.creditRefund} className="text-[10px]" />
         </Badge>
       )}
+      {r.walletRefund > 0 && (
+        <Badge variant="outline" className="border-primary/50 font-normal">
+          للمحفظة <Money amount={r.walletRefund} className="text-[10px]" />
+        </Badge>
+      )}
     </span>
   );
 }

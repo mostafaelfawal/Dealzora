@@ -13,6 +13,8 @@ export interface Kpis {
   discounts: number;
   cashSales: number;
   creditSales: number;
+  /** فودافون كاش + إنستاباي. */
+  walletSales: number;
 }
 
 export interface TrendDay {

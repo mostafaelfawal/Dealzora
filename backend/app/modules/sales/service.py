@@ -60,7 +60,9 @@ from .schema import (
     SaleOut,
     SalesSummaryOut,
 )
-from .types import PaymentMethod, SaleFilters
+from .types import WALLET_METHODS, PaymentMethod, RefundVia, SaleFilters
+
+WALLET_NAMES = {PaymentMethod.VODAFONE_CASH: "فودافون كاش", PaymentMethod.INSTAPAY: "إنستاباي"}
 
 
 class SaleService(EntityService):
@@ -237,11 +239,14 @@ class SaleService(EntityService):
             )
         total = after_lines - data.invoice_discount
 
-        # بَسطة: بيع كاش فقط بدون عميل (العملاء والآجل من خطة دُكّان).
-        if is_free() and (data.customer_id or data.payment_method is not PaymentMethod.CASH):
-            raise upgrade_error(Feature.CUSTOMERS)
+        # بَسطة: بيع كاش فقط بدون عميل (العملاء والآجل والمحافظ من خطة دُكّان).
+        if is_free():
+            if data.payment_method in WALLET_METHODS:
+                raise upgrade_error(Feature.WALLETS)
+            if data.customer_id or data.payment_method is not PaymentMethod.CASH:
+                raise upgrade_error(Feature.CUSTOMERS)
         customer = self._customer(data.customer_id)
-        cash, credit, received, change = self._payment(data, total, customer)
+        cash, credit, wallet, received, change = self._payment(data, total, customer)
 
         sale = Sale(
             id=sale_id,
@@ -260,6 +265,8 @@ class SaleService(EntityService):
             total=total,
             cash_amount=cash,
             credit_amount=credit,
+            wallet_amount=wallet,
+            payment_ref=data.payment_ref if wallet else None,
             received=received,
             change=change,
             note=data.note,
@@ -332,6 +339,9 @@ class SaleService(EntityService):
                 "total": total,
                 "cash": cash,
                 "credit": credit,
+                "wallet": wallet,
+                "payment_method": sale.payment_method,
+                "payment_ref": sale.payment_ref,
                 "discount": lines_discount + data.invoice_discount,
                 "customer_id": sale.customer_id,
                 "items": len(priced),
@@ -342,8 +352,8 @@ class SaleService(EntityService):
 
     def _payment(
         self, data: SaleCreate, total: int, customer: Customer | None
-    ) -> tuple[int, int, int, int]:
-        """(كاش، آجل، المستلم، الباقي) بعد التحقق من قواعد كل طريقة دفع."""
+    ) -> tuple[int, int, int, int, int]:
+        """(كاش، آجل، محفظة، المستلم، الباقي) بعد التحقق من قواعد كل طريقة دفع."""
         method = data.payment_method
         if method is PaymentMethod.CASH:
             if data.cash_amount != total:
@@ -351,7 +361,19 @@ class SaleService(EntityService):
             received = data.received or total
             if received < total:
                 raise self._err(BadRequestError, SaleError.CASH_SHORT, total=total)
-            return total, 0, received, received - total
+            return total, 0, 0, received, received - total
+
+        if method in WALLET_METHODS:
+            # المحل لازم يكون مسجّل رقمه، وإلا الكاشير يستلم على حساب غير معروف.
+            from app.modules.settings.service import SettingsService
+
+            accounts = SettingsService(self.session).payment_accounts()
+            account = (
+                accounts.vodafone_cash if method is PaymentMethod.VODAFONE_CASH else accounts.instapay
+            )
+            if not account:
+                raise self._err(BadRequestError, SaleError.WALLET_NOT_CONFIGURED, method=WALLET_NAMES[method])
+            return 0, 0, total, total, 0
 
         if customer is None:
             raise self._err(BadRequestError, SaleError.CUSTOMER_REQUIRED)
@@ -365,7 +387,7 @@ class SaleService(EntityService):
         available = max(customer.credit_limit - customer.balance, 0)
         if credit > available:
             raise self._err(BadRequestError, SaleError.CREDIT_LIMIT, available=available)
-        return cash, credit, cash, 0
+        return cash, credit, 0, cash, 0
 
     def _product(self, product_id: str) -> Product:
         try:
@@ -474,10 +496,14 @@ class SaleService(EntityService):
         customer = (
             self.customers.get_for_update(sale.customer_id) if sale.customer_id else None
         )
-        credit_refund = 0
+        credit_refund = wallet_refund = 0
         if customer and not force_cash and sale.credit_amount > 0:
             credit_refund = min(total, max(customer.balance, 0), sale.credit_amount)
-        cash_refund = total - credit_refund
+        if not force_cash and sale.wallet_amount > 0 and data.refund_via is RefundVia.WALLET:
+            # يُرد لنفس المحفظة (المحل يحوّل للعميل)، فلا يخرج من الدرج.
+            already = self.repo.wallet_refunded(sale.id)
+            wallet_refund = min(total - credit_refund, max(sale.wallet_amount - already, 0))
+        cash_refund = total - credit_refund - wallet_refund
         if cash_refund and shift is None and not self.is_manager:
             self.shifts.require_open()
 
@@ -485,6 +511,7 @@ class SaleService(EntityService):
         ret.cost_total = cost_total
         ret.cash_refund = cash_refund
         ret.credit_refund = credit_refund
+        ret.wallet_refund = wallet_refund
         sale.returned_total += total
         self.repo.add_any(ret)
         self.repo.flush()
@@ -529,6 +556,7 @@ class SaleService(EntityService):
                 "total": total,
                 "cash_refund": cash_refund,
                 "credit_refund": credit_refund,
+                "wallet_refund": wallet_refund,
                 "reason": data.reason.value,
             },
         )
@@ -557,6 +585,8 @@ class SaleService(EntityService):
             "total": sale.total,
             "cash_amount": sale.cash_amount,
             "credit_amount": sale.credit_amount,
+            "wallet_amount": sale.wallet_amount,
+            "payment_ref": sale.payment_ref,
             "cost_total": sale.cost_total,
             "lines": [
                 {
@@ -585,6 +615,7 @@ class SaleService(EntityService):
             "total": ret.total,
             "cash_refund": ret.cash_refund,
             "credit_refund": ret.credit_refund,
+            "wallet_refund": ret.wallet_refund,
             "lines": [
                 {"id": l.id, "sale_line_id": l.sale_line_id, "qty": l.qty, "amount": l.amount}
                 for l in ret.lines
@@ -617,6 +648,8 @@ class SaleService(EntityService):
                     total=s.total,
                     cash_amount=s.cash_amount,
                     credit_amount=s.credit_amount,
+                    wallet_amount=s.wallet_amount,
+                    payment_ref=s.payment_ref,
                     received=s.received,
                     change=s.change,
                     returned_total=s.returned_total,
@@ -665,6 +698,7 @@ class SaleService(EntityService):
                 total=r.total,
                 cash_refund=r.cash_refund,
                 credit_refund=r.credit_refund,
+                wallet_refund=r.wallet_refund,
                 lines=[
                     ReturnLineOut(
                         id=l.id,

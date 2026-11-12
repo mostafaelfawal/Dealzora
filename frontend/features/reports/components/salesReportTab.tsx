@@ -128,18 +128,31 @@ function SalesTrendCard({ r }: { r: SalesReport }) {
 }
 
 function PaymentSplitCard({ r }: { r: SalesReport }) {
+  const slices = [
+    { key: "cash", label: "كاش", value: r.cash, color: CHART.main },
+    { key: "credit", label: "آجل", value: r.credit, color: CHART.muted },
+    {
+      key: "vodafone_cash",
+      label: "فودافون كاش",
+      value: r.vodafoneCash,
+      color: CHART.seq[1],
+    },
+    {
+      key: "instapay",
+      label: "إنستاباي",
+      value: r.instapay,
+      color: CHART.seq[3],
+    },
+  ].filter((s) => s.key === "cash" || s.key === "credit" || s.value > 0);
   return (
     <ChartCard
       title="طريقة الدفع"
-      subtitle="الكاش سيولة الآن، والآجل يحتاج تحصيلاً"
+      subtitle="الكاش سيولة الآن، والآجل يحتاج تحصيلاً، والمحافظ في حساب المحل"
     >
       <Donut
-        slices={[
-          { key: "cash", label: "كاش", value: r.cash, color: CHART.main },
-          { key: "credit", label: "آجل", value: r.credit, color: CHART.muted },
-        ]}
+        slices={slices}
         centerLabel="المبيعات"
-        centerValue={formatNumber(r.cash + r.credit)}
+        centerValue={formatNumber(slices.reduce((sum, s) => sum + s.value, 0))}
       />
     </ChartCard>
   );
@@ -186,8 +199,22 @@ function SalesDaysTable({ r }: { r: SalesReport }) {
       </div>
       <p className="text-[11px] text-muted-foreground">
         كاش <Money amount={r.cash} className="text-[11px]" /> · آجل{" "}
-        <Money amount={r.credit} className="text-[11px]" />. الربح = صافي
-        المبيعات − تكلفة البضاعة المباعة (بمتوسط سعر الشراء وقت البيع).
+        <Money amount={r.credit} className="text-[11px]" />
+        {r.vodafoneCash > 0 && (
+          <>
+            {" "}
+            · فودافون كاش{" "}
+            <Money amount={r.vodafoneCash} className="text-[11px]" />
+          </>
+        )}
+        {r.instapay > 0 && (
+          <>
+            {" "}
+            · إنستاباي <Money amount={r.instapay} className="text-[11px]" />
+          </>
+        )}
+        . الربح = صافي المبيعات − تكلفة البضاعة المباعة (بمتوسط سعر الشراء وقت
+        البيع).
       </p>
     </ReportPanel>
   );

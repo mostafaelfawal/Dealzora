@@ -7,10 +7,18 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.core.constants import MAX_MONEY
 from app.core.validation import Money, optional_text
 
-from .constants import DEFAULT_PAGE_SIZE, MAX_LINES, MAX_NOTE_LEN, MAX_PAGE_SIZE, MAX_QUERY_LEN
-from .types import PaymentMethod, ReturnReason, SaleSort, SaleStatusFilter
+from .constants import (
+    DEFAULT_PAGE_SIZE,
+    MAX_LINES,
+    MAX_NOTE_LEN,
+    MAX_PAGE_SIZE,
+    MAX_PAYMENT_REF_LEN,
+    MAX_QUERY_LEN,
+)
+from .types import WALLET_METHODS, PaymentMethod, RefundVia, ReturnReason, SaleSort, SaleStatusFilter
 
 Note = optional_text("الملاحظة", MAX_NOTE_LEN)
+PaymentRef = optional_text("رقم العملية", MAX_PAYMENT_REF_LEN)
 Qty = Field(gt=0, le=1_000_000_000)  # × 1000
 
 
@@ -36,10 +44,18 @@ class SaleCreate(BaseModel):
     payment_method: PaymentMethod
     cash_amount: Money = 0
     received: Money = 0
+    # فودافون كاش/إنستاباي: رقم العملية أو رقم المحوِّل (اختياري، للمراجعة).
+    payment_ref: PaymentRef = None
     note: Note = None
 
     @model_validator(mode="after")
     def _payment_shape(self):
+        if self.payment_method in WALLET_METHODS:
+            if self.cash_amount or self.received:
+                raise ValueError("الدفع الإلكتروني يكون بالمبلغ كاملاً بدون كاش")
+            return self
+        if self.payment_ref:
+            raise ValueError("رقم العملية للدفع الإلكتروني فقط")
         if self.payment_method is PaymentMethod.CREDIT and self.cash_amount:
             raise ValueError("البيع الآجل بالكامل لا يحتوي مبلغاً كاشاً")
         if self.received and self.received < self.cash_amount:
@@ -63,6 +79,8 @@ class ReturnCreate(BaseModel):
     reason: ReturnReason
     note: Note = None
     lines: list[ReturnLineIn] = Field(min_length=1, max_length=MAX_LINES)
+    # فاتورة مدفوعة إلكترونياً فقط: لنفس المحفظة (افتراضي) أو كاش من الدرج.
+    refund_via: RefundVia = RefundVia.WALLET
 
 
 class ExchangeCreate(BaseModel):
@@ -108,6 +126,8 @@ class SaleOut(BaseModel):
     total: int
     cash_amount: int
     credit_amount: int
+    wallet_amount: int
+    payment_ref: str | None
     received: int
     change: int
     returned_total: int
@@ -179,6 +199,7 @@ class ReturnOut(BaseModel):
     total: int
     cash_refund: int
     credit_refund: int
+    wallet_refund: int
     lines: list[ReturnLineOut]
 
 

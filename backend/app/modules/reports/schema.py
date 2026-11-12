@@ -64,6 +64,8 @@ class SalesReportOut(BaseModel):
     discounts: int
     cash: int
     credit: int
+    vodafone_cash: int
+    instapay: int
     expenses: int
     net_profit: int  # الربح - المصروفات
 
@@ -160,6 +162,7 @@ class KpisOut(BaseModel):
     discounts: int
     cash_sales: int
     credit_sales: int
+    wallet_sales: int  # فودافون كاش + إنستاباي
 
 
 class TrendPointOut(BaseModel):
@@ -239,7 +242,7 @@ class OverviewOut(BaseModel):
     prev: KpisOut
     trend: list[TrendPointOut]
     heatmap: list[HeatCellOut]
-    payments: list[NamedValueOut]  # cash / credit
+    payments: list[NamedValueOut]  # cash / credit / vodafone_cash / instapay
     top_products: list[NamedValueOut]  # value = ربح، extra = إيراد
     categories: list[NamedValueOut]  # value = إيراد، extra = ربح
     expenses_by_category: list[NamedValueOut]

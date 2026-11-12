@@ -9,7 +9,9 @@ from app.core.database import get_session
 from app.core.permissions import require_manager_write
 from app.core.security import Actor, get_actor, require_app_token
 
-from .schema import CurrencyIn, CurrencyOut, PublicSettingsOut
+from app.core.plan import Feature, require_feature
+
+from .schema import CurrencyIn, CurrencyOut, PaymentAccountsIn, PaymentAccountsOut, PublicSettingsOut
 from .service import SettingsService
 
 router = APIRouter(prefix="/settings", tags=["settings"], dependencies=[Depends(require_app_token)])
@@ -19,9 +21,21 @@ DbSession = Annotated[Session, Depends(get_session)]
 
 @router.get("", response_model=PublicSettingsOut)
 def get_settings_public(session: DbSession):
-    return PublicSettingsOut(currency=SettingsService(session).currency())
+    service = SettingsService(session)
+    return PublicSettingsOut(currency=service.currency(), payments=service.payment_accounts())
 
 
 @router.put("/currency", response_model=CurrencyOut, dependencies=[Depends(require_manager_write)])
 def set_currency(data: CurrencyIn, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
     return SettingsService(session).set_currency(actor, data)
+
+
+@router.put(
+    "/payments",
+    response_model=PaymentAccountsOut,
+    dependencies=[Depends(require_manager_write), require_feature(Feature.WALLETS)],
+)
+def set_payment_accounts(
+    data: PaymentAccountsIn, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]
+):
+    return SettingsService(session).set_payment_accounts(actor, data)
