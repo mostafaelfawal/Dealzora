@@ -3,7 +3,7 @@ import { isTauri } from "@tauri-apps/api/core";
 import { toMs, toMsOrNull } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
 import type { Currency } from "@/lib/currency";
-import { setPaymentAccounts, type PaymentAccounts } from "@/lib/payments";
+import { setPaymentConfig, type PaymentConfig } from "@/lib/payments";
 import { getLicenseStatus } from "@/features/setup/lib/license";
 import type { LicenseStatus } from "@/features/setup/types/setup";
 
@@ -105,38 +105,38 @@ export const restoreBackup = async (
 
 /* ---------- العملة ---------- */
 
-interface PaymentAccountsDto {
-  vodafone_cash: string | null;
-  instapay: string | null;
-}
+/** نفس شكل الـ backend (لا تحويل أسماء: الحقول كلمة واحدة). */
+type PaymentConfigDto = PaymentConfig;
 
-const toAccounts = (d: PaymentAccountsDto | undefined): PaymentAccounts => ({
-  vodafoneCash: d?.vodafone_cash ?? null,
-  instapay: d?.instapay ?? null,
+const toConfig = (d: PaymentConfigDto | undefined): PaymentConfig => ({
+  country: d?.country ?? null,
+  methods: (d?.methods ?? []).map((m) => ({
+    id: m.id,
+    name: m.name,
+    kind: m.kind,
+    account: m.account ?? null,
+    enabled: m.enabled,
+  })),
 });
 
-/** GET /settings يرجّع العملة وحسابات الدفع معاً، فنحدّث مخزن الحسابات هنا أيضاً. */
+/** GET /settings يرجّع العملة وطرق الدفع معاً، فنحدّث مخزن طرق الدفع هنا أيضاً. */
 export const fetchCurrency = async (): Promise<Currency> => {
   const { data } = await api.get<{
     currency: Currency;
-    payments?: PaymentAccountsDto;
+    payments?: PaymentConfigDto;
   }>("/settings");
-  setPaymentAccounts(toAccounts(data.payments));
+  setPaymentConfig(toConfig(data.payments));
   return data.currency;
 };
 
-/* ---------- حسابات الدفع الإلكتروني ---------- */
+/* ---------- طرق الدفع الإلكتروني ---------- */
 
-export const savePaymentAccounts = async (
-  accounts: PaymentAccounts,
-): Promise<PaymentAccounts> =>
-  toAccounts(
-    (
-      await api.put<PaymentAccountsDto>("/settings/payments", {
-        vodafone_cash: accounts.vodafoneCash,
-        instapay: accounts.instapay,
-      })
-    ).data,
+export const savePaymentConfig = async (
+  config: PaymentConfig,
+): Promise<PaymentConfig> =>
+  toConfig(
+    (await api.put<PaymentConfigDto>("/settings/payments", toConfig(config)))
+      .data,
   );
 
 export const saveCurrency = async (currency: Currency): Promise<Currency> =>

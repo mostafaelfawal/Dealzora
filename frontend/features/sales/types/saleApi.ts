@@ -27,6 +27,7 @@ export interface SaleDto {
   customer_phone: string | null;
   cashier_name: string | null;
   payment_method: PaymentMethod;
+  payment_label?: string;
   subtotal: number;
   lines_discount: number;
   invoice_discount: number;

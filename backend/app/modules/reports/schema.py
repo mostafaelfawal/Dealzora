@@ -64,8 +64,8 @@ class SalesReportOut(BaseModel):
     discounts: int
     cash: int
     credit: int
-    vodafone_cash: int
-    instapay: int
+    wallet: int  # كل الدفع الإلكتروني
+    electronic: list["NamedValueOut"]  # تفصيل الإلكتروني حسب الطريقة (key = معرّفها)
     expenses: int
     net_profit: int  # الربح - المصروفات
 
@@ -162,7 +162,7 @@ class KpisOut(BaseModel):
     discounts: int
     cash_sales: int
     credit_sales: int
-    wallet_sales: int  # فودافون كاش + إنستاباي
+    wallet_sales: int  # كل الدفع الإلكتروني
 
 
 class TrendPointOut(BaseModel):
@@ -223,6 +223,7 @@ class RecentSaleOut(BaseModel):
     sold_at: datetime
     customer_name: str | None
     payment_method: str
+    payment_label: str
     total: int
 
 
@@ -242,7 +243,7 @@ class OverviewOut(BaseModel):
     prev: KpisOut
     trend: list[TrendPointOut]
     heatmap: list[HeatCellOut]
-    payments: list[NamedValueOut]  # cash / credit / vodafone_cash / instapay
+    payments: list[NamedValueOut]  # cash / credit / ثم كل طريقة إلكترونية (مفعّلة أو مستخدمة)
     top_products: list[NamedValueOut]  # value = ربح، extra = إيراد
     categories: list[NamedValueOut]  # value = إيراد، extra = ربح
     expenses_by_category: list[NamedValueOut]
@@ -251,3 +252,6 @@ class OverviewOut(BaseModel):
     health: HealthOut
     shift: ShiftBriefOut | None
     recent_sales: list[RecentSaleOut]
+
+
+SalesReportOut.model_rebuild()

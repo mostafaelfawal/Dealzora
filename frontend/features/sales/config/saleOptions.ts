@@ -1,6 +1,9 @@
 import { plain, type Shortcut } from "@/lib/shortcuts";
 
+import { getPaymentConfig } from "@/lib/payments";
+
 import type {
+  BuiltinMethod,
   PaymentMethod,
   ReturnReason,
   SaleSort,
@@ -11,29 +14,39 @@ export const PAGE_SIZES = [12, 24, 48] as const;
 export const DEFAULT_PAGE_SIZE = 24;
 export const SALES_SEARCH_DEBOUNCE_MS = 300;
 
-export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
+export const BUILTIN_LABEL: Record<BuiltinMethod, string> = {
   cash: "كاش",
   credit: "آجل",
   mixed: "مختلط",
+};
+
+/** أسماء طرق قديمة لفواتير بلا لقطة اسم (نفس LEGACY_LABELS في الـ backend). */
+const LEGACY_LABEL: Record<string, string> = {
   vodafone_cash: "فودافون كاش",
   instapay: "إنستاباي",
 };
 
-/** الدفع الإلكتروني: المبلغ كامل في محفظة المحل، لا في الدرج. */
-export const WALLET_METHODS = ["vodafone_cash", "instapay"] as const;
-export type WalletMethod = (typeof WALLET_METHODS)[number];
-export const isWalletMethod = (m: PaymentMethod): m is WalletMethod =>
-  (WALLET_METHODS as readonly PaymentMethod[]).includes(m);
+/** الدفع الإلكتروني: أي طريقة غير المدمجة. المبلغ كامل في حساب المحل، لا في الدرج. */
+export const isWalletMethod = (m: PaymentMethod) => !(m in BUILTIN_LABEL);
 
-export const METHOD_OPTIONS: { value: PaymentMethod | "all"; label: string }[] =
-  [
-    { value: "all", label: "كل طرق الدفع" },
-    { value: "cash", label: "كاش" },
-    { value: "credit", label: "آجل" },
-    { value: "mixed", label: "مختلط" },
-    { value: "vodafone_cash", label: "فودافون كاش" },
-    { value: "instapay", label: "إنستاباي" },
-  ];
+/** اسم الطريقة للعرض حين لا يرسله السيرفر: المدمجة ← الإعدادات ← الأسماء القديمة ← المعرّف. */
+export const paymentLabel = (m: PaymentMethod): string =>
+  BUILTIN_LABEL[m as BuiltinMethod] ??
+  getPaymentConfig().methods.find((x) => x.id === m)?.name ??
+  LEGACY_LABEL[m] ??
+  m;
+
+/** فلتر طريقة الدفع في سجل الفواتير: المدمجة + كل طرق المحل الإلكترونية. */
+export const methodOptions = (
+  methods: { id: string; name: string }[],
+): { value: PaymentMethod | "all"; label: string }[] => [
+  { value: "all", label: "كل طرق الدفع" },
+  ...(Object.keys(BUILTIN_LABEL) as BuiltinMethod[]).map((k) => ({
+    value: k,
+    label: BUILTIN_LABEL[k],
+  })),
+  ...methods.map((m) => ({ value: m.id, label: m.name })),
+];
 
 export const STATUS_TABS: { id: SaleStatusFilter; label: string }[] = [
   { id: "all", label: "كل الفواتير" },

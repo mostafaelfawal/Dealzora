@@ -8,15 +8,12 @@ from .constants import DEFAULT_PAGE_SIZE
 
 
 class PaymentMethod(StrEnum):
+    """الطرق المدمجة. أي معرّف آخر = طريقة إلكترونية يحددها المحل (settings/payments.py):
+    المبلغ كامل بلا باقٍ، ولا يدخل الدرج ولا الخزنة النقدية."""
+
     CASH = "cash"
     CREDIT = "credit"
     MIXED = "mixed"
-    VODAFONE_CASH = "vodafone_cash"  # محفظة: الفلوس في محفظة المحل لا في الدرج
-    INSTAPAY = "instapay"
-
-
-# الدفع الإلكتروني: المبلغ كامل بلا باقٍ، ولا يدخل الدرج ولا الخزنة النقدية.
-WALLET_METHODS = frozenset({PaymentMethod.VODAFONE_CASH, PaymentMethod.INSTAPAY})
 
 
 class RefundVia(StrEnum):
@@ -36,7 +33,7 @@ class ReturnReason(StrEnum):
 class SaleStatusFilter(StrEnum):
     ALL = "all"
     CREDIT = "credit"  # فيها جزء آجل
-    WALLET = "wallet"  # فودافون كاش أو إنستاباي
+    WALLET = "wallet"  # أي دفع إلكتروني (محفظة/بطاقة/تحويل)
     RETURNED = "returned"  # عليها مرتجع (كلي أو جزئي)
 
 
@@ -53,7 +50,7 @@ class SaleFilters:
     number: int | None = None
     customer_id: str | None = None
     shift_id: str | None = None
-    method: PaymentMethod | None = None
+    method: str | None = None
     status: SaleStatusFilter = SaleStatusFilter.ALL
     date_from: date | None = None
     date_to: date | None = None

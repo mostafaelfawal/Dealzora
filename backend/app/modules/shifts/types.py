@@ -12,9 +12,10 @@ class ShiftTotals:
     returns_count: int
     cash_refunds: int
     # الدفع الإلكتروني: يُراجع على المحفظة لا في الدرج (خارج الكاش المتوقع).
-    vodafone_sales: int = 0
-    instapay_sales: int = 0
+    wallet_sales: int = 0
     wallet_refunds: int = 0
+    # تفصيل الإلكتروني: (معرّف الطريقة، اسمها، المبلغ).
+    electronic: tuple[tuple[str, str, int], ...] = ()
 
     def expected(self, opening_float: int) -> int:
         return opening_float + self.cash_sales - self.cash_refunds

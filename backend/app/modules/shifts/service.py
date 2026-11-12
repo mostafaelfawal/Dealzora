@@ -16,7 +16,7 @@ from app.core.service_base import EntityService
 from .constants import ENTITY_SHIFT, ERROR_MESSAGES, SHIFT_SNAPSHOT_FIELDS, ShiftError
 from .model import Shift
 from .repository import ShiftRepository
-from .schema import ShiftCloseIn, ShiftListOut, ShiftListQuery, ShiftOpenIn, ShiftOut
+from .schema import ShiftCloseIn, ShiftListOut, ShiftListQuery, ShiftOpenIn, ShiftOut, ShiftPaymentOut
 from .types import ShiftTotals
 
 
@@ -175,8 +175,10 @@ class ShiftService(EntityService):
             cash_sales=totals.cash_sales if mgr else None,
             credit_sales=totals.credit_sales if mgr else None,
             cash_refunds=totals.cash_refunds if mgr else None,
-            vodafone_sales=totals.vodafone_sales if mgr else None,
-            instapay_sales=totals.instapay_sales if mgr else None,
+            wallet_sales=totals.wallet_sales if mgr else None,
+            electronic=[ShiftPaymentOut(key=k, label=l, value=v) for k, l, v in totals.electronic]
+            if mgr
+            else None,
             wallet_refunds=totals.wallet_refunds if mgr else None,
             expected_cash=expected if mgr else None,
             counted_cash=s.counted_cash,

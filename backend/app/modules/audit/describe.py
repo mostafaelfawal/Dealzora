@@ -212,6 +212,11 @@ _LABELS: dict[str, str] = {
     "wallet_refund": "رد للمحفظة",
     "payment_method": "طريقة الدفع",
     "payment_ref": "رقم العملية",
+    "payment_label": "طريقة الدفع الإلكتروني",
+    "payment_methods": "طرق الدفع الإلكتروني",
+    "added": "أُضيفت",
+    "removed": "حُذفت",
+    "country": "الدولة",
     "vodafone_cash": "رقم فودافون كاش",
     "instapay": "عنوان إنستاباي",
     "refund_method": "طريقة الرد",
@@ -518,7 +523,7 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
     if r.entity == "backup" and a == "create":
         return "أنشأ نسخة احتياطية"
     if r.entity == "sale" and a == "create":
-        method = _ENUMS["payment_method"].get(c.get("payment_method") or "") or (
+        method = _ENUMS["payment_method"].get(c.get("payment_method") or "") or c.get("payment_label") or (
             "آجل" if c.get("credit") and not c.get("cash") else ("مختلط" if c.get("credit") else "كاش")
         )
         who = fmt.names.get("customer", c.get("customer_id"))
@@ -536,6 +541,9 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
             return f"غيّر عملة المحل إلى {fmt.value('currency', to, r)}"
         if "backup_dir" in c:
             return "غيّر مكان حفظ النسخ الاحتياطية"
+        if "payment_methods" in c:
+            to = c["payment_methods"].get("to") if _is_diff(c["payment_methods"]) else None
+            return "غيّر طرق الدفع الإلكتروني" + (f" ({'، '.join(to)})" if to else " (أوقفها كلها)" if to == [] else "")
         if "vodafone_cash" in c or "instapay" in c:
             return "غيّر حسابات الدفع الإلكتروني (فودافون كاش/إنستاباي)"
     if r.entity == "cash_entry":

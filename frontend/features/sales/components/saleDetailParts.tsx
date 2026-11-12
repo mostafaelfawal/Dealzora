@@ -7,7 +7,6 @@ import { listItem, MotionLi } from "@/components/shared/motion";
 import { Separator } from "@/components/ui/separator";
 import { formatQty } from "@/lib/format";
 
-import { PAYMENT_LABEL } from "../config/saleOptions";
 import type { Sale } from "../types/sale";
 
 /** أجزاء عرض الفاتورة داخل SaleDetailSheet. */
@@ -97,7 +96,7 @@ export function SaleTotals({ sale }: { sale: Sale }) {
         </Row>
       )}
       {sale.walletAmount > 0 && (
-        <Row label={PAYMENT_LABEL[sale.paymentMethod]}>
+        <Row label={sale.paymentLabel}>
           <Money amount={sale.walletAmount} />
         </Row>
       )}

@@ -229,36 +229,27 @@ export function CloseShiftForm({
   );
 }
 
-/** فودافون كاش وإنستاباي: خارج الدرج، يطابقها المدير مع رسائل المحفظة (للمدير فقط). */
+/** الدفع الإلكتروني: خارج الدرج، يطابقه المدير مع رسائل المحفظة/كشف الحساب (للمدير فقط). */
 function WalletSummary({ shift }: { shift: Shift }) {
-  const vodafone = shift.vodafoneSales ?? 0;
-  const instapay = shift.instapaySales ?? 0;
+  const items = (shift.electronic ?? []).filter((e) => e.value > 0);
   const refunds = shift.walletRefunds ?? 0;
-  if (!vodafone && !instapay && !refunds) return null;
+  if (!items.length && !refunds) return null;
   return (
     <dl className="space-y-1 border bg-muted/40 p-3 text-xs">
       <p className="pb-1 text-muted-foreground">
-        دفع إلكتروني (لا يُعدّ في الدرج، راجعه على المحفظة)
+        دفع إلكتروني (لا يُعدّ في الدرج، راجعه على حساب المحل)
       </p>
-      {vodafone > 0 && (
-        <div className="flex items-center justify-between">
-          <dt>فودافون كاش</dt>
+      {items.map((e) => (
+        <div key={e.key} className="flex items-center justify-between">
+          <dt>{e.label}</dt>
           <dd>
-            <Money amount={vodafone} />
+            <Money amount={e.value} />
           </dd>
         </div>
-      )}
-      {instapay > 0 && (
-        <div className="flex items-center justify-between">
-          <dt>إنستاباي</dt>
-          <dd>
-            <Money amount={instapay} />
-          </dd>
-        </div>
-      )}
+      ))}
       {refunds > 0 && (
         <div className="flex items-center justify-between text-muted-foreground">
-          <dt>رُدّ للمحافظ</dt>
+          <dt>رُدّ إلكترونياً</dt>
           <dd>
             <Money amount={refunds} />
           </dd>

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { setCurrency, type Currency } from "@/lib/currency";
-import { setPaymentAccounts, type PaymentAccounts } from "@/lib/payments";
+import { setPaymentConfig, type PaymentConfig } from "@/lib/payments";
 import { extractErrorMessage } from "@/lib/errors";
 
 import {
@@ -16,7 +16,7 @@ import {
   renameShop,
   restoreBackup,
   saveCurrency,
-  savePaymentAccounts,
+  savePaymentConfig,
   setBackupLocation,
 } from "../api/settings.api";
 
@@ -124,16 +124,16 @@ export function useSaveCurrency() {
   });
 }
 
-export function useSavePaymentAccounts() {
+export function useSavePaymentConfig() {
   return useMutation({
-    mutationFn: (accounts: PaymentAccounts) => savePaymentAccounts(accounts),
-    onSuccess: (accounts) => {
-      setPaymentAccounts(accounts);
+    mutationFn: (config: PaymentConfig) => savePaymentConfig(config),
+    onSuccess: (config) => {
+      setPaymentConfig(config);
+      const active = config.methods.filter((m) => m.enabled);
       toast.success("تم حفظ طرق الدفع", {
-        description:
-          accounts.vodafoneCash || accounts.instapay
-            ? "تظهر الآن في شاشة الدفع بالكاشير."
-            : "الدفع الإلكتروني متوقف في الكاشير.",
+        description: active.length
+          ? `تظهر الآن في الكاشير: ${active.map((m) => m.name).join("، ")}`
+          : "الدفع الإلكتروني متوقف في الكاشير.",
       });
     },
     onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ طرق الدفع")),

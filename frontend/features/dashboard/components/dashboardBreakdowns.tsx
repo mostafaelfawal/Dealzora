@@ -49,16 +49,25 @@ export function PeakHoursCard({ heatmap }: { heatmap: Overview["heatmap"] }) {
 const PAYMENT_COLORS: Record<string, string> = {
   cash: CHART.main,
   credit: CHART.muted,
-  vodafone_cash: CHART.seq[1],
-  instapay: CHART.seq[3],
 };
+/** الطرق الإلكترونية تأخذ ألوانها بالترتيب (عددها يختلف من محل لآخر). */
+const ELECTRONIC_COLORS = [
+  CHART.seq[1],
+  CHART.seq[3],
+  CHART.seq[2],
+  CHART.seq[4],
+  CHART.seq[0],
+];
 
 export function PaymentsCard({ payments }: { payments: NamedValue[] }) {
   const total = payments.reduce((sum, p) => sum + p.value, 0);
-  // المحافظ تظهر فقط لو استُخدمت في الفترة (لا شرائح صفرية للمحل الذي لا يستخدمها).
-  const shown = payments.filter(
-    (p) => p.key === "cash" || p.key === "credit" || p.value > 0,
-  );
+  // الكاش والآجل دائماً، ثم كل طريقة إلكترونية مفعّلة (حتى لو صفر) أو استُخدمت في الفترة.
+  const shown = payments;
+  let e = 0;
+  const colorOf = (key: string) =>
+    PAYMENT_COLORS[key] ??
+    ELECTRONIC_COLORS[e++ % ELECTRONIC_COLORS.length] ??
+    CHART.muted;
   return (
     <ChartCard
       index={4}
@@ -70,7 +79,7 @@ export function PaymentsCard({ payments }: { payments: NamedValue[] }) {
           key: p.key,
           label: p.label,
           value: p.value,
-          color: PAYMENT_COLORS[p.key] ?? CHART.muted,
+          color: colorOf(p.key),
         }))}
         centerLabel="إجمالي المبيعات"
         centerValue={formatNumber(total)}

@@ -1,5 +1,6 @@
-export type PaymentMethod =
-  "cash" | "credit" | "mixed" | "vodafone_cash" | "instapay";
+export type BuiltinMethod = "cash" | "credit" | "mixed";
+/** المدمجة أو معرّف طريقة إلكترونية من الإعدادات (vodafone_cash، stc_pay...). */
+export type PaymentMethod = BuiltinMethod | (string & {});
 
 /** رد مرتجع فاتورة مدفوعة إلكترونياً: لنفس المحفظة أو كاش من الدرج. */
 export type RefundVia = "wallet" | "cash";
@@ -38,13 +39,15 @@ export interface Sale {
   customerPhone: string | null;
   cashierName: string | null;
   paymentMethod: PaymentMethod;
+  /** اسم الطريقة للعرض (لقطة وقت البيع للإلكتروني). */
+  paymentLabel: string;
   subtotal: number;
   linesDiscount: number;
   invoiceDiscount: number;
   total: number;
   cashAmount: number;
   creditAmount: number;
-  /** المدفوع بفودافون كاش/إنستاباي (لا يدخل الدرج). */
+  /** المدفوع إلكترونياً (لا يدخل الدرج). */
   walletAmount: number;
   /** رقم العملية أو رقم المحوِّل (اختياري). */
   paymentRef: string | null;

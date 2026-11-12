@@ -25,7 +25,7 @@ class ReportRepository:
 
     # ---------- المبيعات ----------
     def sales_by_day(self, d1: date, d2: date) -> dict[date, tuple[int, ...]]:
-        """يوم → (عدد، إجمالي، تكلفة، خصومات، كاش، آجل، فودافون كاش، إنستاباي)."""
+        """يوم → (عدد، إجمالي، تكلفة، خصومات، كاش، آجل، إلكتروني)."""
         rows = self.session.execute(
             select(
                 Sale.sold_on,
@@ -35,13 +35,21 @@ class ReportRepository:
                 func.sum(Sale.lines_discount + Sale.invoice_discount),
                 func.sum(Sale.cash_amount),
                 func.sum(Sale.credit_amount),
-                func.sum(case((Sale.payment_method == "vodafone_cash", Sale.wallet_amount), else_=0)),
-                func.sum(case((Sale.payment_method == "instapay", Sale.wallet_amount), else_=0)),
+                func.sum(Sale.wallet_amount),
             )
             .where(live(Sale), Sale.sold_on.between(d1, d2))
             .group_by(Sale.sold_on)
         ).all()
         return {r[0]: tuple(int(v or 0) for v in r[1:]) for r in rows}  # type: ignore[misc]
+
+    def electronic_by_method(self, d1: date, d2: date) -> list[tuple[str, str | None, int]]:
+        """(معرّف الطريقة، آخر اسم مسجّل، المبلغ) للدفع الإلكتروني في الفترة."""
+        rows = self.session.execute(
+            select(Sale.payment_method, func.max(Sale.payment_label), func.sum(Sale.wallet_amount))
+            .where(live(Sale), Sale.sold_on.between(d1, d2), Sale.wallet_amount > 0)
+            .group_by(Sale.payment_method)
+        ).all()
+        return [(m, label, int(total or 0)) for m, label, total in rows]
 
     def returns_by_day(self, d1: date, d2: date) -> dict[date, tuple[int, int]]:
         """يوم → (قيمة المرتجع، تكلفته)."""

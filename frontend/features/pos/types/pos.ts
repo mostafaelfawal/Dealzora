@@ -101,7 +101,7 @@ export interface PaymentResult {
   credit: number;
   /** الباقي اللي يرجع للعميل. */
   change: number;
-  /** فودافون كاش/إنستاباي: رقم العملية أو رقم المحوِّل (اختياري). */
+  /** الدفع الإلكتروني: رقم العملية أو رقم المحوِّل (اختياري). */
   paymentRef?: string;
   print: boolean;
 }

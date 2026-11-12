@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-import { PAYMENT_LABEL } from "../config/saleOptions";
 import type { Sale } from "../types/sale";
 
 /** طريقة الدفع + حالة المرتجع (نص وليس لوناً فقط). */
@@ -21,7 +20,7 @@ export function SaleBadges({ sale }: { sale: Sale }) {
               : "border-warning/50 text-warning",
         )}
       >
-        {PAYMENT_LABEL[sale.paymentMethod]}
+        {sale.paymentLabel}
       </Badge>
       {sale.returnedTotal > 0 && (
         <Badge variant="secondary" className="font-normal">

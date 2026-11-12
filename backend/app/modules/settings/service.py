@@ -4,6 +4,8 @@
 - مجلد النسخ الاحتياطي: خاص بهذا الجهاز (مسار محلي)، فلا يُنشر للمزامنة.
 """
 
+import json
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,7 +17,8 @@ from app.core.security import Actor
 
 from .constants import DEFAULT_CURRENCY, ENTITY_SETTING, SettingKey
 from .model import AppSetting
-from .schema import CurrencyIn, CurrencyOut, PaymentAccountsIn, PaymentAccountsOut
+from .payments import PaymentKind
+from .schema import CurrencyIn, CurrencyOut, PaymentConfigIn, PaymentConfigOut, PaymentMethodOut
 
 # مفاتيح خاصة بالجهاز لا تُرفع للسحابة.
 _LOCAL_KEYS = frozenset({SettingKey.BACKUP_DIR})
@@ -52,25 +55,50 @@ class SettingsService:
             name=self.get(SettingKey.CURRENCY_NAME) or DEFAULT_CURRENCY["name"],
         )
 
-    def payment_accounts(self) -> PaymentAccountsOut:
-        return PaymentAccountsOut(
-            vodafone_cash=self.get(SettingKey.PAY_VODAFONE_CASH),
-            instapay=self.get(SettingKey.PAY_INSTAPAY),
-        )
+    def payment_config(self) -> PaymentConfigOut:
+        raw = self.get(SettingKey.PAY_METHODS)
+        if raw:
+            try:
+                return PaymentConfigOut.model_validate(json.loads(raw))
+            except ValueError:  # قيمة تالفة (مزامنة/تعديل يدوي): نتعامل كأن لا طرق
+                return PaymentConfigOut(country=None, methods=[])
+        return self._legacy_payment_config()
+
+    def payment_methods(self) -> dict[str, PaymentMethodOut]:
+        """معرّف ← الطريقة (المفعّلة وغير المفعّلة)."""
+        return {m.id: m for m in self.payment_config().methods}
+
+    def _legacy_payment_config(self) -> PaymentConfigOut:
+        """قبل القوالب: رقم فودافون كاش وعنوان إنستاباي في مفتاحين منفصلين."""
+        methods = []
+        if vf := self.get(SettingKey.PAY_VODAFONE_CASH):
+            methods.append(
+                PaymentMethodOut(id="vodafone_cash", name="فودافون كاش", kind=PaymentKind.WALLET, account=vf, enabled=True)
+            )
+        if ip := self.get(SettingKey.PAY_INSTAPAY):
+            methods.append(
+                PaymentMethodOut(id="instapay", name="إنستاباي", kind=PaymentKind.TRANSFER, account=ip, enabled=True)
+            )
+        return PaymentConfigOut(country="EG" if methods else None, methods=methods)
 
     # ---------- كتابة ----------
-    def set_payment_accounts(self, actor: Actor, data: PaymentAccountsIn) -> PaymentAccountsOut:
-        before = self.payment_accounts()
-        self._set(actor, SettingKey.PAY_VODAFONE_CASH, data.vodafone_cash or "")
-        self._set(actor, SettingKey.PAY_INSTAPAY, data.instapay or "")
-        after = self.payment_accounts()
+    def set_payment_config(self, actor: Actor, data: PaymentConfigIn) -> PaymentConfigOut:
+        before = self.payment_config()
+        after = PaymentConfigOut.model_validate(data.model_dump())
+        self._set(actor, SettingKey.PAY_METHODS, after.model_dump_json())
         if after != before:
+            old = {m.id: m for m in before.methods}
+            new = {m.id: m for m in after.methods}
             record_audit(
                 self.session, actor, entity=ENTITY_SETTING, entity_id="payments", action="update",
                 changes={
-                    k: {"from": getattr(before, k), "to": getattr(after, k)}
-                    for k in ("vodafone_cash", "instapay")
-                    if getattr(before, k) != getattr(after, k)
+                    "payment_methods": {
+                        "from": [m.name for m in before.methods if m.enabled],
+                        "to": [m.name for m in after.methods if m.enabled],
+                    },
+                    **({"country": {"from": before.country, "to": after.country}} if before.country != after.country else {}),
+                    **({"added": added} if (added := [new[k].name for k in new.keys() - old.keys()]) else {}),
+                    **({"removed": removed} if (removed := [old[k].name for k in old.keys() - new.keys()]) else {}),
                 },
             )  # fmt: skip
         self.session.commit()

@@ -4,13 +4,18 @@ import { LazyMotion, MotionConfig, domAnimation, m } from "framer-motion";
 import type { ReactNode } from "react";
 import type { Transition, Variants } from "framer-motion";
 
+import { initMotionPreference } from "@/lib/motionPreference";
 import { cn } from "@/lib/utils";
+
+// قبل أول render: لو الجهاز ضعيف (من آخر فحص) لا تبدأ أي حركة أصلاً.
+initMotionPreference();
 
 /**
  * ضع <MotionProvider> مرة واحدة في الـ layout الرئيسي.
  * - LazyMotion + domAnimation: حزمة أصغر بكثير (مهم للأجهزة الضعيفة).
  * - strict: يمنع استخدام motion.* بالغلط (لازم m.*).
  * - reducedMotion="user": يحترم إعداد "تقليل الحركة" في الجهاز تلقائياً.
+ * - الأجهزة الضعيفة (فحص Rust) أو الإيقاف اليدوي: lib/motionPreference.
  */
 export function MotionProvider({ children }: { children: ReactNode }) {
   return (

@@ -26,6 +26,12 @@ class ShiftCloseIn(BaseModel):
     note: Note = None
 
 
+class ShiftPaymentOut(BaseModel):
+    key: str
+    label: str
+    value: int
+
+
 class ShiftOut(BaseModel):
     id: str
     cashier_id: str
@@ -43,8 +49,8 @@ class ShiftOut(BaseModel):
     cash_sales: int | None
     credit_sales: int | None
     cash_refunds: int | None
-    vodafone_sales: int | None
-    instapay_sales: int | None
+    wallet_sales: int | None  # كل الدفع الإلكتروني (خارج الدرج)
+    electronic: list[ShiftPaymentOut] | None  # تفصيله حسب الطريقة
     wallet_refunds: int | None
     expected_cash: int | None
     counted_cash: int | None

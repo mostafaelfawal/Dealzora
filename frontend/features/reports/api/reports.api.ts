@@ -57,8 +57,10 @@ export async function fetchSalesReport(r: Range): Promise<SalesReport> {
     discounts: p(data.discounts),
     cash: p(data.cash),
     credit: p(data.credit),
-    vodafoneCash: p(data.vodafone_cash ?? 0),
-    instapay: p(data.instapay ?? 0),
+    wallet: p(data.wallet ?? 0),
+    electronic: (
+      (data.electronic ?? []) as { key: string; label: string; value: number }[]
+    ).map((e) => ({ key: e.key, label: e.label, value: p(e.value) })),
     expenses: p(data.expenses),
     netProfit: p(data.net_profit),
   };

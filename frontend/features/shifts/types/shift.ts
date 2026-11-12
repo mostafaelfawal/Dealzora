@@ -17,8 +17,9 @@ export interface Shift {
   creditSales: number | null;
   cashRefunds: number | null;
   /** الدفع الإلكتروني (للمدير فقط): يُطابق مع المحفظة لا مع الدرج. */
-  vodafoneSales: number | null;
-  instapaySales: number | null;
+  walletSales: number | null;
+  /** تفصيله حسب الطريقة (فودافون كاش، مدى، STC Pay...). */
+  electronic: { key: string; label: string; value: number }[] | null;
   walletRefunds: number | null;
   expectedCash: number | null;
   countedCash: number | null;

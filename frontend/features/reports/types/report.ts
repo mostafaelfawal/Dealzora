@@ -23,8 +23,10 @@ export interface SalesReport {
   discounts: number;
   cash: number;
   credit: number;
-  vodafoneCash: number;
-  instapay: number;
+  /** كل الدفع الإلكتروني. */
+  wallet: number;
+  /** تفصيله حسب الطريقة (المفعّلة في الإعدادات حتى لو صفر، ثم أي طريقة استُخدمت). */
+  electronic: { key: string; label: string; value: number }[];
   expenses: number;
   netProfit: number;
 }

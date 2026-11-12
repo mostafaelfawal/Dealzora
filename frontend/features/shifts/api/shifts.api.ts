@@ -25,8 +25,10 @@ export const toShift = (d: ShiftDto): Shift => ({
   cashSales: toPoundsOrNull(d.cash_sales),
   creditSales: toPoundsOrNull(d.credit_sales),
   cashRefunds: toPoundsOrNull(d.cash_refunds),
-  vodafoneSales: toPoundsOrNull(d.vodafone_sales ?? null),
-  instapaySales: toPoundsOrNull(d.instapay_sales ?? null),
+  walletSales: toPoundsOrNull(d.wallet_sales ?? null),
+  electronic: d.electronic
+    ? d.electronic.map((e) => ({ ...e, value: toPounds(e.value) }))
+    : null,
   walletRefunds: toPoundsOrNull(d.wallet_refunds ?? null),
   expectedCash: toPoundsOrNull(d.expected_cash),
   countedCash: toPoundsOrNull(d.counted_cash),

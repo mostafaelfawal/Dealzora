@@ -1,5 +1,6 @@
 mod device;
 mod downloads;
+mod hardware;
 mod license;
 
 use std::process::Child;
@@ -386,7 +387,8 @@ pub fn run() {
                 open_whatsapp,
                 open_external,
                 downloads::save_download,
-                downloads::reveal_download
+                downloads::reveal_download,
+                hardware::get_hardware_info
             ]
         )
         .build(tauri::generate_context!())

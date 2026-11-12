@@ -67,7 +67,7 @@ ERROR_MESSAGES: dict[SaleError, str] = {
     SaleError.CREDIT_LIMIT: "المبلغ الآجل أكبر من الحد المتاح للعميل",
     SaleError.PAYMENT_MISMATCH: "المدفوع لا يطابق إجمالي الفاتورة",
     SaleError.CASH_SHORT: "المبلغ المستلم أقل من المطلوب",
-    SaleError.WALLET_NOT_CONFIGURED: "{method} غير مفعّل. أضف رقم المحل من الإعدادات ← طرق الدفع",
+    SaleError.WALLET_NOT_CONFIGURED: "طريقة الدفع ({method}) غير مفعّلة. فعّلها من الإعدادات ← طرق الدفع",
     SaleError.RETURN_NOT_FOUND: "لم نجد هذا المرتجع",
     SaleError.RETURN_EMPTY: "اختر صنفاً واحداً على الأقل للإرجاع",
     SaleError.RETURN_LINE_NOT_FOUND: "الصنف ليس في هذه الفاتورة",

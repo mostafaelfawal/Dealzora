@@ -203,6 +203,7 @@ export function Donut({
             </Pie>
             {total > 0 && (
               <Tooltip
+                wrapperStyle={{ zIndex: 20 }}
                 content={({ active, payload }) => {
                   const p =
                     active && payload?.[0]
@@ -222,7 +223,7 @@ export function Donut({
             )}
           </PieChart>
         </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+        <div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center text-center">
           <span className="text-[10px] text-muted-foreground">
             {centerLabel}
           </span>

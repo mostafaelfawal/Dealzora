@@ -60,9 +60,9 @@ from .schema import (
     SaleOut,
     SalesSummaryOut,
 )
-from .types import WALLET_METHODS, PaymentMethod, RefundVia, SaleFilters
+from app.modules.settings.payments import is_electronic, method_label
 
-WALLET_NAMES = {PaymentMethod.VODAFONE_CASH: "فودافون كاش", PaymentMethod.INSTAPAY: "إنستاباي"}
+from .types import PaymentMethod, RefundVia, SaleFilters
 
 
 class SaleService(EntityService):
@@ -241,10 +241,11 @@ class SaleService(EntityService):
 
         # بَسطة: بيع كاش فقط بدون عميل (العملاء والآجل والمحافظ من خطة دُكّان).
         if is_free():
-            if data.payment_method in WALLET_METHODS:
+            if is_electronic(data.payment_method):
                 raise upgrade_error(Feature.WALLETS)
-            if data.customer_id or data.payment_method is not PaymentMethod.CASH:
+            if data.customer_id or data.payment_method != PaymentMethod.CASH:
                 raise upgrade_error(Feature.CUSTOMERS)
+        label = self._electronic_label(data.payment_method) if is_electronic(data.payment_method) else None
         customer = self._customer(data.customer_id)
         cash, credit, wallet, received, change = self._payment(data, total, customer)
 
@@ -258,7 +259,8 @@ class SaleService(EntityService):
             customer_id=customer.id if customer else None,
             customer_name=customer.name if customer else None,
             sold_on=local_today(),
-            payment_method=data.payment_method.value,
+            payment_method=data.payment_method,
+            payment_label=label,
             subtotal=subtotal,
             lines_discount=lines_discount,
             invoice_discount=data.invoice_discount,
@@ -341,6 +343,7 @@ class SaleService(EntityService):
                 "credit": credit,
                 "wallet": wallet,
                 "payment_method": sale.payment_method,
+                "payment_label": sale.payment_label,
                 "payment_ref": sale.payment_ref,
                 "discount": lines_discount + data.invoice_discount,
                 "customer_id": sale.customer_id,
@@ -355,7 +358,7 @@ class SaleService(EntityService):
     ) -> tuple[int, int, int, int, int]:
         """(كاش، آجل، محفظة، المستلم، الباقي) بعد التحقق من قواعد كل طريقة دفع."""
         method = data.payment_method
-        if method is PaymentMethod.CASH:
+        if method == PaymentMethod.CASH:
             if data.cash_amount != total:
                 raise self._err(BadRequestError, SaleError.PAYMENT_MISMATCH, total=total)
             received = data.received or total
@@ -363,21 +366,12 @@ class SaleService(EntityService):
                 raise self._err(BadRequestError, SaleError.CASH_SHORT, total=total)
             return total, 0, 0, received, received - total
 
-        if method in WALLET_METHODS:
-            # المحل لازم يكون مسجّل رقمه، وإلا الكاشير يستلم على حساب غير معروف.
-            from app.modules.settings.service import SettingsService
-
-            accounts = SettingsService(self.session).payment_accounts()
-            account = (
-                accounts.vodafone_cash if method is PaymentMethod.VODAFONE_CASH else accounts.instapay
-            )
-            if not account:
-                raise self._err(BadRequestError, SaleError.WALLET_NOT_CONFIGURED, method=WALLET_NAMES[method])
+        if is_electronic(method):  # تحقّق _electronic_label من أنها مفعّلة
             return 0, 0, total, total, 0
 
         if customer is None:
             raise self._err(BadRequestError, SaleError.CUSTOMER_REQUIRED)
-        if method is PaymentMethod.CREDIT:
+        if method == PaymentMethod.CREDIT:
             cash = 0
         else:
             cash = data.cash_amount
@@ -388,6 +382,17 @@ class SaleService(EntityService):
         if credit > available:
             raise self._err(BadRequestError, SaleError.CREDIT_LIMIT, available=available)
         return cash, credit, 0, cash, 0
+
+    def _electronic_label(self, method: str) -> str:
+        """الطريقة لازم تكون مضافة ومفعّلة في الإعدادات، وإلا الكاشير يستلم على حساب غير معروف."""
+        from app.modules.settings.service import SettingsService
+
+        found = SettingsService(self.session).payment_methods().get(method)
+        if found is None or not found.enabled:
+            raise self._err(
+                BadRequestError, SaleError.WALLET_NOT_CONFIGURED, method=found.name if found else method_label(method)
+            )
+        return found.name
 
     def _product(self, product_id: str) -> Product:
         try:
@@ -625,6 +630,7 @@ class SaleService(EntityService):
     def _sales_out(self, rows: list[Sale]) -> list[SaleOut]:
         names = user_names(self.session, [s.created_by for s in rows])
         phones = self._customer_phones({s.customer_id for s in rows if s.customer_id})
+        labels = self._method_names()
         mgr = self.is_manager
         out: list[SaleOut] = []
         for s in rows:
@@ -642,6 +648,7 @@ class SaleService(EntityService):
                     customer_phone=phones.get(s.customer_id) if s.customer_id else None,
                     cashier_name=names.get(s.created_by or ""),
                     payment_method=s.payment_method,
+                    payment_label=method_label(s.payment_method, s.payment_label, labels),
                     subtotal=s.subtotal,
                     lines_discount=s.lines_discount,
                     invoice_discount=s.invoice_discount,
@@ -714,6 +721,12 @@ class SaleService(EntityService):
             )
             for r in rows
         ]
+
+    def _method_names(self) -> dict[str, str]:
+        """أسماء الطرق الحالية (للفواتير القديمة التي بلا لقطة اسم)."""
+        from app.modules.settings.service import SettingsService
+
+        return {k: m.name for k, m in SettingsService(self.session).payment_methods().items()}
 
     def _customer_phones(self, ids: set[str]) -> dict[str, str | None]:
         if not ids:

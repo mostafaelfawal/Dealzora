@@ -41,6 +41,8 @@ _NEW_COLUMNS = (
     ("sales", "wallet_amount", "INTEGER NOT NULL DEFAULT 0"),
     ("sales", "payment_ref", "VARCHAR(40)"),
     ("sale_returns", "wallet_refund", "INTEGER NOT NULL DEFAULT 0"),
+    # طرق الدفع حسب الدولة: لقطة اسم الطريقة الإلكترونية وقت البيع
+    ("sales", "payment_label", "VARCHAR(40)"),
 )
 
 

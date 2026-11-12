@@ -8,7 +8,6 @@ MAX_CURRENCY_CODE = 8
 MAX_CURRENCY_SYMBOL = 8
 MAX_CURRENCY_NAME = 40
 MAX_PATH_LEN = 400
-MAX_WALLET_ACCOUNT = 60
 
 # الافتراضي: الجنيه المصري (سلوك النظام قبل إضافة الإعداد).
 DEFAULT_CURRENCY = {"code": "EGP", "symbol": "ج.م", "name": "جنيه مصري"}
@@ -19,7 +18,9 @@ class SettingKey(StrEnum):
     CURRENCY_SYMBOL = "currency.symbol"
     CURRENCY_NAME = "currency.name"
     BACKUP_DIR = "backup.dir"  # فارغ = المجلد الافتراضي بجانب القاعدة
-    # حسابات الدفع الإلكتروني للمحل. فارغ = الطريقة غير مفعّلة في الكاشير.
+    # طرق الدفع الإلكتروني للمحل + دولة القوالب (JSON، انظر payments.py).
+    PAY_METHODS = "payments.methods"
+    # مفاتيح قديمة (قبل القوالب): تُقرأ مرة واحدة لترحيلها إلى PAY_METHODS.
     PAY_VODAFONE_CASH = "payments.vodafone_cash"
     PAY_INSTAPAY = "payments.instapay"
 

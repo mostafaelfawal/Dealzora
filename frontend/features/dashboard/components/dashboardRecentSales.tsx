@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ChartCard, ChartEmpty } from "@/components/shared/charts/ChartCard";
 import { Money } from "@/components/shared/Money";
 import { listItem, MotionLi } from "@/components/shared/motion";
-import { PAYMENT_LABEL } from "@/features/sales/config/saleOptions";
 import { formatWhen } from "@/lib/dates";
 
 import type { Overview } from "../types/dashboard";
@@ -24,7 +23,7 @@ function RecentSaleRow({ sale, index }: { sale: RecentSale; index: number }) {
           {sale.customerName ?? "عميل نقدي"}
         </span>
         <span className="hidden text-muted-foreground sm:inline">
-          {PAYMENT_LABEL[sale.paymentMethod]}
+          {sale.paymentLabel}
         </span>
         <span className="hidden w-28 text-muted-foreground md:inline">
           {formatWhen(sale.soldAt)}

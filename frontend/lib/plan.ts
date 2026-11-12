@@ -38,7 +38,10 @@ export interface PlanInfo {
 export const FEATURE_INFO: Record<PlanFeature, { name: string; plan: string }> =
   {
     customers: { name: "العملاء والبيع الآجل", plan: "دُكّان" },
-    wallets: { name: "الدفع بفودافون كاش وإنستاباي", plan: "دُكّان" },
+    wallets: {
+      name: "الدفع الإلكتروني (محافظ وبطاقات وتحويلات)",
+      plan: "دُكّان",
+    },
     suppliers: { name: "الموردين والمشتريات", plan: "دُكّان" },
     expenses: { name: "المصروفات والخزنة", plan: "دُكّان" },
     extra_units: { name: "وحدات البيع الإضافية (كرتونة/دستة)", plan: "دُكّان" },

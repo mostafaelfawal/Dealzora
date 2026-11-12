@@ -15,7 +15,9 @@ from .constants import (
     MAX_PAYMENT_REF_LEN,
     MAX_QUERY_LEN,
 )
-from .types import WALLET_METHODS, PaymentMethod, RefundVia, ReturnReason, SaleSort, SaleStatusFilter
+from app.modules.settings.payments import is_electronic
+
+from .types import PaymentMethod, RefundVia, ReturnReason, SaleSort, SaleStatusFilter
 
 Note = optional_text("الملاحظة", MAX_NOTE_LEN)
 PaymentRef = optional_text("رقم العملية", MAX_PAYMENT_REF_LEN)
@@ -41,22 +43,23 @@ class SaleCreate(BaseModel):
     customer_id: str | None = Field(None, max_length=36)
     lines: list[SaleLineIn] = Field(min_length=1, max_length=MAX_LINES)
     invoice_discount: Money = 0
-    payment_method: PaymentMethod
+    # cash/credit/mixed أو معرّف طريقة إلكترونية مفعّلة في الإعدادات.
+    payment_method: str = Field(pattern=r"^[a-z][a-z0-9_]{1,15}$")
     cash_amount: Money = 0
     received: Money = 0
-    # فودافون كاش/إنستاباي: رقم العملية أو رقم المحوِّل (اختياري، للمراجعة).
+    # الدفع الإلكتروني: رقم العملية أو رقم المحوِّل (اختياري، للمراجعة).
     payment_ref: PaymentRef = None
     note: Note = None
 
     @model_validator(mode="after")
     def _payment_shape(self):
-        if self.payment_method in WALLET_METHODS:
+        if is_electronic(self.payment_method):
             if self.cash_amount or self.received:
                 raise ValueError("الدفع الإلكتروني يكون بالمبلغ كاملاً بدون كاش")
             return self
         if self.payment_ref:
             raise ValueError("رقم العملية للدفع الإلكتروني فقط")
-        if self.payment_method is PaymentMethod.CREDIT and self.cash_amount:
+        if self.payment_method == PaymentMethod.CREDIT and self.cash_amount:
             raise ValueError("البيع الآجل بالكامل لا يحتوي مبلغاً كاشاً")
         if self.received and self.received < self.cash_amount:
             raise ValueError("المبلغ المستلم أقل من المدفوع كاش")
@@ -119,7 +122,8 @@ class SaleOut(BaseModel):
     customer_name: str | None
     customer_phone: str | None
     cashier_name: str | None
-    payment_method: PaymentMethod
+    payment_method: str
+    payment_label: str
     subtotal: int
     lines_discount: int
     invoice_discount: int
@@ -143,7 +147,7 @@ class SaleListQuery(BaseModel):
     q: str = Field("", max_length=MAX_QUERY_LEN)
     customer_id: str | None = None
     shift_id: str | None = None
-    method: PaymentMethod | None = None
+    method: str | None = Field(None, max_length=16)
     status: SaleStatusFilter = SaleStatusFilter.ALL
     date_from: date | None = None
     date_to: date | None = None

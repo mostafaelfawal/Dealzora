@@ -247,6 +247,22 @@
   }
 }
 
+/*
+ * جهاز ضعيف أو "الحركة: إيقاف" (lib/motionPreference): نلغي حركات CSS والـ transitions.
+ * مدة شبه صفرية بدل none حتى تصل أحداث animationend فتُغلق النوافذ والقوائم طبيعياً.
+ * مؤشرات التحميل (spin / pulse) تبقى لأنها تخبر المستخدم أن شيئاً يحدث.
+ */
+html[data-reduce-motion] *:not(.animate-spin, .animate-pulse),
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
 button {
   cursor: pointer !important;
 }

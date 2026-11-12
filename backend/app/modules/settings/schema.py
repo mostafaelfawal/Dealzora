@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from app.core.text import collapse_spaces
 
@@ -11,7 +11,15 @@ from .constants import (
     MAX_CURRENCY_NAME,
     MAX_CURRENCY_SYMBOL,
     MAX_PATH_LEN,
-    MAX_WALLET_ACCOUNT,
+)
+from .payments import (
+    MAX_COUNTRY_LEN,
+    MAX_METHOD_ACCOUNT,
+    MAX_METHOD_NAME,
+    MAX_METHODS,
+    METHOD_ID_RE,
+    RESERVED_IDS,
+    PaymentKind,
 )
 
 
@@ -54,48 +62,80 @@ class CurrencyOut(BaseModel):
     name: str
 
 
-def _vodafone_number(value: str | None) -> str | None:
-    """رقم محفظة مصري: 11 رقماً يبدأ بـ 01 (نقبل الأرقام العربية والمسافات)."""
-    if value is None:
-        return None
-    digits = value.translate(str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")).replace(" ", "").replace("-", "")
-    if not (len(digits) == 11 and digits.startswith("01") and digits.isdigit()):
-        raise ValueError("رقم فودافون كاش يجب أن يكون 11 رقماً ويبدأ بـ 01")
-    return digits
+def _method_id(value: str) -> str:
+    value = value.strip().lower()
+    if not METHOD_ID_RE.match(value) or value in RESERVED_IDS:
+        raise ValueError("معرّف طريقة الدفع غير صالح")
+    return value
 
 
-def _instapay_address(value: str | None) -> str | None:
+def _account(value: str | None) -> str | None:
     if value is None:
         return None
-    value = collapse_spaces(value)
-    if len(value) > MAX_WALLET_ACCOUNT:
-        raise ValueError(f"عنوان إنستاباي أطول من {MAX_WALLET_ACCOUNT} حرفاً")
+    value = collapse_spaces(value.translate(str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")))
+    if len(value) > MAX_METHOD_ACCOUNT:
+        raise ValueError(f"رقم الحساب أطول من {MAX_METHOD_ACCOUNT} حرفاً")
     return value or None
 
 
-class PaymentAccountsIn(BaseModel):
-    """حسابات المحل للدفع الإلكتروني. الفارغ يوقف الطريقة في الكاشير."""
+def _country(value: str | None) -> str | None:
+    if value is None:
+        return None
+    value = value.strip().upper()
+    if not value.isalpha() or len(value) > MAX_COUNTRY_LEN:
+        raise ValueError("رمز الدولة غير صالح")
+    return value
+
+
+class PaymentMethodIn(BaseModel):
+    """طريقة دفع إلكتروني (من قالب الدولة أو مضافة يدوياً)."""
 
     model_config = ConfigDict(extra="forbid")
 
-    vodafone_cash: Annotated[
-        str | None, BeforeValidator(_empty_to_none), AfterValidator(_vodafone_number)
-    ] = None
-    instapay: Annotated[
-        str | None, BeforeValidator(_empty_to_none), AfterValidator(_instapay_address)
-    ] = Field(None, description="عنوان الدفع (name@instapay) أو رقم الموبايل")
+    id: Annotated[str, AfterValidator(_method_id)]
+    name: Annotated[str, AfterValidator(_required("اسم طريقة الدفع", MAX_METHOD_NAME))]
+    kind: PaymentKind = PaymentKind.WALLET
+    # رقم المحفظة / IBAN / عنوان الدفع يظهر للكاشير ليمليه على العميل. اختياري (نقطة البيع لا تحتاجه).
+    account: Annotated[str | None, BeforeValidator(_empty_to_none), AfterValidator(_account)] = None
+    enabled: bool = True
 
 
-class PaymentAccountsOut(BaseModel):
-    vodafone_cash: str | None
-    instapay: str | None
+class PaymentMethodOut(BaseModel):
+    id: str
+    name: str
+    kind: PaymentKind
+    account: str | None
+    enabled: bool
+
+
+class PaymentConfigIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # دولة القوالب (ISO مثل EG/SA). None = لم تُختر بعد.
+    country: Annotated[str | None, BeforeValidator(_empty_to_none), AfterValidator(_country)] = None
+    methods: list[PaymentMethodIn] = Field(default_factory=list, max_length=MAX_METHODS)
+
+    @model_validator(mode="after")
+    def _unique(self):
+        ids = [m.id for m in self.methods]
+        if len(ids) != len(set(ids)):
+            raise ValueError("طريقة الدفع مكررة")
+        names = [m.name for m in self.methods]
+        if len(names) != len(set(names)):
+            raise ValueError("يوجد طريقتا دفع بنفس الاسم")
+        return self
+
+
+class PaymentConfigOut(BaseModel):
+    country: str | None
+    methods: list[PaymentMethodOut]
 
 
 class PublicSettingsOut(BaseModel):
     """ما تحتاجه كل الشاشات (حتى قبل الدخول)."""
 
     currency: CurrencyOut
-    payments: PaymentAccountsOut
+    payments: PaymentConfigOut
 
 
 class BackupLocationIn(BaseModel):

@@ -75,9 +75,9 @@ const SHARED: Section[] = [
     group: "shop",
     icon: <IconWallet />,
     title: "طرق الدفع",
-    hint: "فودافون كاش وإنستاباي",
+    hint: "محافظ وبطاقات وتحويلات حسب دولتك",
     description:
-      "فودافون كاش وإنستاباي: رقم المحل الذي يحوّل عليه العميل ويظهر للكاشير.",
+      "اختر دولتك وفعّل طرق الدفع الإلكتروني التي يستخدمها محلك، مع رقم الحساب الذي يظهر للكاشير.",
     content: <PaymentsSection />,
   },
   {
@@ -85,8 +85,8 @@ const SHARED: Section[] = [
     group: "account",
     icon: <IconPalette />,
     title: "المظهر",
-    hint: "فاتح أو داكن",
-    description: "فاتح أو داكن أو حسب إعداد الجهاز.",
+    hint: "الألوان والحركة",
+    description: "فاتح أو داكن، وتشغيل الحركة أو إيقافها على الأجهزة الضعيفة.",
     content: <AppearanceSection />,
   },
   {

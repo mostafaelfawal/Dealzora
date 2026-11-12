@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { formatQty } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { PAYMENT_LABEL, RETURN_REASONS } from "../config/saleOptions";
+import { RETURN_REASONS } from "../config/saleOptions";
 import { useCreateReturn } from "../hooks/useSales";
 import {
   clampReturnQty,
@@ -173,14 +173,14 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
       {paidByWallet && (
         <div className="space-y-1.5">
           <span className="text-xs text-muted-foreground">
-            رد المبلغ (الفاتورة مدفوعة {PAYMENT_LABEL[sale.paymentMethod]})
+            رد المبلغ (الفاتورة مدفوعة {sale.paymentLabel})
           </span>
           <SegmentedTabs
             label="طريقة رد المبلغ"
             items={[
               {
                 id: "wallet" as const,
-                label: `تحويل على ${PAYMENT_LABEL[sale.paymentMethod]}`,
+                label: `تحويل على ${sale.paymentLabel}`,
               },
               { id: "cash" as const, label: "كاش من الدرج" },
             ]}

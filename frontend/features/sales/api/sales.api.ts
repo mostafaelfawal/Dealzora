@@ -9,6 +9,8 @@ import {
 } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
 
+import { paymentLabel } from "../config/saleOptions";
+
 import type {
   ReturnInput,
   Sale,
@@ -37,6 +39,7 @@ export const toSale = (d: SaleDto): Sale => ({
   customerPhone: d.customer_phone,
   cashierName: d.cashier_name,
   paymentMethod: d.payment_method,
+  paymentLabel: d.payment_label ?? paymentLabel(d.payment_method),
   subtotal: toPounds(d.subtotal),
   linesDiscount: toPounds(d.lines_discount),
   invoiceDiscount: toPounds(d.invoice_discount),

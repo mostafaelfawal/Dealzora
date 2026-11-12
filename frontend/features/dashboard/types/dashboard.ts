@@ -13,7 +13,7 @@ export interface Kpis {
   discounts: number;
   cashSales: number;
   creditSales: number;
-  /** فودافون كاش + إنستاباي. */
+  /** كل الدفع الإلكتروني (محافظ/بطاقات/تحويلات). */
   walletSales: number;
 }
 
@@ -84,6 +84,7 @@ export interface Overview {
     soldAt: number;
     customerName: string | null;
     paymentMethod: PaymentMethod;
+    paymentLabel: string;
     total: number;
   }[];
 }

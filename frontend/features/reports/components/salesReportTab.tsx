@@ -127,23 +127,25 @@ function SalesTrendCard({ r }: { r: SalesReport }) {
   );
 }
 
+const ELECTRONIC_COLORS = [
+  CHART.seq[1],
+  CHART.seq[3],
+  CHART.seq[2],
+  CHART.seq[4],
+  CHART.seq[0],
+];
+
 function PaymentSplitCard({ r }: { r: SalesReport }) {
   const slices = [
     { key: "cash", label: "كاش", value: r.cash, color: CHART.main },
     { key: "credit", label: "آجل", value: r.credit, color: CHART.muted },
-    {
-      key: "vodafone_cash",
-      label: "فودافون كاش",
-      value: r.vodafoneCash,
-      color: CHART.seq[1],
-    },
-    {
-      key: "instapay",
-      label: "إنستاباي",
-      value: r.instapay,
-      color: CHART.seq[3],
-    },
-  ].filter((s) => s.key === "cash" || s.key === "credit" || s.value > 0);
+    ...r.electronic
+      .filter((e) => e.value > 0)
+      .map((e, i) => ({
+        ...e,
+        color: ELECTRONIC_COLORS[i % ELECTRONIC_COLORS.length],
+      })),
+  ];
   return (
     <ChartCard
       title="طريقة الدفع"
@@ -200,19 +202,14 @@ function SalesDaysTable({ r }: { r: SalesReport }) {
       <p className="text-[11px] text-muted-foreground">
         كاش <Money amount={r.cash} className="text-[11px]" /> · آجل{" "}
         <Money amount={r.credit} className="text-[11px]" />
-        {r.vodafoneCash > 0 && (
-          <>
-            {" "}
-            · فودافون كاش{" "}
-            <Money amount={r.vodafoneCash} className="text-[11px]" />
-          </>
-        )}
-        {r.instapay > 0 && (
-          <>
-            {" "}
-            · إنستاباي <Money amount={r.instapay} className="text-[11px]" />
-          </>
-        )}
+        {r.electronic
+          .filter((e) => e.value > 0)
+          .map((e) => (
+            <span key={e.key}>
+              {" "}
+              · {e.label} <Money amount={e.value} className="text-[11px]" />
+            </span>
+          ))}
         . الربح = صافي المبيعات − تكلفة البضاعة المباعة (بمتوسط سعر الشراء وقت
         البيع).
       </p>

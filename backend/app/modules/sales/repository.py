@@ -64,7 +64,7 @@ class SaleRepository(BaseRepository[Sale]):
         if f.shift_id:
             conds.append(Sale.shift_id == f.shift_id)
         if f.method:
-            conds.append(Sale.payment_method == f.method.value)
+            conds.append(Sale.payment_method == f.method)
         if f.status is SaleStatusFilter.CREDIT:
             conds.append(Sale.credit_amount > 0)
         elif f.status is SaleStatusFilter.WALLET:

@@ -11,6 +11,8 @@ from app.modules.expenses.constants import CATEGORY_LABELS
 from app.core.security import Actor
 from app.modules.customers.helper import is_overdue
 from app.modules.products.model import Product
+from app.modules.settings.payments import method_label
+from app.modules.settings.service import SettingsService
 from app.modules.shifts.service import ShiftService
 
 from .repository import ReportRepository
@@ -62,11 +64,11 @@ class ReportService:
         returns = self.repo.returns_by_day(q.date_from, q.date_to)
         days: list[SalesDayOut] = []
         tot = dict(
-            count=0, revenue=0, returns=0, cost=0, discounts=0, cash=0, credit=0, vodafone=0, instapay=0
+            count=0, revenue=0, returns=0, cost=0, discounts=0, cash=0, credit=0, wallet=0
         )
         for day in iter_days(q.date_from, q.date_to):
-            count, revenue, cost, discounts, cash, credit, vodafone, instapay = sales.get(
-                day, (0, 0, 0, 0, 0, 0, 0, 0)
+            count, revenue, cost, discounts, cash, credit, wallet = sales.get(
+                day, (0, 0, 0, 0, 0, 0, 0)
             )
             r_total, r_cost = returns.get(day, (0, 0))
             net_cost = cost - r_cost
@@ -90,8 +92,7 @@ class ReportService:
                 ("discounts", discounts),
                 ("cash", cash),
                 ("credit", credit),
-                ("vodafone", vodafone),
-                ("instapay", instapay),
+                ("wallet", wallet),
             ):
                 tot[key] += val
         net = tot["revenue"] - tot["returns"]
@@ -108,8 +109,8 @@ class ReportService:
             discounts=tot["discounts"],
             cash=tot["cash"],
             credit=tot["credit"],
-            vodafone_cash=tot["vodafone"],
-            instapay=tot["instapay"],
+            wallet=tot["wallet"],
+            electronic=self._electronic(q.date_from, q.date_to),
             expenses=expenses,
             net_profit=profit - expenses,
         )
@@ -328,6 +329,7 @@ class ReportService:
         stock = self.stock(StockQuery(stagnant_days=STAGNANT_DAYS, limit=500))
         debts = self.debts()
         shift_out = ShiftService(self.session, self.actor).current()
+        labels = {k: m.name for k, m in SettingsService(self.session).payment_methods().items()}
 
         return OverviewOut(
             date_from=q.date_from,
@@ -341,8 +343,7 @@ class ReportService:
             payments=[
                 NamedValueOut(key="cash", label="كاش", value=cur.cash),
                 NamedValueOut(key="credit", label="آجل", value=cur.credit),
-                NamedValueOut(key="vodafone_cash", label="فودافون كاش", value=cur.vodafone_cash),
-                NamedValueOut(key="instapay", label="إنستاباي", value=cur.instapay),
+                *cur.electronic,
             ],
             top_products=top_products,
             categories=categories,
@@ -376,11 +377,28 @@ class ReportService:
                     sold_at=s.created_at,
                     customer_name=s.customer_name,
                     payment_method=s.payment_method,
+                    payment_label=method_label(s.payment_method, s.payment_label, labels),
                     total=s.total,
                 )
                 for s in self.repo.recent_sales(RECENT_SALES)
             ],
         )
+
+    def _electronic(self, d1, d2) -> list[NamedValueOut]:
+        """الطرق المفعّلة في الإعدادات (حتى لو صفر) ثم أي طريقة أخرى استُخدمت في الفترة."""
+        configured = SettingsService(self.session).payment_methods()
+        used = {m: (label, total) for m, label, total in self.repo.electronic_by_method(d1, d2)}
+        out = [
+            NamedValueOut(key=k, label=m.name, value=used.get(k, (None, 0))[1])
+            for k, m in configured.items()
+            if m.enabled or k in used
+        ]
+        out += [
+            NamedValueOut(key=k, label=method_label(k, label), value=total)
+            for k, (label, total) in sorted(used.items(), key=lambda kv: -kv[1][1])
+            if k not in configured
+        ]
+        return out
 
     @staticmethod
     def _kpis(r: SalesReportOut, stats: dict[str, list[int]]) -> KpisOut:
@@ -396,7 +414,7 @@ class ReportService:
             discounts=r.discounts,
             cash_sales=r.cash,
             credit_sales=r.credit,
-            wallet_sales=r.vodafone_cash + r.instapay,
+            wallet_sales=r.wallet,
         )
 
 

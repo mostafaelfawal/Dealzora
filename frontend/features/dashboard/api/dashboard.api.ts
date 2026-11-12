@@ -69,6 +69,7 @@ interface OverviewDto {
     sold_at: string;
     customer_name: string | null;
     payment_method: Overview["recentSales"][number]["paymentMethod"];
+    payment_label: string;
     total: number;
   }[];
 }
@@ -163,6 +164,7 @@ export async function fetchOverview(range: DateRange): Promise<Overview> {
       soldAt: toMs(s.sold_at),
       customerName: s.customer_name,
       paymentMethod: s.payment_method,
+      paymentLabel: s.payment_label,
       total: p(s.total),
     })),
   };

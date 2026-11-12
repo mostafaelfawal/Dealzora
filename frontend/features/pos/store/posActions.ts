@@ -1,7 +1,6 @@
 import { toast } from "sonner";
 
 import { createExchange, createSale } from "@/features/sales/api/sales.api";
-import { PAYMENT_LABEL } from "@/features/sales/config/saleOptions";
 import { printReceipt, sendWhatsapp } from "@/features/sales/lib/receipt";
 import type { Sale, SaleInput } from "@/features/sales/types/sale";
 import { fetchShopName } from "@/features/settings/api/settings.api";
@@ -484,7 +483,7 @@ export const confirmPayment =
           ? "تم استلام " +
             formatMoneyText(sale.walletAmount) +
             " على " +
-            PAYMENT_LABEL[sale.paymentMethod]
+            sale.paymentLabel
           : sale.change > 0
             ? "الباقي للعميل: " + formatMoneyText(sale.change)
             : sale.creditAmount > 0

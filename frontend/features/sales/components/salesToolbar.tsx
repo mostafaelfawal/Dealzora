@@ -11,9 +11,10 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { usePaymentConfig } from "@/lib/payments";
 
 import {
-  METHOD_OPTIONS,
+  methodOptions,
   SORT_OPTIONS,
   STATUS_TABS,
 } from "../config/saleOptions";
@@ -27,6 +28,8 @@ export function SalesToolbar({
   /** زر البطاقات/الجدول في آخر السطر. */
   viewToggle?: ReactNode;
 }) {
+  // كل طرق المحل (حتى المعطّلة) لأن فواتيرها القديمة ما زالت في السجل.
+  const { methods } = usePaymentConfig();
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -45,7 +48,7 @@ export function SalesToolbar({
         <PeriodPicker value={f.period} onChange={f.setPeriod} />
         <OptionSelect
           label="طريقة الدفع"
-          items={METHOD_OPTIONS}
+          items={methodOptions(methods)}
           value={f.method}
           onChange={f.setMethod}
           className="w-36"

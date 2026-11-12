@@ -16,7 +16,7 @@ import { ShiftDifference } from "./shiftDifference";
 
 /** المحافظ خارج الدرج: نذكرها حتى لا يظن المدير أن الدرج ناقص. */
 function walletHint(shift: Shift | null) {
-  const wallets = (shift?.vodafoneSales ?? 0) + (shift?.instapaySales ?? 0);
+  const wallets = shift?.walletSales ?? 0;
   if (!wallets) return undefined;
   return (
     <span className="inline-flex items-center gap-1">

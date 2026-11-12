@@ -2,6 +2,8 @@
 
 import {
   IconAlertTriangle,
+  IconArrowsExchange,
+  IconCreditCard,
   IconLoader2,
   IconPrinter,
   IconWallet,
@@ -36,20 +38,35 @@ import { posUiActions } from "../store/posUiSlice";
 import { selectInvoiceCustomer, selectTotals } from "../store/selectors";
 import type { PaymentMethod } from "../types/pos";
 import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
-import { usePaymentAccounts } from "@/lib/payments";
+import { useEnabledMethods, type PaymentKind } from "@/lib/payments";
 import { upgradeMessage, useFeature } from "@/lib/plan";
 import {
   isWalletMethod,
-  PAYMENT_LABEL,
+  paymentLabel,
 } from "@/features/sales/config/saleOptions";
 
-const METHODS: { id: PaymentMethod; label: string; key: string }[] = [
+interface MethodButton {
+  id: PaymentMethod;
+  label: string;
+  key?: string;
+}
+
+const BUILTIN_METHODS: MethodButton[] = [
   { id: "cash", label: "كاش", key: "F1" },
   { id: "credit", label: "آجل", key: "F2" },
   { id: "mixed", label: "مختلط", key: "F3" },
-  { id: "vodafone_cash", label: "فودافون كاش", key: "F4" },
-  { id: "instapay", label: "إنستاباي", key: "F5" },
 ];
+/** اختصارات الطرق الإلكترونية بالترتيب (F6 لاختيار العميل، F9 لفتح الدفع). */
+const ELECTRONIC_KEYS = ["F4", "F5", "F7", "F8"];
+/** عرض أزرار الطرق الإلكترونية في شبكة من 6 أعمدة حسب عددها. */
+const electronicSpan = (count: number) =>
+  count === 1 ? "col-span-6" : count === 3 ? "col-span-2" : "col-span-3";
+
+const KIND_ICON: Record<PaymentKind, typeof IconWallet> = {
+  wallet: IconWallet,
+  card: IconCreditCard,
+  transfer: IconArrowsExchange,
+};
 const REF_MAX = 40;
 
 const initialCashText = (method: PaymentMethod, total: number) =>
@@ -127,14 +144,20 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
 
   const customersAllowed = useFeature("customers");
   const walletsAllowed = useFeature("wallets");
-  const accounts = usePaymentAccounts();
+  const enabled = useEnabledMethods();
+  const electronic: MethodButton[] = walletsAllowed
+    ? enabled.map((m, i) => ({
+        id: m.id,
+        label: m.name,
+        key: ELECTRONIC_KEYS[i],
+      }))
+    : [];
+  const methods = [...BUILTIN_METHODS, ...electronic];
   const wallet = isWalletMethod(method);
-  const walletAccount =
-    method === "vodafone_cash"
-      ? accounts.vodafoneCash
-      : method === "instapay"
-        ? accounts.instapay
-        : null;
+  const walletMethod = wallet
+    ? enabled.find((m) => m.id === method)
+    : undefined;
+  const KindIcon = KIND_ICON[walletMethod?.kind ?? "wallet"];
   const typed = round2(Number(normalizeDigits(cashText)) || 0);
   const cash = method === "credit" || wallet ? 0 : typed;
   const applied = method === "cash" ? total : cash;
@@ -148,8 +171,8 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
   let needsCustomer = false;
   if (wallet) {
     if (!walletsAllowed) error = upgradeMessage("wallets");
-    else if (!walletAccount)
-      error = `${PAYMENT_LABEL[method]} غير مفعّل. يضيف المدير رقم المحل من الإعدادات ← طرق الدفع.`;
+    else if (!walletMethod)
+      error = `${paymentLabel(method)} غير مفعّلة. يفعّلها المدير من الإعدادات ← طرق الدفع.`;
   } else if (method !== "cash" && !customersAllowed) {
     // بَسطة: البيع كاش فقط (السيرفر يرفض الآجل أيضاً).
     error = upgradeMessage("customers");
@@ -194,7 +217,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
-    const next = METHODS.find((m) => m.key === event.key);
+    const next = methods.find((m) => m.key === event.key);
     if (next) {
       event.preventDefault();
       changeMethod(next.id);
@@ -222,7 +245,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         aria-label="طريقة الدفع"
         className="grid grid-cols-6 gap-2"
       >
-        {METHODS.map((m) => (
+        {methods.map((m) => (
           <Button
             key={m.id}
             type="button"
@@ -232,37 +255,51 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
             onClick={() => changeMethod(m.id)}
             className={cn(
               "gap-2 font-normal",
-              isWalletMethod(m.id) ? "col-span-3" : "col-span-2",
+              isWalletMethod(m.id)
+                ? electronicSpan(electronic.length)
+                : "col-span-2",
             )}
           >
-            {m.label}
-            <ShortcutBadge
-              className={cn(
-                "rounded-none",
-                method === m.id &&
-                  "border-primary-foreground/30 text-primary-foreground/80",
-              )}
-            >
-              {m.key}
-            </ShortcutBadge>
+            <span className="truncate">{m.label}</span>
+            {m.key && (
+              <ShortcutBadge
+                className={cn(
+                  "rounded-none",
+                  method === m.id &&
+                    "border-primary-foreground/30 text-primary-foreground/80",
+                )}
+              >
+                {m.key}
+              </ShortcutBadge>
+            )}
           </Button>
         ))}
       </div>
 
-      {wallet && walletAccount && walletsAllowed && (
+      {walletMethod && walletsAllowed && (
         <div className="space-y-2">
           <div className="flex items-center gap-3 border bg-muted/40 p-3">
-            <IconWallet className="size-6 shrink-0 text-primary" aria-hidden />
+            <KindIcon className="size-6 shrink-0 text-primary" aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">
-                يحوّل العميل على {PAYMENT_LABEL[method]}
-              </p>
-              <bdi
-                dir="ltr"
-                className="block truncate font-mono text-lg font-semibold select-all"
-              >
-                {walletAccount}
-              </bdi>
+              {walletMethod.account ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    يحوّل العميل على {walletMethod.name}
+                  </p>
+                  <bdi
+                    dir="ltr"
+                    className="block truncate font-mono text-lg font-semibold select-all"
+                  >
+                    {walletMethod.account}
+                  </bdi>
+                </>
+              ) : (
+                <p className="text-sm">
+                  {walletMethod.kind === "card"
+                    ? `ادفع ${formatMoneyText(total)} على جهاز ${walletMethod.name}`
+                    : `الدفع عبر ${walletMethod.name}`}
+                </p>
+              )}
             </div>
           </div>
           <label htmlFor="pos-ref" className="text-xs text-muted-foreground">
@@ -281,7 +318,9 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
             />
           </InputGroup>
           <p className="text-[11px] text-muted-foreground">
-            أكّد بعد وصول رسالة التحويل للمحل. المبلغ لا يدخل الدرج.
+            {walletMethod.kind === "card"
+              ? "أكّد بعد طباعة إيصال الجهاز بنجاح. المبلغ لا يدخل الدرج."
+              : "أكّد بعد وصول رسالة التحويل للمحل. المبلغ لا يدخل الدرج."}
           </p>
         </div>
       )}
