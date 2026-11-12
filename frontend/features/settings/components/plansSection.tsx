@@ -237,7 +237,7 @@ function PlanCardView({
         )}
         <p className="flex h-4 items-center gap-1 text-[11px] text-muted-foreground">
           {free ? (
-            "للأبد، بدون بطاقة بنكية"
+            "ادر محلك مجانا"
           ) : billing === "yearly" ? (
             `يعادل ${formatPlanPrice(Math.round(plan.yearly! / 12))} شهرياً`
           ) : (

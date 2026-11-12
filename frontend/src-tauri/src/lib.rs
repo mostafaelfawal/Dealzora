@@ -296,9 +296,39 @@ fn reset_license_dev() -> Result<(), String> {
 /// rundll32 لا يمر عبر cmd، فلا يوجد حقن أوامر، والرابط مُرمَّز بالكامل من الواجهة.
 #[tauri::command]
 fn open_whatsapp(url: String) -> Result<(), String> {
-    let safe = url.starts_with("https://wa.me/")
-        && url.len() <= 4096
-        && url.chars().all(|c| c.is_ascii_graphic());
+    if !url.starts_with("https://wa.me/") {
+        return Err("invalid_url".into());
+    }
+    launch_url(&url)
+}
+
+/// بادئات الروابط الخارجية المسموح فتحها من الواجهة (قائمة بيضاء).
+/// كل بادئة تنتهي بـ "/" عشان مايتقبلش مثلاً https://x.com.evil.com.
+const ALLOWED_EXTERNAL_PREFIXES: &[&str] = &[
+    "https://wa.me/",
+    "https://chat.whatsapp.com/",
+    "https://www.facebook.com/",
+    "https://www.instagram.com/",
+    "https://www.youtube.com/",
+    "https://www.tiktok.com/",
+    "https://x.com/",
+];
+
+/// يفتح رابطاً خارجياً (من القائمة البيضاء) أو رقم تليفون tel: في البرنامج الافتراضي.
+#[tauri::command]
+fn open_external(url: String) -> Result<(), String> {
+    let is_tel = url
+        .strip_prefix("tel:")
+        .is_some_and(|n| !n.is_empty() && n.chars().all(|c| c.is_ascii_digit() || c == '+'));
+    let allowed = is_tel || ALLOWED_EXTERNAL_PREFIXES.iter().any(|p| url.starts_with(p));
+    if !allowed {
+        return Err("invalid_url".into());
+    }
+    launch_url(&url)
+}
+
+fn launch_url(url: &str) -> Result<(), String> {
+    let safe = url.len() <= 4096 && url.chars().all(|c| c.is_ascii_graphic());
     if !safe {
         return Err("invalid_url".into());
     }
@@ -307,14 +337,14 @@ fn open_whatsapp(url: String) -> Result<(), String> {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         std::process::Command::new("rundll32")
-            .args(["url.dll,FileProtocolHandler", &url])
+            .args(["url.dll,FileProtocolHandler", url])
             .creation_flags(CREATE_NO_WINDOW)
             .spawn()
             .map_err(|e| e.to_string())?;
     }
     #[cfg(not(target_os = "windows"))]
     {
-        std::process::Command::new("xdg-open").arg(&url).spawn().map_err(|e| e.to_string())?;
+        std::process::Command::new("xdg-open").arg(url).spawn().map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -354,6 +384,7 @@ pub fn run() {
                 activate_license,
                 reset_license_dev,
                 open_whatsapp,
+                open_external,
                 downloads::save_download,
                 downloads::reveal_download
             ]

@@ -14,6 +14,7 @@ import { SHIFT_PAGE_SIZES } from "../config/shiftOptions";
 import type { useShiftsList } from "../hooks/useShifts";
 import type { Shift } from "../types/shift";
 import { ShiftDifference } from "./shiftDifference";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const Dash = () => <span className="text-muted-foreground">—</span>;
 
@@ -78,7 +79,11 @@ const COLUMNS: AppTableColumn<Shift>[] = [
     header: "ملاحظة",
     className: "hidden xl:table-cell",
     cellClassName: "max-w-48 truncate text-xs text-muted-foreground",
-    cell: (s) => s.note || "—",
+    cell: (s) => (
+      <AppTooltip message={s.note || "لا يوجد ملاحظات"}>
+        <span>{s.note || "—"}</span>
+      </AppTooltip>
+    ),
   },
 ];
 
