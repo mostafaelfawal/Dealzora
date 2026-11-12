@@ -5,7 +5,7 @@ import {
   IconCoins,
   IconDatabaseExport,
   IconDevices,
-  IconLicense,
+  IconCrown,
   IconPalette,
   IconShieldLock,
 } from "@tabler/icons-react";
@@ -78,10 +78,12 @@ const MAIN_ONLY: Section[] = [
     content: <BackupSection />,
   },
   {
-    id: "license",
-    icon: <IconLicense />,
-    title: "الترخيص والاشتراك",
-    description: "الترخيص مرتبط بهذا الجهاز.",
+    // المرساة #plans: أزرار «عرض الخطط» في الميزات المقفولة تفتح الخطط هنا مباشرة.
+    id: "plans",
+    icon: <IconCrown />,
+    title: "الخطط والترخيص",
+    description:
+      "خطتك الحالية، الترقية، وتفعيل المفتاح. الترخيص مرتبط بهذا الجهاز.",
     content: <LicenseSection />,
   },
 ];

@@ -9,11 +9,17 @@ import { ApiError } from "@/lib/axios";
 import { extractErrorMessage } from "@/lib/errors";
 import { formatItemCount, formatMoneyText } from "@/lib/format";
 import type { AppThunk, RootState } from "@/lib/store";
+import {
+  fetchHeld,
+  holdInvoiceRemote,
+  recallHeldRemote,
+} from "../api/held.api";
 import { fetchPosProducts, toCompletedInvoice } from "../api/posCatalog.api";
 import { findByBarcode, lineDiscount, lineKey } from "../lib/posCalc";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
 import { focusSearch, selectSearchText } from "../lib/posFocus";
 import type {
+  HeldInvoice,
   InvoiceDiscount,
   PaymentMethod,
   PaymentResult,
@@ -219,19 +225,59 @@ export const requestPayment =
 
 /* ---------- تعليق / استرجاع / إلغاء ---------- */
 
-export const holdCurrentInvoice = (): AppThunk => (dispatch, getState) => {
-  const state = getState();
-  if (selectExchange(state)) {
-    toast.error("أنهِ الاستبدال أو ألغِه أولاً");
-    return;
+let holding = false;
+
+/** يعلّق الفاتورة الحالية على الجهاز الأساسي (تظهر لكل الأجهزة، وتُحذف عند قفل الوردية). */
+export const holdCurrentInvoice =
+  (): AppThunk<Promise<void>> => async (dispatch, getState) => {
+    const state = getState();
+    if (selectExchange(state)) {
+      toast.error("أنهِ الاستبدال أو ألغِه أولاً");
+      return;
+    }
+    if (selectIsEmpty(state) || holding) return;
+    const { itemCount, total } = selectTotals(state);
+    holding = true;
+    try {
+      const held = await holdInvoiceRemote(state.cart.present);
+      dispatch(cartActions.holdInvoice(held));
+      toast.success("عُلّقت الفاتورة", {
+        description: `${formatItemCount(itemCount)} · ${formatMoneyText(total)}. ستجدها في المعلّقة (${POS_SHORTCUTS.heldList.label}) من أي جهاز.`,
+      });
+    } catch (error) {
+      // الفاتورة تبقى مفتوحة كما هي على هذا الجهاز.
+      toast.error(extractErrorMessage(error, "تعذّر تعليق الفاتورة"));
+    } finally {
+      holding = false;
+      focusSearch();
+    }
+  };
+
+/** تحديث قائمة المعلّقة من الجهاز الأساسي (صامت عند الفشل). */
+export const refreshHeld = (): AppThunk<Promise<void>> => async (dispatch) => {
+  try {
+    dispatch(cartActions.setHeld(await fetchHeld()));
+  } catch {
+    // بدون اتصال: تبقى آخر قائمة معروفة.
   }
-  if (selectIsEmpty(state)) return;
-  const { itemCount, total } = selectTotals(state);
-  dispatch(cartActions.holdInvoice());
-  toast.success("عُلّقت الفاتورة", {
-    description: `${formatItemCount(itemCount)} · ${formatMoneyText(total)}. ستجدها في المعلّقة (${POS_SHORTCUTS.heldList.label}).`,
-  });
 };
+
+/** ترحيل لمرة واحدة: معلّقات النسخ القديمة المحفوظة في المتصفح ← الجهاز الأساسي. */
+export const migrateLocalHeld =
+  (legacy: HeldInvoice[]): AppThunk<Promise<boolean>> =>
+  async (dispatch) => {
+    let all = true;
+    for (const h of legacy) {
+      if (!h?.invoice?.lines?.length) continue;
+      try {
+        await holdInvoiceRemote(h.invoice);
+      } catch {
+        all = false; // بدون وردية/اتصال: نعيد المحاولة في المرة القادمة
+      }
+    }
+    await dispatch(refreshHeld());
+    return all;
+  };
 
 export const requestReturn = (): AppThunk => (dispatch, getState) => {
   if (selectExchange(getState())) {
@@ -241,18 +287,39 @@ export const requestReturn = (): AppThunk => (dispatch, getState) => {
   dispatch(posUiActions.openDialog("returnPicker"));
 };
 
+/**
+ * استرجاع معلّقة. لو الفاتورة الحالية فيها أصناف: تُعلَّق أولاً على السيرفر ثم نسترجع،
+ * فلو سبقنا جهاز آخر للاسترجاع لا يضيع شيء (الحالية محفوظة في المعلّقة).
+ */
 export const recallHeldInvoice =
-  (id: string): AppThunk =>
-  (dispatch, getState) => {
+  (id: string): AppThunk<Promise<void>> =>
+  async (dispatch, getState) => {
     const state = getState();
     if (selectExchange(state)) {
       toast.error("أنهِ الاستبدال أو ألغِه أولاً");
       return;
     }
     if (!selectHeld(state).some((h) => h.id === id)) return;
-    const swapped = !selectIsEmpty(state);
-    dispatch(cartActions.recallHeld(id));
-    if (swapped) toast.info("عُلّقت الفاتورة الحالية تلقائياً");
+    if (!selectIsEmpty(state)) {
+      try {
+        dispatch(
+          cartActions.holdInvoice(await holdInvoiceRemote(state.cart.present)),
+        );
+        toast.info("عُلّقت الفاتورة الحالية تلقائياً");
+      } catch (error) {
+        toast.error(extractErrorMessage(error, "تعذّر تعليق الفاتورة الحالية"));
+        return;
+      }
+    }
+    try {
+      const invoice = await recallHeldRemote(id);
+      dispatch(cartActions.recallHeld({ id, invoice }));
+    } catch (error) {
+      toast.error(extractErrorMessage(error, "تعذّر استرجاع الفاتورة"));
+      void dispatch(refreshHeld());
+    } finally {
+      focusSearch();
+    }
   };
 
 export const confirmCancel = (): AppThunk => (dispatch) => {

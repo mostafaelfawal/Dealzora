@@ -77,10 +77,14 @@ export interface PosInvoice {
   discount: InvoiceDiscount | null;
 }
 
+/** فاتورة معلّقة على الجهاز الأساسي (تظهر لكل الأجهزة، وتُحذف عند قفل ورديتها). */
 export interface HeldInvoice {
   id: string;
   heldAt: number;
   invoice: PosInvoice;
+  cashierName?: string | null;
+  /** الجهاز الذي عُلّقت عليه (الأساسي أو كاشير 2…). */
+  deviceName?: string | null;
 }
 
 export type PaymentMethod = "cash" | "credit" | "mixed";

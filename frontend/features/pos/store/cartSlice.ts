@@ -28,10 +28,11 @@ export interface RemovedLine {
   index: number;
 }
 
-/** اللي بيتحفظ في localStorage. */
+/** اللي بيتحفظ في localStorage: الفاتورة المفتوحة فقط (مسودة هذا الجهاز).
+ *  المعلّقة على الجهاز الأساسي؛ held هنا للترحيل من النسخ القديمة فقط. */
 export interface PersistedCart {
   invoice: PosInvoice;
-  held: HeldInvoice[];
+  held?: HeldInvoice[];
   nextNumber: number;
 }
 
@@ -62,9 +63,6 @@ const initialState: CartState = {
   lastRemoved: null,
   hydrated: false,
 };
-
-const newId = () =>
-  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 /** نسخة عادية (مش Draft) من قيمة جوه الـ state. */
 function plain<T>(value: T): T {
@@ -148,9 +146,8 @@ const cartSlice = createSlice({
     /** تحميل المحفوظ من المتصفح. بيحصل مرة واحدة بس. */
     hydrate(state, action: PayloadAction<Partial<PersistedCart>>) {
       if (state.hydrated) return;
-      const { invoice, held, nextNumber } = action.payload;
+      const { invoice, nextNumber } = action.payload;
       if (invoice && Array.isArray(invoice.lines)) resetTo(state, invoice);
-      if (Array.isArray(held)) state.held = held;
       if (typeof nextNumber === "number") state.nextNumber = nextNumber;
       state.hydrated = true;
     },
@@ -335,38 +332,27 @@ const cartSlice = createSlice({
 
     /* ---------- تعليق / استرجاع / إنهاء ---------- */
 
-    holdInvoice: {
-      reducer(state, action: PayloadAction<{ id: string; heldAt: number }>) {
-        const invoice = plain(state.present);
-        if (invoice.lines.length === 0) return;
-        state.held.unshift({ ...action.payload, invoice });
-        resetTo(state, EMPTY_INVOICE);
-      },
-      // الـ id والوقت بيتولّدوا هنا (مش جوه الـ reducer) عشان يفضل نقي.
-      prepare: () => ({ payload: { id: newId(), heldAt: Date.now() } }),
+    /** السيرفر حفظ الفاتورة الحالية كمعلّقة: تُضاف للقائمة وتبدأ فاتورة جديدة. */
+    holdInvoice(state, action: PayloadAction<HeldInvoice>) {
+      state.held = [
+        action.payload,
+        ...state.held.filter((h) => h.id !== action.payload.id),
+      ];
+      resetTo(state, EMPTY_INVOICE);
     },
 
-    /** لو الفاتورة الحالية فيها أصناف بتتعلّق تلقائياً بدل ما تتمسح. */
-    recallHeld: {
-      reducer(
-        state,
-        action: PayloadAction<{ id: string; swapId: string; at: number }>,
-      ) {
-        const { id, swapId, at } = action.payload;
-        const held = plain(state.held);
-        const target = held.find((h) => h.id === id);
-        if (!target) return;
-        const invoice = plain(state.present);
-        const rest = held.filter((h) => h.id !== id);
-        state.held =
-          invoice.lines.length > 0
-            ? [{ id: swapId, heldAt: at, invoice }, ...rest]
-            : rest;
-        resetTo(state, target.invoice);
-      },
-      prepare: (id: string) => ({
-        payload: { id, swapId: newId(), at: Date.now() },
-      }),
+    /** السيرفر سلّم المعلّقة لهذا الجهاز (وحذفها من القائمة للجميع). */
+    recallHeld(
+      state,
+      action: PayloadAction<{ id: string; invoice: PosInvoice }>,
+    ) {
+      state.held = state.held.filter((h) => h.id !== action.payload.id);
+      resetTo(state, action.payload.invoice);
+    },
+
+    /** القائمة كما على الجهاز الأساسي (تعليقات الأجهزة الأخرى، وقفل الورديات). */
+    setHeld(state, action: PayloadAction<HeldInvoice[]>) {
+      state.held = action.payload;
     },
 
     cancelInvoice(state) {

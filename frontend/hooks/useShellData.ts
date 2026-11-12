@@ -63,7 +63,11 @@ export function useShellData() {
   const daysLeft = license.data?.days_left;
   const subscription: Subscription = {
     daysRemaining:
-      typeof daysLeft === "number" ? daysLeft : Number.POSITIVE_INFINITY,
+      license.data?.state === "expired"
+        ? 0 // منتهي: شارة «رجعت لبَسطة» حتى يجدد
+        : typeof daysLeft === "number"
+          ? daysLeft
+          : Number.POSITIVE_INFINITY,
   };
 
   return {

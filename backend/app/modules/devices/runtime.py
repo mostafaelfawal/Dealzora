@@ -31,6 +31,9 @@ _lock = threading.Lock()
 class Lease:
     expires_at: int
     max_terminals: int
+    # الخطة من الترخيص (Rust) ونهايتها (0 = بلا نهاية/مجانية). None في صيغة العقد القديمة.
+    plan: str | None = None
+    plan_expires_at: int = 0
 
 
 _lease: Lease | None = None
@@ -38,28 +41,39 @@ _lease: Lease | None = None
 
 def parse_lease(raw: str, now: float | None = None) -> Lease | None:
     now = now if now is not None else time.time()
+    parts = raw.strip().split(".")
+    plan: str | None = None
+    plan_expires = 0
     try:
-        exp_s, max_s, sig = raw.strip().split(".")
+        if len(parts) == 5:  # <exp>.<max>.<plan>.<plan_exp>.<sig>
+            exp_s, max_s, plan, plan_exp_s, sig = parts
+            plan_expires = int(plan_exp_s)
+            message = f"lease|{exp_s}|{max_s}|{plan}|{plan_exp_s}"
+        elif len(parts) == 3:  # الصيغة القديمة بدون خطة
+            exp_s, max_s, sig = parts
+            message = f"lease|{exp_s}|{max_s}"
+        else:
+            return None
         expires, max_terminals = int(exp_s), int(max_s)
     except ValueError:
         return None
     expected = hmac.new(
-        get_settings().write_permit_secret.encode(),
-        f"lease|{expires}|{max_terminals}".encode(),
-        hashlib.sha256,
+        get_settings().write_permit_secret.encode(), message.encode(), hashlib.sha256
     ).hexdigest()
     if not hmac.compare_digest(sig, expected):
         return None
     if not now < expires <= now + LEASE_MAX_AHEAD or not 0 <= max_terminals <= 1000:
         return None
-    return Lease(expires, max_terminals)
+    if plan is not None and (not plan.isalpha() or len(plan) > 20):
+        return None
+    return Lease(expires, max_terminals, plan, plan_expires)
 
 
 def set_lease(lease: Lease) -> None:
+    """الأحدث يحل محل السابق دائماً (كله موقّع من Rust): تفعيل/انتهاء الخطة يظهر فوراً."""
     global _lease
     with _lock:
-        if _lease is None or lease.expires_at >= _lease.expires_at:
-            _lease = lease
+        _lease = lease
 
 
 def active_lease(now: float | None = None) -> Lease | None:

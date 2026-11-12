@@ -44,11 +44,20 @@ fn get_license_lease(state: State<AppState>) -> Result<String, String> {
         return Err("not_main_device".into());
     }
     let (expires, terminals) = license::lease_terms()?;
+    // الخطة ونهايتها داخل العقد الموقّع: الـ backend يعرف الخطة فوراً بعد التفعيل
+    // (حتى لو لم يشغّله Rust، كما في التطوير)، ولا يمكن تزويرها بدون سر التصريح.
+    let (plan, plan_expires) = license::plan_terms();
+    let plan_expires = plan_expires.unwrap_or(0);
     let mut mac = Hmac::<Sha256>
         ::new_from_slice(state.permit_secret.as_bytes())
         .map_err(|e| e.to_string())?;
-    mac.update(format!("lease|{expires}|{terminals}").as_bytes());
-    Ok(format!("{expires}.{terminals}.{}", hex::encode(mac.finalize().into_bytes())))
+    mac.update(format!("lease|{expires}|{terminals}|{plan}|{plan_expires}").as_bytes());
+    Ok(
+        format!(
+            "{expires}.{terminals}.{plan}.{plan_expires}.{}",
+            hex::encode(mac.finalize().into_bytes())
+        )
+    )
 }
 
 /* ---------- وضع الجهاز (أساسي / كاشير) ---------- */
@@ -192,16 +201,21 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
     };
     // 0.0.0.0 فقط لو المدير سمح لأجهزة الكاشير. كل طلب يحتاج توكن جهاز في الحالتين.
     let host = if cfg.lan_enabled { "0.0.0.0" } else { "127.0.0.1" };
-    let spawned = Command::new(&exe)
+    let (plan, plan_expires_at) = license::plan_terms();
+    let mut cmd = Command::new(&exe);
+    cmd
         .env("POS_SESSION_TOKEN", session_token)
         .env("POS_WRITE_PERMIT_SECRET", permit_secret)
         .env("POS_DB_PASSWORD", db_password)
         .env("POS_DEVICE_ID", device_id)
         .env("POS_HOST", host)
-        .env("POS_PLAN", license::plan_name())
+        .env("POS_PLAN", plan)
         .env("POS_DEBUG", "false")
-        .creation_flags(CREATE_NO_WINDOW)
-        .spawn();
+        .creation_flags(CREATE_NO_WINDOW);
+    if let Some(at) = plan_expires_at {
+        cmd.env("POS_PLAN_EXPIRES_AT", at.to_string());
+    }
+    let spawned = cmd.spawn();
     match spawned {
         Ok(child) => {
             app_log(&format!("backend started pid={} host={host}", child.id()));

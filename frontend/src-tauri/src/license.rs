@@ -417,6 +417,9 @@ pub fn permit_expiry() -> R<u64> {
         (Status { state: State::Licensed, .. }, Some(r)) => {
             Ok((now + PERMIT_TTL).min(r.expires_at))
         }
+        // اشتراك مدفوع انتهى: لا يتوقف البرنامج، يكمل على «بَسطة» المجانية بحدودها
+        // (الـ backend يطبّق حدودها لأن plan_terms ترجع free).
+        (Status { state: State::Expired, .. }, Some(_)) => Ok(now + PERMIT_TTL),
         (s, _) =>
             Err(
                 e(match s.state {
@@ -429,15 +432,19 @@ pub fn permit_expiry() -> R<u64> {
     }
 }
 
-/// الخطة الحالية للـ backend (POS_PLAN): free لأي حالة غير ترخيص مدفوع فعّال.
-pub fn plan_name() -> String {
+/// خطة الـ backend (POS_PLAN) ووقت انتهائها (POS_PLAN_EXPIRES_AT).
+/// free لأي حالة غير ترخيص مدفوع فعّال، ومنها الاشتراك المنتهي.
+/// وقت الانتهاء يُمرَّر ليرجع الـ backend لـ«بَسطة» بنفسه لو انتهى الاشتراك والبرنامج مفتوح.
+pub fn plan_terms() -> (String, Option<u64>) {
     let _g = lock();
-    let Ok(now) = now_secs() else { return "free".into() };
-    let Ok(mid) = machine_id() else { return "free".into() };
+    let free = ("free".to_string(), None);
+    let Ok(now) = now_secs() else { return free };
+    let Ok(mid) = machine_id() else { return free };
     match refresh(mid, now) {
-        (Status { state: State::Licensed, .. }, Some(r)) =>
-            r.plan.unwrap_or_else(|| DEFAULT_PAID_PLAN.into()),
-        _ => "free".into(),
+        (Status { state: State::Licensed, .. }, Some(r)) => {
+            (r.plan.unwrap_or_else(|| DEFAULT_PAID_PLAN.into()), Some(r.expires_at))
+        }
+        _ => free,
     }
 }
 
@@ -446,7 +453,10 @@ pub fn lease_terms() -> R<(u64, u32)> {
     let _g = lock();
     let now = now_secs()?;
     match refresh(machine_id()?, now) {
-        (Status { state: State::Trial, .. }, Some(_)) => Ok((now + LEASE_TTL, TRIAL_TERMINALS)),
+        // المجانية والاشتراك المنتهي: بلا أجهزة كاشير إضافية.
+        (Status { state: State::Trial | State::Expired, .. }, Some(_)) => {
+            Ok((now + LEASE_TTL, TRIAL_TERMINALS))
+        }
         (Status { state: State::Licensed, .. }, Some(r)) => {
             Ok(((now + LEASE_TTL).min(r.expires_at), r.terminals.unwrap_or(0)))
         }

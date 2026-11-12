@@ -56,6 +56,11 @@ def get_caller(
             )
         ).first()
         if device is not None:
+            # «بَسطة» (ومنها اشتراك انتهى): جهاز واحد فقط، فأجهزة الكاشير تتوقف برسالة واضحة.
+            from .plan import Feature, is_free, upgrade_error
+
+            if is_free():
+                raise upgrade_error(Feature.TERMINALS)
             now = utcnow()
             seen = device.last_seen_at
             if seen is None or now - (seen if seen.tzinfo else seen.replace(tzinfo=now.tzinfo)) > _TOUCH_EVERY:

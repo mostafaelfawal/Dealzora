@@ -14,7 +14,7 @@ import {
 } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
-const SETTINGS_LICENSE = "/admin/settings#license";
+const SETTINGS_PLANS = "/admin/settings#plans";
 
 /** صفحة كاملة لميزة غير متاحة في الخطة الحالية. */
 export function UpgradeNotice({
@@ -42,11 +42,11 @@ export function UpgradeNotice({
       </p>
       <Button
         nativeButton={false}
-        render={<Link href={SETTINGS_LICENSE} />}
+        render={<Link href={SETTINGS_PLANS} />}
         className="gap-2"
       >
         <IconSparkles className="size-4" />
-        ترقية الخطة
+        عرض الخطط
       </Button>
     </div>
   );

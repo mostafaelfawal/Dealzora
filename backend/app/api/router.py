@@ -9,6 +9,7 @@ from app.modules.catalog.routes import router as catalog_router
 from app.modules.customers.routes import router as customers_router
 from app.modules.devices.routes import router as devices_router
 from app.modules.expenses.routes import router as expenses_router
+from app.modules.held.routes import router as held_router
 from app.modules.plan.routes import router as plan_router
 from app.modules.products.routes import router as products_router
 from app.modules.purchases.routes import router as purchases_router
@@ -37,6 +38,7 @@ routes = [
     treasury_router,
     shifts_router,
     sales_router,
+    held_router,
     purchases_router,
     reports_router,
     audit_router,

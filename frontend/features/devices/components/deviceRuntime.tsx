@@ -15,7 +15,11 @@ import {
   isTerminal,
   useDeviceConfig,
 } from "@/lib/device";
-import { DEVICE_UNPAIRED_EVENT, MAIN_CONNECTION_EVENT } from "@/lib/axios";
+import {
+  DEVICE_UNPAIRED_EVENT,
+  MAIN_CONNECTION_EVENT,
+  TERMINALS_DISABLED_EVENT,
+} from "@/lib/axios";
 
 import { pingMain, sendLease } from "../api/devices.api";
 
@@ -59,10 +63,13 @@ function LeaseKeeper() {
 function TerminalStatus() {
   const [online, setOnline] = useState(true);
   const [unpaired, setUnpaired] = useState(false);
+  const [disabled, setDisabled] = useState(false);
 
   useEffect(() => {
     const onConn = (e: Event) => setOnline((e as CustomEvent<boolean>).detail);
     const onUnpaired = () => setUnpaired(true);
+    const onDisabled = () => setDisabled(true);
+    window.addEventListener(TERMINALS_DISABLED_EVENT, onDisabled);
     window.addEventListener(MAIN_CONNECTION_EVENT, onConn);
     window.addEventListener(DEVICE_UNPAIRED_EVENT, onUnpaired);
     // فحص دوري: يكتشف الانقطاع حتى لو الكاشير لا يفعل شيئاً، ويكتشف رجوع الاتصال.
@@ -73,9 +80,37 @@ function TerminalStatus() {
     return () => {
       window.removeEventListener(MAIN_CONNECTION_EVENT, onConn);
       window.removeEventListener(DEVICE_UNPAIRED_EVENT, onUnpaired);
+      window.removeEventListener(TERMINALS_DISABLED_EVENT, onDisabled);
       clearInterval(ping);
     };
   }, []);
+
+  if (disabled && !unpaired) {
+    return (
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 p-6"
+      >
+        <div className="max-w-sm space-y-3 text-center">
+          <IconPlugConnectedX className="mx-auto size-10 text-warning" />
+          <h2 className="text-lg font-semibold">أجهزة الكاشير متوقفة</h2>
+          <p className="text-sm text-muted-foreground">
+            اشتراك المحل انتهى (أو الخطة لا تشمل أجهزة كاشير)، فالبيع الآن من
+            الجهاز الأساسي فقط. بعد التجديد هذا الجهاز يرجع يشتغل تلقائياً.
+          </p>
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full"
+            onClick={() => window.location.reload()}
+          >
+            إعادة المحاولة بعد التجديد
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (unpaired) {
     return (

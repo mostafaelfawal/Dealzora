@@ -52,6 +52,7 @@ ENTITY_LABELS: dict[str, str] = {
     "app_setting": "إعدادات",
     "backup": "نسخة احتياطية",
     "devtools": "بيانات تجريبية",
+    "held_invoice": "فاتورة معلّقة",
 }
 
 # مع «ال» للجمل: «عدّل الصنف «سكر»».
@@ -90,6 +91,9 @@ ACTION_LABELS: dict[str, str] = {
     "revoke": "إلغاء ربط جهاز",
     "restore": "استعادة نسخة",
     "demo_clear": "مسح البيانات التجريبية",
+    "hold": "تعليق فاتورة",
+    "recall": "استرجاع فاتورة معلّقة",
+    "discard": "حذف فاتورة معلّقة",
     "login": "تسجيل دخول",
     "login_failed": "محاولة دخول فاشلة",
     "logout": "تسجيل خروج",
@@ -211,6 +215,7 @@ _LABELS: dict[str, str] = {
     "source": "المصدر",
     "safety_backup": "نسخة الأمان قبلها",
     "detached_products": "أصناف أصبحت بدون قسم",
+    "held_cleared": "فواتير معلّقة حُذفت مع القفل",
     "deleted": "المحذوف",
 }
 
@@ -486,7 +491,12 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
     if a == "close":
         diff = c.get("difference") or 0
         tail = "مطابقة" if not diff else (f"زيادة {fmt.money(diff)}" if diff > 0 else f"عجز {fmt.money(-diff)}")
-        return f"قفل الوردية ({tail})"
+        held = c.get("held_cleared")
+        return f"قفل الوردية ({tail})" + (f" وحُذفت {held} فاتورة معلّقة" if held else "")
+    if r.entity == "held_invoice" and a in ("hold", "recall", "discard"):
+        verb = {"hold": "علّق", "recall": "استرجع", "discard": "حذف"}[a]
+        suffix = "" if a == "hold" else " المعلّقة"
+        return f"{verb} فاتورة{suffix} ({c.get('items', 0)} صنف) بقيمة {fmt.money(c.get('total'))}"
     if a == "revoke":
         return f"ألغى ربط جهاز الكاشير{_quoted(name or c.get('name'))}"
     if a == "restore":

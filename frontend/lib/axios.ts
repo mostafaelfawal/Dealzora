@@ -49,6 +49,8 @@ export const AUTH_EXPIRED_EVENT = "dz:auth-expired";
 export const MAIN_CONNECTION_EVENT = "dz:main-connection";
 /** جهاز الكاشير: الجهاز الأساسي ألغى اقتران هذا الجهاز. */
 export const DEVICE_UNPAIRED_EVENT = "dz:device-unpaired";
+/** جهاز الكاشير: خطة الجهاز الأساسي لا تشمل أجهزة كاشير (بَسطة أو اشتراك انتهى). */
+export const TERMINALS_DISABLED_EVENT = "dz:terminals-disabled";
 
 function emitConnection(online: boolean) {
   if (typeof window !== "undefined")
@@ -150,6 +152,14 @@ api.interceptors.response.use(
     ) {
       authStore.clear();
       window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+    if (
+      status === 403 &&
+      body?.code === "plan_upgrade_required" &&
+      body.details?.feature === "terminals" &&
+      typeof window !== "undefined"
+    ) {
+      window.dispatchEvent(new Event(TERMINALS_DISABLED_EVENT));
     }
     if (
       status === 401 &&

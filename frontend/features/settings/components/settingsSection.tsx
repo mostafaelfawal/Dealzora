@@ -18,7 +18,7 @@ export function SettingsSection({
   description: string;
   children: ReactNode;
   index: number;
-  /** مرساة للروابط المباشرة (مثل /admin/settings#license). */
+  /** مرساة للروابط المباشرة (مثل /admin/settings#plans). */
   id?: string;
 }) {
   return (

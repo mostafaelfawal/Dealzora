@@ -7,6 +7,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import { HeaderStatus } from "./HeaderStatus";
 import { MobileNav } from "./MobileNav";
 import { NewSaleButton } from "./NewSaleButton";
+import { SupportButton } from "@/components/shared/SupportButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 
@@ -26,6 +27,7 @@ export function AppHeader() {
 
         <HeaderStatus className="hidden lg:flex" />
         <Separator orientation="vertical" className="mx-1 hidden lg:block" />
+        <SupportButton />
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>

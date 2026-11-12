@@ -9,15 +9,38 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { activateLicense, LicenseError } from "@/features/setup/lib/license";
-import { waitForLocalBackend } from "@/lib/device";
+import { sendLease } from "@/features/devices/api/devices.api";
+import { getLicenseLease, waitForLocalBackend } from "@/lib/device";
 import { usePlan } from "@/lib/plan";
 import { formatDate } from "@/lib/dates";
 import { formatDaysArabic } from "@/lib/format";
 
 import { useLicense } from "../hooks/useSettings";
 import { isLicenseActive, licenseKindLabel } from "../lib/settingsFormat";
+import { PlansSection } from "./plansSection";
 
+/**
+ * الخطط والترخيص في قسم واحد، بترتيب ما يفعله العميل:
+ * حالته الآن ← يقارن الخطط ويشترك (واتساب) ← يلصق المفتاح الذي يصله.
+ */
 export function LicenseSection() {
+  return (
+    <div className="space-y-4">
+      <LicenseStatus />
+      <div className="border-t pt-4">
+        <PlansSection />
+      </div>
+      <div className="space-y-2 border-t pt-4">
+        <p className="text-xs text-muted-foreground">
+          وصلك مفتاح الترخيص؟ الصقه هنا لتفعيل خطتك فوراً (أو لتجديدها وتغييرها).
+        </p>
+        <ActivateForm />
+      </div>
+    </div>
+  );
+}
+
+function LicenseStatus() {
   const license = useLicense();
   const plan = usePlan().data;
   const l = license.data;
@@ -46,7 +69,9 @@ export function LicenseSection() {
                 : "border-destructive/50 text-destructive"
             }
           >
-            {licenseKindLabel(l)}
+            {l.state === "licensed" && plan && !plan.isFree
+              ? `خطة «${plan.name}» مفعّلة`
+              : licenseKindLabel(l)}
           </Badge>
         </dd>
       </div>
@@ -54,7 +79,11 @@ export function LicenseSection() {
         <div className="flex gap-2">
           <dt className="text-muted-foreground">المتبقي</dt>
           <dd className="font-medium">
-            {l.days_left > 0 ? formatDaysArabic(l.days_left) : "منتهي"}
+            {l.days_left <= 0
+              ? "منتهي"
+              : l.days_left === 1
+                ? "يوم واحد"
+                : formatDaysArabic(l.days_left)}
           </dd>
         </div>
       )}
@@ -69,20 +98,6 @@ export function LicenseSection() {
         <dd dir="ltr" className="truncate font-mono select-all">
           {l.machine_id}
         </dd>
-      </div>
-      {plan && (
-        <div className="flex gap-2">
-          <dt className="text-muted-foreground">الخطة</dt>
-          <dd className="font-medium">«{plan.name}»</dd>
-        </div>
-      )}
-      <div className="space-y-2 border-t pt-3 sm:col-span-2">
-        <p className="text-muted-foreground">
-          {plan?.isFree
-            ? "للترقية: أرسل رقم الجهاز أعلاه لفريق Dealzora، والصق المفتاح الذي يصلك هنا."
-            : "للتجديد أو تغيير الخطة: أرسل رقم الجهاز لفريق Dealzora، والصق المفتاح الجديد هنا."}
-        </p>
-        <ActivateForm />
       </div>
     </dl>
   );
@@ -99,8 +114,10 @@ function ActivateForm() {
     setPending(true);
     try {
       await activateLicense(key.trim());
-      // Rust يعيد تشغيل الخادم بالخطة الجديدة: ننتظره ثم نحدّث كل البيانات.
+      // Rust يعيد تشغيل الخادم بالخطة الجديدة: ننتظره، ثم نرسل عقد الترخيص فوراً
+      // (يحمل الخطة الجديدة، فتنفتح الميزات حتى لو الخادم لم يُعد تشغيله كما في التطوير).
       await waitForLocalBackend();
+      await sendLease(await getLicenseLease()).catch(() => undefined);
       await qc.invalidateQueries();
       setKey("");
       toast.success("تم تفعيل الترخيص", {

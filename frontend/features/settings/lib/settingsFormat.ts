@@ -12,6 +12,8 @@ export const isLicenseActive = (l: LicenseStatus) =>
   l.state === "trial" || l.state === "licensed";
 
 export function licenseKindLabel(l: LicenseStatus) {
+  // اشتراك مدفوع انتهى: البرنامج يكمل تلقائياً على «بَسطة» (لا يتوقف).
+  if (l.state === "expired") return "انتهى الاشتراك — تعمل الآن على «بَسطة»";
   if (l.kind === "trial") return "«بَسطة» المجانية";
   if (l.kind === "licensed") return "اشتراك مدفوع مفعّل";
   return "غير مفعّل";

@@ -109,6 +109,16 @@ function HeldItems() {
                   <IconClock className="size-3" aria-hidden />
                   {now === null ? "" : formatTimeAgo(h.heldAt, now)}
                 </span>
+                {(h.deviceName || h.cashierName) && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span className="truncate">
+                      {[h.deviceName, h.cashierName]
+                        .filter(Boolean)
+                        .join(" — ")}
+                    </span>
+                  </>
+                )}
               </span>
             </span>
 

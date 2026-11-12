@@ -22,17 +22,17 @@ export function SubscriptionBadge({ subscription }: SubscriptionBadgeProps) {
 
   const shortText =
     daysRemaining <= 0
-      ? "منتهي"
+      ? "انتهى الاشتراك"
       : `ينتهي بعد ${formatDaysArabic(daysRemaining)}`;
   const fullText =
     daysRemaining <= 0
-      ? "الاشتراك منتهي"
+      ? "انتهى الاشتراك — تعمل على «بَسطة». جدّد الآن"
       : `الاشتراك ينتهي بعد ${formatDaysArabic(daysRemaining)}`;
 
   return (
     <Badge
       variant="outline"
-      render={<Link href="/admin/settings" />}
+      render={<Link href="/admin/settings#plans" />}
       className={cn(
         "h-7 px-2.5 font-normal",
         critical

@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { ShiftStatus } from "@/components/layout/header/ShiftStatus";
 import { SyncStatus } from "@/components/layout/header/SyncStatus";
 import { ThemeToggle } from "@/components/layout/header/ThemeToggle";
+import { SupportButton } from "@/components/shared/SupportButton";
 import { AppTooltip } from "@/components/shared/AppTooltip";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
@@ -131,6 +132,7 @@ export function PosTopBar() {
           </Button>
         </AppTooltip>
 
+        <SupportButton />
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>

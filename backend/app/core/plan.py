@@ -6,6 +6,7 @@
 الإنفاذ هنا (لا في الواجهة فقط): أي طلب يتجاوز الخطة يُرفض برسالة ترقية واضحة.
 """
 
+import time
 from enum import StrEnum
 from typing import Annotated
 
@@ -70,10 +71,24 @@ _UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
 
 
 def current_plan() -> Plan:
+    """المصدر الأحدث: عقد الترخيص الموقّع الذي يجدده البرنامج كل دقيقتين (ويُرسل فور التفعيل)،
+    وإلا POS_PLAN الذي مرّره Rust عند التشغيل."""
+    from app.modules.devices.runtime import active_lease  # متأخر: تفادي الاستيراد الدائري
+
+    settings = get_settings()
+    lease = active_lease()
+    if lease is not None and lease.plan is not None:
+        raw, expires_at = lease.plan, lease.plan_expires_at or None
+    else:
+        raw, expires_at = settings.plan, settings.plan_expires_at
     try:
-        return Plan(get_settings().plan)
+        plan = Plan(raw)
     except ValueError:
         return Plan.FREE  # قيمة غير معروفة = الأضيق (لا نفتح ميزة بالخطأ)
+    # الاشتراك انتهى والبرنامج مفتوح: نكمل على «بَسطة» (البيع لا يتوقف، والمدفوع يُقفل).
+    if plan is not Plan.FREE and expires_at and time.time() >= expires_at:
+        return Plan.FREE
+    return plan
 
 
 def is_free() -> bool:

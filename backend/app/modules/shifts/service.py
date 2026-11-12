@@ -92,6 +92,10 @@ class ShiftService(EntityService):
 
         if shift.difference:
             self._post_difference(shift)
+        # المعلّقة تخص هذه الوردية فقط: تُحذف معها في نفس المعاملة.
+        from app.modules.held.service import HeldService  # متأخر: held يستورد ShiftService
+
+        held_cleared = HeldService.clear_for_shift(self.session, shift.id)
         self._audit(
             shift,
             "close",
@@ -99,6 +103,7 @@ class ShiftService(EntityService):
                 "expected_cash": expected,
                 "counted_cash": data.counted_cash,
                 "difference": shift.difference,
+                **({"held_cleared": held_cleared} if held_cleared else {}),
             },
         )
         self._enqueue(shift, base_version=base_version)

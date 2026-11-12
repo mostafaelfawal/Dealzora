@@ -92,6 +92,8 @@ export function usePlan() {
     queryKey: planKey,
     queryFn: fetchPlan,
     staleTime: 5 * 60_000,
+    // الاشتراك قد ينتهي والبرنامج مفتوح: الـ backend يرجع لـ«بَسطة» فوراً، والواجهة خلال دقائق.
+    refetchInterval: 5 * 60_000,
   });
 }
 

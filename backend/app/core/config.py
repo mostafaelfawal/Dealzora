@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     port: int = 8000
     # الخطة من الترخيص (Rust). الافتراضي الأضيق «بَسطة» المجانية. للتطوير: POS_PLAN=pro في .env
     plan: str = "free"
+    # نهاية الاشتراك المدفوع (unix). عند تجاوزها يرجع الـ backend لـ«بَسطة» بنفسه دون إعادة تشغيل.
+    plan_expires_at: int | None = None
     debug: bool = False
     cors_origins: list[str] = [
         "tauri://localhost",
