@@ -15,6 +15,7 @@ import { UpgradeNotice } from "@/components/shared/PlanGate";
 import { Button } from "@/components/ui/button";
 import { useFeature } from "@/lib/plan";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useNow } from "@/hooks/useNow";
 import { formatMinutesAgo } from "@/lib/format";
@@ -53,9 +54,16 @@ function DevicesPanel() {
 
   if (network.isPending) {
     return (
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <IconLoader2 className="size-4 animate-spin" /> جارٍ التحميل…
-      </p>
+      <div role="status" aria-label="جارٍ التحميل" className="space-y-3">
+        <div aria-hidden className="flex items-center justify-between gap-3">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-5 w-9" />
+        </div>
+        <div aria-hidden className="space-y-1.5">
+          <Skeleton className="h-3 w-56" />
+          <Skeleton className="h-7 w-36" />
+        </div>
+      </div>
     );
   }
   if (!n) {

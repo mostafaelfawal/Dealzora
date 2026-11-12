@@ -1,5 +1,6 @@
 "use client";
 
+import { AppTableCardsSkeleton } from "@/components/shared/AppTable/AppTableCards";
 import { IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -114,9 +115,7 @@ export function UsersScreen() {
 
     if (list.isPending) {
       return (
-        <p className="border border-dashed py-16 text-center text-sm text-muted-foreground">
-          جارٍ تحميل المستخدمين…
-        </p>
+        <AppTableCardsSkeleton count={Math.min(list.filters.pageSize, 8)} />
       );
     }
 

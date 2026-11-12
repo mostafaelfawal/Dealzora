@@ -86,17 +86,38 @@ export function AppTableCardsSkeleton({
   className?: string;
 }) {
   return (
-    <div aria-hidden className={cn(CARDS_GRID, className)}>
+    <div
+      role="status"
+      aria-label="جارٍ التحميل"
+      className={cn(CARDS_GRID, className)}
+    >
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="flex flex-col gap-3 border bg-card p-3.5">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-3 w-1/2" />
+        <div
+          key={i}
+          aria-hidden
+          className="flex flex-col gap-3 border bg-card p-3.5"
+        >
+          {/* CardHead: عنوان + سطر فرعي + عنصر جانبي */}
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-3/5" />
+              <Skeleton className="h-3 w-2/5" />
+            </div>
+            <Skeleton className="h-5 w-16 shrink-0" />
           </div>
-          <Skeleton className="h-5 w-20" />
-          <div className="grid grid-cols-2 gap-2 border-t pt-2.5">
-            <Skeleton className="h-8" />
-            <Skeleton className="h-8" />
+          {/* CardBadges */}
+          <div className="flex gap-1.5">
+            <Skeleton className="h-5 w-14" />
+            <Skeleton className="h-5 w-10" />
+          </div>
+          {/* CardStats: «العنوان» فوق «القيمة» */}
+          <div className="mt-auto grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border/60 pt-2.5">
+            {[0, 1].map((j) => (
+              <div key={j} className="space-y-1">
+                <Skeleton className="h-2.5 w-12" />
+                <Skeleton className="h-3.5 w-16" />
+              </div>
+            ))}
           </div>
         </div>
       ))}

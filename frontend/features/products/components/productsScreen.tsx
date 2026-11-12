@@ -1,5 +1,6 @@
 "use client";
 
+import { AppTableCardsSkeleton } from "@/components/shared/AppTable/AppTableCards";
 import {
   IconDownload,
   IconFileSpreadsheet,
@@ -164,9 +165,7 @@ export function ProductsScreen() {
 
     if (list.isPending) {
       return (
-        <p className="border border-dashed py-16 text-center text-sm text-muted-foreground">
-          جارٍ تحميل الأصناف…
-        </p>
+        <AppTableCardsSkeleton count={Math.min(list.filters.pageSize, 8)} />
       );
     }
 

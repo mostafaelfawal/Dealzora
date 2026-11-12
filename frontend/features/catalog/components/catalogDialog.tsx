@@ -1,6 +1,5 @@
 "use client";
 
-import { IconLoader2 } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
@@ -13,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import useGetCategories from "@/features/products/hooks/useGetCategories";
 
@@ -95,9 +95,25 @@ function ListState({
 }) {
   if (isPending)
     return (
-      <p className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-        <IconLoader2 className="size-4 animate-spin" /> جارٍ التحميل…
-      </p>
+      <ul
+        role="status"
+        aria-label="جارٍ التحميل"
+        className="divide-y border px-2"
+      >
+        {Array.from({ length: 4 }, (_, i) => (
+          <li
+            key={i}
+            aria-hidden
+            className="flex h-12 items-center justify-between gap-3"
+          >
+            <div className="space-y-1.5">
+              <Skeleton className="h-3.5 w-28" />
+              <Skeleton className="h-2.5 w-16" />
+            </div>
+            <Skeleton className="size-7" />
+          </li>
+        ))}
+      </ul>
     );
   if (isError)
     return (
