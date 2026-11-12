@@ -7,8 +7,10 @@ import { useState } from "react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { ViewToggle } from "@/components/shared/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
+import { useViewMode } from "@/hooks/useViewMode";
 
 import { PURCHASES_SHORTCUTS } from "../config/purchaseOptions";
 import { PURCHASE_ROUTES } from "../config/purchaseRoutes";
@@ -23,6 +25,7 @@ export function PurchasesScreen() {
   const router = useRouter();
   const filters = usePurchasesFilters();
   const [openId, setOpenId] = useState<string | null>(null);
+  const { view, setView } = useViewMode("purchases");
 
   useHotkey(
     PURCHASES_SHORTCUTS.newPurchase.match,
@@ -62,10 +65,18 @@ export function PurchasesScreen() {
         onPeriodChange={filters.setPeriod}
         status={filters.status}
         onStatusChange={filters.setStatus}
+        viewToggle={
+          <ViewToggle
+            view={view}
+            onChange={setView}
+            hotkey={openId === null}
+          />
+        }
       />
 
       <PurchasesTable
         filters={filters}
+        view={view}
         onOpen={setOpenId}
         emptyAction={
           <Button

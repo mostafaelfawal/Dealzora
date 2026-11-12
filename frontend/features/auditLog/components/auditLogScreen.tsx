@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
+import { ViewToggle } from "@/components/shared/ViewToggle";
+import { useViewMode } from "@/hooks/useViewMode";
 
 import { ALL } from "../config/auditLogOptions";
 import {
@@ -15,7 +17,13 @@ import {
 } from "../hooks/useAuditLog";
 import { AuditLogTable } from "./auditLogTable";
 
-function AuditLogToolbar({ state: s }: { state: AuditLogState }) {
+function AuditLogToolbar({
+  state: s,
+  viewToggle,
+}: {
+  state: AuditLogState;
+  viewToggle: ReactNode;
+}) {
   const actors = useAuditActors();
   const options = useAuditFilterOptions();
   const entityOptions = useMemo(
@@ -64,6 +72,7 @@ function AuditLogToolbar({ state: s }: { state: AuditLogState }) {
         onChange={s.setActor}
         className="w-40"
       />
+      <div className="ms-auto">{viewToggle}</div>
     </div>
   );
 }
@@ -71,6 +80,7 @@ function AuditLogToolbar({ state: s }: { state: AuditLogState }) {
 /** سجل العمليات: من فعل ماذا ومتى، بالتغييرات قبل وبعد. لا يمكن تعديله أو حذفه. */
 export function AuditLogScreen() {
   const state = useAuditLog();
+  const { view, setView } = useViewMode("audit-log");
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
@@ -78,8 +88,11 @@ export function AuditLogScreen() {
         title="سجل العمليات"
         description="كل إضافة وتعديل وحذف في النظام مسجّلة باسم من قام بها ووقتها. اضغط على أي عملية لرؤية التغييرات."
       />
-      <AuditLogToolbar state={state} />
-      <AuditLogTable state={state} />
+      <AuditLogToolbar
+        state={state}
+        viewToggle={<ViewToggle view={view} onChange={setView} />}
+      />
+      <AuditLogTable state={state} view={view} />
     </div>
   );
 }

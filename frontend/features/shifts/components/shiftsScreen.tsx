@@ -5,8 +5,10 @@ import { useState } from "react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { ViewToggle } from "@/components/shared/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
+import { useViewMode } from "@/hooks/useViewMode";
 
 import { SHIFT_PAGE_SIZES, SHIFTS_SHORTCUTS } from "../config/shiftOptions";
 import { useCurrentShift, useShiftsList } from "../hooks/useShifts";
@@ -21,6 +23,7 @@ export function ShiftsScreen() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(SHIFT_PAGE_SIZES[0]);
   const [dialog, setDialog] = useState<ShiftDialog>(null);
+  const { view, setView } = useViewMode("shifts");
   const list = useShiftsList(page, pageSize);
   const shift = useCurrentShift().data ?? null;
   const lastClosed = list.data?.items.find((s) => !s.isOpen) ?? null;
@@ -38,22 +41,25 @@ export function ShiftsScreen() {
         title="الورديات"
         description="كل وردية تبدأ بفكّة الدرج وتنتهي بجرده. الفرق (عجز أو زيادة) يُسجَّل في الخزنة تلقائياً."
         actions={
-          <Button
-            size="lg"
-            variant={shift ? "outline" : "default"}
-            onClick={toggleShift}
-            className="h-10 gap-2"
-          >
-            {shift ? (
-              <IconLockDollar className="size-4" />
-            ) : (
-              <IconPlayerPlay className="size-4" />
-            )}
-            {shift ? "قفل الوردية الحالية" : "فتح وردية"}
-            <ShortcutBadge className="hidden lg:inline-flex">
-              {SHIFTS_SHORTCUTS.toggleShift.label}
-            </ShortcutBadge>
-          </Button>
+          <>
+            <ViewToggle view={view} onChange={setView} hotkey={!dialog} />
+            <Button
+              size="lg"
+              variant={shift ? "outline" : "default"}
+              onClick={toggleShift}
+              className="h-10 gap-2"
+            >
+              {shift ? (
+                <IconLockDollar className="size-4" />
+              ) : (
+                <IconPlayerPlay className="size-4" />
+              )}
+              {shift ? "قفل الوردية الحالية" : "فتح وردية"}
+              <ShortcutBadge className="hidden lg:inline-flex">
+                {SHIFTS_SHORTCUTS.toggleShift.label}
+              </ShortcutBadge>
+            </Button>
+          </>
         }
       />
 
@@ -61,6 +67,7 @@ export function ShiftsScreen() {
 
       <ShiftsTable
         list={list}
+        view={view}
         page={page}
         pageSize={pageSize}
         onPageChange={setPage}

@@ -4,8 +4,10 @@ import { IconChevronDown, IconHistory } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { AppTable } from "@/components/shared/AppTable/AppTable";
+import { CardFoot } from "@/components/shared/AppTable/AppTableCards";
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Badge } from "@/components/ui/badge";
+import type { ViewMode } from "@/hooks/useViewMode";
 import { formatWhen } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -79,8 +81,62 @@ function buildColumns(expanded: string | null): AppTableColumn<AuditEntry>[] {
   ];
 }
 
+/** بطاقة عملية: النوع والجملة المقروءة، ثم من ومتى. الضغط يفتح التغييرات. */
+function AuditCard({ entry: e, open }: { entry: AuditEntry; open: boolean }) {
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <Badge
+            variant="outline"
+            className={cn(
+              "font-normal",
+              e.danger && "border-destructive/50 text-destructive",
+            )}
+          >
+            {e.actionLabel}
+          </Badge>
+          <span className="truncate text-[11px] text-muted-foreground">
+            {e.entityLabel}
+          </span>
+        </span>
+        {e.details.length > 0 && (
+          <IconChevronDown
+            aria-hidden
+            className={cn(
+              "size-4 shrink-0 text-muted-foreground transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        )}
+      </div>
+      <p
+        className={cn(
+          "text-xs leading-relaxed",
+          e.danger && "text-destructive",
+        )}
+      >
+        {e.summary}
+      </p>
+      {open && <AuditChanges details={e.details} />}
+      <CardFoot className="mt-auto border-t border-border/60 pt-2.5">
+        <span className="truncate text-foreground/80">
+          {e.actorName ?? "—"}
+        </span>
+        <span className="shrink-0">{formatWhen(e.createdAt)}</span>
+      </CardFoot>
+    </>
+  );
+}
+
 /** جدول السجل. الضغط على صف يفتح/يغلق تفاصيل التغييرات. */
-export function AuditLogTable({ state: s }: { state: AuditLogState }) {
+export function AuditLogTable({
+  state: s,
+  view,
+}: {
+  state: AuditLogState;
+  view: ViewMode;
+}) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const { list } = s;
 
@@ -98,6 +154,10 @@ export function AuditLogTable({ state: s }: { state: AuditLogState }) {
       isFiltered={s.isFiltered}
       onClearFilters={s.clearFilters}
       empty={{ icon: IconHistory, title: "لا توجد عمليات في هذه الفترة" }}
+      view={view}
+      renderCard={(e) => <AuditCard entry={e} open={expanded === e.id} />}
+      cardsClassName="items-start lg:grid-cols-2 xl:grid-cols-3"
+      getCardLabel={(e) => e.summary}
       pagination={{
         total: list.data?.total ?? 0,
         page: s.page,

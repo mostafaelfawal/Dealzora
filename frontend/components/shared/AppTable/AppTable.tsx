@@ -7,9 +7,11 @@ import { listRow, MotionTr } from "@/components/shared/motion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ViewMode } from "@/hooks/useViewMode";
 import { cn } from "@/lib/utils";
 
 import { AppTableBulkBar } from "./AppTableBulkBar";
+import { AppTableCards, AppTableCardsSkeleton } from "./AppTableCards";
 import { AppTablePagination } from "./AppTablePagination";
 import type {
   AppTableBulkActions,
@@ -58,6 +60,16 @@ export interface AppTableProps<T> {
   bulkActions?: AppTableBulkActions<T>;
 
   pagination?: AppTablePaginationProps;
+
+  /* عرض البطاقات (اختياري): نفس البيانات والحالات والترقيم */
+  /** "cards" يعرض renderCard بدل الجدول (يتجاهل التحديد المتعدد). */
+  view?: ViewMode;
+  renderCard?: (row: T, index: number) => ReactNode;
+  /** يغيّر أعمدة الشبكة، مثل "lg:grid-cols-2 xl:grid-cols-3". */
+  cardsClassName?: string;
+  cardClassName?: (row: T) => string | undefined;
+  /** اسم البطاقة لقارئ الشاشة لو كانت قابلة للضغط. */
+  getCardLabel?: (row: T) => string;
 }
 
 function StateBox({ children }: { children: ReactNode }) {
@@ -91,7 +103,13 @@ export function AppTable<T>({
   getRowLabel,
   bulkActions,
   pagination,
+  view = "table",
+  renderCard,
+  cardsClassName,
+  cardClassName,
+  getCardLabel,
 }: AppTableProps<T>) {
+  const asCards = view === "cards" && renderCard !== undefined;
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 
   const selectableRows = useMemo(
@@ -205,6 +223,31 @@ export function AppTable<T>({
     <div className="flex flex-col gap-3">
       {isError || showEmpty ? (
         renderState()
+      ) : asCards && renderCard ? (
+        <div
+          aria-busy={isLoading || isFetching}
+          className={cn(
+            "transition-opacity",
+            isFetching && !isLoading && "opacity-60",
+          )}
+        >
+          {isLoading ? (
+            <AppTableCardsSkeleton
+              count={skeletonCount}
+              className={cardsClassName}
+            />
+          ) : (
+            <AppTableCards
+              data={data}
+              getRowId={getRowId}
+              renderCard={renderCard}
+              onCardClick={onRowClick}
+              getCardLabel={getCardLabel}
+              cardClassName={cardClassName}
+              className={cardsClassName}
+            />
+          )}
+        </div>
       ) : (
         <div
           aria-busy={isLoading || isFetching}
@@ -347,7 +390,7 @@ export function AppTable<T>({
         <AppTablePagination {...pagination} />
       )}
 
-      {hasBulk && bulkActions && selectedRows.length > 0 && (
+      {!asCards && hasBulk && bulkActions && selectedRows.length > 0 && (
         <AppTableBulkBar
           rows={selectedRows}
           actions={bulkActions}

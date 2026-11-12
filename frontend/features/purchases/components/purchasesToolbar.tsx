@@ -1,6 +1,7 @@
 "use client";
 
 import { IconSearch } from "@tabler/icons-react";
+import type { ReactNode } from "react";
 
 import {
   PeriodPicker,
@@ -23,7 +24,9 @@ export function PurchasesToolbar({
   onPeriodChange,
   status,
   onStatusChange,
+  viewToggle,
 }: {
+  viewToggle?: ReactNode;
   search: string;
   onSearchChange: (value: string) => void;
   period: PeriodValue;
@@ -47,6 +50,7 @@ export function PurchasesToolbar({
           />
         </InputGroup>
         <PeriodPicker value={period} onChange={onPeriodChange} />
+        {viewToggle}
       </div>
       <SegmentedTabs
         label="حالة الفاتورة"

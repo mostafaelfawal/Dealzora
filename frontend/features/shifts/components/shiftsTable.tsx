@@ -4,9 +4,15 @@ import { IconClockHour4 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import { AppTable } from "@/components/shared/AppTable/AppTable";
+import {
+  CardFoot,
+  CardHead,
+  CardStats,
+} from "@/components/shared/AppTable/AppTableCards";
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { Badge } from "@/components/ui/badge";
+import type { ViewMode } from "@/hooks/useViewMode";
 import { formatWhen } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 
@@ -87,6 +93,59 @@ const COLUMNS: AppTableColumn<Shift>[] = [
   },
 ];
 
+/** بطاقة وردية: الكاشير والمبيعات، ثم جرد الدرج (المتوقع والفعلي والفرق). */
+function ShiftCard({ shift: s }: { shift: Shift }) {
+  return (
+    <>
+      <CardHead
+        title={
+          <span className="flex items-center gap-2">
+            {s.cashierName ?? "—"}
+            {s.isOpen && <Badge className="font-normal">مفتوحة الآن</Badge>}
+          </span>
+        }
+        subtitle={s.deviceName ?? undefined}
+        aside={<ShiftDifference value={s.isOpen ? null : s.difference} />}
+      />
+      <div className="space-y-0.5">
+        <Money amount={s.salesTotal ?? 0} className="text-lg font-semibold" />
+        <p className="text-[11px] text-muted-foreground">
+          {s.salesCount} فاتورة
+          {s.returnsCount > 0 && ` · ${s.returnsCount} مرتجع`}
+        </p>
+      </div>
+      <CardStats
+        items={[
+          {
+            label: "المتوقع في الدرج",
+            value: <Money amount={s.expectedCash ?? 0} className="text-xs" />,
+          },
+          {
+            label: "الفعلي",
+            value:
+              s.countedCash === null ? (
+                <Dash />
+              ) : (
+                <Money amount={s.countedCash} className="text-xs" />
+              ),
+          },
+        ]}
+      />
+      {s.note && (
+        <p className="line-clamp-2 text-[11px] text-muted-foreground">
+          {s.note}
+        </p>
+      )}
+      <CardFoot>
+        <span>
+          {formatWhen(s.openedAt)}
+          {s.closedAt && ` ← ${formatWhen(s.closedAt)}`}
+        </span>
+      </CardFoot>
+    </>
+  );
+}
+
 export function ShiftsTable({
   list,
   page,
@@ -94,7 +153,9 @@ export function ShiftsTable({
   onPageChange,
   onPageSizeChange,
   emptyAction,
+  view,
 }: {
+  view: ViewMode;
   list: ReturnType<typeof useShiftsList>;
   page: number;
   pageSize: number;
@@ -119,6 +180,9 @@ export function ShiftsTable({
         action: emptyAction,
       }}
       rowHeightClassName="h-16"
+      view={view}
+      renderCard={(s) => <ShiftCard shift={s} />}
+      cardClassName={(s) => (s.isOpen ? "border-primary/60" : undefined)}
       pagination={{
         total: list.data?.total ?? 0,
         page,

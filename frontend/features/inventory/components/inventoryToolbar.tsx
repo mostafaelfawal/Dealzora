@@ -1,6 +1,7 @@
 "use client";
 
 import { IconSearch } from "@tabler/icons-react";
+import type { ReactNode } from "react";
 
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
@@ -20,7 +21,13 @@ import type { InventoryTab, StockReport } from "../types/inventory";
 const tabCount = (id: InventoryTab, r: StockReport | undefined) =>
   id === "all" ? undefined : r?.[id].length;
 
-export function InventoryToolbar({ list }: { list: InventoryList }) {
+export function InventoryToolbar({
+  list,
+  viewToggle,
+}: {
+  list: InventoryList;
+  viewToggle?: ReactNode;
+}) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -47,6 +54,7 @@ export function InventoryToolbar({ list }: { list: InventoryList }) {
             className="w-40"
           />
         )}
+        {viewToggle}
       </div>
       <SegmentedTabs
         label="عرض"

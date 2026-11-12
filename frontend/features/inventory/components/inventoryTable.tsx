@@ -3,11 +3,16 @@
 import { IconAdjustments, IconBox, IconHistory } from "@tabler/icons-react";
 
 import { AppTable } from "@/components/shared/AppTable/AppTable";
+import {
+  CardHead,
+  CardStats,
+} from "@/components/shared/AppTable/AppTableCards";
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { ProgressBar } from "@/components/shared/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { ViewMode } from "@/hooks/useViewMode";
 import { formatDayLabel } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 import { formatQty } from "@/lib/format";
@@ -145,21 +150,118 @@ function buildColumns({
   ];
 }
 
+/** بطاقة صنف في المخزون: الرصيد بخط كبير وشريط الحد الأدنى، ثم القيمة والإجراءات. */
+function StockCard({
+  row,
+  showLastSold,
+  onAdjust,
+  onLedger,
+}: {
+  row: StockRow;
+  showLastSold: boolean;
+  onAdjust: (row: StockRow) => void;
+  onLedger: (row: StockRow) => void;
+}) {
+  const level = stockLevel(row);
+  const style = level === "ok" ? null : LEVEL_STYLE[level];
+
+  return (
+    <>
+      <CardHead
+        title={<span className="line-clamp-2">{row.name}</span>}
+        subtitle={
+          showLastSold
+            ? row.lastSoldAt
+              ? `آخر بيع ${formatDayLabel(row.lastSoldAt)}`
+              : "لم يُبع أبداً"
+            : undefined
+        }
+        aside={
+          style && (
+            <Badge variant="outline" className={cn("font-normal", style.badge)}>
+              {style.label}
+            </Badge>
+          )
+        }
+      />
+      <div className="space-y-1.5">
+        <p className="flex items-baseline gap-1.5">
+          <span
+            className={cn(
+              "font-mono text-xl font-semibold tabular-nums",
+              style?.text,
+            )}
+          >
+            {formatQty(row.stock)}
+          </span>
+          <span className="text-xs text-muted-foreground">{row.unit}</span>
+        </p>
+        {row.minStock > 0 && (
+          <ProgressBar
+            value={row.stock / (row.minStock * 2)}
+            className="h-0.5"
+            barClassName={BAR_CLASS[level]}
+          />
+        )}
+      </div>
+      <CardStats
+        items={[
+          {
+            label: "الحد الأدنى",
+            value: (
+              <span className="font-mono">
+                {row.minStock > 0 ? formatQty(row.minStock) : "—"}
+              </span>
+            ),
+          },
+          {
+            label: "قيمة المخزون",
+            value: <Money amount={row.stockValue} className="text-xs" />,
+          },
+        ]}
+      />
+      <div className="flex gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onAdjust(row)}
+          className="flex-1 gap-1 font-normal"
+        >
+          <IconAdjustments className="size-3.5" />
+          تعديل الرصيد
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onLedger(row)}
+          className="gap-1 font-normal"
+        >
+          <IconHistory className="size-3.5" />
+          الحركة
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function InventoryTable({
   list,
   onAdjust,
   onLedger,
+  view,
 }: {
   list: InventoryList;
   onAdjust: (row: StockRow) => void;
   onLedger: (row: StockRow) => void;
+  view: ViewMode;
 }) {
+  const showLastSold = list.tab === "stagnant";
   const isAll = list.tab === "all";
   return (
     <AppTable
       data={list.rows}
       columns={buildColumns({
-        showLastSold: list.tab === "stagnant",
+        showLastSold,
         onAdjust,
         onLedger,
       })}
@@ -180,6 +282,16 @@ export function InventoryTable({
           : "ممتاز! لا يوجد ما يحتاج انتباهك.",
       }}
       rowHeightClassName="h-16"
+      view={view}
+      renderCard={(row) => (
+        <StockCard
+          row={row}
+          showLastSold={showLastSold}
+          onAdjust={onAdjust}
+          onLedger={onLedger}
+        />
+      )}
+      getCardLabel={(row) => `حركة ${row.name}`}
       pagination={{
         total: list.total,
         page: list.page,

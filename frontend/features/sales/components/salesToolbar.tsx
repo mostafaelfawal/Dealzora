@@ -1,6 +1,7 @@
 "use client";
 
 import { IconSearch } from "@tabler/icons-react";
+import type { ReactNode } from "react";
 
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
@@ -18,7 +19,14 @@ import {
 } from "../config/saleOptions";
 import type { SalesFilters } from "../hooks/useSalesFilters";
 
-export function SalesToolbar({ filters: f }: { filters: SalesFilters }) {
+export function SalesToolbar({
+  filters: f,
+  viewToggle,
+}: {
+  filters: SalesFilters;
+  /** زر البطاقات/الجدول في آخر السطر. */
+  viewToggle?: ReactNode;
+}) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -49,6 +57,7 @@ export function SalesToolbar({ filters: f }: { filters: SalesFilters }) {
           onChange={f.setSort}
           className="w-36"
         />
+        {viewToggle}
       </div>
       <SegmentedTabs
         label="حالة الفاتورة"

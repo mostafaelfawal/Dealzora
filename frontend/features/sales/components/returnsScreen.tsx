@@ -1,7 +1,7 @@
 "use client";
 
 import { IconReceiptRefund, IconSearch } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Money } from "@/components/shared/Money";
 import { Num } from "@/components/shared/Num";
@@ -9,11 +9,13 @@ import { OptionSelect } from "@/components/shared/OptionSelect";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PeriodPicker } from "@/components/shared/PeriodPicker";
 import { StatTile } from "@/components/shared/StatTile";
+import { ViewToggle } from "@/components/shared/ViewToggle";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { useViewMode } from "@/hooks/useViewMode";
 
 import { RETURN_REASON_FILTER_OPTIONS } from "../config/saleOptions";
 import {
@@ -46,7 +48,13 @@ function ReturnsStats({ totals }: { totals: ReturnsFilters["totals"] }) {
   );
 }
 
-function ReturnsToolbar({ filters: f }: { filters: ReturnsFilters }) {
+function ReturnsToolbar({
+  filters: f,
+  viewToggle,
+}: {
+  filters: ReturnsFilters;
+  viewToggle: ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <InputGroup className="h-10 min-w-56 flex-1">
@@ -69,6 +77,7 @@ function ReturnsToolbar({ filters: f }: { filters: ReturnsFilters }) {
         onChange={f.setReason}
         className="w-36"
       />
+      {viewToggle}
     </div>
   );
 }
@@ -78,6 +87,7 @@ export function ReturnsScreen() {
   const filters = useReturnsFilters();
   const [openSale, setOpenSale] = useState<string | null>(null);
   const [returning, setReturning] = useState<Sale | null>(null);
+  const { view, setView } = useViewMode("returns");
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
@@ -87,8 +97,17 @@ export function ReturnsScreen() {
       />
 
       <ReturnsStats totals={filters.totals} />
-      <ReturnsToolbar filters={filters} />
-      <ReturnsTable filters={filters} onOpenSale={setOpenSale} />
+      <ReturnsToolbar
+        filters={filters}
+        viewToggle={
+          <ViewToggle
+            view={view}
+            onChange={setView}
+            hotkey={openSale === null && returning === null}
+          />
+        }
+      />
+      <ReturnsTable filters={filters} onOpenSale={setOpenSale} view={view} />
 
       <SaleDetailSheet
         saleId={openSale}

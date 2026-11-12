@@ -3,7 +3,9 @@
 import { useState } from "react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
+import { ViewToggle } from "@/components/shared/ViewToggle";
 import { useHotkey } from "@/hooks/useHotkey";
+import { useViewMode } from "@/hooks/useViewMode";
 
 import { INVENTORY_SHORTCUTS } from "../config/inventoryOptions";
 import { useInventoryList } from "../hooks/useInventoryList";
@@ -20,6 +22,7 @@ export function InventoryScreen() {
   const list = useInventoryList();
   const [ledgerFor, setLedgerFor] = useState<AdjustTarget | null>(null);
   const [adjustFor, setAdjustFor] = useState<AdjustTarget | null>(null);
+  const { view, setView } = useViewMode("inventory");
 
   // F4 من داخل نافذة الحركة = تعديل نفس الصنف.
   useHotkey(INVENTORY_SHORTCUTS.adjust.match, () => {
@@ -40,10 +43,20 @@ export function InventoryScreen() {
         onTabChange={list.setTab}
       />
 
-      <InventoryToolbar list={list} />
+      <InventoryToolbar
+        list={list}
+        viewToggle={
+          <ViewToggle
+            view={view}
+            onChange={setView}
+            hotkey={!ledgerFor && !adjustFor}
+          />
+        }
+      />
 
       <InventoryTable
         list={list}
+        view={view}
         onAdjust={(row) => setAdjustFor(toAdjustTarget(row))}
         onLedger={(row) => setLedgerFor(toAdjustTarget(row))}
       />

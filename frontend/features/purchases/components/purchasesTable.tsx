@@ -4,9 +4,16 @@ import { IconTruckDelivery } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import { AppTable } from "@/components/shared/AppTable/AppTable";
+import {
+  CardBadges,
+  CardFoot,
+  CardHead,
+  CardStats,
+} from "@/components/shared/AppTable/AppTableCards";
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { Badge } from "@/components/ui/badge";
+import type { ViewMode } from "@/hooks/useViewMode";
 import { formatDayLabel, parseIsoDay } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 
@@ -84,11 +91,64 @@ const COLUMNS: AppTableColumn<Purchase>[] = [
   },
 ];
 
+/** بطاقة فاتورة شراء: المورد والإجمالي، ثم المدفوع والمتبقي والمرتجع. */
+function PurchaseCard({ purchase: p }: { purchase: Purchase }) {
+  return (
+    <>
+      <CardHead
+        title={
+          <span className="font-mono text-sm font-semibold">#{p.number}</span>
+        }
+        subtitle={p.supplierName}
+        aside={<Money amount={p.total} className="text-base font-semibold" />}
+      />
+      <CardBadges>
+        <PaymentBadge purchase={p} />
+        {p.returnedTotal > 0 && (
+          <Badge variant="secondary" className="font-normal">
+            مرتجع
+          </Badge>
+        )}
+      </CardBadges>
+      <CardStats
+        items={[
+          { label: "الأصناف", value: `${p.lines.length} صنف` },
+          {
+            label: "المدفوع",
+            value: <Money amount={p.paidAmount} className="text-xs" />,
+          },
+          {
+            label: "فاتورة المورد",
+            value: <span className="font-mono">{p.supplierInvoice}</span>,
+            hidden: !p.supplierInvoice,
+          },
+          {
+            label: "المرتجع",
+            value: (
+              <Money
+                amount={p.returnedTotal}
+                className="text-xs text-destructive"
+              />
+            ),
+            hidden: p.returnedTotal <= 0,
+          },
+        ]}
+      />
+      <CardFoot>
+        <span>{formatDayLabel(parseIsoDay(p.purchasedOn))}</span>
+        {p.createdByName && <span className="truncate">{p.createdByName}</span>}
+      </CardFoot>
+    </>
+  );
+}
+
 export function PurchasesTable({
   filters: f,
   onOpen,
   emptyAction,
+  view,
 }: {
+  view: ViewMode;
   filters: ReturnType<typeof usePurchasesFilters>;
   onOpen: (id: string) => void;
   emptyAction: ReactNode;
@@ -114,6 +174,9 @@ export function PurchasesTable({
         action: emptyAction,
       }}
       rowHeightClassName="h-16"
+      view={view}
+      renderCard={(p) => <PurchaseCard purchase={p} />}
+      getCardLabel={(p) => `فاتورة شراء رقم ${p.number} من ${p.supplierName}`}
       pagination={{
         total: list.data?.total ?? 0,
         page: f.page,

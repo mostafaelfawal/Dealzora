@@ -6,8 +6,10 @@ import { useState } from "react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { ViewToggle } from "@/components/shared/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { SHORTCUTS } from "@/config/shortcuts";
+import { useViewMode } from "@/hooks/useViewMode";
 
 import { useSalesFilters } from "../hooks/useSalesFilters";
 import type { Sale } from "../types/sale";
@@ -45,6 +47,7 @@ export function SalesScreen() {
   const filters = useSalesFilters();
   const [openId, setOpenId] = useState<string | null>(initialOpenId);
   const [returning, setReturning] = useState<Sale | null>(null);
+  const { view, setView } = useViewMode("sales");
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
@@ -55,8 +58,17 @@ export function SalesScreen() {
       />
 
       <SalesStats period={filters.period} onPeriodChange={filters.setPeriod} />
-      <SalesToolbar filters={filters} />
-      <SalesTable filters={filters} onOpen={setOpenId} />
+      <SalesToolbar
+        filters={filters}
+        viewToggle={
+          <ViewToggle
+            view={view}
+            onChange={setView}
+            hotkey={openId === null && returning === null}
+          />
+        }
+      />
+      <SalesTable filters={filters} onOpen={setOpenId} view={view} />
 
       <SaleDetailSheet
         saleId={openId}

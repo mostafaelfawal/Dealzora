@@ -3,9 +3,15 @@
 import { IconReceiptRefund } from "@tabler/icons-react";
 
 import { AppTable } from "@/components/shared/AppTable/AppTable";
+import {
+  CardBadges,
+  CardFoot,
+  CardHead,
+} from "@/components/shared/AppTable/AppTableCards";
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { Badge } from "@/components/ui/badge";
+import type { ViewMode } from "@/hooks/useViewMode";
 import { formatWhen } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 import { formatQty } from "@/lib/format";
@@ -81,12 +87,66 @@ const COLUMNS: AppTableColumn<SaleReturn>[] = [
   },
 ];
 
+/** بطاقة مرتجع: القيمة والسبب، ثم الأصناف الراجعة وطريقة الرد. */
+function ReturnCard({ ret: r }: { ret: SaleReturn }) {
+  return (
+    <>
+      <CardHead
+        title={
+          <span className="font-mono text-sm font-semibold">
+            مرتجع #{r.number}
+          </span>
+        }
+        subtitle={
+          <>
+            من فاتورة <span className="font-mono">#{r.saleNumber}</span>
+            {r.customerName && ` · ${r.customerName}`}
+          </>
+        }
+        aside={
+          <Money
+            amount={r.total}
+            className="text-base font-semibold text-destructive"
+          />
+        }
+      />
+      <CardBadges>
+        <Badge variant="outline" className="font-normal text-muted-foreground">
+          {RETURN_REASON_LABEL[r.reason]}
+        </Badge>
+      </CardBadges>
+      <ul className="mt-auto space-y-1 border-t border-border/60 pt-2.5 text-xs">
+        {r.lines.slice(0, 3).map((l) => (
+          <li key={l.id} className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate">{l.name}</span>
+            <span className="shrink-0 font-mono text-muted-foreground">
+              {formatQty(l.qty)} {l.unitName}
+            </span>
+          </li>
+        ))}
+        {r.lines.length > 3 && (
+          <li className="text-[11px] text-muted-foreground">
+            +{r.lines.length - 3} أصناف أخرى
+          </li>
+        )}
+      </ul>
+      <RefundBadges ret={r} />
+      <CardFoot>
+        <span>{formatWhen(r.returnedAt)}</span>
+        {r.cashierName && <span className="truncate">{r.cashierName}</span>}
+      </CardFoot>
+    </>
+  );
+}
+
 export function ReturnsTable({
   filters: f,
   onOpenSale,
+  view,
 }: {
   filters: ReturnsFilters;
   onOpenSale: (saleId: string) => void;
+  view: ViewMode;
 }) {
   const { list } = f;
   return (
@@ -108,6 +168,9 @@ export function ReturnsTable({
         description: "ممتاز! لم يرجع أي صنف.",
       }}
       rowHeightClassName="h-16"
+      view={view}
+      renderCard={(r) => <ReturnCard ret={r} />}
+      getCardLabel={(r) => `مرتجع رقم ${r.number} من فاتورة ${r.saleNumber}`}
       pagination={{
         total: f.totals.count,
         page: f.page,
