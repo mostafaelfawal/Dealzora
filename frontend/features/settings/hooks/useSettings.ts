@@ -12,12 +12,15 @@ import {
   fetchBackupStatus,
   fetchLicense,
   fetchCurrency,
+  fetchDiscountLimit,
   fetchShopName,
   renameShop,
   restoreBackup,
   saveCurrency,
+  saveDiscountLimit,
   savePaymentConfig,
   setBackupLocation,
+  type DiscountLimit,
 } from "../api/settings.api";
 
 export const settingsKeys = {
@@ -26,6 +29,7 @@ export const settingsKeys = {
   shop: ["shop"] as const,
   currency: ["settings", "currency"] as const,
   license: ["license"] as const,
+  discountLimit: ["settings", "discount-limit"] as const,
 };
 
 export function useBackupStatus() {
@@ -137,6 +141,31 @@ export function useSavePaymentConfig() {
       });
     },
     onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ طرق الدفع")),
+  });
+}
+
+/* ---------- حد خصم الكاشير ---------- */
+
+export function useDiscountLimit() {
+  return useQuery({
+    queryKey: settingsKeys.discountLimit,
+    queryFn: fetchDiscountLimit,
+  });
+}
+
+export function useSaveDiscountLimit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (limit: DiscountLimit) => saveDiscountLimit(limit),
+    onSuccess: (limit) => {
+      qc.setQueryData(settingsKeys.discountLimit, limit);
+      toast.success(
+        limit.enabled
+          ? `أقصى خصم للكاشير الآن ${limit.maxPercent}%`
+          : "تم إلغاء حد الخصم: الكاشير يخصم بلا حد",
+      );
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ حد الخصم")),
   });
 }
 

@@ -11,8 +11,7 @@ DEFAULT_PAGE_SIZE = 24
 MAX_PAGE_SIZE = 200
 
 # ---- قواعد العمل ----
-# أقصى خصم يمنحه الكاشير (على الصنف أو الفاتورة) كنسبة من القيمة. المدير بلا حد.
-CASHIER_MAX_DISCOUNT_PERCENT = 20
+# حد خصم الكاشير يحدده المدير من الإعدادات (settings.discount_limit). المدير بلا حد.
 # البيع بأكثر من الرصيد مرفوض: الرصيد المخزّن هو المرجع، والتصحيح بالجرد.
 ALLOW_NEGATIVE_STOCK = False
 
@@ -61,7 +60,7 @@ ERROR_MESSAGES: dict[SaleError, str] = {
     SaleError.FRACTION_NOT_ALLOWED: "صنف في الفاتورة لا يقبل كسوراً",
     SaleError.LINE_DISCOUNT_TOO_HIGH: "خصم الصنف أكبر من قيمته",
     SaleError.DISCOUNT_TOO_HIGH: "الخصم أكبر من قيمة الفاتورة",
-    SaleError.CASHIER_DISCOUNT_LIMIT: "الخصم أكبر من المسموح للكاشير. اطلب موافقة المدير",
+    SaleError.CASHIER_DISCOUNT_LIMIT: "الخصم أكبر من النسبة المسموحة للكاشير في الإعدادات. اطلب من المدير إتمام البيع أو تعديل الحد",
     SaleError.CUSTOMER_REQUIRED: "اختر عميلاً للبيع الآجل",
     SaleError.CUSTOMER_INACTIVE: "هذا العميل موقوف",
     SaleError.CREDIT_LIMIT: "المبلغ الآجل أكبر من الحد المتاح للعميل",

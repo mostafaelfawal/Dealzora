@@ -142,6 +142,42 @@ export const savePaymentConfig = async (
 export const saveCurrency = async (currency: Currency): Promise<Currency> =>
   (await api.put<Currency>("/settings/currency", currency)).data;
 
+/* ---------- حد خصم الكاشير ---------- */
+
+export interface DiscountLimit {
+  /** false = الكاشير يخصم بلا حد. */
+  enabled: boolean;
+  maxPercent: number;
+}
+
+interface DiscountLimitDto {
+  enabled: boolean;
+  max_percent: number;
+}
+
+const toDiscountLimit = (d: DiscountLimitDto | undefined): DiscountLimit => ({
+  enabled: d?.enabled ?? true,
+  maxPercent: d?.max_percent ?? 20,
+});
+
+export const fetchDiscountLimit = async (): Promise<DiscountLimit> =>
+  toDiscountLimit(
+    (await api.get<{ discount_limit?: DiscountLimitDto }>("/settings")).data
+      .discount_limit,
+  );
+
+export const saveDiscountLimit = async (
+  limit: DiscountLimit,
+): Promise<DiscountLimit> =>
+  toDiscountLimit(
+    (
+      await api.put<DiscountLimitDto>("/settings/discount-limit", {
+        enabled: limit.enabled,
+        max_percent: limit.maxPercent,
+      })
+    ).data,
+  );
+
 /* ---------- المحل ---------- */
 
 export const fetchShopName = async (): Promise<string | null> =>

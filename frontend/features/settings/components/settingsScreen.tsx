@@ -7,6 +7,7 @@ import {
   IconDatabaseExport,
   IconDevices,
   IconPalette,
+  IconPercentage,
   IconShieldLock,
   IconWallet,
 } from "@tabler/icons-react";
@@ -24,6 +25,7 @@ import { useSettingsTab } from "../hooks/useSettingsTab";
 import { AppearanceSection } from "./appearanceSection";
 import { BackupSection } from "./backupSection";
 import { CurrencySection } from "./currencySection";
+import { DiscountLimitSection } from "./discountLimitSection";
 import { DemoDataSection } from "./demoDataSection";
 import { LicenseSection } from "./licenseSection";
 import { PasswordSection } from "./passwordSection";
@@ -79,6 +81,16 @@ const SHARED: Section[] = [
     description:
       "اختر دولتك وفعّل طرق الدفع الإلكتروني التي يستخدمها محلك، مع رقم الحساب الذي يظهر للكاشير.",
     content: <PaymentsSection />,
+  },
+  {
+    id: "discount",
+    group: "shop",
+    icon: <IconPercentage />,
+    title: "حد الخصم",
+    hint: "أقصى خصم يمنحه الكاشير",
+    description:
+      "أقصى نسبة خصم يمنحها الكاشير على الفاتورة (خصم الأصناف + خصم الفاتورة). المدير بلا حد.",
+    content: <DiscountLimitSection />,
   },
   {
     id: "appearance",

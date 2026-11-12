@@ -12,6 +12,10 @@ MAX_PATH_LEN = 400
 # الافتراضي: الجنيه المصري (سلوك النظام قبل إضافة الإعداد).
 DEFAULT_CURRENCY = {"code": "EGP", "symbol": "ج.م", "name": "جنيه مصري"}
 
+# حد خصم الكاشير (المدير بلا حد). الافتراضي: مفعّل بنسبة 20% (سلوك النظام قبل الإعداد).
+DEFAULT_CASHIER_DISCOUNT_ENABLED = True
+DEFAULT_CASHIER_DISCOUNT_PERCENT = 20
+
 
 class SettingKey(StrEnum):
     CURRENCY_CODE = "currency.code"
@@ -20,6 +24,9 @@ class SettingKey(StrEnum):
     BACKUP_DIR = "backup.dir"  # فارغ = المجلد الافتراضي بجانب القاعدة
     # طرق الدفع الإلكتروني للمحل + دولة القوالب (JSON، انظر payments.py).
     PAY_METHODS = "payments.methods"
+    # حد خصم الكاشير: "1"/"0" والنسبة المئوية (0..100).
+    DISCOUNT_LIMIT_ENABLED = "discount.cashier_limit_enabled"
+    DISCOUNT_LIMIT_PERCENT = "discount.cashier_max_percent"
     # مفاتيح قديمة (قبل القوالب): تُقرأ مرة واحدة لترحيلها إلى PAY_METHODS.
     PAY_VODAFONE_CASH = "payments.vodafone_cash"
     PAY_INSTAPAY = "payments.instapay"

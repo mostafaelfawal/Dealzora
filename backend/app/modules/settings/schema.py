@@ -131,11 +131,26 @@ class PaymentConfigOut(BaseModel):
     methods: list[PaymentMethodOut]
 
 
+class DiscountLimitIn(BaseModel):
+    """حد خصم الكاشير. enabled=False = الكاشير يخصم بلا حد."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool
+    max_percent: int = Field(ge=0, le=100)
+
+
+class DiscountLimitOut(BaseModel):
+    enabled: bool
+    max_percent: int
+
+
 class PublicSettingsOut(BaseModel):
     """ما تحتاجه كل الشاشات (حتى قبل الدخول)."""
 
     currency: CurrencyOut
     payments: PaymentConfigOut
+    discount_limit: DiscountLimitOut
 
 
 class BackupLocationIn(BaseModel):

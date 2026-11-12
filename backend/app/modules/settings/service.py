@@ -15,10 +15,24 @@ from app.core.database import get_sessionmaker
 from app.core.outbox import OutboxOp, enqueue_outbox
 from app.core.security import Actor
 
-from .constants import DEFAULT_CURRENCY, ENTITY_SETTING, SettingKey
+from .constants import (
+    DEFAULT_CASHIER_DISCOUNT_ENABLED,
+    DEFAULT_CASHIER_DISCOUNT_PERCENT,
+    DEFAULT_CURRENCY,
+    ENTITY_SETTING,
+    SettingKey,
+)
 from .model import AppSetting
 from .payments import PaymentKind
-from .schema import CurrencyIn, CurrencyOut, PaymentConfigIn, PaymentConfigOut, PaymentMethodOut
+from .schema import (
+    CurrencyIn,
+    CurrencyOut,
+    DiscountLimitIn,
+    DiscountLimitOut,
+    PaymentConfigIn,
+    PaymentConfigOut,
+    PaymentMethodOut,
+)
 
 # مفاتيح خاصة بالجهاز لا تُرفع للسحابة.
 _LOCAL_KEYS = frozenset({SettingKey.BACKUP_DIR})
@@ -54,6 +68,16 @@ class SettingsService:
             symbol=self.get(SettingKey.CURRENCY_SYMBOL) or DEFAULT_CURRENCY["symbol"],
             name=self.get(SettingKey.CURRENCY_NAME) or DEFAULT_CURRENCY["name"],
         )
+
+    def discount_limit(self) -> DiscountLimitOut:
+        enabled_raw = self.get(SettingKey.DISCOUNT_LIMIT_ENABLED)
+        percent_raw = self.get(SettingKey.DISCOUNT_LIMIT_PERCENT)
+        enabled = DEFAULT_CASHIER_DISCOUNT_ENABLED if enabled_raw is None else enabled_raw == "1"
+        try:
+            percent = min(max(int(percent_raw), 0), 100) if percent_raw else DEFAULT_CASHIER_DISCOUNT_PERCENT
+        except ValueError:  # قيمة تالفة: نرجع للافتراضي
+            percent = DEFAULT_CASHIER_DISCOUNT_PERCENT
+        return DiscountLimitOut(enabled=enabled, max_percent=percent)
 
     def payment_config(self) -> PaymentConfigOut:
         raw = self.get(SettingKey.PAY_METHODS)
@@ -100,6 +124,19 @@ class SettingsService:
                     **({"added": added} if (added := [new[k].name for k in new.keys() - old.keys()]) else {}),
                     **({"removed": removed} if (removed := [old[k].name for k in old.keys() - new.keys()]) else {}),
                 },
+            )  # fmt: skip
+        self.session.commit()
+        return after
+
+    def set_discount_limit(self, actor: Actor, data: DiscountLimitIn) -> DiscountLimitOut:
+        before = self.discount_limit()
+        self._set(actor, SettingKey.DISCOUNT_LIMIT_ENABLED, "1" if data.enabled else "0")
+        self._set(actor, SettingKey.DISCOUNT_LIMIT_PERCENT, str(data.max_percent))
+        after = self.discount_limit()
+        if after != before:
+            record_audit(
+                self.session, actor, entity=ENTITY_SETTING, entity_id="discount_limit", action="update",
+                changes={"discount_limit": {"from": before.model_dump(), "to": after.model_dump()}},
             )  # fmt: skip
         self.session.commit()
         return after

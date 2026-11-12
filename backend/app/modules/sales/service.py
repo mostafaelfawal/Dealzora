@@ -34,7 +34,6 @@ from app.modules.treasury.types import CashDirection, CashKind
 
 from .constants import (
     ALLOW_NEGATIVE_STOCK,
-    CASHIER_MAX_DISCOUNT_PERCENT,
     ENTITY_SALE,
     ENTITY_SALE_RETURN,
     ERROR_MESSAGES,
@@ -231,12 +230,14 @@ class SaleService(EntityService):
         after_lines = subtotal - lines_discount
         if data.invoice_discount > after_lines:
             raise self._err(BadRequestError, SaleError.DISCOUNT_TOO_HIGH)
-        if not self.is_manager and exceeds_percent(
-            lines_discount + data.invoice_discount, subtotal, CASHIER_MAX_DISCOUNT_PERCENT
-        ):
-            raise self._err(
-                ForbiddenError, SaleError.CASHIER_DISCOUNT_LIMIT, max_percent=CASHIER_MAX_DISCOUNT_PERCENT
-            )
+        if not self.is_manager:
+            from app.modules.settings.service import SettingsService
+
+            limit = SettingsService(self.session).discount_limit()
+            if limit.enabled and exceeds_percent(
+                lines_discount + data.invoice_discount, subtotal, limit.max_percent
+            ):
+                raise self._err(ForbiddenError, SaleError.CASHIER_DISCOUNT_LIMIT, max_percent=limit.max_percent)
         total = after_lines - data.invoice_discount
 
         # بَسطة: بيع كاش فقط بدون عميل (العملاء والآجل والمحافظ من خطة دُكّان).
