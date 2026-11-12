@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import { extractErrorMessage } from "@/lib/errors";
+import { useFallbackInterval } from "@/lib/realtime";
 import { useAppDispatch } from "@/lib/store/hooks";
 
 import { fetchCatalogVersion, fetchPosCatalog } from "../api/posCatalog.api";
@@ -12,7 +13,7 @@ import { cartActions } from "../store/cartSlice";
 import { syncCartWithCatalog } from "../store/posActions";
 import { catalogActions } from "../store/catalogSlice";
 
-/** كل كم ثانية نسأل: هل تغيّر شيء في الأصناف/الأسعار/العملاء؟ (طلب صغير جداً) */
+/** احتياط فقط عند انقطاع البث اللحظي: كل كم ثانية نسأل هل تغيّر شيء؟ (طلب صغير جداً) */
 const VERSION_POLL_MS = 10_000;
 
 /**
@@ -23,10 +24,11 @@ const VERSION_POLL_MS = 10_000;
 function useCatalogFreshness() {
   const qc = useQueryClient();
   const last = useRef<string | null>(null);
+  const interval = useFallbackInterval(VERSION_POLL_MS);
   const { data: version } = useQuery({
     queryKey: ["pos", "catalog-version"],
     queryFn: fetchCatalogVersion,
-    refetchInterval: VERSION_POLL_MS,
+    refetchInterval: interval,
     refetchIntervalInBackground: true,
     staleTime: 0,
     retry: false,

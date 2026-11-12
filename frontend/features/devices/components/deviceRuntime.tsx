@@ -21,6 +21,7 @@ import {
   MAIN_CONNECTION_EVENT,
   TERMINALS_DISABLED_EVENT,
 } from "@/lib/axios";
+import { isRealtimeConnected } from "@/lib/realtime";
 
 import { pingMain, sendLease } from "../api/devices.api";
 
@@ -75,10 +76,10 @@ function TerminalStatus() {
     window.addEventListener(MAIN_CONNECTION_EVENT, onConn);
     window.addEventListener(DEVICE_UNPAIRED_EVENT, onUnpaired);
     // فحص دوري: يكتشف الانقطاع حتى لو الكاشير لا يفعل شيئاً، ويكتشف رجوع الاتصال.
-    const ping = setInterval(
-      () => void pingMain().catch(() => undefined),
-      PING_EVERY_MS,
-    );
+    // مع البث اللحظي (بعد الدخول) نبضاته تكفي، فلا نرسل ping.
+    const ping = setInterval(() => {
+      if (!isRealtimeConnected()) void pingMain().catch(() => undefined);
+    }, PING_EVERY_MS);
     return () => {
       window.removeEventListener(MAIN_CONNECTION_EVENT, onConn);
       window.removeEventListener(DEVICE_UNPAIRED_EVENT, onUnpaired);

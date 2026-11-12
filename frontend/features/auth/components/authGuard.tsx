@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useSyncExternalStore } from "react";
 
+import { RealtimeSync } from "@/features/realtime/components/realtimeSync";
 import { AUTH_EXPIRED_EVENT } from "@/lib/axios";
 
 import type { UserRole } from "../config/authOptions";
@@ -48,5 +49,11 @@ export function AuthGuard({
     }
   }, [sessionRole, roleOk, router]);
 
-  return allowed ? <>{children}</> : null;
+  return allowed ? (
+    <>
+      {children}
+      {/* مزامنة لحظية مع باقي الأجهزة طالما المستخدم داخل */}
+      <RealtimeSync />
+    </>
+  ) : null;
 }

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { extractErrorMessage } from "@/lib/errors";
 import { formatMoneyText } from "@/lib/format";
+import { useFallbackInterval } from "@/lib/realtime";
 
 import {
   closeShift,
@@ -19,11 +20,12 @@ import { shiftKeys } from "../config/shiftQueryKeys";
 
 /** الوردية المفتوحة الآن (أو null). تتحدّث كل دقيقة لتحديث رصيد الدرج في الـ Header. */
 export function useCurrentShift(enabled = true) {
+  const interval = useFallbackInterval(60_000);
   return useQuery({
     queryKey: shiftKeys.current(),
     queryFn: fetchCurrentShift,
     enabled,
-    refetchInterval: 60_000,
+    refetchInterval: interval,
     staleTime: 15_000,
   });
 }

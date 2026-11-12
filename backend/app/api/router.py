@@ -13,6 +13,7 @@ from app.modules.held.routes import router as held_router
 from app.modules.plan.routes import router as plan_router
 from app.modules.products.routes import router as products_router
 from app.modules.purchases.routes import router as purchases_router
+from app.modules.realtime.routes import router as realtime_router
 from app.modules.reports.routes import router as reports_router
 from app.modules.sales.routes import router as sales_router
 from app.modules.shifts.routes import router as shifts_router
@@ -43,6 +44,7 @@ routes = [
     reports_router,
     audit_router,
     backup_router,
+    realtime_router,
 ]
 
 # أدوات التطوير (بيانات تجريبية) لا توجد أصلاً في نسخة الإنتاج.

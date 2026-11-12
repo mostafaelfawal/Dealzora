@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { extractErrorMessage } from "@/lib/errors";
+import { useRealtimeConnected } from "@/lib/realtime";
 
 import {
   createPairingCode,
@@ -11,12 +12,14 @@ import {
 
 export const deviceKeys = { network: ["devices", "network"] as const };
 
-/** قائمة الأجهزة تتحدث كل 15 ثانية (لرؤية «متصل الآن» ونجاح الاقتران فور حدوثه). */
+/** قائمة الأجهزة: لحظياً مع البث (اقتران/اتصال جهاز)، ودقيقة احتياطاً لتحول «متصل» إلى «غير متصل». */
 export function useNetwork() {
+  // «غير متصل» لا يُعلَن (هو غياب نشاط)، فنُبقي تحديثاً بطيئاً حتى مع البث.
+  const live = useRealtimeConnected();
   return useQuery({
     queryKey: deviceKeys.network,
     queryFn: fetchNetwork,
-    refetchInterval: 15_000,
+    refetchInterval: live ? 60_000 : 15_000,
   });
 }
 

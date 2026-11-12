@@ -14,6 +14,9 @@ from app.core.config import get_settings
 HOST = get_settings().host
 PORT = get_settings().port  # لازم يطابق البورت اللي الـ frontend بيكلمه
 
+# اتصالات البث اللحظي (/events) لا تنتهي وحدها: لا ننتظرها للأبد عند الإيقاف/إعادة التشغيل.
+GRACEFUL_S = 3
+
 FROZEN = getattr(sys, "frozen", False)  # True جوا exe بتاع PyInstaller
 
 
@@ -42,7 +45,9 @@ def main() -> None:
         try:
             from app.main import app  # كائن مباشر: import بالنص مش بيشتغل جوا الـ exe
 
-            uvicorn.run(app, host=HOST, port=PORT, log_config=None)
+            uvicorn.run(
+                app, host=HOST, port=PORT, log_config=None, timeout_graceful_shutdown=GRACEFUL_S
+            )
         except Exception:
             logging.getLogger("dealzora").exception("backend crashed")
             raise
@@ -55,6 +60,7 @@ def main() -> None:
         port=PORT,
         reload=settings.debug,  # إعادة تشغيل تلقائي وقت التطوير فقط
         log_level="debug" if settings.debug else "info",
+        timeout_graceful_shutdown=GRACEFUL_S,
     )
 
 

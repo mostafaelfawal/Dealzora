@@ -2,12 +2,13 @@
 
 import { useEffect } from "react";
 
+import { onRealtime, useRealtimeConnected } from "@/lib/realtime";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cartActions, type PersistedCart } from "../store/cartSlice";
 import { migrateLocalHeld, refreshHeld } from "../store/posActions";
 
 const STORAGE_KEY = "dealzora:pos:v1";
-/** المعلّقة على الجهاز الأساسي تتحدث كل 15 ثانية (تعليقات الأجهزة الأخرى وقفل الورديات). */
+/** احتياط عند انقطاع البث اللحظي: المعلّقة تتحدث كل 15 ثانية (تعليقات الأجهزة الأخرى وقفل الورديات). */
 const HELD_POLL_MS = 15_000;
 
 /**
@@ -48,9 +49,19 @@ export function usePosPersistence() {
     } else {
       void dispatch(refreshHeld());
     }
+  }, [dispatch]);
+
+  // لحظياً: تعليق/استرجاع من جهاز آخر، أو إغلاق وردية (يلغي معلّقاتها).
+  const live = useRealtimeConnected();
+  useEffect(
+    () => onRealtime(["held", "shifts"], () => void dispatch(refreshHeld())),
+    [dispatch],
+  );
+  useEffect(() => {
+    if (live) return;
     const timer = setInterval(() => void dispatch(refreshHeld()), HELD_POLL_MS);
     return () => clearInterval(timer);
-  }, [dispatch]);
+  }, [live, dispatch]);
 
   useEffect(() => {
     if (!hydrated) return;

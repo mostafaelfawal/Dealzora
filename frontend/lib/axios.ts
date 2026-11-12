@@ -112,6 +112,42 @@ api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
   return config;
 });
 
+/** عنوان الـ API وهيدرات الهوية (قراءة فقط، بدون تصريح كتابة) لطلبات fetch خارج axios (البث اللحظي). */
+export async function getReadTarget(): Promise<{
+  baseURL: string;
+  headers: Record<string, string>;
+}> {
+  const device = await getDeviceConfig();
+  const headers: Record<string, string> = {};
+  let baseURL = `${API_ORIGIN}/api/v1`;
+  if (isTerminal(device)) {
+    baseURL = `${device.main_url}/api/v1`;
+    headers["X-Device-Token"] = device.device_token!;
+  } else {
+    const app = await getAppToken();
+    if (app) headers["X-Session-Token"] = app;
+  }
+  const user = authStore.get();
+  if (user) headers.Authorization = `Bearer ${user}`;
+  return { baseURL, headers };
+}
+
+/** للبث اللحظي: نفس معالجة الردود في axios (انتهاء الجلسة، إلغاء الاقتران، حالة الاتصال). */
+export function reportStreamStatus(
+  status: number,
+  body?: { error?: { code?: string } } | null,
+) {
+  emitConnection(status !== 0);
+  if (typeof window === "undefined") return;
+  const code = body?.error?.code;
+  if (status === 401 && code === "unauthorized") {
+    authStore.clear();
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+  } else if (status === 401 && code === "device_not_paired") {
+    window.dispatchEvent(new Event(DEVICE_UNPAIRED_EVENT));
+  }
+}
+
 // ---------- أخطاء موحدة: { code, message, details } ----------
 export class ApiError extends Error {
   constructor(

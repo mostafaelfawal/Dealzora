@@ -13,6 +13,7 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
 from app.core.init_db import init_db
+from app.core.realtime import install as install_realtime
 from app.modules.backup.service import auto_backup_if_due
 
 
@@ -82,6 +83,7 @@ def create_app() -> FastAPI:
         allow_private_network=True,
     )
     register_error_handlers(app)
+    install_realtime()  # إعلان التغييرات لحظياً لكل الأجهزة (GET /api/v1/events)
     app.include_router(api_router, prefix="/api/v1")
 
     @app.get("/health", include_in_schema=False)
