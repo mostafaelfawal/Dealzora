@@ -4,6 +4,7 @@ import { IconPackageOff } from "@tabler/icons-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { extractErrorMessage } from "@/lib/errors";
 
 import { PRODUCT_ROUTES } from "../config/productRoutes";
@@ -17,10 +18,23 @@ export function ProductFormScreen() {
   if (!productId) return <ProductForm />;
 
   if (isPending) {
+    // نفس شكل النموذج (عمود + لوحة جانبية) فلا تقفز الصفحة عند التحميل.
     return (
-      <p className="py-24 text-center text-sm text-muted-foreground">
-        جارٍ تحميل الصنف…
-      </p>
+      <div
+        aria-busy="true"
+        aria-label="جارٍ تحميل الصنف"
+        className="mx-auto flex max-w-6xl flex-col gap-4"
+      >
+        <Skeleton className="h-12 w-72" />
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-72 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </div>
     );
   }
 

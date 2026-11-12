@@ -596,6 +596,7 @@ class SaleService(EntityService):
                 note=f"مرتجع #{number} من فاتورة #{sale.number}",
                 ref_type=REF_SALE_RETURN,
                 ref_id=ret.id,
+                origin_id=sale.id,
             )
         if customer:
             customer.total_sales = max(customer.total_sales - total, 0)

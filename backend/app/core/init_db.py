@@ -28,6 +28,7 @@ import app.modules.purchases.model  # noqa: F401
 import app.modules.purchase_orders.model  # noqa: F401
 import app.modules.promotions.model  # noqa: F401
 import app.modules.loyalty.model  # noqa: F401
+import app.modules.batches.model  # noqa: F401
 import app.modules.devtools.model  # noqa: F401
 
 # تعديلات على جداول موجودة (create_all لا يعدّل جدولاً قائماً). كل خطوة آمنة للتكرار.
@@ -59,6 +60,8 @@ _NEW_COLUMNS = (
     ("sale_lines", "is_wholesale", "BOOLEAN NOT NULL DEFAULT 0"),
     # نقاط الولاء
     ("customers", "loyalty_points", "INTEGER NOT NULL DEFAULT 0"),
+    # تتبع الصلاحية والدفعات
+    ("products", "track_expiry", "BOOLEAN NOT NULL DEFAULT 0"),
     ("sales", "loyalty_redeemed", "INTEGER NOT NULL DEFAULT 0"),
     ("sales", "loyalty_discount", "INTEGER NOT NULL DEFAULT 0"),
     ("sales", "loyalty_earned", "INTEGER NOT NULL DEFAULT 0"),

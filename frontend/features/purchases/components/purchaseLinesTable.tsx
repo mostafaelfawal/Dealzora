@@ -76,6 +76,28 @@ function LineRow({
           · البيع <Money amount={l.currentPrice} className="text-[11px]" /> /{" "}
           {l.unit}
         </p>
+        {l.trackExpiry && (
+          <div className="mt-1 flex gap-1.5">
+            <Input
+              type="date"
+              value={l.expiryDate ?? ""}
+              onChange={(e) => onPatch({ expiryDate: e.target.value })}
+              aria-label={`صلاحية ${l.name}`}
+              aria-invalid={!l.expiryDate}
+              dir="ltr"
+              className="h-7 w-36 font-mono text-[11px]"
+            />
+            <Input
+              value={l.batchNo ?? ""}
+              onChange={(e) => onPatch({ batchNo: e.target.value })}
+              placeholder="رقم التشغيلة"
+              aria-label={`رقم تشغيلة ${l.name}`}
+              maxLength={40}
+              dir="ltr"
+              className="h-7 w-28 font-mono text-[11px]"
+            />
+          </div>
+        )}
       </td>
       <NumberCell
         label={`كمية ${l.name}`}

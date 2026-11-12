@@ -29,6 +29,9 @@ class PurchaseLineIn(BaseModel):
     qty: int = Qty
     unit_cost: Money
     new_sale_price: PositiveMoney | None = None  # سعر بيع جديد للوحدة الأساسية (اختياري)
+    # الأصناف المتتبَّعة: رقم التشغيلة وتاريخ الصلاحية للدفعة الداخلة.
+    batch_no: str | None = Field(None, max_length=40)
+    expiry_date: date | None = None
 
 
 class PurchaseCreate(BaseModel):

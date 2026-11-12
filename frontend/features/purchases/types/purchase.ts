@@ -62,6 +62,10 @@ export interface PurchaseDraftLine {
   cost: string;
   /** فارغ = لا تغيير في سعر البيع. */
   salePrice: string;
+  /** صنف متتبَّع: رقم التشغيلة وتاريخ الصلاحية (YYYY-MM-DD) للدفعة الداخلة. */
+  trackExpiry?: boolean;
+  batchNo?: string;
+  expiryDate?: string;
 }
 
 export interface PurchaseInput {
@@ -73,6 +77,8 @@ export interface PurchaseInput {
     qty: number;
     unitCost: number;
     newSalePrice: number | null;
+    batchNo?: string | null;
+    expiryDate?: string | null;
   }[];
   discount: number;
   paidAmount: number;

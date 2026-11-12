@@ -44,6 +44,7 @@ PRODUCT_SNAPSHOT_FIELDS = (
     "scale_code",
     "wholesale_price",
     "wholesale_min_qty",
+    "track_expiry",
 )
 
 

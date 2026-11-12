@@ -125,6 +125,8 @@ export const createPurchase = async (input: PurchaseInput) =>
           unit_cost: toCents(l.unitCost),
           new_sale_price:
             l.newSalePrice === null ? null : toCents(l.newSalePrice),
+          batch_no: l.batchNo ?? null,
+          expiry_date: l.expiryDate ?? null,
         })),
         discount: toCents(input.discount),
         paid_amount: toCents(input.paidAmount),

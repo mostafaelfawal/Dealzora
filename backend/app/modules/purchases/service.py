@@ -17,6 +17,7 @@ from app.core.lookups import user_names
 from app.core.periods import local_today
 from app.core.security import Actor
 from app.core.service_base import EntityService
+from app.modules.batches.engine import BatchIn
 from app.modules.products.model import Product
 from app.modules.products.service import ProductService
 from app.modules.products.types import MovementType
@@ -115,6 +116,7 @@ class PurchaseService(EntityService):
                     "unit_cost": item.unit_cost,
                     "total": qty_amount(item.qty, item.unit_cost),
                     "new_sale_price": item.new_sale_price,
+                    "batch_in": BatchIn((item.batch_no or "").strip() or None, item.expiry_date),
                 }
             )
 
@@ -180,6 +182,7 @@ class PurchaseService(EntityService):
                 note=f"فاتورة شراء #{number}",
                 ref_type=REF_PURCHASE,
                 ref_id=purchase.id,
+                batch_in=p["batch_in"],
             )
         self.repo.flush()
 
@@ -301,6 +304,7 @@ class PurchaseService(EntityService):
                 note=label,
                 ref_type=REF_PURCHASE_RETURN,
                 ref_id=ret.id,
+                origin_id=purchase.id,
             )
         if data.refund_method is RefundMethod.BALANCE:
             self.suppliers.record_transaction(

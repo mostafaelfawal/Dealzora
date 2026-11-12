@@ -45,6 +45,7 @@ class Feature(StrEnum):
     FULL_REPORTS = "full_reports"  # التقارير أبعد من 7 أيام + تقرير الديون
     MULTI_USER = "multi_user"
     TERMINALS = "terminals"  # أجهزة كاشير إضافية
+    EXPIRY = "expiry"  # تتبع الصلاحية والدفعات (سلسلة)
 
 
 FEATURE_NAMES: dict[Feature, str] = {
@@ -61,6 +62,7 @@ FEATURE_NAMES: dict[Feature, str] = {
     Feature.FULL_REPORTS: "التقارير الكاملة",
     Feature.MULTI_USER: "أكثر من مستخدم",
     Feature.TERMINALS: "أجهزة كاشير إضافية",
+    Feature.EXPIRY: "تتبع الصلاحية والدفعات",
 }
 
 # بَسطة: المالك يبيع بنفسه على جهاز واحد.
@@ -69,7 +71,12 @@ FREE_LIMITS = {"products": 300, "users": 1, "report_days": 7}
 _UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
     Feature.AUDIT_LOG: Plan.PRO,
     Feature.TERMINALS: Plan.PRO,
+    Feature.EXPIRY: Plan.ENTERPRISE,
 }
+
+_RANK = {Plan.FREE: 0, Plan.BASIC: 1, Plan.PRO: 2, Plan.ENTERPRISE: 3}
+# ميزات تُفرض بالخطة فعلاً (الباقي: أي خطة مدفوعة تفتحه، كما كان قبل التقسيم).
+_STRICT = frozenset({Feature.EXPIRY})
 
 
 def current_plan() -> Plan:
@@ -98,8 +105,11 @@ def is_free() -> bool:
 
 
 def has_feature(feature: Feature) -> bool:
-    # الآن: أي خطة مدفوعة = كل الميزات (الحدود بين دكان/سوق/سلسلة تُضاف لاحقاً هنا فقط).
-    return not is_free()
+    # أي خطة مدفوعة = كل الميزات، ما عدا _STRICT فتحتاج خطتها أو أعلى.
+    plan = current_plan()
+    if feature in _STRICT:
+        return _RANK[plan] >= _RANK[_UNLOCKED_IN[feature]]
+    return plan is not Plan.FREE
 
 
 def enabled_features() -> list[Feature]:
@@ -108,10 +118,15 @@ def enabled_features() -> list[Feature]:
 
 def upgrade_error(feature: Feature) -> ForbiddenError:
     plan = PLAN_NAMES[_UNLOCKED_IN[feature]]
+    current = current_plan()
+    where = (
+        f"خطة «{PLAN_NAMES[Plan.FREE]}» المجانية"
+        if current is Plan.FREE
+        else f"خطتك الحالية «{PLAN_NAMES[current]}»"
+    )
     return ForbiddenError(
         "plan_upgrade_required",
-        f"{FEATURE_NAMES[feature]} غير متاحة في خطة «{PLAN_NAMES[Plan.FREE]}» المجانية. "
-        f"متاحة من خطة «{plan}».",
+        f"{FEATURE_NAMES[feature]} غير متاحة في {where}. متاحة من خطة «{plan}».",
         {"feature": feature.value, "plan": current_plan().value},
     )
 

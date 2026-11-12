@@ -34,6 +34,9 @@ export function toProduct(dto: ProductDto): Product {
       dto.wholesale_price == null ? null : money(dto.wholesale_price),
     wholesaleMinQty:
       dto.wholesale_min_qty == null ? null : qty(dto.wholesale_min_qty),
+    trackExpiry: dto.track_expiry ?? false,
+    nearestExpiry: dto.nearest_expiry ?? null,
+    expiredQty: qty(dto.expired_qty ?? 0),
     isActive: dto.is_active,
     version: dto.version,
     extraUnits: dto.extra_units.map((u) => ({

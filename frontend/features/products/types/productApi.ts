@@ -21,6 +21,9 @@ export interface ProductDto {
   scale_code: number | null;
   wholesale_price: number | null;
   wholesale_min_qty: number | null;
+  track_expiry?: boolean;
+  nearest_expiry?: string | null;
+  expired_qty?: number;
   stock_qty: number;
   stock_level: "ok" | "low" | "out";
   is_active: boolean;
@@ -71,12 +74,15 @@ interface ProductPayloadBase {
   scale_code: number | null;
   wholesale_price: number | null;
   wholesale_min_qty: number | null;
+  track_expiry: boolean;
   is_active: boolean;
   extra_units: ProductUnitPayload[];
 }
 
 export interface ProductCreatePayload extends ProductPayloadBase {
   opening_stock: number; // × 1000
+  opening_expiry?: string | null;
+  opening_batch_no?: string | null;
 }
 
 export interface ProductUpdatePayload extends ProductPayloadBase {

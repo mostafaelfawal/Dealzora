@@ -15,6 +15,7 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
   products: [
     ["products"],
     ["promotions"],
+    ["expiry"],
     ["inventory"],
     ["pos", "catalog"],
     ["purchases"],
@@ -26,6 +27,7 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
   sales: [
     ["sales"],
     ["purchase-orders", "suggestions"],
+    ["expiry"],
     ["pos", "catalog"],
     ["inventory"],
     ["shifts"],

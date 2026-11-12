@@ -66,11 +66,7 @@ export function PurchasesScreen() {
         status={filters.status}
         onStatusChange={filters.setStatus}
         viewToggle={
-          <ViewToggle
-            view={view}
-            onChange={setView}
-            hotkey={openId === null}
-          />
+          <ViewToggle view={view} onChange={setView} hotkey={openId === null} />
         }
       />
 

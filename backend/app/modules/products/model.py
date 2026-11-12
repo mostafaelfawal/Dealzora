@@ -36,6 +36,8 @@ class Product(SyncMixin, Base):
     # سعر الجملة للوحدة الأساسية، ويُطبق لعميل الجملة أو عند الوصول لكمية الجملة (× 1000).
     wholesale_price: Mapped[int | None] = mapped_column(Integer, nullable=True)
     wholesale_min_qty: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # تتبع الصلاحية والدفعات: كل دخول دفعة بتاريخها، والبيع من الأقرب انتهاءً (خطة سلسلة).
+    track_expiry: Mapped[bool] = mapped_column(Boolean, default=False)
     # رصيد مخزّن مؤقتاً لسرعة القوائم. المرجع الحقيقي = مجموع StockMovement.qty_delta،
     # ويُحدَّث هنا فقط داخل نفس معاملة تسجيل الحركة.
     stock_qty: Mapped[int] = mapped_column(Integer, default=0)

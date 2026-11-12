@@ -1,9 +1,13 @@
 "use client";
 
-import { IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconBoxMultiple, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useWatch, type FieldErrors } from "react-hook-form";
 
-import { errorId, FieldError, FormSection } from "@/components/shared/form";
+import {
+  CollapsibleSection,
+  errorId,
+  FieldError,
+} from "@/components/shared/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlanLock } from "@/components/shared/PlanGate";
@@ -172,11 +176,26 @@ export function ProductFormUnits() {
   }
 
   return (
-    <FormSection
+    <CollapsibleSection
       title="وحدات بيع إضافية"
-      description="مثل الكرتونة أو الدستة. المخزون يُحسب دائماً بالوحدة الأساسية."
-      className="space-y-3"
+      summary={
+        units.length
+          ? units
+              .map(
+                (u) =>
+                  `${u.name || "وحدة"}${u.factor ? ` (${u.factor} ${baseUnit})` : ""}`,
+              )
+              .join(" · ")
+          : `غير مستخدمة · مثل كرتونة أو دستة بسعرها وباركودها`
+      }
+      icon={<IconBoxMultiple />}
+      defaultOpen={units.length > 0}
+      forceOpen={Boolean(errors.extraUnits)}
     >
+      <p className="text-xs text-muted-foreground">
+        المخزون يُحسب دائماً بال{baseUnit}. اكتب كام {baseUnit} في الوحدة، والسعر
+        لو مختلف (فارغ = سعر ال{baseUnit} × العدد).
+      </p>
       {units.length > 0 && (
         <ul className="space-y-2">
           {units.map((unit, index) => (
@@ -222,6 +241,6 @@ export function ProductFormUnits() {
           <option key={n} value={n} />
         ))}
       </datalist>
-    </FormSection>
+    </CollapsibleSection>
   );
 }

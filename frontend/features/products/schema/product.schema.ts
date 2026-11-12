@@ -137,6 +137,9 @@ export const productSchema = z
     scaleCode: check(scaleCodeError),
     wholesalePrice: check(costError),
     wholesaleMinQty: check(qtyError),
+    trackExpiry: z.boolean(),
+    openingExpiry: z.string(),
+    openingBatchNo: z.string().max(40, "رقم التشغيلة حتى 40 حرفاً"),
     openingStock: check(qtyError),
     isActive: z.boolean(),
     extraUnits: z

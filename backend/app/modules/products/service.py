@@ -83,8 +83,9 @@ class ProductService(EntityService):
             page_size=query.page_size,
         )
         rows, total = self.repo.list_products(filters)
+        info = self._expiry(rows)
         return ProductListOut(
-            items=[self._to_out(p) for p in rows],
+            items=[self._to_out(p, info) for p in rows],
             total=total,
             page=query.page,
             page_size=query.page_size,
@@ -98,6 +99,11 @@ class ProductService(EntityService):
             out=s.out,
             stock_value=s.stock_value if self.is_manager else None,
         )
+
+    def _expiry(self, rows: list[Product]) -> dict:
+        from app.modules.batches.engine import expiry_info  # متأخر: لا دوران
+
+        return expiry_info(self.session, [p.id for p in rows if p.track_expiry])
 
     def get_product(self, product_id: str) -> ProductOut:
         return self._to_out(self._get_visible(product_id))
@@ -146,8 +152,15 @@ class ProductService(EntityService):
         )
 
     # ================= كتابة =================
+    def _check_expiry_plan(self, data: ProductBase, was: bool = False) -> None:
+        if data.track_expiry and not was:
+            from app.core.plan import Feature, ensure_feature
+
+            ensure_feature(Feature.EXPIRY)
+
     def create_product(self, data: ProductCreate) -> ProductOut:
         self._check_plan(data, new_product=True)
+        self._check_expiry_plan(data)
         self._check_category(data.category_id)
         self._check_barcodes(data)
 
@@ -165,8 +178,14 @@ class ProductService(EntityService):
         self.repo.flush()
 
         if data.opening_stock > 0:
+            from app.modules.batches.engine import BatchIn
+
             self._record_movement(
-                product, MovementType.OPENING, data.opening_stock, note="رصيد افتتاحي"
+                product,
+                MovementType.OPENING,
+                data.opening_stock,
+                note="رصيد افتتاحي",
+                batch_in=BatchIn(data.opening_batch_no, data.opening_expiry),
             )
 
         self._audit(product, "create", self._snapshot(product))
@@ -180,6 +199,8 @@ class ProductService(EntityService):
         self._check_version(product, data.base_version)
         self._check_category(data.category_id)
         self._check_barcodes(data, exclude_product_id=product.id)
+        self._check_expiry_plan(data, was=product.track_expiry)
+        started_tracking = data.track_expiry and not product.track_expiry
 
         before = self._snapshot(product)
         self._apply_fields(product, data)
@@ -189,6 +210,11 @@ class ProductService(EntityService):
         product.mark_modified()
         self.repo.flush()
 
+        if started_tracking:
+            # الرصيد الحالي يصبح دفعة «قبل التتبع» بلا صلاحية، والدفعات الجديدة بتواريخها.
+            from app.modules.batches.engine import BatchEngine
+
+            BatchEngine(self.session, self.actor).reconcile(product)
         self._audit(product, "update", diff_snapshots(before, self._snapshot(product)))
         self._enqueue(product, base_version=data.base_version)
         self._commit()
@@ -265,7 +291,16 @@ class ProductService(EntityService):
                 BadRequestError, ProductError.INSUFFICIENT_STOCK, available=product.stock_qty
             )
 
-        movement = self._record_movement(product, movement_type, delta, note=data.note)
+        from app.modules.batches.engine import BatchIn
+
+        movement = self._record_movement(
+            product,
+            movement_type,
+            delta,
+            note=data.note,
+            batch_in=BatchIn(data.batch_no, data.expiry_date),
+            batch_id=data.batch_id,
+        )
         self._audit(
             product,
             "stock_adjust",
@@ -302,8 +337,12 @@ class ProductService(EntityService):
         note: str | None = None,
         ref_type: str | None = None,
         ref_id: str | None = None,
+        batch_in=None,  # noqa: ANN001 - BatchIn
+        batch_id: str | None = None,
+        origin_id: str | None = None,
     ) -> StockMovement:
-        """حركة مخزون مرتبطة بمستند (فاتورة بيع/شراء/مرتجع). الموديول المستدعي يملك المعاملة."""
+        """حركة مخزون مرتبطة بمستند (فاتورة بيع/شراء/مرتجع). الموديول المستدعي يملك المعاملة.
+        origin_id: المستند الأصلي لمرتجع (الفاتورة أو فاتورة الشراء) ليرجع لنفس الدفعات."""
         return self._record_movement(
             product,
             movement_type,
@@ -312,7 +351,22 @@ class ProductService(EntityService):
             unit_cost=unit_cost,
             ref_type=ref_type,
             ref_id=ref_id,
+            batch_in=batch_in,
+            batch_id=batch_id,
+            origin_id=origin_id,
         )
+
+    def write_off_batch(self, product: Product, batch_id: str, qty: int, *, note: str) -> None:
+        """إعدام دفعة (منتهية/تالفة): حركة تالف من هذه الدفعة + Audit + commit."""
+        movement = self._record_movement(
+            product, MovementType.DAMAGE, -qty, note=note, batch_id=batch_id
+        )
+        self._audit(
+            product,
+            "batch_write_off",
+            {"qty_delta": -qty, "balance_after": movement.balance_after, "note": note},
+        )
+        self._commit()
 
     def apply_purchase_prices(
         self,
@@ -419,6 +473,7 @@ class ProductService(EntityService):
         product.scale_code = data.scale_code
         product.wholesale_price = data.wholesale_price
         product.wholesale_min_qty = data.wholesale_min_qty
+        product.track_expiry = data.track_expiry
 
     def _sync_units(self, product: Product, incoming: list[UnitIn]) -> None:
         existing = {u.id: u for u in product.units}
@@ -463,6 +518,9 @@ class ProductService(EntityService):
         unit_cost: int | None = None,
         ref_type: str | None = None,
         ref_id: str | None = None,
+        batch_in=None,  # noqa: ANN001 - BatchIn
+        batch_id: str | None = None,
+        origin_id: str | None = None,
     ) -> StockMovement:
         balance = product.stock_qty + delta
         movement = StockMovement(
@@ -480,6 +538,21 @@ class ProductService(EntityService):
         )
         product.stock_qty = balance  # الرصيد المخزّن، داخل نفس المعاملة
         self.repo.add_movement(movement)
+        if product.track_expiry:
+            from app.modules.batches.engine import BatchEngine
+
+            BatchEngine(self.session, self.actor).apply(
+                product,
+                movement_id=movement.id,
+                movement_type=movement_type.value,
+                delta=delta,
+                unit_cost=movement.unit_cost or 0,
+                ref_type=ref_type,
+                ref_id=ref_id,
+                batch_in=batch_in,
+                batch_id=batch_id,
+                origin_id=origin_id,
+            )
         self._enqueue_event(
             ENTITY_STOCK_MOVEMENT,
             movement.id,
@@ -497,8 +570,11 @@ class ProductService(EntityService):
         )
         return movement
 
-    def _to_out(self, p: Product) -> ProductOut:
+    def _to_out(self, p: Product, info: dict | None = None) -> ProductOut:
         """الكاشير لا يرى سعر الشراء ولا الهامش."""
+        if info is None:
+            info = self._expiry([p])
+        nearest, expired, _valid = info.get(p.id, (None, 0, 0))
         return ProductOut(
             id=p.id,
             name=p.name,
@@ -516,6 +592,9 @@ class ProductService(EntityService):
             scale_code=p.scale_code,
             wholesale_price=p.wholesale_price,
             wholesale_min_qty=p.wholesale_min_qty,
+            track_expiry=p.track_expiry,
+            nearest_expiry=nearest,
+            expired_qty=expired,
             stock_qty=p.stock_qty,
             stock_level=calc_stock_level(p.stock_qty, p.min_stock),
             is_active=p.is_active,

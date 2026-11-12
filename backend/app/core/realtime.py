@@ -25,6 +25,8 @@ TABLE_TOPICS: dict[str, str] = {
     "categories": "products",
     "measure_units": "products",
     "stock_movements": "products",
+    "product_batches": "products",
+    "batch_moves": "products",
     "customers": "customers",
     "customer_ledger": "customers",
     "loyalty_ledger": "customers",

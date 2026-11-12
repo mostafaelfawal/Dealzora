@@ -1,16 +1,19 @@
 "use client";
 
+import { IconArrowRight } from "@tabler/icons-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
-import { FormSection, SwitchField } from "@/components/shared/form";
+import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 
-import { PRODUCT_FIELD_IDS as IDS } from "../config/productFormFields";
+import { PRODUCT_ROUTES } from "../config/productRoutes";
 import { PRODUCT_FORM_SHORTCUTS } from "../config/productShortcuts";
 import { useProductFormFields } from "../hooks/useProductFormFields";
 import { focusFirstError } from "../lib/productFormFocus";
+import { ProductFormAside } from "./productFormAside";
 import { ProductFormBasics } from "./productFormBasics";
 import { ProductFormFooter, type SaveAction } from "./productFormFooter";
 import { ProductFormPricing } from "./productFormPricing";
@@ -18,37 +21,38 @@ import { ProductFormStock } from "./productFormStock";
 import { ProductFormUnits } from "./productFormUnits";
 
 function ProductFormHeader({ isEditing }: { isEditing: boolean }) {
+  const { form } = useProductFormFields();
+  const name = useWatch({ control: form.control, name: "name" });
+  const dirty = form.formState.isDirty;
   return (
-    <header className="space-y-1">
-      <h1 className="text-lg font-bold">
-        {isEditing ? "تعديل صنف" : "صنف جديد"}
-      </h1>
-      <p className="text-xs text-muted-foreground">
-        {isEditing
-          ? "عدّل بيانات الصنف ثم احفظ."
-          : "اسم الصنف وسعر البيع فقط هما المطلوبان."}
-      </p>
+    <header className="flex items-start gap-3">
+      <Button
+        variant="outline"
+        size="icon-lg"
+        aria-label="رجوع إلى المنتجات"
+        nativeButton={false}
+        render={<Link href={PRODUCT_ROUTES.list} />}
+        className="mt-0.5 shrink-0"
+      >
+        <IconArrowRight />
+      </Button>
+      <div className="min-w-0 space-y-0.5">
+        <h1 className="truncate text-lg font-bold">
+          {isEditing ? `تعديل: ${name || "صنف"}` : "صنف جديد"}
+        </h1>
+        <p className="text-xs text-muted-foreground">
+          {isEditing
+            ? dirty
+              ? "فيه تعديلات لم تُحفظ بعد."
+              : "عدّل اللي محتاجه واحفظ."
+            : "المطلوب بس: اسم الصنف وسعر البيع. الباقي اختياري وتقدر تكمّله بعدين."}
+        </p>
+      </div>
     </header>
   );
 }
 
-function ProductActiveSwitch() {
-  const { form, setField } = useProductFormFields();
-  const isActive = useWatch({ control: form.control, name: "isActive" });
-  return (
-    <FormSection>
-      <SwitchField
-        id={IDS.isActive}
-        label="مفعّل في الكاشير"
-        description="الصنف المعطّل لا يظهر في شاشة البيع."
-        checked={isActive}
-        onCheckedChange={(checked) => setField("isActive", checked)}
-      />
-    </FormSection>
-  );
-}
-
-/** نموذج إضافة/تعديل صنف. كل قسم في ملفه ويقرأ النموذج من ProductFormContext. */
+/** نموذج إضافة/تعديل صنف: النموذج + لوحة جانبية (معاينة وربح واكتمال). */
 export function ProductForm() {
   const { form, onSubmit, isSaving, isEditing } = useProductFormFields();
   const [pendingAction, setPendingAction] = useState<SaveAction>("save");
@@ -60,7 +64,7 @@ export function ProductForm() {
       (data) => onSubmit(data, andNew),
       (errors) => {
         focusFirstError(errors);
-        toast.error("راجع الحقول المطلوبة");
+        toast.error("راجع الحقول المظللة بالأحمر");
       },
     )();
   }
@@ -75,14 +79,20 @@ export function ProductForm() {
         event.preventDefault();
         submit(false);
       }}
-      className="mx-auto flex max-w-3xl flex-col gap-5"
+      className="mx-auto flex max-w-6xl flex-col gap-4"
     >
       <ProductFormHeader isEditing={isEditing} />
-      <ProductFormBasics />
-      <ProductFormPricing />
-      <ProductFormStock />
-      <ProductFormUnits />
-      <ProductActiveSwitch />
+
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <ProductFormBasics />
+          <ProductFormPricing />
+          <ProductFormStock />
+          <ProductFormUnits />
+        </div>
+        <ProductFormAside />
+      </div>
+
       <ProductFormFooter
         isEditing={isEditing}
         isSaving={isSaving}

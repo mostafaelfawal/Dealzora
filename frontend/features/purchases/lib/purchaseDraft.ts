@@ -38,6 +38,9 @@ export function newDraftLine(p: Product): PurchaseDraftLine {
     qty: "1",
     cost: String(p.costPrice ?? 0),
     salePrice: "",
+    trackExpiry: p.trackExpiry,
+    batchNo: "",
+    expiryDate: "",
   };
 }
 
@@ -65,6 +68,7 @@ export function lineError(l: PurchaseDraftLine): string | null {
   if (!(cost >= 0)) return "سعر الشراء";
   if (l.salePrice.trim() && !(parseNumberInput(l.salePrice) > 0))
     return "سعر البيع";
+  if (l.trackExpiry && !l.expiryDate) return "تاريخ الصلاحية";
   return null;
 }
 
@@ -102,7 +106,8 @@ export function draftErrors({
   return [
     !supplierId && "اختر المورد",
     lines.length === 0 && "أضف صنفاً واحداً على الأقل",
-    lineErrors.some(Boolean) && "راجع الكميات والأسعار في الأصناف المظللة",
+    lineErrors.some(Boolean) &&
+      "راجع الكميات والأسعار وتواريخ الصلاحية في الأصناف المظللة",
     totals.paid > totals.total && "المدفوع أكبر من إجمالي الفاتورة",
   ].filter((e): e is string => Boolean(e));
 }
@@ -129,6 +134,8 @@ export function toPurchaseInput(draft: {
       qty: moneyInputOrZero(l.qty),
       unitCost: moneyInputOrZero(l.cost),
       newSalePrice: l.salePrice.trim() ? moneyInputOrZero(l.salePrice) : null,
+      batchNo: l.trackExpiry ? l.batchNo?.trim() || null : null,
+      expiryDate: l.trackExpiry ? l.expiryDate || null : null,
     })),
   };
 }

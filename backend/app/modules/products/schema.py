@@ -1,6 +1,6 @@
 """Pydantic schemas (الطلبات والاستجابات). قواعد التحقق نفسها في schema_validation."""
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
@@ -66,6 +66,7 @@ class ProductBase(BaseModel):
     scale_code: int | None = Field(None, ge=1, le=MAX_SCALE_CODE)
     wholesale_price: Money | None = None
     wholesale_min_qty: int | None = Field(None, ge=1, le=MAX_QTY)
+    track_expiry: bool = False
     extra_units: list[UnitIn] = Field(default_factory=list, max_length=MAX_EXTRA_UNITS)
 
     @model_validator(mode="after")
@@ -88,6 +89,9 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     opening_stock: Qty = 0
+    # صلاحية الرصيد الافتتاحي (للأصناف المتتبَّعة).
+    opening_expiry: date | None = None
+    opening_batch_no: str | None = Field(None, max_length=40)
 
 
 class ProductUpdate(ProductBase):
@@ -111,6 +115,9 @@ class ProductOut(BaseModel):
     scale_code: int | None
     wholesale_price: int | None
     wholesale_min_qty: int | None
+    track_expiry: bool
+    nearest_expiry: date | None  # أقرب صلاحية للكمية الصالحة
+    expired_qty: int  # كمية منتهية لم تُعدم (× 1000)
     stock_qty: int
     stock_level: StockLevel
     is_active: bool
@@ -172,6 +179,10 @@ class StockAdjustIn(BaseModel):
     reason: AdjustReason
     qty: int = Field(ge=-MAX_QTY, le=MAX_QTY)
     note: str | None = Field(None, max_length=MAX_NOTE_LEN)
+    # الأصناف المتتبَّعة: صلاحية الكمية الزائدة، أو الدفعة التي يُخصم منها.
+    expiry_date: date | None = None
+    batch_no: str | None = Field(None, max_length=40)
+    batch_id: str | None = Field(None, max_length=36)
 
     @model_validator(mode="after")
     def _rules(self):

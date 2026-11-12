@@ -2,6 +2,7 @@ import {
   IconBuildingBank,
   IconBuildingStore,
   IconBuildingWarehouse,
+  IconCalendarTime,
   IconCash,
   IconChartBar,
   IconClipboardList,
@@ -57,6 +58,12 @@ export const NAVIGATION: NavGroup[] = [
         href: "/admin/inventory",
         icon: IconBuildingWarehouse,
         hotkey: 4,
+      },
+      {
+        title: "الصلاحية",
+        href: "/admin/expiry",
+        feature: "expiry",
+        icon: IconCalendarTime,
       },
       {
         title: "المشتريات",

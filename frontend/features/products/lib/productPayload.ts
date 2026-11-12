@@ -34,6 +34,7 @@ function toBase(v: ProductSchemaType) {
     wholesale_price: v.wholesalePrice.trim()
       ? scaled(v.wholesalePrice, MONEY_SCALE)
       : null,
+    track_expiry: v.trackExpiry,
     wholesale_min_qty:
       v.wholesalePrice.trim() && v.wholesaleMinQty.trim()
         ? scaled(v.wholesaleMinQty, QTY_SCALE) || null
@@ -54,6 +55,9 @@ export const toCreatePayload = (
 ): ProductCreatePayload => ({
   ...toBase(v),
   opening_stock: scaled(v.openingStock, QTY_SCALE),
+  opening_expiry: v.trackExpiry && v.openingExpiry ? v.openingExpiry : null,
+  opening_batch_no:
+    v.trackExpiry && v.openingBatchNo.trim() ? v.openingBatchNo.trim() : null,
 });
 
 export const toUpdatePayload = (

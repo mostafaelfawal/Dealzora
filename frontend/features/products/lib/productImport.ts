@@ -110,7 +110,9 @@ export async function importProducts({
         : 0;
       const saleCents = Math.round(sale * MONEY_SCALE);
       const wholesaleFromSheet =
-        wholesaleCents > 0 && wholesaleCents < saleCents ? wholesaleCents : null;
+        wholesaleCents > 0 && wholesaleCents < saleCents
+          ? wholesaleCents
+          : null;
       const keptCents =
         existing?.wholesalePrice != null
           ? Math.round(existing.wholesalePrice * MONEY_SCALE)
@@ -147,6 +149,7 @@ export async function importProducts({
             : (existing?.scaleCode ?? null),
         // سعر الجملة: من العمود لو أقل من سعر البيع، وإلا يبقى الحالي.
         wholesale_price: wholesaleFromSheet ?? wholesaleKept,
+        track_expiry: existing?.trackExpiry ?? false,
         wholesale_min_qty:
           (wholesaleFromSheet ?? wholesaleKept) === null
             ? null

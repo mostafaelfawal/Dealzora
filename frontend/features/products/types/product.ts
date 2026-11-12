@@ -28,6 +28,12 @@ export interface Product {
   wholesalePrice: number | null;
   /** الكمية التي يبدأ منها سعر الجملة (null = لعملاء الجملة فقط). */
   wholesaleMinQty: number | null;
+  /** تتبع الصلاحية والدفعات (خطة سلسلة). */
+  trackExpiry: boolean;
+  /** أقرب صلاحية للكمية الصالحة (YYYY-MM-DD). */
+  nearestExpiry: string | null;
+  /** كمية منتهية الصلاحية لم تُعدم بعد. */
+  expiredQty: number;
   isActive: boolean;
   /** نسخة السجل للتحكم في التعارض (base_version). */
   version: number;

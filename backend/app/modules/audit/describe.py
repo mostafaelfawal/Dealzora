@@ -99,6 +99,7 @@ ACTION_LABELS: dict[str, str] = {
     "recall": "استرجاع فاتورة معلّقة",
     "discard": "حذف فاتورة معلّقة",
     "loyalty_adjust": "تعديل نقاط الولاء",
+    "batch_write_off": "إعدام دفعة",
     "send": "إرسال طلب شراء للمورد",
     "cancel": "إلغاء طلب شراء",
     "receive": "استلام طلب شراء",
