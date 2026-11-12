@@ -160,8 +160,7 @@ export function CustomersTable({
       }}
       noResults={{
         title: "لا يوجد عملاء مطابقون",
-        description:
-          "جرّب جزءاً من الاسم أو آخر أرقام الهاتف، أو امسح الفلاتر.",
+        description: "جرّب جزءاً من الاسم أو آخر أرقام الهاتف، أو امسح الفلاتر.",
       }}
       isFiltered={isFiltered}
       onClearFilters={onClearFilters}

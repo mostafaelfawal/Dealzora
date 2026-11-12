@@ -26,6 +26,7 @@ class CustomerBase(BaseModel):
     notes: Notes = ""
     credit_limit: Money = 0  # 0 = بيع نقدي فقط
     is_active: bool = True
+    is_wholesale: bool = False
 
 
 class CustomerCreate(CustomerBase):
@@ -50,6 +51,7 @@ class CustomerOut(BaseModel):
     credit_level: CreditLevel
     is_overdue: bool
     is_active: bool
+    is_wholesale: bool
     total_sales: int | None  # None للكاشير
     last_purchase_at: datetime | None
     last_payment_at: datetime | None

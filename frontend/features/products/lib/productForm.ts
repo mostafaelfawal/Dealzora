@@ -11,6 +11,8 @@ export const emptyValues = (): ProductSchemaType => ({
   salePrice: "",
   minStock: "",
   scaleCode: "",
+  wholesalePrice: "",
+  wholesaleMinQty: "",
   openingStock: "",
   isActive: true,
   extraUnits: [],
@@ -28,6 +30,10 @@ export function toFormValues(product?: Product): ProductSchemaType {
     salePrice: String(product.salePrice),
     minStock: String(product.minStock),
     scaleCode: product.scaleCode === null ? "" : String(product.scaleCode),
+    wholesalePrice:
+      product.wholesalePrice === null ? "" : String(product.wholesalePrice),
+    wholesaleMinQty:
+      product.wholesaleMinQty === null ? "" : String(product.wholesaleMinQty),
     openingStock: "",
     isActive: product.isActive,
     extraUnits: product.extraUnits.map((u) => ({

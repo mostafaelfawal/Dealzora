@@ -6,7 +6,7 @@
 
 from datetime import date
 
-from sqlalchemy import Date, ForeignKey, Index, Integer, String
+from sqlalchemy import Boolean, Date, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.base import Base, SyncMixin
@@ -29,7 +29,8 @@ class Sale(SyncMixin, Base):
     # اسم الطريقة الإلكترونية وقت البيع (لا يتأثر بإعادة التسمية أو الحذف لاحقاً).
     payment_label: Mapped[str | None] = mapped_column(String(40), nullable=True)
     subtotal: Mapped[int] = mapped_column(Integer)  # قبل أي خصم
-    lines_discount: Mapped[int] = mapped_column(Integer, default=0)
+    lines_discount: Mapped[int] = mapped_column(Integer, default=0)  # خصم الكاشير على الأصناف
+    promo_discount: Mapped[int] = mapped_column(Integer, default=0)  # العروض التلقائية
     invoice_discount: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer)
     cash_amount: Mapped[int] = mapped_column(Integer, default=0)  # الجزء الكاش من الإجمالي
@@ -66,7 +67,10 @@ class SaleLine(SyncMixin, Base):
     qty: Mapped[int] = mapped_column(Integer)  # بوحدة البيع × 1000
     unit_price: Mapped[int] = mapped_column(Integer)
     discount: Mapped[int] = mapped_column(Integer, default=0)  # خصم السطر بالقروش
-    line_total: Mapped[int] = mapped_column(Integer)  # بعد خصم السطر
+    promo_discount: Mapped[int] = mapped_column(Integer, default=0)  # خصم العرض التلقائي
+    promo_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    is_wholesale: Mapped[bool] = mapped_column(Boolean, default=False)  # بيع بسعر الجملة
+    line_total: Mapped[int] = mapped_column(Integer)  # بعد العرض وخصم السطر
     net_total: Mapped[int] = mapped_column(Integer)  # بعد توزيع خصم الفاتورة (= المدفوع فعلاً)
     unit_cost: Mapped[int] = mapped_column(Integer, default=0)  # تكلفة الوحدة الأساسية وقت البيع
     cost_total: Mapped[int] = mapped_column(Integer, default=0)

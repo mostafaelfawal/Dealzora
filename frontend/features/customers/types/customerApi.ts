@@ -13,6 +13,7 @@ export interface CustomerDto {
   credit_level: CreditLevel;
   is_overdue: boolean;
   is_active: boolean;
+  is_wholesale: boolean;
   total_sales: number | null; // null للكاشير
   last_purchase_at: string | null;
   last_payment_at: string | null;
@@ -55,6 +56,7 @@ export interface CustomerCreatePayload {
   credit_limit: number;
   opening_balance: number;
   is_active: boolean;
+  is_wholesale: boolean;
 }
 
 export type CustomerUpdatePayload = Omit<

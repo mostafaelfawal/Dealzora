@@ -15,6 +15,7 @@ export const EMPTY_CUSTOMER_FORM: CustomerSchemaType = {
   creditLimit: "",
   openingBalance: "",
   isActive: true,
+  isWholesale: false,
 };
 
 export const customerToForm = (c: Customer): CustomerSchemaType => ({
@@ -25,6 +26,7 @@ export const customerToForm = (c: Customer): CustomerSchemaType => ({
   creditLimit: c.creditLimit ? String(c.creditLimit) : "",
   openingBalance: "",
   isActive: c.isActive,
+  isWholesale: c.isWholesale,
 });
 
 export const formToInput = (v: CustomerSchemaType): CustomerInput => ({
@@ -35,4 +37,5 @@ export const formToInput = (v: CustomerSchemaType): CustomerInput => ({
   creditLimit: amountOrZero(parseAmount(v.creditLimit)),
   openingBalance: amountOrZero(parseAmount(v.openingBalance)),
   isActive: v.isActive,
+  isWholesale: v.isWholesale,
 });

@@ -34,6 +34,8 @@ class SaleLineIn(BaseModel):
     # السعر الذي رآه الكاشير. السيرفر يقارنه بالسعر الحالي ولا يثق به أبداً.
     unit_price: Money
     discount: Money = 0
+    # خصم العرض الذي رآه الكاشير. السيرفر يعيد حسابه ويرفض أي اختلاف.
+    promo_discount: Money = 0
 
 
 class SaleCreate(BaseModel):
@@ -107,6 +109,9 @@ class SaleLineOut(BaseModel):
     qty: int
     unit_price: int
     discount: int
+    promo_discount: int
+    promo_name: str | None
+    is_wholesale: bool
     line_total: int
     net_total: int
     returned_qty: int
@@ -126,6 +131,7 @@ class SaleOut(BaseModel):
     payment_label: str
     subtotal: int
     lines_discount: int
+    promo_discount: int
     invoice_discount: int
     total: int
     cash_amount: int

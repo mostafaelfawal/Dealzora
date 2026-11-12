@@ -16,6 +16,8 @@ export interface PosUnit {
   /** سعر الوحدة بالجنيه. */
   price: number;
   barcode: string;
+  /** للوحدة سعر خاص (لا يُحسب من سعر القطعة)، فلا يتأثر بسعر الجملة. */
+  ownPrice?: boolean;
 }
 
 export interface PosProduct {
@@ -35,6 +37,24 @@ export interface PosProduct {
   units: PosUnit[];
   /** كود الصنف على الميزان (PLU) لملصقات الوزن. */
   scaleCode?: number | null;
+  /** سعر الجملة للوحدة الأساسية. */
+  wholesalePrice?: number | null;
+  /** الكمية (بالوحدة الأساسية) التي يبدأ منها سعر الجملة. */
+  wholesaleMinQty?: number | null;
+}
+
+/** عرض تلقائي ساري اليوم (القيم كما في الـ backend: نسبة أو قروش، والكمية × 1000). */
+export interface PosPromotion {
+  id: string;
+  name: string;
+  kind: "percent" | "amount" | "buy_get";
+  value: number;
+  buyQty: number | null;
+  getQty: number | null;
+  minQty: number | null;
+  scope: "all" | "category" | "products";
+  categoryId: string | null;
+  productIds: string[];
 }
 
 export interface PosCustomer {
@@ -45,6 +65,8 @@ export interface PosCustomer {
   balance: number;
   /** الحد الائتماني. 0 = مفيش بيع آجل للعميل ده. */
   creditLimit: number;
+  /** عميل جملة: سعر الجملة على كل صنف له سعر جملة. */
+  isWholesale?: boolean;
 }
 
 /** صنف جوه الفاتورة (نسخة من بيانات الصنف وقت الإضافة). */
@@ -66,6 +88,19 @@ export interface CartLine {
   stock: number;
   /** خصم على السطر بالجنيه (مبلغ ثابت). */
   discount?: number;
+  /** قسم الصنف (لعروض الأقسام). */
+  category?: string;
+  /** سعر القطاعي لوحدة البيع (price قد يكون سعر الجملة). */
+  retailPrice?: number;
+  /** سعر الجملة لوحدة البيع (null = لا يوجد). */
+  wholesalePrice?: number | null;
+  /** كمية الجملة بالوحدة الأساسية. */
+  wholesaleMinQty?: number | null;
+  /** السطر بسعر الجملة الآن. */
+  wholesale?: boolean;
+  /** خصم العرض التلقائي بالجنيه، واسم العرض. */
+  promo?: number;
+  promoName?: string | null;
 }
 
 export type DiscountType = "amount" | "percent";

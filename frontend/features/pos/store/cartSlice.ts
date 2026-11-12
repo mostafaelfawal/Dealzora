@@ -7,6 +7,7 @@ import {
 } from "@reduxjs/toolkit";
 
 import { clampQty, lineKey, unitOptions } from "../lib/posCalc";
+import { priceInvoice } from "../lib/pricing";
 import type {
   CartLine,
   HeldInvoice,
@@ -14,6 +15,7 @@ import type {
   PosCustomer,
   PosInvoice,
   PosProduct,
+  PosPromotion,
 } from "../types/pos";
 
 /** أقصى عدد من خطوات التراجع المحفوظة. */
@@ -51,6 +53,8 @@ export interface CartState {
   selectedId: string | null;
   lastRemoved: RemovedLine | null;
   hydrated: boolean;
+  /** العروض السارية (من الكتالوج): السطور تُسعَّر بها تلقائياً. */
+  promotions: PosPromotion[];
 }
 
 const initialState: CartState = {
@@ -62,6 +66,7 @@ const initialState: CartState = {
   selectedId: null,
   lastRemoved: null,
   hydrated: false,
+  promotions: [],
 };
 
 /** نسخة عادية (مش Draft) من قيمة جوه الـ state. */
@@ -89,6 +94,17 @@ function toLine(
     ? (unitOptions(product).find((u) => u.id === unitId) ?? null)
     : null;
   const allowDecimal = extra ? false : product.allowDecimal;
+  const retail = extra ? extra.price : product.price;
+  // الكرتونة بسعر خاص لا تأخذ جملة؛ المحسوبة من سعر القطعة تُحسب من سعر الجملة.
+  const ownPrice = extra
+    ? Boolean(product.units?.find((u) => u.id === extra.id)?.ownPrice)
+    : false;
+  const wholesale =
+    product.wholesalePrice == null || ownPrice
+      ? null
+      : extra
+        ? Math.round(product.wholesalePrice * extra.factor * 100) / 100
+        : product.wholesalePrice;
   return {
     productId: product.id,
     unitId: extra ? extra.id : null,
@@ -96,7 +112,11 @@ function toLine(
     name: product.name,
     barcode: product.barcode,
     unit: extra ? extra.name : product.unit,
-    price: extra ? extra.price : product.price,
+    price: retail,
+    retailPrice: retail,
+    wholesalePrice: wholesale,
+    wholesaleMinQty: product.wholesaleMinQty ?? null,
+    category: product.category,
     qty: clampQty(qty, allowDecimal),
     allowDecimal,
     stock: product.stock,
@@ -108,8 +128,10 @@ const keyOf = (line: CartLine) => lineKey(line);
 /** تعديل قابل للتراجع. لو `update` رجّعت نفس المرجع يبقى مفيش تغيير ومش بيتسجّل. */
 function commit(state: CartState, update: (prev: PosInvoice) => PosInvoice) {
   const prev = plain(state.present);
-  const next = update(prev);
-  if (next === prev) return;
+  const updated = update(prev);
+  if (updated === prev) return;
+  // كل تعديل يعيد التسعير: الجملة تتبع العميل والكمية، والعروض تتبع الأصناف.
+  const next = priceInvoice(updated, plain(state.promotions));
   state.past.push(prev);
   if (state.past.length > HISTORY_LIMIT) state.past.shift();
   state.present = next;
@@ -117,9 +139,16 @@ function commit(state: CartState, update: (prev: PosInvoice) => PosInvoice) {
 }
 
 /** استبدال الفاتورة وبدء سجل جديد. */
+/** تسعير الفاتورة الحالية بدون تسجيلها في التراجع (عروض/كتالوج تغيّر). */
+function reprice(state: CartState) {
+  const prev = plain(state.present);
+  const next = priceInvoice(prev, plain(state.promotions));
+  if (next !== prev) state.present = next;
+}
+
 function resetTo(state: CartState, invoice: PosInvoice) {
   state.past = [];
-  state.present = invoice;
+  state.present = priceInvoice(invoice, plain(state.promotions));
   state.future = [];
   const last = invoice.lines.at(-1);
   state.selectedId = last ? keyOf(last) : null;
@@ -380,9 +409,21 @@ const cartSlice = createSlice({
           (u) => u.id === (line.unitId ?? null),
         );
         if (!unit) continue;
+        const fresh = toLine(product, line.qty, line.unitId ?? null);
         line.price = unit.price;
+        line.retailPrice = fresh.retailPrice;
+        line.wholesalePrice = fresh.wholesalePrice;
+        line.wholesaleMinQty = fresh.wholesaleMinQty;
+        line.category = fresh.category;
         line.stock = product.stock;
       }
+      reprice(state);
+    },
+
+    /** العروض السارية تغيّرت (من الكتالوج): تُعاد أسعار الفاتورة المفتوحة. */
+    setPromotions(state, action: PayloadAction<PosPromotion[]>) {
+      state.promotions = action.payload;
+      reprice(state);
     },
 
     syncNextNumber(state, action: PayloadAction<number>) {
@@ -397,6 +438,7 @@ const cartSlice = createSlice({
       state.past = past.slice(0, -1);
       state.present = past[past.length - 1];
       state.future = [present, ...future];
+      reprice(state);
     },
 
     redo(state) {
@@ -405,6 +447,7 @@ const cartSlice = createSlice({
       state.past = [...past, present].slice(-HISTORY_LIMIT);
       state.present = future[0];
       state.future = future.slice(1);
+      reprice(state);
     },
   },
 });

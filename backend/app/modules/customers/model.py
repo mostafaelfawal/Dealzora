@@ -36,6 +36,8 @@ class Customer(SyncMixin, Base):
         DateTime(timezone=True), nullable=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # عميل جملة: يأخذ سعر الجملة على كل صنف له سعر جملة، أياً كانت الكمية.
+    is_wholesale: Mapped[bool] = mapped_column(Boolean, default=False)
 
     __table_args__ = (
         Index(

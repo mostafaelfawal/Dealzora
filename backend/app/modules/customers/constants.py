@@ -34,6 +34,7 @@ CUSTOMER_SNAPSHOT_FIELDS = (
     "notes",
     "credit_limit",
     "is_active",
+    "is_wholesale",
 )
 
 

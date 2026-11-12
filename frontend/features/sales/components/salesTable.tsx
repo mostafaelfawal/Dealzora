@@ -102,7 +102,9 @@ function SaleCard({ sale }: { sale: Sale }) {
           </span>
         }
         subtitle={sale.customerName ?? "عميل نقدي"}
-        aside={<Money amount={sale.total} className="text-base font-semibold" />}
+        aside={
+          <Money amount={sale.total} className="text-base font-semibold" />
+        }
       />
       <CardBadges>
         <SaleBadges sale={sale} />
@@ -118,7 +120,10 @@ function SaleCard({ sale }: { sale: Sale }) {
           {
             label: "آجل على العميل",
             value: (
-              <Money amount={sale.creditAmount} className="text-xs text-warning" />
+              <Money
+                amount={sale.creditAmount}
+                className="text-xs text-warning"
+              />
             ),
             hidden: sale.creditAmount <= 0,
           },
@@ -136,7 +141,9 @@ function SaleCard({ sale }: { sale: Sale }) {
       />
       <CardFoot>
         <span>{formatWhen(sale.soldAt)}</span>
-        {sale.cashierName && <span className="truncate">{sale.cashierName}</span>}
+        {sale.cashierName && (
+          <span className="truncate">{sale.cashierName}</span>
+        )}
       </CardFoot>
     </>
   );

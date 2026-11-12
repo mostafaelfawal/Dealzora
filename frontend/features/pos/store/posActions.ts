@@ -22,6 +22,7 @@ import {
   findByScaleBarcode,
   lineDiscount,
   lineKey,
+  linePromo,
 } from "../lib/posCalc";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
 import { focusSearch, selectSearchText } from "../lib/posFocus";
@@ -429,6 +430,7 @@ function buildSaleInput(
       qty: l.qty,
       unitPrice: l.price,
       discount: lineDiscount(l),
+      promoDiscount: linePromo(l),
     })),
     invoiceDiscount: selectTotals(state).discountAmount,
     ...payment,
@@ -446,7 +448,11 @@ const handleSaveError =
       description: product ? "الصنف: " + product : undefined,
       duration: 8000,
     });
-    if (error instanceof ApiError && error.code === "sale_price_changed") {
+    if (
+      error instanceof ApiError &&
+      (error.code === "sale_price_changed" ||
+        error.code === "sale_promo_changed")
+    ) {
       void fetchPosProducts()
         .then((products) => {
           dispatch(catalogActions.setCatalog({ products }));

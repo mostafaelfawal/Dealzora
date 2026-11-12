@@ -22,6 +22,11 @@ export interface SaleLine {
   qty: number;
   unitPrice: number;
   discount: number;
+  /** خصم العرض التلقائي واسمه. */
+  promoDiscount: number;
+  promoName: string | null;
+  /** بيع بسعر الجملة. */
+  isWholesale: boolean;
   lineTotal: number;
   /** بعد توزيع خصم الفاتورة (= ما دُفع فعلاً في السطر). */
   netTotal: number;
@@ -43,6 +48,8 @@ export interface Sale {
   paymentLabel: string;
   subtotal: number;
   linesDiscount: number;
+  /** مجموع العروض التلقائية. */
+  promoDiscount: number;
   invoiceDiscount: number;
   total: number;
   cashAmount: number;
@@ -118,6 +125,8 @@ export interface SaleLineInput {
   qty: number;
   unitPrice: number;
   discount: number;
+  /** خصم العرض الذي يعرضه الكاشير (السيرفر يتحقق منه). */
+  promoDiscount: number;
 }
 
 export interface SaleInput {

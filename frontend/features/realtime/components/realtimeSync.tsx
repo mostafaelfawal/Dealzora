@@ -14,6 +14,7 @@ import {
 const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
   products: [
     ["products"],
+    ["promotions"],
     ["inventory"],
     ["pos", "catalog"],
     ["purchases"],

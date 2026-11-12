@@ -54,6 +54,7 @@ export const customerSchema = z.object({
   creditLimit: check(amountError("الحد الائتماني")),
   openingBalance: check(amountError("الرصيد الافتتاحي")),
   isActive: z.boolean(),
+  isWholesale: z.boolean(),
 });
 
 export type CustomerSchemaType = z.infer<typeof customerSchema>;

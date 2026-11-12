@@ -54,6 +54,7 @@ ENTITY_LABELS: dict[str, str] = {
     "devtools": "بيانات تجريبية",
     "held_invoice": "فاتورة معلّقة",
     "purchase_order": "طلب شراء",
+    "promotion": "عرض",
 }
 
 # مع «ال» للجمل: «عدّل الصنف «سكر»».
@@ -66,6 +67,7 @@ _THE = {
     "sale": "فاتورة البيع",
     "purchase": "فاتورة الشراء",
     "purchase_order": "طلب الشراء",
+    "promotion": "العرض",
     "expense": "المصروف",
     "cash_entry": "حركة الخزنة",
     "shift": "الوردية",
@@ -422,6 +424,7 @@ _LOADERS: dict[str, Callable[[Session, set[str]], dict[str, str]]] = {
     "sale": _by_number("app.modules.sales.model.Sale"),
     "purchase": _by_number("app.modules.purchases.model.Purchase"),
     "purchase_order": _by_number("app.modules.purchase_orders.model.PurchaseOrder"),
+    "promotion": _by_name("app.modules.promotions.model.Promotion"),
     "shift": _shifts,
     "expense": _expenses,
     "device": _devices,

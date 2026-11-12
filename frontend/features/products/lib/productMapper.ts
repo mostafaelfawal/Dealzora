@@ -30,6 +30,10 @@ export function toProduct(dto: ProductDto): Product {
     stock: qty(dto.stock_qty),
     minStock: qty(dto.min_stock),
     scaleCode: dto.scale_code ?? null,
+    wholesalePrice:
+      dto.wholesale_price == null ? null : money(dto.wholesale_price),
+    wholesaleMinQty:
+      dto.wholesale_min_qty == null ? null : qty(dto.wholesale_min_qty),
     isActive: dto.is_active,
     version: dto.version,
     extraUnits: dto.extra_units.map((u) => ({

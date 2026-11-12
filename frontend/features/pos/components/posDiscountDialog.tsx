@@ -17,10 +17,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { formatMoneyText, normalizeDigits } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
-import { round2 } from "../lib/posCalc";
 import { applyDiscount } from "../store/posActions";
 import { posUiActions } from "../store/posUiSlice";
-import { lineDiscount, lineGross, lineKey } from "../lib/posCalc";
+import {
+  lineDiscount,
+  lineGross,
+  lineKey,
+  linePromo,
+  round2,
+} from "../lib/posCalc";
 import {
   selectInvoiceDiscount,
   selectLines,
@@ -90,7 +95,9 @@ function DiscountForm({
   });
   // في خصم الصنف: الأساس قيمة السطر، والخصم الحالي مبلغ ثابت.
   const subtotal =
-    isLine && selectedLine ? lineGross(selectedLine) : totals.subtotal;
+    isLine && selectedLine
+      ? round2(lineGross(selectedLine) - linePromo(selectedLine))
+      : totals.subtotal;
   const lineCurrent =
     selectedLine && lineDiscount(selectedLine) > 0
       ? { type: "amount" as const, value: lineDiscount(selectedLine) }

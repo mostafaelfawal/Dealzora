@@ -31,6 +31,13 @@ function toBase(v: ProductSchemaType) {
       v.allowDecimal && v.scaleCode.trim()
         ? Number(normalizeDigits(v.scaleCode).trim())
         : null,
+    wholesale_price: v.wholesalePrice.trim()
+      ? scaled(v.wholesalePrice, MONEY_SCALE)
+      : null,
+    wholesale_min_qty:
+      v.wholesalePrice.trim() && v.wholesaleMinQty.trim()
+        ? scaled(v.wholesaleMinQty, QTY_SCALE) || null
+        : null,
     is_active: v.isActive,
     extra_units: v.extraUnits.map((u) => ({
       id: u.id,

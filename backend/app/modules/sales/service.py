@@ -24,9 +24,10 @@ from app.core.service_base import EntityService
 from app.modules.customers.model import Customer
 from app.modules.customers.service import CustomerService
 from app.modules.customers.types import LedgerType
-from app.modules.products.model import Product
+from app.modules.products.model import Product, ProductUnit
 from app.modules.products.service import ProductService
 from app.modules.products.types import MovementType
+from app.modules.promotions.service import active_promotions
 from app.modules.shifts.model import Shift
 from app.modules.shifts.service import ShiftService
 from app.modules.treasury.service import TreasuryService
@@ -43,6 +44,7 @@ from .constants import (
 )
 from .helper import allocate, base_qty, exceeds_percent, proportional, qty_amount, round_div
 from .model import Sale, SaleLine, SaleReturn, SaleReturnLine
+from .pricing import LineInput, price_lines
 from .repository import SaleRepository
 from .schema import (
     ExchangeCreate,
@@ -185,31 +187,47 @@ class SaleService(EntityService):
         demand: dict[str, int] = defaultdict(int)
         products: dict[str, Product] = {}
 
+        # العميل قبل التسعير: «عميل الجملة» يغيّر سعر الأصناف.
+        customer = self._customer(data.customer_id)
+        inputs: list[LineInput] = []
         for item in data.lines:
             product = self._product(item.product_id)
             products[product.id] = product
-            factor, price, unit_name = self._unit_info(product, item.unit_id)
-            if item.unit_price != price:
+            inputs.append(LineInput(product, self._unit(product, item.unit_id), item.qty))
+        prices = price_lines(
+            inputs,
+            wholesale_customer=bool(customer and customer.is_wholesale),
+            promos=active_promotions(self.session),
+        )
+
+        for item, line, lp in zip(data.lines, inputs, prices, strict=True):
+            product = line.product
+            if item.unit_price != lp.price:
                 raise self._err(
-                    ConflictError, SaleError.PRICE_CHANGED, product=product.name, price=price
+                    ConflictError, SaleError.PRICE_CHANGED, product=product.name, price=lp.price
                 )
-            base = base_qty(item.qty, factor)
-            if not product.allow_decimal and base % QTY_SCALE:
+            if item.promo_discount != lp.promo:
+                raise self._err(
+                    ConflictError, SaleError.PROMO_CHANGED, product=product.name, promo=lp.promo
+                )
+            if not product.allow_decimal and lp.base % QTY_SCALE:
                 raise self._err(BadRequestError, SaleError.FRACTION_NOT_ALLOWED, product=product.name)
-            gross = qty_amount(item.qty, price)
-            if item.discount > gross:
+            if item.discount > lp.gross - lp.promo:
                 raise self._err(BadRequestError, SaleError.LINE_DISCOUNT_TOO_HIGH, product=product.name)
-            demand[product.id] += base
+            demand[product.id] += lp.base
             priced.append(
                 {
                     "product": product,
                     "unit_id": item.unit_id,
-                    "unit_name": unit_name,
-                    "factor": factor,
+                    "unit_name": lp.unit_name,
+                    "factor": lp.factor,
                     "qty": item.qty,
-                    "base": base,
-                    "price": price,
-                    "gross": gross,
+                    "base": lp.base,
+                    "price": lp.price,
+                    "gross": lp.gross,
+                    "promo": lp.promo,
+                    "promo_name": lp.promo_name,
+                    "wholesale": lp.wholesale,
                     "discount": item.discount,
                 }
             )
@@ -226,8 +244,9 @@ class SaleService(EntityService):
                     )
 
         subtotal = sum(p["gross"] for p in priced)
+        promo_discount = sum(p["promo"] for p in priced)
         lines_discount = sum(p["discount"] for p in priced)
-        after_lines = subtotal - lines_discount
+        after_lines = subtotal - promo_discount - lines_discount
         if data.invoice_discount > after_lines:
             raise self._err(BadRequestError, SaleError.DISCOUNT_TOO_HIGH)
         if not self.is_manager:
@@ -235,7 +254,7 @@ class SaleService(EntityService):
 
             limit = SettingsService(self.session).discount_limit()
             if limit.enabled and exceeds_percent(
-                lines_discount + data.invoice_discount, subtotal, limit.max_percent
+                lines_discount + data.invoice_discount, subtotal - promo_discount, limit.max_percent
             ):
                 raise self._err(ForbiddenError, SaleError.CASHIER_DISCOUNT_LIMIT, max_percent=limit.max_percent)
         total = after_lines - data.invoice_discount
@@ -247,7 +266,6 @@ class SaleService(EntityService):
             if data.customer_id or data.payment_method != PaymentMethod.CASH:
                 raise upgrade_error(Feature.CUSTOMERS)
         label = self._electronic_label(data.payment_method) if is_electronic(data.payment_method) else None
-        customer = self._customer(data.customer_id)
         cash, credit, wallet, received, change = self._payment(data, total, customer)
 
         sale = Sale(
@@ -264,6 +282,7 @@ class SaleService(EntityService):
             payment_label=label,
             subtotal=subtotal,
             lines_discount=lines_discount,
+            promo_discount=promo_discount,
             invoice_discount=data.invoice_discount,
             total=total,
             cash_amount=cash,
@@ -276,7 +295,9 @@ class SaleService(EntityService):
         )
         self.repo.add(sale)
 
-        nets = allocate(data.invoice_discount, [p["gross"] - p["discount"] for p in priced])
+        nets = allocate(
+            data.invoice_discount, [p["gross"] - p["promo"] - p["discount"] for p in priced]
+        )
         cost_total = 0
         for p, net in zip(priced, nets, strict=True):
             product: Product = p["product"]
@@ -295,7 +316,10 @@ class SaleService(EntityService):
                     qty=p["qty"],
                     unit_price=p["price"],
                     discount=p["discount"],
-                    line_total=p["gross"] - p["discount"],
+                    promo_discount=p["promo"],
+                    promo_name=p["promo_name"],
+                    is_wholesale=p["wholesale"],
+                    line_total=p["gross"] - p["promo"] - p["discount"],
                     net_total=net,
                     unit_cost=product.cost_price,
                     cost_total=line_cost,
@@ -347,6 +371,7 @@ class SaleService(EntityService):
                 "payment_label": sale.payment_label,
                 "payment_ref": sale.payment_ref,
                 "discount": lines_discount + data.invoice_discount,
+                "promo_discount": promo_discount,
                 "customer_id": sale.customer_id,
                 "items": len(priced),
             },
@@ -404,15 +429,13 @@ class SaleService(EntityService):
             raise self._err(ConflictError, SaleError.PRODUCT_INACTIVE, product=product.name)
         return product
 
-    def _unit_info(self, product: Product, unit_id: str | None) -> tuple[int, int, str]:
-        """(المعامل، سعر وحدة البيع، اسمها). الوحدة الإضافية بلا سعر = سعر الأساس × المعامل."""
+    def _unit(self, product: Product, unit_id: str | None) -> ProductUnit | None:
         if not unit_id:
-            return QTY_SCALE, product.sale_price, product.unit
+            return None
         unit = next((u for u in product.units if u.id == unit_id), None)
         if unit is None:
             raise self._err(NotFoundError, SaleError.UNIT_NOT_FOUND)
-        price = unit.sale_price or qty_amount(unit.factor, product.sale_price)
-        return unit.factor, price, unit.name
+        return unit
 
     def _customer(self, customer_id: str | None) -> Customer | None:
         if not customer_id:
@@ -652,6 +675,7 @@ class SaleService(EntityService):
                     payment_label=method_label(s.payment_method, s.payment_label, labels),
                     subtotal=s.subtotal,
                     lines_discount=s.lines_discount,
+                    promo_discount=s.promo_discount,
                     invoice_discount=s.invoice_discount,
                     total=s.total,
                     cash_amount=s.cash_amount,
@@ -675,6 +699,9 @@ class SaleService(EntityService):
                             qty=l.qty,
                             unit_price=l.unit_price,
                             discount=l.discount,
+                            promo_discount=l.promo_discount,
+                            promo_name=l.promo_name,
+                            is_wholesale=l.is_wholesale,
                             line_total=l.line_total,
                             net_total=l.net_total,
                             returned_qty=l.returned_qty,

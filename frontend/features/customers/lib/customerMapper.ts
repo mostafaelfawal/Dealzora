@@ -31,6 +31,7 @@ export const toCustomer = (dto: CustomerDto): Customer => ({
   balance: toPounds(dto.balance),
   creditLimit: toPounds(dto.credit_limit),
   isActive: dto.is_active,
+  isWholesale: dto.is_wholesale ?? false,
   totalSales: toPounds(dto.total_sales ?? 0),
   lastPurchaseAt: toMsOrNull(dto.last_purchase_at),
   lastPaymentAt: toMsOrNull(dto.last_payment_at),
@@ -58,6 +59,7 @@ export const toCreatePayload = (
   credit_limit: toCents(input.creditLimit),
   opening_balance: toCents(input.openingBalance),
   is_active: input.isActive,
+  is_wholesale: input.isWholesale,
 });
 
 /** التعديل لا يقبل opening_balance (الـ backend extra="forbid"). */
@@ -71,6 +73,7 @@ export const toUpdatePayload = (
   notes: input.notes,
   credit_limit: toCents(input.creditLimit),
   is_active: input.isActive,
+  is_wholesale: input.isWholesale,
   base_version: baseVersion,
 });
 

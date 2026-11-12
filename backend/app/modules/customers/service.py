@@ -262,6 +262,7 @@ class CustomerService(EntityService):
         customer.notes = data.notes
         customer.credit_limit = data.credit_limit
         customer.is_active = data.is_active
+        customer.is_wholesale = data.is_wholesale
 
     @staticmethod
     def _refresh_search_text(customer: Customer) -> None:
@@ -330,6 +331,7 @@ class CustomerService(EntityService):
             credit_level=calc_credit_level(c.balance, c.credit_limit),
             is_overdue=is_overdue(c.balance, c.last_payment_at, c.created_at, utcnow()),
             is_active=c.is_active,
+            is_wholesale=c.is_wholesale,
             total_sales=c.total_sales if self.is_manager else None,
             last_purchase_at=c.last_purchase_at,
             last_payment_at=c.last_payment_at,

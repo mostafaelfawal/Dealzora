@@ -7,7 +7,8 @@ export type ImportFieldKey =
   | "salePrice"
   | "stock"
   | "minStock"
-  | "scaleCode";
+  | "scaleCode"
+  | "wholesalePrice";
 
 export interface ImportField {
   key: ImportFieldKey;
@@ -31,6 +32,13 @@ export const IMPORT_FIELDS: ImportField[] = [
     label: "كود الميزان",
     required: false,
     aliases: ["ميزان", "plu", "scale"],
+  },
+  // قبل «سعر البيع»: عمود «سعر الجملة» فيه كلمة «سعر» أيضاً.
+  {
+    key: "wholesalePrice",
+    label: "سعر الجملة",
+    required: false,
+    aliases: ["جملة", "wholesale"],
   },
   {
     key: "barcode",

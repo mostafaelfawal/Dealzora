@@ -64,6 +64,8 @@ class ProductBase(BaseModel):
     min_stock: Qty = 0
     is_active: bool = True
     scale_code: int | None = Field(None, ge=1, le=MAX_SCALE_CODE)
+    wholesale_price: Money | None = None
+    wholesale_min_qty: int | None = Field(None, ge=1, le=MAX_QTY)
     extra_units: list[UnitIn] = Field(default_factory=list, max_length=MAX_EXTRA_UNITS)
 
     @model_validator(mode="after")
@@ -71,6 +73,10 @@ class ProductBase(BaseModel):
         self.allow_decimal = resolve_allow_decimal(self.unit, self.allow_decimal)
         if self.scale_code is not None and not self.allow_decimal:
             raise ValueError("كود الميزان للأصناف التي تُباع بالوزن فقط")
+        if self.wholesale_price is not None and self.wholesale_price >= self.sale_price:
+            raise ValueError("سعر الجملة يجب أن يكون أقل من سعر البيع (القطاعي)")
+        if self.wholesale_price is None:
+            self.wholesale_min_qty = None
         validate_granularity(
             self.allow_decimal,
             min_stock=self.min_stock,
@@ -103,6 +109,8 @@ class ProductOut(BaseModel):
     margin_percent: int | None  # None للكاشير
     min_stock: int
     scale_code: int | None
+    wholesale_price: int | None
+    wholesale_min_qty: int | None
     stock_qty: int
     stock_level: StockLevel
     is_active: bool

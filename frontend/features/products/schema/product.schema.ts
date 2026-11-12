@@ -135,6 +135,8 @@ export const productSchema = z
     salePrice: check(saleError),
     minStock: check(qtyError),
     scaleCode: check(scaleCodeError),
+    wholesalePrice: check(costError),
+    wholesaleMinQty: check(qtyError),
     openingStock: check(qtyError),
     isActive: z.boolean(),
     extraUnits: z
@@ -159,6 +161,18 @@ export const productSchema = z
             message: `${label} لا يقبل كسوراً لأن الصنف لا يُباع بالوزن`,
           });
         }
+      }
+    }
+
+    if (values.wholesalePrice.trim()) {
+      const wholesale = toScaled(values.wholesalePrice, MONEY_SCALE);
+      const retail = toScaled(values.salePrice, MONEY_SCALE);
+      if (wholesale !== null && retail !== null && wholesale >= retail) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["wholesalePrice"],
+          message: "سعر الجملة يجب أن يكون أقل من سعر البيع",
+        });
       }
     }
 

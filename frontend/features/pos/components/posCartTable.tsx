@@ -5,6 +5,7 @@ import {
   IconBarcode,
   IconCheck,
   IconChevronDown,
+  IconDiscount2,
   IconX,
 } from "@tabler/icons-react";
 import { useEffect } from "react";
@@ -23,7 +24,13 @@ import {
 import { formatQty } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
-import { lineDiscount, lineKey, lineTotal, unitOptions } from "../lib/posCalc";
+import {
+  lineDiscount,
+  lineKey,
+  linePromo,
+  lineTotal,
+  unitOptions,
+} from "../lib/posCalc";
 import { cartActions } from "../store/cartSlice";
 import { changeLineUnit, removeLineWithUndo } from "../store/posActions";
 import {
@@ -147,7 +154,20 @@ function CartRow({
             className="absolute inset-y-0 inset-s-0 w-0.5 bg-primary"
           />
         )}
-        <span className="block truncate text-xs font-medium">{line.name}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-xs font-medium">{line.name}</span>
+          {line.wholesale && (
+            <span className="shrink-0 bg-primary/10 px-1 text-[10px] text-primary">
+              جملة
+            </span>
+          )}
+          {line.promoName && (
+            <span className="inline-flex shrink-0 items-center gap-0.5 bg-success/10 px-1 text-[10px] text-success">
+              <IconDiscount2 className="size-3" />
+              {line.promoName}
+            </span>
+          )}
+        </span>
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <UnitSwitcher line={line} id={id} />
           <span className="hidden font-mono sm:flex sm:gap-1">
@@ -173,6 +193,11 @@ function CartRow({
       </td>
       <td className="px-2">
         <Money amount={lineTotal(line)} className="text-sm" />
+        {linePromo(line) > 0 && (
+          <span className="block text-[10px] text-success">
+            عرض −<Money amount={linePromo(line)} className="text-[10px]" />
+          </span>
+        )}
         {lineDiscount(line) > 0 && (
           <span className="block text-[10px] text-warning">
             خصم <Money amount={lineDiscount(line)} className="text-[10px]" />

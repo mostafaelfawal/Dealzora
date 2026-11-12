@@ -26,6 +26,7 @@ import app.modules.shifts.model  # noqa: F401
 import app.modules.sales.model  # noqa: F401
 import app.modules.purchases.model  # noqa: F401
 import app.modules.purchase_orders.model  # noqa: F401
+import app.modules.promotions.model  # noqa: F401
 import app.modules.devtools.model  # noqa: F401
 
 # تعديلات على جداول موجودة (create_all لا يعدّل جدولاً قائماً). كل خطوة آمنة للتكرار.
@@ -46,6 +47,15 @@ _NEW_COLUMNS = (
     ("sales", "payment_label", "VARCHAR(40)"),
     # باركود الميزان: كود الصنف على الميزان (PLU)
     ("products", "scale_code", "INTEGER"),
+    # أسعار الجملة: سعر الجملة للوحدة الأساسية + الكمية التي يبدأ منها (× 1000)
+    ("products", "wholesale_price", "INTEGER"),
+    ("products", "wholesale_min_qty", "INTEGER"),
+    ("customers", "is_wholesale", "BOOLEAN NOT NULL DEFAULT 0"),
+    # العروض التلقائية في الفاتورة
+    ("sales", "promo_discount", "INTEGER NOT NULL DEFAULT 0"),
+    ("sale_lines", "promo_discount", "INTEGER NOT NULL DEFAULT 0"),
+    ("sale_lines", "promo_name", "VARCHAR(80)"),
+    ("sale_lines", "is_wholesale", "BOOLEAN NOT NULL DEFAULT 0"),
 )
 
 # فهارس على أعمدة أُضيفت بـ _NEW_COLUMNS (تُنشأ بعدها).

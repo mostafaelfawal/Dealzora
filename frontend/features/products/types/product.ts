@@ -24,6 +24,10 @@ export interface Product {
   minStock: number;
   /** كود الصنف على الميزان (PLU). null = لا يُوزن على الميزان. */
   scaleCode: number | null;
+  /** سعر الجملة للوحدة الأساسية (null = لا يوجد). */
+  wholesalePrice: number | null;
+  /** الكمية التي يبدأ منها سعر الجملة (null = لعملاء الجملة فقط). */
+  wholesaleMinQty: number | null;
   isActive: boolean;
   /** نسخة السجل للتحكم في التعارض (base_version). */
   version: number;

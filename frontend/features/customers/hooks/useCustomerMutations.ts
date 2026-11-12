@@ -99,8 +99,7 @@ export function useBulkDeactivateCustomers() {
   return useMutation({
     mutationFn: (items: BulkItem[]) => bulkDeactivateCustomers(items),
     onSuccess: (result) => showBulkResult(result, "تم تعطيل", "عميل"),
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
+    onError: (error) => toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
     onSettled: () => void refresh(),
   });
 }

@@ -10,7 +10,12 @@ import type { Sale } from "@/features/sales/types/sale";
 import type { Product } from "@/features/products/types/product";
 
 import { round2 } from "../lib/posCalc";
-import type { CompletedInvoice, PosCustomer, PosProduct } from "../types/pos";
+import type {
+  CompletedInvoice,
+  PosCustomer,
+  PosProduct,
+  PosPromotion,
+} from "../types/pos";
 import type { CatalogState } from "../store/catalogSlice";
 
 const PAGE_SIZE = 200;
@@ -28,6 +33,8 @@ const toPosProduct = (p: Product): PosProduct => ({
   stock: p.stock,
   minStock: p.minStock,
   scaleCode: p.scaleCode,
+  wholesalePrice: p.wholesalePrice,
+  wholesaleMinQty: p.wholesaleMinQty,
   // سعر الوحدة الفارغ = سعر الأساسية × العدد (نفس حساب الـ backend).
   units: p.extraUnits.map((u) => ({
     id: u.id,
@@ -35,6 +42,7 @@ const toPosProduct = (p: Product): PosProduct => ({
     factor: u.factor,
     price: u.salePrice ?? round2(p.salePrice * u.factor),
     barcode: u.barcode,
+    ownPrice: u.salePrice !== null,
   })),
 });
 
@@ -44,6 +52,7 @@ const toPosCustomer = (c: Customer): PosCustomer => ({
   phone: c.phone,
   balance: c.balance,
   creditLimit: c.creditLimit,
+  isWholesale: c.isWholesale,
 });
 
 /** فاتورة من الـ backend → شكل الكاشير. نسبة الخصم للعرض فقط؛ قيمة المرتجع يحسبها السيرفر. */
@@ -134,3 +143,33 @@ export async function fetchPosProducts(): Promise<PosProduct[]> {
 export const fetchCatalogVersion = async (): Promise<string> =>
   (await api.get<{ version: string }>("/products/catalog-version")).data
     .version;
+
+/** العروض السارية اليوم (الكاشير يطبقها تلقائياً، والسيرفر يتحقق منها). */
+export const fetchActivePromotions = async (): Promise<PosPromotion[]> =>
+  (
+    await api.get<
+      {
+        id: string;
+        name: string;
+        kind: PosPromotion["kind"];
+        value: number;
+        buy_qty: number | null;
+        get_qty: number | null;
+        min_qty: number | null;
+        scope: PosPromotion["scope"];
+        category_id: string | null;
+        product_ids: string[];
+      }[]
+    >("/promotions/active")
+  ).data.map((p) => ({
+    id: p.id,
+    name: p.name,
+    kind: p.kind,
+    value: p.value,
+    buyQty: p.buy_qty,
+    getQty: p.get_qty,
+    minQty: p.min_qty,
+    scope: p.scope,
+    categoryId: p.category_id,
+    productIds: p.product_ids,
+  }));

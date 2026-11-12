@@ -19,6 +19,8 @@ export interface ProductDto {
   margin_percent: number | null; // null للكاشير
   min_stock: number;
   scale_code: number | null;
+  wholesale_price: number | null;
+  wholesale_min_qty: number | null;
   stock_qty: number;
   stock_level: "ok" | "low" | "out";
   is_active: boolean;
@@ -67,6 +69,8 @@ interface ProductPayloadBase {
   sale_price: number; // قروش
   min_stock: number; // × 1000
   scale_code: number | null;
+  wholesale_price: number | null;
+  wholesale_min_qty: number | null;
   is_active: boolean;
   extra_units: ProductUnitPayload[];
 }

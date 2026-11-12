@@ -34,9 +34,9 @@ export function ProductFormPricing() {
     control,
     formState: { errors },
   } = form;
-  const [costPrice, salePrice] = useWatch({
+  const [costPrice, salePrice, wholesalePrice, unit] = useWatch({
     control,
-    name: ["costPrice", "salePrice"],
+    name: ["costPrice", "salePrice", "wholesalePrice", "unit"],
   });
 
   const cost = numberOrZero(parseNumber(costPrice));
@@ -85,6 +85,42 @@ export function ProductFormPricing() {
             aria-describedby={errorId(IDS.salePrice)}
           />
         </FormField>
+      </div>
+
+      <div className="grid gap-4 border-t pt-3 sm:grid-cols-2">
+        <FormField
+          id={IDS.wholesalePrice}
+          label="سعر الجملة"
+          error={errors.wholesalePrice?.message}
+        >
+          <Input
+            id={IDS.wholesalePrice}
+            {...PRICE_INPUT}
+            {...register("wholesalePrice")}
+            placeholder="اختياري"
+            aria-invalid={Boolean(errors.wholesalePrice)}
+            aria-describedby={errorId(IDS.wholesalePrice)}
+          />
+        </FormField>
+        <FormField
+          id={IDS.wholesaleMinQty}
+          label={`سعر الجملة من كمية (${unit || "قطعة"})`}
+          error={errors.wholesaleMinQty?.message}
+        >
+          <Input
+            id={IDS.wholesaleMinQty}
+            {...PRICE_INPUT}
+            {...register("wholesaleMinQty")}
+            disabled={!wholesalePrice.trim()}
+            placeholder="مثال: 12"
+            aria-invalid={Boolean(errors.wholesaleMinQty)}
+            aria-describedby={errorId(IDS.wholesaleMinQty)}
+          />
+        </FormField>
+        <p className="text-xs text-muted-foreground sm:col-span-2">
+          سعر الجملة يُطبَّق تلقائياً في الكاشير لعميل الجملة، أو لأي عميل لما يشتري
+          الكمية دي أو أكتر. اترك الكمية فارغة لو الجملة لعملاء الجملة فقط.
+        </p>
       </div>
 
       <div className="space-y-1.5">

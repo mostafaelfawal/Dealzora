@@ -42,6 +42,8 @@ PRODUCT_SNAPSHOT_FIELDS = (
     "min_stock",
     "is_active",
     "scale_code",
+    "wholesale_price",
+    "wholesale_min_qty",
 )
 
 

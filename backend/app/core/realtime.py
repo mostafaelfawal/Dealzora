@@ -44,6 +44,7 @@ TABLE_TOPICS: dict[str, str] = {
     "suppliers": "suppliers",
     "supplier_transactions": "suppliers",
     "users": "users",
+    "promotions": "products",  # العروض تغيّر أسعار الكاشير
     "app_settings": "settings",
     "shop": "settings",
     "devices": "devices",

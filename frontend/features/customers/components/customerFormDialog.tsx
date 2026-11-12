@@ -93,6 +93,7 @@ function CustomerForm({
     control,
     formState: { errors },
   } = form;
+  const isWholesale = useWatch({ control, name: "isWholesale" });
   const [creditLimit, isActive] = useWatch({
     control,
     name: ["creditLimit", "isActive"],
@@ -300,6 +301,23 @@ function CustomerForm({
           placeholder="مثال: يدفع آخر كل شهر"
         />
         <FieldError id={`${IDS.notes}-error`} message={errors.notes?.message} />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t pt-3">
+        <div className="space-y-0.5">
+          <Label htmlFor="cf-wholesale">عميل جملة (تاجر)</Label>
+          <p className="text-xs text-muted-foreground">
+            يأخذ سعر الجملة تلقائياً على كل صنف له سعر جملة، أياً كانت الكمية.
+          </p>
+        </div>
+        <Switch
+          id="cf-wholesale"
+          checked={isWholesale}
+          disabled={saving}
+          onCheckedChange={(checked) =>
+            setValue("isWholesale", checked, { shouldDirty: true })
+          }
+        />
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t pt-3">

@@ -32,7 +32,7 @@ class ReportRepository:
                 func.count(),
                 func.sum(Sale.total),
                 func.sum(Sale.cost_total),
-                func.sum(Sale.lines_discount + Sale.invoice_discount),
+                func.sum(Sale.lines_discount + Sale.promo_discount + Sale.invoice_discount),
                 func.sum(Sale.cash_amount),
                 func.sum(Sale.credit_amount),
                 func.sum(Sale.wallet_amount),
@@ -277,7 +277,7 @@ class ReportRepository:
                 Sale.created_by,
                 func.count(),
                 func.sum(Sale.total),
-                func.sum(Sale.lines_discount + Sale.invoice_discount),
+                func.sum(Sale.lines_discount + Sale.promo_discount + Sale.invoice_discount),
             )
             .where(live(Sale), Sale.sold_on.between(d1, d2))
             .group_by(Sale.created_by)

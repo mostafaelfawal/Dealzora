@@ -28,7 +28,7 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
       <tr><td colspan="3" class="name">${esc(l.name)}</td></tr>
       <tr class="sub">
         <td>${formatQty(l.qty)} ${esc(l.unitName)} × ${money(l.unitPrice)}</td>
-        <td>${l.discount > 0 ? `خصم ${money(l.discount)}` : ""}</td>
+        <td>${l.promoDiscount > 0 ? `${esc(l.promoName ?? "عرض")} −${money(l.promoDiscount)}` : ""}${l.discount > 0 ? ` خصم ${money(l.discount)}` : ""}</td>
         <td class="num">${money(l.lineTotal)}</td>
       </tr>`,
     )
@@ -64,6 +64,7 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
   ${sale.customerName ? `<div class="center muted">العميل: ${esc(sale.customerName)}</div>` : ""}
   <hr><table>${rows}</table><hr>
   ${line("الإجمالي قبل الخصم", money(sale.subtotal))}
+  ${sale.promoDiscount > 0 ? line("العروض", money(sale.promoDiscount)) : ""}
   ${discount > 0 ? line("الخصم", money(discount)) : ""}
   ${line(`الإجمالي (${currencySymbol()})`, money(sale.total), "total")}
   ${line("طريقة الدفع", sale.paymentLabel)}
@@ -108,6 +109,9 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
     "",
     lines,
     "",
+    sale.promoDiscount > 0
+      ? `العروض: ${money(sale.promoDiscount)} ${currencySymbol()}`
+      : null,
     discount > 0 ? `الخصم: ${money(discount)} ${currencySymbol()}` : null,
     `*الإجمالي: ${money(sale.total)} ${currencySymbol()}*`,
     sale.creditAmount > 0

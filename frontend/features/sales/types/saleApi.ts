@@ -11,6 +11,9 @@ export interface SaleLineDto {
   qty: number;
   unit_price: number;
   discount: number;
+  promo_discount?: number;
+  promo_name?: string | null;
+  is_wholesale?: boolean;
   line_total: number;
   net_total: number;
   returned_qty: number;
@@ -30,6 +33,7 @@ export interface SaleDto {
   payment_label?: string;
   subtotal: number;
   lines_discount: number;
+  promo_discount?: number;
   invoice_discount: number;
   total: number;
   cash_amount: number;

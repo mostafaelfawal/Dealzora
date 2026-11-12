@@ -105,6 +105,18 @@ export async function importProducts({
       const categoryText = text("category").toLowerCase();
       const pluText = normalizeDigits(text("scaleCode")).trim();
       const scaleCode = /^\d{1,6}$/.test(pluText) ? Number(pluText) : 0;
+      const wholesaleCents = text("wholesalePrice")
+        ? Math.round(num("wholesalePrice") * MONEY_SCALE)
+        : 0;
+      const saleCents = Math.round(sale * MONEY_SCALE);
+      const wholesaleFromSheet =
+        wholesaleCents > 0 && wholesaleCents < saleCents ? wholesaleCents : null;
+      const keptCents =
+        existing?.wholesalePrice != null
+          ? Math.round(existing.wholesalePrice * MONEY_SCALE)
+          : null;
+      const wholesaleKept =
+        keptCents !== null && keptCents < saleCents ? keptCents : null;
 
       const base = {
         name,
@@ -133,6 +145,14 @@ export async function importProducts({
           : scaleCode > 0
             ? scaleCode
             : (existing?.scaleCode ?? null),
+        // سعر الجملة: من العمود لو أقل من سعر البيع، وإلا يبقى الحالي.
+        wholesale_price: wholesaleFromSheet ?? wholesaleKept,
+        wholesale_min_qty:
+          (wholesaleFromSheet ?? wholesaleKept) === null
+            ? null
+            : existing?.wholesaleMinQty != null
+              ? Math.round(existing.wholesaleMinQty * QTY_SCALE)
+              : null,
       };
 
       if (existing) {

@@ -9,6 +9,8 @@ export interface Customer {
   /** الحد الائتماني. 0 = بيع نقدي فقط. */
   creditLimit: number;
   isActive: boolean;
+  /** عميل جملة: يأخذ سعر الجملة على كل صنف له سعر جملة. */
+  isWholesale: boolean;
   totalSales: number;
   lastPurchaseAt: number | null;
   lastPaymentAt: number | null;
@@ -26,6 +28,7 @@ export interface CustomerInput {
   /** رصيد افتتاحي (دين سابق) عند الإضافة فقط. */
   openingBalance: number;
   isActive: boolean;
+  isWholesale: boolean;
 }
 
 export interface PaymentInput {

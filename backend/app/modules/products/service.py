@@ -209,6 +209,8 @@ class ProductService(EntityService):
             cost_price=src.cost_price,
             sale_price=src.sale_price,
             min_stock=src.min_stock,
+            wholesale_price=src.wholesale_price,
+            wholesale_min_qty=src.wholesale_min_qty,
             is_active=src.is_active,
             stock_qty=0,
         )
@@ -415,6 +417,8 @@ class ProductService(EntityService):
         product.min_stock = data.min_stock
         product.is_active = data.is_active
         product.scale_code = data.scale_code
+        product.wholesale_price = data.wholesale_price
+        product.wholesale_min_qty = data.wholesale_min_qty
 
     def _sync_units(self, product: Product, incoming: list[UnitIn]) -> None:
         existing = {u.id: u for u in product.units}
@@ -510,6 +514,8 @@ class ProductService(EntityService):
             else None,
             min_stock=p.min_stock,
             scale_code=p.scale_code,
+            wholesale_price=p.wholesale_price,
+            wholesale_min_qty=p.wholesale_min_qty,
             stock_qty=p.stock_qty,
             stock_level=calc_stock_level(p.stock_qty, p.min_stock),
             is_active=p.is_active,

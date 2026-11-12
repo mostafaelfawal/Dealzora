@@ -8,7 +8,11 @@ import { extractErrorMessage } from "@/lib/errors";
 import { useFallbackInterval } from "@/lib/realtime";
 import { useAppDispatch } from "@/lib/store/hooks";
 
-import { fetchCatalogVersion, fetchPosCatalog } from "../api/posCatalog.api";
+import {
+  fetchActivePromotions,
+  fetchCatalogVersion,
+  fetchPosCatalog,
+} from "../api/posCatalog.api";
 import { cartActions } from "../store/cartSlice";
 import { syncCartWithCatalog } from "../store/posActions";
 import { catalogActions } from "../store/catalogSlice";
@@ -54,6 +58,16 @@ export function usePosCatalog() {
   });
 
   const { data, isError, error } = query;
+
+  // العروض السارية: مع الكتالوج (نفس مفتاح ["pos", ...] فيتحدث مع أي تغيير لحظي).
+  const promos = useQuery({
+    queryKey: ["pos", "catalog", "promotions"],
+    queryFn: fetchActivePromotions,
+    staleTime: 60_000,
+  });
+  useEffect(() => {
+    if (promos.data) dispatch(cartActions.setPromotions(promos.data));
+  }, [promos.data, dispatch]);
 
   useEffect(() => {
     if (!data) return;
