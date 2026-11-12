@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
+  disconnectFromMain,
   getDeviceConfig,
   getLicenseLease,
   isTerminal,
@@ -64,6 +65,7 @@ function TerminalStatus() {
   const [online, setOnline] = useState(true);
   const [unpaired, setUnpaired] = useState(false);
   const [disabled, setDisabled] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     const onConn = (e: Event) => setOnline((e as CustomEvent<boolean>).detail);
@@ -129,7 +131,16 @@ function TerminalStatus() {
           <Button
             size="lg"
             className="w-full"
-            onClick={() => window.location.replace("/connect")}
+            disabled={resetting}
+            onClick={async () => {
+              // نمسح الاقتران القديم (التوكن الملغى) وإلا يرجع الـ ping يكتشفه ويفتح الشاشة تاني.
+              setResetting(true);
+              try {
+                await disconnectFromMain(); // يعيد تشغيل البرنامج كجهاز مستقل
+              } catch {
+                window.location.replace("/connect");
+              }
+            }}
           >
             إعادة الربط بكود جديد
           </Button>

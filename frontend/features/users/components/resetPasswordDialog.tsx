@@ -63,6 +63,8 @@ function ResetForm({ user, onClose }: { user: User; onClose: () => void }) {
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
+        // الـ Dialog في portal لكن أحداث React تصعد عبر شجرة المكونات لفورم المستخدم الأب.
+        event.stopPropagation();
         void submit();
       }}
       className="flex flex-col gap-3"
