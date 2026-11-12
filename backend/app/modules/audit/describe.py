@@ -53,6 +53,7 @@ ENTITY_LABELS: dict[str, str] = {
     "backup": "نسخة احتياطية",
     "devtools": "بيانات تجريبية",
     "held_invoice": "فاتورة معلّقة",
+    "purchase_order": "طلب شراء",
 }
 
 # مع «ال» للجمل: «عدّل الصنف «سكر»».
@@ -64,6 +65,7 @@ _THE = {
     "supplier": "المورد",
     "sale": "فاتورة البيع",
     "purchase": "فاتورة الشراء",
+    "purchase_order": "طلب الشراء",
     "expense": "المصروف",
     "cash_entry": "حركة الخزنة",
     "shift": "الوردية",
@@ -94,6 +96,9 @@ ACTION_LABELS: dict[str, str] = {
     "hold": "تعليق فاتورة",
     "recall": "استرجاع فاتورة معلّقة",
     "discard": "حذف فاتورة معلّقة",
+    "send": "إرسال طلب شراء للمورد",
+    "cancel": "إلغاء طلب شراء",
+    "receive": "استلام طلب شراء",
     "login": "تسجيل دخول",
     "login_failed": "محاولة دخول فاشلة",
     "logout": "تسجيل خروج",
@@ -416,6 +421,7 @@ _LOADERS: dict[str, Callable[[Session, set[str]], dict[str, str]]] = {
     "user": _by_name("app.modules.users.model.User", "username"),
     "sale": _by_number("app.modules.sales.model.Sale"),
     "purchase": _by_number("app.modules.purchases.model.Purchase"),
+    "purchase_order": _by_number("app.modules.purchase_orders.model.PurchaseOrder"),
     "shift": _shifts,
     "expense": _expenses,
     "device": _devices,

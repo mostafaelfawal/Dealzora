@@ -26,7 +26,7 @@ export function searchProducts(products: Product[], term: string) {
     .slice(0, PURCHASE_SEARCH_LIMIT);
 }
 
-function newDraftLine(p: Product): PurchaseDraftLine {
+export function newDraftLine(p: Product): PurchaseDraftLine {
   return {
     key: `${p.id}-${Date.now()}`,
     productId: p.id,
@@ -108,6 +108,7 @@ export function draftErrors({
 }
 
 export function toPurchaseInput(draft: {
+  orderId?: string | null;
   supplierId: string;
   supplierInvoice: string;
   date: string;
@@ -122,6 +123,7 @@ export function toPurchaseInput(draft: {
     discount: draft.totals.discount,
     paidAmount: draft.totals.paid,
     note: draft.note,
+    orderId: draft.orderId ?? null,
     lines: draft.lines.map((l) => ({
       productId: l.productId,
       qty: moneyInputOrZero(l.qty),

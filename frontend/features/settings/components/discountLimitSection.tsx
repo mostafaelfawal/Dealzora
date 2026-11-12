@@ -71,13 +71,12 @@ export function DiscountLimitSection() {
               min={0}
               max={100}
               step={1}
-              dir="ltr"
               value={value.percent}
               onChange={(e) => setDraft({ ...value, percent: e.target.value })}
               aria-invalid={!valid}
               className="h-10 pe-8 font-mono"
             />
-            <span className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-sm text-muted-foreground">
+            <span className="pointer-events-none absolute inset-y-0 inset-e-3 flex items-center text-sm text-muted-foreground">
               %
             </span>
           </div>

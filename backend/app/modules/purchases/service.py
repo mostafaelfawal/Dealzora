@@ -208,6 +208,13 @@ class PurchaseService(EntityService):
                 source_id=purchase.id,
             )
 
+        if data.order_id:
+            from app.modules.purchase_orders.service import PurchaseOrderService  # متأخر: لا دوران
+
+            PurchaseOrderService(self.session, self.actor).mark_received(
+                data.order_id, purchase.id, number
+            )
+
         self._audit(
             purchase,
             "create",

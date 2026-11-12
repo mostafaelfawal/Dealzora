@@ -12,6 +12,7 @@ export const purchaseKeys = {
 /** كل ما يتأثر بفاتورة شراء أو مرتجعها: المخزون، الموردون، الخزنة، والتقارير. */
 export const PURCHASE_AFFECTED_KEYS = [
   purchaseKeys.all,
+  ["purchase-orders"],
   ["products"],
   ["suppliers"],
   ["treasury"],

@@ -39,6 +39,8 @@ TABLE_TOPICS: dict[str, str] = {
     "purchase_lines": "purchases",
     "purchase_returns": "purchases",
     "purchase_return_lines": "purchases",
+    "purchase_orders": "purchases",
+    "purchase_order_lines": "purchases",
     "suppliers": "suppliers",
     "supplier_transactions": "suppliers",
     "users": "users",

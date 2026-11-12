@@ -17,12 +17,14 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
     ["inventory"],
     ["pos", "catalog"],
     ["purchases"],
+    ["purchase-orders"],
     ["reports"],
     ["dashboard"],
   ],
   customers: [["customers"], ["pos", "catalog"], ["reports"], ["dashboard"]],
   sales: [
     ["sales"],
+    ["purchase-orders", "suggestions"],
     ["pos", "catalog"],
     ["inventory"],
     ["shifts"],
@@ -42,6 +44,7 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
   ],
   purchases: [
     ["purchases"],
+    ["purchase-orders"],
     ["suppliers"],
     ["inventory"],
     ["products"],

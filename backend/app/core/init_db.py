@@ -25,6 +25,7 @@ import app.modules.treasury.model  # noqa: F401
 import app.modules.shifts.model  # noqa: F401
 import app.modules.sales.model  # noqa: F401
 import app.modules.purchases.model  # noqa: F401
+import app.modules.purchase_orders.model  # noqa: F401
 import app.modules.devtools.model  # noqa: F401
 
 # تعديلات على جداول موجودة (create_all لا يعدّل جدولاً قائماً). كل خطوة آمنة للتكرار.

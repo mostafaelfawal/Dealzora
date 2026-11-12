@@ -41,6 +41,8 @@ class PurchaseCreate(BaseModel):
     discount: Money = 0
     paid_amount: Money = 0
     note: Note = None
+    # فاتورة ناتجة عن طلب شراء: يُغلق الطلب «تم الاستلام» في نفس المعاملة.
+    order_id: str | None = Field(None, max_length=36)
 
 
 class PurchaseReturnLineIn(BaseModel):

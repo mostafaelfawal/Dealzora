@@ -129,6 +129,7 @@ export const createPurchase = async (input: PurchaseInput) =>
         discount: toCents(input.discount),
         paid_amount: toCents(input.paidAmount),
         note: input.note.trim() || null,
+        order_id: input.orderId ?? null,
       })
     ).data,
   );

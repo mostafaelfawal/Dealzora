@@ -30,8 +30,16 @@ export function PurchaseFormScreen() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <PageHeader
-        title="فاتورة شراء جديدة"
-        description="الأصناف تدخل المخزون ويتحدث متوسط سعر الشراء تلقائياً. الجزء غير المدفوع يُضاف لحساب المورد."
+        title={
+          draft.orderNumber
+            ? `استلام طلب الشراء #${draft.orderNumber}`
+            : "فاتورة شراء جديدة"
+        }
+        description={
+          draft.orderNumber
+            ? "الكميات والأسعار من الطلب: صحّحها حسب ما وصل فعلاً وسعر فاتورة المورد. عند الحفظ يُغلق الطلب «تم الاستلام»."
+            : "الأصناف تدخل المخزون ويتحدث متوسط سعر الشراء تلقائياً. الجزء غير المدفوع يُضاف لحساب المورد."
+        }
         actions={
           <Button
             variant="outline"

@@ -77,4 +77,6 @@ export interface PurchaseInput {
   discount: number;
   paidAmount: number;
   note: string;
+  /** فاتورة ناتجة عن طلب شراء: يُغلق الطلب «تم الاستلام». */
+  orderId?: string | null;
 }
