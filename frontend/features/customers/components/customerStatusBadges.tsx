@@ -1,4 +1,4 @@
-import { IconAlertTriangle, IconClock } from "@tabler/icons-react";
+import { IconAlertTriangle, IconClock, IconGift } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -12,6 +12,23 @@ export function CustomerStatusBadges({ customer }: { customer: Customer }) {
 
   return (
     <>
+      {customer.isWholesale && (
+        <Badge
+          variant="outline"
+          className="border-primary/40 font-normal text-primary"
+        >
+          جملة
+        </Badge>
+      )}
+      {customer.loyaltyPoints > 0 && (
+        <Badge
+          variant="outline"
+          className="gap-1 border-success/40 font-normal text-success"
+        >
+          <IconGift />
+          {customer.loyaltyPoints} نقطة
+        </Badge>
+      )}
       {!customer.isActive && (
         <Badge variant="secondary" className="font-normal">
           معطّل

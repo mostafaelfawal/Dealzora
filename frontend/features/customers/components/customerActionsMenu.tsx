@@ -6,6 +6,7 @@ import {
   IconEye,
   IconEyeOff,
   IconFileText,
+  IconGift,
   IconPencil,
   IconTrash,
 } from "@tabler/icons-react";
@@ -24,6 +25,7 @@ import type { Customer } from "../types/customer";
 export interface CustomerActions {
   onEdit: (id: string) => void;
   onStatement: (id: string) => void;
+  onLoyalty: (id: string) => void;
   onCollect: (id: string) => void;
   onToggleActive: (id: string) => void;
   onRemove: (id: string) => void;
@@ -34,6 +36,7 @@ export function CustomerActionsMenu({
   customer,
   onEdit,
   onStatement,
+  onLoyalty,
   onCollect,
   onToggleActive,
   onRemove,
@@ -64,6 +67,10 @@ export function CustomerActionsMenu({
         >
           <IconCash />
           تحصيل دفعة
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onLoyalty(customer.id)}>
+          <IconGift />
+          نقاط الولاء
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onEdit(customer.id)}>
           <IconPencil />

@@ -25,6 +25,7 @@ from .constants import (
 from .model import AppSetting
 from .payments import PaymentKind
 from .scale import ScaleBarcodeConfig
+from app.modules.loyalty.config import LoyaltyConfig
 from .schema import (
     CurrencyIn,
     CurrencyOut,
@@ -88,6 +89,26 @@ class SettingsService:
             except ValueError:  # قيمة تالفة: متوقف حتى يُحفظ من جديد
                 pass
         return ScaleBarcodeConfig()
+
+    def loyalty(self) -> LoyaltyConfig:
+        raw = self.get(SettingKey.LOYALTY)
+        if raw:
+            try:
+                return LoyaltyConfig.model_validate_json(raw)
+            except ValueError:  # قيمة تالفة: متوقف حتى يُحفظ من جديد
+                pass
+        return LoyaltyConfig()
+
+    def set_loyalty(self, actor: Actor, data: LoyaltyConfig) -> LoyaltyConfig:
+        before = self.loyalty()
+        self._set(actor, SettingKey.LOYALTY, data.model_dump_json())
+        if data != before:
+            record_audit(
+                self.session, actor, entity=ENTITY_SETTING, entity_id="loyalty", action="update",
+                changes={"loyalty": {"from": before.model_dump(), "to": data.model_dump()}},
+            )  # fmt: skip
+        self.session.commit()
+        return data
 
     def payment_config(self) -> PaymentConfigOut:
         raw = self.get(SettingKey.PAY_METHODS)

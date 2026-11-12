@@ -52,6 +52,7 @@ class CustomerOut(BaseModel):
     is_overdue: bool
     is_active: bool
     is_wholesale: bool
+    loyalty_points: int
     total_sales: int | None  # None للكاشير
     last_purchase_at: datetime | None
     last_payment_at: datetime | None

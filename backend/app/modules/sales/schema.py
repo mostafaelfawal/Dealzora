@@ -52,6 +52,8 @@ class SaleCreate(BaseModel):
     # الدفع الإلكتروني: رقم العملية أو رقم المحوِّل (اختياري، للمراجعة).
     payment_ref: PaymentRef = None
     note: Note = None
+    # نقاط ولاء يستبدلها العميل (مضاعف لباقة الاستبدال). تحتاج عميلاً.
+    redeem_points: int = Field(0, ge=0, le=100_000_000)
 
     @model_validator(mode="after")
     def _payment_shape(self):
@@ -133,6 +135,10 @@ class SaleOut(BaseModel):
     lines_discount: int
     promo_discount: int
     invoice_discount: int
+    loyalty_redeemed: int
+    loyalty_discount: int
+    loyalty_earned: int
+    customer_points: int | None  # رصيد نقاط العميل الآن
     total: int
     cash_amount: int
     credit_amount: int
@@ -210,6 +216,8 @@ class ReturnOut(BaseModel):
     cash_refund: int
     credit_refund: int
     wallet_refund: int
+    loyalty_reversed: int
+    loyalty_restored: int
     lines: list[ReturnLineOut]
 
 

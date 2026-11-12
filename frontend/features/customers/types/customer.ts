@@ -11,6 +11,8 @@ export interface Customer {
   isActive: boolean;
   /** عميل جملة: يأخذ سعر الجملة على كل صنف له سعر جملة. */
   isWholesale: boolean;
+  /** رصيد نقاط الولاء. */
+  loyaltyPoints: number;
   totalSales: number;
   lastPurchaseAt: number | null;
   lastPaymentAt: number | null;

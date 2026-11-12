@@ -10,6 +10,7 @@ from app.modules.customers.routes import router as customers_router
 from app.modules.devices.routes import router as devices_router
 from app.modules.expenses.routes import router as expenses_router
 from app.modules.held.routes import router as held_router
+from app.modules.loyalty.routes import router as loyalty_router
 from app.modules.plan.routes import router as plan_router
 from app.modules.products.routes import router as products_router
 from app.modules.purchase_orders.routes import router as purchase_orders_router
@@ -43,6 +44,7 @@ routes = [
     sales_router,
     held_router,
     promotions_router,
+    loyalty_router,
     purchases_router,
     purchase_orders_router,
     reports_router,

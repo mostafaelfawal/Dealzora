@@ -73,6 +73,7 @@ export function usePosCatalog() {
     if (!data) return;
     const { nextNumber, ...catalog } = data;
     dispatch(catalogActions.setCatalog(catalog));
+    dispatch(cartActions.applyCustomers(catalog.customers));
     dispatch(syncCartWithCatalog(catalog.products));
     dispatch(cartActions.syncNextNumber(nextNumber));
   }, [data, dispatch]);

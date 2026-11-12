@@ -23,6 +23,7 @@ import { CollectPaymentDialog } from "./collectPaymentDialog";
 import { CustomerCard } from "./customerCard";
 import { CustomerFormDialog } from "./customerFormDialog";
 import { CustomerStatementDialog } from "./customerStatementDialog";
+import { LoyaltyDialog } from "./loyaltyDialog";
 import { CustomersEmpty } from "./customersEmpty";
 import { CustomersPagination } from "./customersPagination";
 import { CustomersStats } from "./customersStats";
@@ -35,7 +36,7 @@ import { Customer } from "../types/customer";
 /** نافذة واحدة مفتوحة في كل مرة: فلا تتراكم النوافذ فوق بعضها. */
 type DialogState =
   | { type: "form"; id: string | null }
-  | { type: "statement" | "collect" | "delete"; id: string }
+  | { type: "statement" | "collect" | "delete" | "loyalty"; id: string }
   | null;
 
 /** صفحة إدارة العملاء: إحصائيات سريعة + بحث وفلاتر + بطاقات أو جدول + كشف حساب وتحصيل. */
@@ -102,6 +103,7 @@ export function CustomersScreen() {
   const actions = {
     onEdit: (id: string) => setDialog({ type: "form", id }),
     onStatement: (id: string) => setDialog({ type: "statement", id }),
+    onLoyalty: (id: string) => setDialog({ type: "loyalty", id }),
     onCollect: (id: string) => setDialog({ type: "collect", id }),
     onToggleActive: (id: string) => {
       const customer = list.all.find((c) => c.id === id);
@@ -275,6 +277,10 @@ export function CustomersScreen() {
         onClose={close}
         onCollect={actions.onCollect}
         onEdit={actions.onEdit}
+      />
+      <LoyaltyDialog
+        customer={dialog?.type === "loyalty" ? target : null}
+        onClose={close}
       />
       <CollectPaymentDialog
         customer={dialog?.type === "collect" ? target : null}

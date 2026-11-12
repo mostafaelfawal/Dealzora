@@ -34,6 +34,10 @@ export interface SaleDto {
   subtotal: number;
   lines_discount: number;
   promo_discount?: number;
+  loyalty_redeemed?: number;
+  loyalty_discount?: number;
+  loyalty_earned?: number;
+  customer_points?: number | null;
   invoice_discount: number;
   total: number;
   cash_amount: number;

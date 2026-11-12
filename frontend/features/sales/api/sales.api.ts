@@ -43,6 +43,10 @@ export const toSale = (d: SaleDto): Sale => ({
   subtotal: toPounds(d.subtotal),
   linesDiscount: toPounds(d.lines_discount),
   promoDiscount: toPounds(d.promo_discount ?? 0),
+  loyaltyRedeemed: d.loyalty_redeemed ?? 0,
+  loyaltyDiscount: toPounds(d.loyalty_discount ?? 0),
+  loyaltyEarned: d.loyalty_earned ?? 0,
+  customerPoints: d.customer_points ?? null,
   invoiceDiscount: toPounds(d.invoice_discount),
   total: toPounds(d.total),
   cashAmount: toPounds(d.cash_amount),
@@ -117,6 +121,7 @@ const toSalePayload = (s: SaleInput) => ({
   received: toCents(s.received),
   payment_ref: s.paymentRef?.trim() || null,
   note: s.note || null,
+  redeem_points: s.redeemPoints ?? 0,
 });
 
 const toReturnPayload = (r: ReturnInput) => ({

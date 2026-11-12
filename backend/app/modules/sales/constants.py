@@ -31,6 +31,9 @@ class SaleError(StrEnum):
     UNIT_NOT_FOUND = "sale_unit_not_found"
     PRICE_CHANGED = "sale_price_changed"
     PROMO_CHANGED = "sale_promo_changed"
+    LOYALTY_UNAVAILABLE = "sale_loyalty_unavailable"
+    LOYALTY_BLOCKS = "sale_loyalty_blocks"
+    LOYALTY_TOO_MANY = "sale_loyalty_too_many"
     INSUFFICIENT_STOCK = "sale_insufficient_stock"
     FRACTION_NOT_ALLOWED = "sale_fraction_not_allowed"
     LINE_DISCOUNT_TOO_HIGH = "sale_line_discount_too_high"
@@ -57,6 +60,9 @@ ERROR_MESSAGES: dict[SaleError, str] = {
     SaleError.PRODUCT_INACTIVE: "صنف في الفاتورة موقوف عن البيع",
     SaleError.UNIT_NOT_FOUND: "وحدة البيع لم تعد موجودة. حدّث الكاشير",
     SaleError.PRICE_CHANGED: "تغيّر سعر صنف في الفاتورة. حدّث الكاشير وأعد المحاولة",
+    SaleError.LOYALTY_UNAVAILABLE: "استبدال النقاط يحتاج عميلاً ونقاط الولاء مفعّلة",
+    SaleError.LOYALTY_BLOCKS: "النقاط تُستبدل بالباقات فقط",
+    SaleError.LOYALTY_TOO_MANY: "النقاط أكثر من رصيد العميل أو من الحد المسموح للفاتورة",
     SaleError.PROMO_CHANGED: "تغيّرت العروض على صنف في الفاتورة. راجع الفاتورة وأعد المحاولة",
     SaleError.INSUFFICIENT_STOCK: "الرصيد غير كافٍ لأحد الأصناف",
     SaleError.FRACTION_NOT_ALLOWED: "صنف في الفاتورة لا يقبل كسوراً",

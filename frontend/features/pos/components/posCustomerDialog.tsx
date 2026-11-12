@@ -1,6 +1,12 @@
 "use client";
 
-import { IconCheck, IconPhone, IconUser, IconUsers } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconGift,
+  IconPhone,
+  IconUser,
+  IconUsers,
+} from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import { Money } from "@/components/shared/Money";
@@ -16,6 +22,7 @@ import {
 import { toArabicDigits } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { cn } from "cn";
+import { useLoyaltyConfig } from "@/lib/loyalty";
 import { selectCustomer } from "../store/posActions";
 import { posUiActions } from "../store/posUiSlice";
 import { selectCustomers, selectInvoiceCustomer } from "../store/selectors";
@@ -107,6 +114,7 @@ export function PosCustomerDialog() {
   const dispatch = useAppDispatch();
   const open = useAppSelector((s) => s.posUi.dialog === "customer");
   const customers = useAppSelector(selectCustomers);
+  const loyaltyOn = useLoyaltyConfig().enabled;
   const selectedId = useAppSelector(selectInvoiceCustomer)?.id ?? null;
   const allowed = useFeature("customers");
 
@@ -203,6 +211,17 @@ export function PosCustomerDialog() {
                     {customer.phone}
                   </span>
                 </span>
+                {customer.isWholesale && (
+                  <span className="shrink-0 bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                    جملة
+                  </span>
+                )}
+                {loyaltyOn && (customer.loyaltyPoints ?? 0) > 0 && (
+                  <span className="inline-flex shrink-0 items-center gap-0.5 bg-success/10 px-1.5 py-0.5 text-[10px] text-success">
+                    <IconGift className="size-3" />
+                    {customer.loyaltyPoints} نقطة
+                  </span>
+                )}
                 <CreditStatus customer={customer} />
                 {selected && <span className="sr-only">المحدد حالياً</span>}
               </CommandItem>

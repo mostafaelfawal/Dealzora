@@ -32,6 +32,7 @@ export const toCustomer = (dto: CustomerDto): Customer => ({
   creditLimit: toPounds(dto.credit_limit),
   isActive: dto.is_active,
   isWholesale: dto.is_wholesale ?? false,
+  loyaltyPoints: dto.loyalty_points ?? 0,
   totalSales: toPounds(dto.total_sales ?? 0),
   lastPurchaseAt: toMsOrNull(dto.last_purchase_at),
   lastPaymentAt: toMsOrNull(dto.last_payment_at),

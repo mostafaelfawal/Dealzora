@@ -433,6 +433,7 @@ function buildSaleInput(
       promoDiscount: linePromo(l),
     })),
     invoiceDiscount: selectTotals(state).discountAmount,
+    redeemPoints: selectTotals(state).redeemPoints,
     ...payment,
   };
 }
@@ -484,10 +485,29 @@ const recordSaved =
         : l;
     });
     dispatch(catalogActions.addInvoice(invoice));
+    if (sale.customerId && sale.customerPoints !== null) {
+      // رصيد النقاط من السيرفر بعد الفاتورة (كسب واستبدال).
+      dispatch(
+        catalogActions.setCatalog({
+          customers: getState().catalog.customers.map((c) =>
+            c.id === sale.customerId
+              ? { ...c, loyaltyPoints: sale.customerPoints ?? 0 }
+              : c,
+          ),
+        }),
+      );
+      if (sale.loyaltyEarned > 0)
+        toast.success(
+          `${sale.customerName ?? "العميل"} كسب ${sale.loyaltyEarned} نقطة`,
+          {
+            description: `رصيده الآن ${sale.customerPoints} نقطة`,
+          },
+        );
+    }
     if (sale.customerId && sale.creditAmount > 0) {
       dispatch(
         catalogActions.setCatalog({
-          customers: state.catalog.customers.map((c) =>
+          customers: getState().catalog.customers.map((c) =>
             c.id === sale.customerId
               ? {
                   ...c,

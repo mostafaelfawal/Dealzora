@@ -50,6 +50,11 @@ export interface Sale {
   linesDiscount: number;
   /** مجموع العروض التلقائية. */
   promoDiscount: number;
+  /** نقاط الولاء: المستبدلة وقيمة خصمها، والمكتسبة، ورصيد العميل الآن. */
+  loyaltyRedeemed: number;
+  loyaltyDiscount: number;
+  loyaltyEarned: number;
+  customerPoints: number | null;
   invoiceDiscount: number;
   total: number;
   cashAmount: number;
@@ -130,6 +135,8 @@ export interface SaleLineInput {
 }
 
 export interface SaleInput {
+  /** نقاط ولاء يستبدلها العميل (0 = لا شيء). */
+  redeemPoints?: number;
   clientRef: string;
   customerId: string | null;
   lines: SaleLineInput[];

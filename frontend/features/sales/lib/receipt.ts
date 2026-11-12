@@ -66,6 +66,7 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
   ${line("الإجمالي قبل الخصم", money(sale.subtotal))}
   ${sale.promoDiscount > 0 ? line("العروض", money(sale.promoDiscount)) : ""}
   ${discount > 0 ? line("الخصم", money(discount)) : ""}
+  ${sale.loyaltyDiscount > 0 ? line(`خصم ${sale.loyaltyRedeemed} نقطة`, money(sale.loyaltyDiscount)) : ""}
   ${line(`الإجمالي (${currencySymbol()})`, money(sale.total), "total")}
   ${line("طريقة الدفع", sale.paymentLabel)}
   ${sale.cashAmount > 0 ? line("المدفوع كاش", money(sale.received || sale.cashAmount)) : ""}
@@ -74,6 +75,7 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
   ${sale.walletAmount > 0 ? line(`مدفوع ${sale.paymentLabel}`, money(sale.walletAmount)) : ""}
   ${sale.walletAmount > 0 && sale.paymentRef ? line("رقم العملية", esc(sale.paymentRef)) : ""}
   ${sale.returnedTotal > 0 ? line("مرتجع من الفاتورة", money(sale.returnedTotal)) : ""}
+  ${sale.customerPoints !== null && (sale.loyaltyEarned > 0 || sale.loyaltyRedeemed > 0) ? `<hr><div class="center muted">كسبت ${sale.loyaltyEarned} نقطة · رصيدك ${sale.customerPoints} نقطة</div>` : ""}
   <hr><div class="center">${FOOTER}</div>
   ${getCachedPlan()?.isFree ? `<div class="center muted" style="margin-top:4px">${FREE_FOOTER}</div>` : ""}
 </body></html>`;
@@ -113,6 +115,9 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
       ? `العروض: ${money(sale.promoDiscount)} ${currencySymbol()}`
       : null,
     discount > 0 ? `الخصم: ${money(discount)} ${currencySymbol()}` : null,
+    sale.loyaltyDiscount > 0
+      ? `خصم ${sale.loyaltyRedeemed} نقطة: ${money(sale.loyaltyDiscount)} ${currencySymbol()}`
+      : null,
     `*الإجمالي: ${money(sale.total)} ${currencySymbol()}*`,
     sale.creditAmount > 0
       ? `آجل على الحساب: ${money(sale.creditAmount)} ${currencySymbol()}`

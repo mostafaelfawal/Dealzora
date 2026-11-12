@@ -53,6 +53,7 @@ const toPosCustomer = (c: Customer): PosCustomer => ({
   balance: c.balance,
   creditLimit: c.creditLimit,
   isWholesale: c.isWholesale,
+  loyaltyPoints: c.loyaltyPoints,
 });
 
 /** فاتورة من الـ backend → شكل الكاشير. نسبة الخصم للعرض فقط؛ قيمة المرتجع يحسبها السيرفر. */

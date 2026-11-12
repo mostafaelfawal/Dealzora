@@ -38,6 +38,8 @@ class Customer(SyncMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     # عميل جملة: يأخذ سعر الجملة على كل صنف له سعر جملة، أياً كانت الكمية.
     is_wholesale: Mapped[bool] = mapped_column(Boolean, default=False)
+    # رصيد نقاط الولاء (مخزّن). المرجع = مجموع loyalty_ledger.points، ولا يرفع version.
+    loyalty_points: Mapped[int] = mapped_column(Integer, default=0)
 
     __table_args__ = (
         Index(

@@ -5,6 +5,13 @@ import { api } from "@/lib/axios";
 import type { Currency } from "@/lib/currency";
 import { setPaymentConfig, type PaymentConfig } from "@/lib/payments";
 import {
+  fromLoyaltyDto,
+  setLoyaltyConfig,
+  toLoyaltyDto,
+  type LoyaltyConfig,
+  type LoyaltyDto,
+} from "@/lib/loyalty";
+import {
   fromScaleDto,
   setScaleConfig,
   toScaleDto,
@@ -132,9 +139,11 @@ export const fetchCurrency = async (): Promise<Currency> => {
     currency: Currency;
     payments?: PaymentConfigDto;
     scale_barcode?: ScaleBarcodeDto;
+    loyalty?: LoyaltyDto;
   }>("/settings");
   setPaymentConfig(toConfig(data.payments));
   setScaleConfig(fromScaleDto(data.scale_barcode));
+  setLoyaltyConfig(fromLoyaltyDto(data.loyalty));
   return data.currency;
 };
 
@@ -227,3 +236,12 @@ export const logout = async () => {
 /** null خارج تطبيق سطح المكتب (المتصفح أثناء التطوير). */
 export const fetchLicense = async (): Promise<LicenseStatus | null> =>
   isTauri() ? getLicenseStatus() : null;
+
+/* ---------- نقاط الولاء ---------- */
+
+export const saveLoyalty = async (
+  config: LoyaltyConfig,
+): Promise<LoyaltyConfig> =>
+  fromLoyaltyDto(
+    (await api.put<LoyaltyDto>("/settings/loyalty", toLoyaltyDto(config))).data,
+  );

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { setLoyaltyConfig, type LoyaltyConfig } from "@/lib/loyalty";
 import { setScaleConfig, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
 
 import { setCurrency, type Currency } from "@/lib/currency";
@@ -20,6 +21,7 @@ import {
   restoreBackup,
   saveCurrency,
   saveDiscountLimit,
+  saveLoyalty,
   saveScaleBarcode,
   savePaymentConfig,
   setBackupLocation,
@@ -216,5 +218,22 @@ export function useSaveScaleBarcode() {
     },
     onError: (e) =>
       toast.error(extractErrorMessage(e, "تعذّر حفظ إعداد الميزان")),
+  });
+}
+
+/* ---------- نقاط الولاء ---------- */
+
+export function useSaveLoyalty() {
+  return useMutation({
+    mutationFn: (config: LoyaltyConfig) => saveLoyalty(config),
+    onSuccess: (config) => {
+      setLoyaltyConfig(config);
+      toast.success(
+        config.enabled
+          ? "تم حفظ نقاط الولاء: العملاء يكسبون نقاطاً من الآن"
+          : "تم إيقاف نقاط الولاء",
+      );
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ نقاط الولاء")),
   });
 }

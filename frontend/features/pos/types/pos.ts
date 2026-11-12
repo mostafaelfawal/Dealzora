@@ -67,6 +67,8 @@ export interface PosCustomer {
   creditLimit: number;
   /** عميل جملة: سعر الجملة على كل صنف له سعر جملة. */
   isWholesale?: boolean;
+  /** رصيد نقاط الولاء. */
+  loyaltyPoints?: number;
 }
 
 /** صنف جوه الفاتورة (نسخة من بيانات الصنف وقت الإضافة). */
@@ -114,6 +116,8 @@ export interface PosInvoice {
   lines: CartLine[];
   customer: PosCustomer | null;
   discount: InvoiceDiscount | null;
+  /** نقاط ولاء يستبدلها العميل في هذه الفاتورة (تُقص للمسموح تلقائياً). */
+  redeemPoints?: number;
 }
 
 /** فاتورة معلّقة على الجهاز الأساسي (تظهر لكل الأجهزة، وتُحذف عند قفل ورديتها). */

@@ -332,6 +332,7 @@ class CustomerService(EntityService):
             is_overdue=is_overdue(c.balance, c.last_payment_at, c.created_at, utcnow()),
             is_active=c.is_active,
             is_wholesale=c.is_wholesale,
+            loyalty_points=c.loyalty_points,
             total_sales=c.total_sales if self.is_manager else None,
             last_purchase_at=c.last_purchase_at,
             last_payment_at=c.last_payment_at,

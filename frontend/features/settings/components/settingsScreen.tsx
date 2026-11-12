@@ -7,6 +7,7 @@ import {
   IconCrown,
   IconDatabaseExport,
   IconDevices,
+  IconGift,
   IconPalette,
   IconPercentage,
   IconScale,
@@ -32,6 +33,7 @@ import { CurrencySection } from "./currencySection";
 import { DemoDataSection } from "./demoDataSection";
 import { DiscountLimitSection } from "./discountLimitSection";
 import { LicenseSection } from "./licenseSection";
+import { LoyaltySection } from "./loyaltySection";
 import { PasswordSection } from "./passwordSection";
 import { PaymentsSection } from "./paymentsSection";
 import { ScaleBarcodeSection } from "./scaleBarcodeSection";
@@ -92,7 +94,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
     id: "selling",
     icon: <IconCashRegister />,
     title: "البيع والكاشير",
-    hint: "الدفع، الخصم، الميزان",
+    hint: "الدفع، الخصم، النقاط، الميزان",
     sections: [
       {
         id: "payments",
@@ -109,6 +111,14 @@ function buildPages(device: DeviceConfig | null): Page[] {
         description:
           "الكاشير ما يقدرش يخصم أكتر من النسبة دي من الفاتورة. المدير بلا حد.",
         content: <DiscountLimitSection />,
+      },
+      {
+        id: "loyalty",
+        icon: <IconGift />,
+        title: "نقاط الولاء",
+        description:
+          "العميل المسجّل يكسب نقاط على كل شراء ويستبدلها خصماً، فيرجع يشتري منك تاني.",
+        content: <LoyaltySection />,
       },
       {
         id: "scale",

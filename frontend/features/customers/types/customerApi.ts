@@ -14,6 +14,7 @@ export interface CustomerDto {
   is_overdue: boolean;
   is_active: boolean;
   is_wholesale: boolean;
+  loyalty_points?: number;
   total_sales: number | null; // null للكاشير
   last_purchase_at: string | null;
   last_payment_at: string | null;

@@ -337,10 +337,41 @@ const cartSlice = createSlice({
 
     setCustomer(state, action: PayloadAction<PosCustomer | null>) {
       const customer = action.payload;
+      const prevId = state.present.customer?.id ?? null;
+      if (prevId !== null && prevId === (customer?.id ?? null)) {
+        // نفس العميل: نحدّث بياناته فقط (رصيد النقاط مثلاً) بدون خطوة تراجع.
+        state.present.customer = customer;
+        reprice(state);
+        return;
+      }
       commit(state, (prev) =>
-        (prev.customer?.id ?? null) === (customer?.id ?? null)
+        prevId === (customer?.id ?? null)
           ? prev
-          : { ...prev, customer },
+          : // نقاط العميل السابق لا تنتقل للجديد.
+            { ...prev, customer, redeemPoints: 0 },
+      );
+    },
+
+    /**
+     * قائمة العملاء اتحدثت (نقاط كسبها من جهاز آخر، تحوّل لعميل جملة…):
+     * العميل المختار في الفاتورة المفتوحة يأخذ أحدث بياناته. ليس تعديلاً من المستخدم.
+     */
+    applyCustomers(state, action: PayloadAction<PosCustomer[]>) {
+      const current = state.present.customer;
+      if (!current) return;
+      const fresh = action.payload.find((c) => c.id === current.id);
+      if (!fresh || JSON.stringify(fresh) === JSON.stringify(plain(current)))
+        return;
+      state.present.customer = fresh;
+      reprice(state);
+    },
+
+    setRedeemPoints(state, action: PayloadAction<number>) {
+      const points = Math.max(Math.floor(action.payload), 0);
+      commit(state, (prev) =>
+        (prev.redeemPoints ?? 0) === points
+          ? prev
+          : { ...prev, redeemPoints: points },
       );
     },
 

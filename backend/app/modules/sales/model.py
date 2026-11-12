@@ -31,6 +31,12 @@ class Sale(SyncMixin, Base):
     subtotal: Mapped[int] = mapped_column(Integer)  # قبل أي خصم
     lines_discount: Mapped[int] = mapped_column(Integer, default=0)  # خصم الكاشير على الأصناف
     promo_discount: Mapped[int] = mapped_column(Integer, default=0)  # العروض التلقائية
+    # نقاط الولاء: المستبدلة وقيمة خصمها، والمكتسبة، وما عُكس منها بالمرتجع.
+    loyalty_redeemed: Mapped[int] = mapped_column(Integer, default=0)
+    loyalty_discount: Mapped[int] = mapped_column(Integer, default=0)
+    loyalty_earned: Mapped[int] = mapped_column(Integer, default=0)
+    loyalty_earn_reversed: Mapped[int] = mapped_column(Integer, default=0)
+    loyalty_redeem_restored: Mapped[int] = mapped_column(Integer, default=0)
     invoice_discount: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer)
     cash_amount: Mapped[int] = mapped_column(Integer, default=0)  # الجزء الكاش من الإجمالي
@@ -93,6 +99,8 @@ class SaleReturn(SyncMixin, Base):
     total: Mapped[int] = mapped_column(Integer)
     cash_refund: Mapped[int] = mapped_column(Integer, default=0)  # خرج من الدرج
     credit_refund: Mapped[int] = mapped_column(Integer, default=0)  # خُصم من دين العميل
+    loyalty_reversed: Mapped[int] = mapped_column(Integer, default=0)  # نقاط مكتسبة خُصمت
+    loyalty_restored: Mapped[int] = mapped_column(Integer, default=0)  # نقاط مستبدلة رجعت
     wallet_refund: Mapped[int] = mapped_column(Integer, default=0)  # رُدّ لمحفظة العميل
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
 

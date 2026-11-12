@@ -27,6 +27,7 @@ import app.modules.sales.model  # noqa: F401
 import app.modules.purchases.model  # noqa: F401
 import app.modules.purchase_orders.model  # noqa: F401
 import app.modules.promotions.model  # noqa: F401
+import app.modules.loyalty.model  # noqa: F401
 import app.modules.devtools.model  # noqa: F401
 
 # تعديلات على جداول موجودة (create_all لا يعدّل جدولاً قائماً). كل خطوة آمنة للتكرار.
@@ -56,6 +57,15 @@ _NEW_COLUMNS = (
     ("sale_lines", "promo_discount", "INTEGER NOT NULL DEFAULT 0"),
     ("sale_lines", "promo_name", "VARCHAR(80)"),
     ("sale_lines", "is_wholesale", "BOOLEAN NOT NULL DEFAULT 0"),
+    # نقاط الولاء
+    ("customers", "loyalty_points", "INTEGER NOT NULL DEFAULT 0"),
+    ("sales", "loyalty_redeemed", "INTEGER NOT NULL DEFAULT 0"),
+    ("sales", "loyalty_discount", "INTEGER NOT NULL DEFAULT 0"),
+    ("sales", "loyalty_earned", "INTEGER NOT NULL DEFAULT 0"),
+    ("sales", "loyalty_earn_reversed", "INTEGER NOT NULL DEFAULT 0"),
+    ("sales", "loyalty_redeem_restored", "INTEGER NOT NULL DEFAULT 0"),
+    ("sale_returns", "loyalty_reversed", "INTEGER NOT NULL DEFAULT 0"),
+    ("sale_returns", "loyalty_restored", "INTEGER NOT NULL DEFAULT 0"),
 )
 
 # فهارس على أعمدة أُضيفت بـ _NEW_COLUMNS (تُنشأ بعدها).

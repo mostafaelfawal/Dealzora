@@ -45,6 +45,8 @@ from .constants import (
 from .helper import allocate, base_qty, exceeds_percent, proportional, qty_amount, round_div
 from .model import Sale, SaleLine, SaleReturn, SaleReturnLine
 from .pricing import LineInput, price_lines
+from app.modules.loyalty.config import earned_points, max_redeemable, redeem_discount
+from app.modules.loyalty.service import LoyaltyKind, load_config as load_loyalty, post as post_points
 from .repository import SaleRepository
 from .schema import (
     ExchangeCreate,
@@ -257,7 +259,22 @@ class SaleService(EntityService):
                 lines_discount + data.invoice_discount, subtotal - promo_discount, limit.max_percent
             ):
                 raise self._err(ForbiddenError, SaleError.CASHIER_DISCOUNT_LIMIT, max_percent=limit.max_percent)
-        total = after_lines - data.invoice_discount
+        # نقاط الولاء: الاستبدال خصم بعد خصم الفاتورة، والكسب على المدفوع فعلاً.
+        loyalty = load_loyalty(self.session)
+        loyalty_discount = 0
+        if data.redeem_points:
+            if not loyalty.enabled or customer is None:
+                raise self._err(BadRequestError, SaleError.LOYALTY_UNAVAILABLE)
+            if data.redeem_points % loyalty.redeem_points:
+                raise self._err(BadRequestError, SaleError.LOYALTY_BLOCKS, block=loyalty.redeem_points)
+            allowed = max_redeemable(
+                loyalty, customer.loyalty_points, after_lines - data.invoice_discount
+            )
+            if data.redeem_points > allowed:
+                raise self._err(ConflictError, SaleError.LOYALTY_TOO_MANY, max=allowed)
+            loyalty_discount = redeem_discount(loyalty, data.redeem_points)
+        total = after_lines - data.invoice_discount - loyalty_discount
+        earned = earned_points(loyalty, total) if customer else 0
 
         # بَسطة: بيع كاش فقط بدون عميل (العملاء والآجل والمحافظ من خطة دُكّان).
         if is_free():
@@ -284,6 +301,9 @@ class SaleService(EntityService):
             lines_discount=lines_discount,
             promo_discount=promo_discount,
             invoice_discount=data.invoice_discount,
+            loyalty_redeemed=data.redeem_points,
+            loyalty_discount=loyalty_discount,
+            loyalty_earned=earned,
             total=total,
             cash_amount=cash,
             credit_amount=credit,
@@ -296,7 +316,8 @@ class SaleService(EntityService):
         self.repo.add(sale)
 
         nets = allocate(
-            data.invoice_discount, [p["gross"] - p["promo"] - p["discount"] for p in priced]
+            data.invoice_discount + loyalty_discount,
+            [p["gross"] - p["promo"] - p["discount"] for p in priced],
         )
         cost_total = 0
         for p, net in zip(priced, nets, strict=True):
@@ -338,6 +359,14 @@ class SaleService(EntityService):
 
         if customer:
             self.customers.record_purchase(customer, total)
+            post_points(
+                self.session, self.actor, customer, LoyaltyKind.REDEEM, -data.redeem_points,
+                note=f"استبدال في فاتورة #{number}", ref_type=REF_SALE, ref_id=sale.id,
+            )  # fmt: skip
+            post_points(
+                self.session, self.actor, customer, LoyaltyKind.EARN, earned,
+                note=f"فاتورة #{number}", ref_type=REF_SALE, ref_id=sale.id,
+            )  # fmt: skip
             if credit:
                 self.customers.post_entry(
                     customer,
@@ -372,6 +401,8 @@ class SaleService(EntityService):
                 "payment_ref": sale.payment_ref,
                 "discount": lines_discount + data.invoice_discount,
                 "promo_discount": promo_discount,
+                "loyalty_redeemed": data.redeem_points,
+                "loyalty_earned": earned,
                 "customer_id": sale.customer_id,
                 "items": len(priced),
             },
@@ -542,6 +573,17 @@ class SaleService(EntityService):
         ret.credit_refund = credit_refund
         ret.wallet_refund = wallet_refund
         sale.returned_total += total
+        if customer and (sale.loyalty_earned or sale.loyalty_redeemed):
+            full = sale.total <= 0 or sale.returned_total >= sale.total
+            left_earn = sale.loyalty_earned - sale.loyalty_earn_reversed
+            left_redeem = sale.loyalty_redeemed - sale.loyalty_redeem_restored
+            restore = left_redeem if full else min(left_redeem, sale.loyalty_redeemed * total // sale.total)
+            reverse = left_earn if full else min(left_earn, sale.loyalty_earned * total // sale.total)
+            reverse = min(reverse, customer.loyalty_points + restore)  # لا رصيد بالسالب
+            sale.loyalty_redeem_restored += restore
+            sale.loyalty_earn_reversed += reverse
+            ret.loyalty_restored = restore
+            ret.loyalty_reversed = reverse
         self.repo.add_any(ret)
         self.repo.flush()
 
@@ -557,6 +599,14 @@ class SaleService(EntityService):
             )
         if customer:
             customer.total_sales = max(customer.total_sales - total, 0)
+            post_points(
+                self.session, self.actor, customer, LoyaltyKind.RESTORE, ret.loyalty_restored,
+                note=f"رد نقاط مستبدلة — مرتجع #{number}", ref_type=REF_SALE_RETURN, ref_id=ret.id,
+            )  # fmt: skip
+            post_points(
+                self.session, self.actor, customer, LoyaltyKind.RETURN, -ret.loyalty_reversed,
+                note=f"مرتجع #{number} من فاتورة #{sale.number}", ref_type=REF_SALE_RETURN, ref_id=ret.id,
+            )  # fmt: skip
             if credit_refund:
                 self.customers.post_entry(
                     customer,
@@ -653,7 +703,9 @@ class SaleService(EntityService):
 
     def _sales_out(self, rows: list[Sale]) -> list[SaleOut]:
         names = user_names(self.session, [s.created_by for s in rows])
-        phones = self._customer_phones({s.customer_id for s in rows if s.customer_id})
+        cids = {s.customer_id for s in rows if s.customer_id}
+        phones = self._customer_phones(cids)
+        points = self._customer_points(cids)
         labels = self._method_names()
         mgr = self.is_manager
         out: list[SaleOut] = []
@@ -677,6 +729,10 @@ class SaleService(EntityService):
                     lines_discount=s.lines_discount,
                     promo_discount=s.promo_discount,
                     invoice_discount=s.invoice_discount,
+                    loyalty_redeemed=s.loyalty_redeemed,
+                    loyalty_discount=s.loyalty_discount,
+                    loyalty_earned=s.loyalty_earned,
+                    customer_points=points.get(s.customer_id) if s.customer_id else None,
                     total=s.total,
                     cash_amount=s.cash_amount,
                     credit_amount=s.credit_amount,
@@ -734,6 +790,8 @@ class SaleService(EntityService):
                 cash_refund=r.cash_refund,
                 credit_refund=r.credit_refund,
                 wallet_refund=r.wallet_refund,
+                loyalty_reversed=r.loyalty_reversed,
+                loyalty_restored=r.loyalty_restored,
                 lines=[
                     ReturnLineOut(
                         id=l.id,
@@ -755,6 +813,16 @@ class SaleService(EntityService):
         from app.modules.settings.service import SettingsService
 
         return {k: m.name for k, m in SettingsService(self.session).payment_methods().items()}
+
+    def _customer_points(self, ids: set[str]) -> dict[str, int]:
+        if not ids:
+            return {}
+        from sqlalchemy import select
+
+        rows = self.session.execute(
+            select(Customer.id, Customer.loyalty_points).where(Customer.id.in_(ids))
+        )
+        return {cid: pts for cid, pts in rows.all()}
 
     def _customer_phones(self, ids: set[str]) -> dict[str, str | None]:
         if not ids:

@@ -21,6 +21,7 @@ import {
   selectSettlement,
   selectTotals,
 } from "../store/selectors";
+import { PosLoyaltyRow } from "./posLoyaltyRow";
 
 /** الإجمالي كبير وثابت أسفل الجدول، ومعه أزرار الإجراءات. */
 export function PosTotals() {
@@ -51,6 +52,7 @@ export function PosTotals() {
             </dd>
           </div>
         )}
+        <PosLoyaltyRow />
         <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">الأصناف</dt>
           <dd className="font-mono tabular-nums" dir="ltr">

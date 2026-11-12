@@ -13,6 +13,7 @@ from .constants import (
     MAX_PATH_LEN,
 )
 from .scale import ScaleBarcodeConfig
+from app.modules.loyalty.config import LoyaltyConfig
 from .payments import (
     MAX_COUNTRY_LEN,
     MAX_METHOD_ACCOUNT,
@@ -153,6 +154,7 @@ class PublicSettingsOut(BaseModel):
     payments: PaymentConfigOut
     discount_limit: DiscountLimitOut
     scale_barcode: ScaleBarcodeConfig
+    loyalty: LoyaltyConfig
 
 
 class BackupLocationIn(BaseModel):

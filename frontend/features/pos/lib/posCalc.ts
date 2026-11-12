@@ -1,3 +1,9 @@
+import {
+  earnedPoints,
+  getLoyaltyConfig,
+  maxRedeemable,
+  redeemDiscount,
+} from "@/lib/loyalty";
 import { parseScaleBarcode, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
 import { normalizeDigits } from "@/lib/format";
 import type {
@@ -135,6 +141,11 @@ export interface InvoiceTotals {
   /** المجموع بعد خصم الأصناف (وقبل خصم الفاتورة). */
   subtotal: number;
   discountAmount: number;
+  /** النقاط المستبدلة فعلاً (بعد القص للمسموح) وقيمة خصمها. */
+  redeemPoints: number;
+  loyaltyDiscount: number;
+  /** تقدير النقاط التي سيكسبها العميل (السيرفر هو المرجع). */
+  pointsToEarn: number;
   total: number;
 }
 
@@ -143,6 +154,17 @@ export function calcTotals(invoice: PosInvoice): InvoiceTotals {
     invoice.lines.reduce((sum, line) => sum + lineTotal(line), 0),
   );
   const discountAmount = calcDiscount(subtotal, invoice.discount);
+  const loyalty = getLoyaltyConfig();
+  const customer = invoice.customer;
+  const base = round2(subtotal - discountAmount);
+  const allowed = customer
+    ? maxRedeemable(loyalty, customer.loyaltyPoints ?? 0, base)
+    : 0;
+  const wanted = invoice.redeemPoints ?? 0;
+  const redeemPoints =
+    Math.min(wanted - (wanted % loyalty.redeemPoints), allowed) || 0;
+  const loyaltyDiscount = redeemDiscount(loyalty, redeemPoints);
+  const total = round2(base - loyaltyDiscount);
   return {
     itemCount: invoice.lines.length,
     promoDiscount: round2(
@@ -154,7 +176,10 @@ export function calcTotals(invoice: PosInvoice): InvoiceTotals {
     qtyCount: round3(invoice.lines.reduce((sum, l) => sum + l.qty, 0)),
     subtotal,
     discountAmount,
-    total: round2(subtotal - discountAmount),
+    redeemPoints,
+    loyaltyDiscount,
+    pointsToEarn: customer ? earnedPoints(loyalty, total) : 0,
+    total,
   };
 }
 
