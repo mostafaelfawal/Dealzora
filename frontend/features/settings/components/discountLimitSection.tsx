@@ -15,7 +15,10 @@ import { useDiscountLimit, useSaveDiscountLimit } from "../hooks/useSettings";
 export function DiscountLimitSection() {
   const saved = useDiscountLimit();
   const save = useSaveDiscountLimit();
-  const [draft, setDraft] = useState<{ enabled: boolean; percent: string } | null>(null);
+  const [draft, setDraft] = useState<{
+    enabled: boolean;
+    percent: string;
+  } | null>(null);
 
   if (!saved.data) {
     return <p className="text-xs text-muted-foreground">جارِ التحميل…</p>;

@@ -11,6 +11,7 @@ from app.core.security import Actor, get_actor, require_app_token
 
 from app.core.plan import Feature, require_feature
 
+from .scale import ScaleBarcodeConfig
 from .schema import (
     CurrencyIn,
     CurrencyOut,
@@ -34,6 +35,7 @@ def get_settings_public(session: DbSession):
         currency=service.currency(),
         payments=service.payment_config(),
         discount_limit=service.discount_limit(),
+        scale_barcode=service.scale_barcode(),
     )
 
 
@@ -58,3 +60,10 @@ def set_discount_limit(
     data: DiscountLimitIn, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]
 ):
     return SettingsService(session).set_discount_limit(actor, data)
+
+
+@router.put("/scale-barcode", response_model=ScaleBarcodeConfig, dependencies=[Depends(require_manager_write)])
+def set_scale_barcode(
+    data: ScaleBarcodeConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]
+):
+    return SettingsService(session).set_scale_barcode(actor, data)

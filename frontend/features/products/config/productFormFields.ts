@@ -10,6 +10,7 @@ export const PRODUCT_FIELD_IDS = {
   costPrice: "pf-cost",
   salePrice: "pf-sale",
   minStock: "pf-min",
+  scaleCode: "pf-scale",
   openingStock: "pf-opening",
   extraUnits: "pf-units",
   isActive: "pf-active",
@@ -25,6 +26,7 @@ export const unitFieldId = (key: UnitKey, index: number) =>
 export const PRODUCT_ERROR_ORDER = [
   "name",
   "barcode",
+  "scaleCode",
   "costPrice",
   "salePrice",
   "extraUnits",

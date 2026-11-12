@@ -33,6 +33,8 @@ export interface PosProduct {
   minStock: number;
   /** وحدات البيع الإضافية. */
   units: PosUnit[];
+  /** كود الصنف على الميزان (PLU) لملصقات الوزن. */
+  scaleCode?: number | null;
 }
 
 export interface PosCustomer {

@@ -1,6 +1,12 @@
 "use client";
 
-import { IconBarcode, IconSettings, IconSparkles } from "@tabler/icons-react";
+import {
+  IconBarcode,
+  IconScale,
+  IconSettings,
+  IconSparkles,
+} from "@tabler/icons-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useWatch } from "react-hook-form";
 
@@ -23,6 +29,7 @@ import {
 import { CatalogDialog } from "@/features/catalog/components/catalogDialog";
 import { useUnits } from "@/features/catalog/hooks/useCatalog";
 import type { CatalogTab } from "@/features/catalog/types/catalog";
+import { useScaleConfig } from "@/lib/scaleBarcode";
 
 import {
   NO_CATEGORY,
@@ -104,6 +111,7 @@ export function ProductFormBasics() {
     name: ["category", "unit", "allowDecimal"],
   });
 
+  const scaleEnabled = useScaleConfig().enabled;
   const { data: categories = [] } = useGetCategories();
   const categoryItems = useMemo<Item[]>(
     () => [
@@ -226,6 +234,44 @@ export function ProductFormBasics() {
         onCheckedChange={(checked) => setField("allowDecimal", checked)}
         className="border-t pt-3"
       />
+
+      {allowDecimal && (
+        <FormField
+          id={IDS.scaleCode}
+          label="كود الميزان (PLU)"
+          error={errors.scaleCode?.message}
+        >
+          <div className="relative max-w-60">
+            <IconScale
+              aria-hidden
+              className="pointer-events-none absolute inset-s-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              id={IDS.scaleCode}
+              {...register("scaleCode")}
+              aria-invalid={Boolean(errors.scaleCode)}
+              aria-describedby={errorId(IDS.scaleCode)}
+              autoComplete="off"
+              inputMode="numeric"
+              dir="ltr"
+              placeholder="مثال: 1234"
+              className="ps-8 font-mono"
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            نفس رقم الصنف المسجّل على الميزان. الكاشير يقرأ الوزن من الملصق
+            مباشرة.{" "}
+            {!scaleEnabled && (
+              <Link
+                href="/admin/settings#scale"
+                className="text-primary underline"
+              >
+                فعّل باركود الميزان من الإعدادات
+              </Link>
+            )}
+          </p>
+        </FormField>
+      )}
 
       <CatalogDialog
         open={catalogTab !== null}

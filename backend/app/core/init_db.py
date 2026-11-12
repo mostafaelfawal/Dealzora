@@ -44,6 +44,14 @@ _NEW_COLUMNS = (
     ("sale_returns", "wallet_refund", "INTEGER NOT NULL DEFAULT 0"),
     # طرق الدفع حسب الدولة: لقطة اسم الطريقة الإلكترونية وقت البيع
     ("sales", "payment_label", "VARCHAR(40)"),
+    # باركود الميزان: كود الصنف على الميزان (PLU)
+    ("products", "scale_code", "INTEGER"),
+)
+
+# فهارس على أعمدة أُضيفت بـ _NEW_COLUMNS (تُنشأ بعدها).
+_POST_COLUMN_UPGRADES = (
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_products_scale_code_live "
+    "ON products (scale_code) WHERE deleted_at IS NULL AND scale_code IS NOT NULL",
 )
 
 
@@ -57,3 +65,5 @@ def init_db() -> None:
             existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
             if column not in existing:
                 conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
+        for sql in _POST_COLUMN_UPGRADES:
+            conn.exec_driver_sql(sql)

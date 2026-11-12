@@ -4,6 +4,13 @@ import { toMs, toMsOrNull } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
 import type { Currency } from "@/lib/currency";
 import { setPaymentConfig, type PaymentConfig } from "@/lib/payments";
+import {
+  fromScaleDto,
+  setScaleConfig,
+  toScaleDto,
+  type ScaleBarcodeConfig,
+  type ScaleBarcodeDto,
+} from "@/lib/scaleBarcode";
 import { getLicenseStatus } from "@/features/setup/lib/license";
 import type { LicenseStatus } from "@/features/setup/types/setup";
 
@@ -119,15 +126,31 @@ const toConfig = (d: PaymentConfigDto | undefined): PaymentConfig => ({
   })),
 });
 
-/** GET /settings يرجّع العملة وطرق الدفع معاً، فنحدّث مخزن طرق الدفع هنا أيضاً. */
+/** GET /settings يرجّع العملة وطرق الدفع وصيغة باركود الميزان معاً، فنحدّث مخازنها هنا أيضاً. */
 export const fetchCurrency = async (): Promise<Currency> => {
   const { data } = await api.get<{
     currency: Currency;
     payments?: PaymentConfigDto;
+    scale_barcode?: ScaleBarcodeDto;
   }>("/settings");
   setPaymentConfig(toConfig(data.payments));
+  setScaleConfig(fromScaleDto(data.scale_barcode));
   return data.currency;
 };
+
+/* ---------- باركود الميزان ---------- */
+
+export const saveScaleBarcode = async (
+  config: ScaleBarcodeConfig,
+): Promise<ScaleBarcodeConfig> =>
+  fromScaleDto(
+    (
+      await api.put<ScaleBarcodeDto>(
+        "/settings/scale-barcode",
+        toScaleDto(config),
+      )
+    ).data,
+  );
 
 /* ---------- طرق الدفع الإلكتروني ---------- */
 

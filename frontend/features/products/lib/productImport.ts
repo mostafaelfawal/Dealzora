@@ -103,6 +103,8 @@ export async function importProducts({
           Math.round((decimal ? value : Math.round(value)) * QTY_SCALE),
         );
       const categoryText = text("category").toLowerCase();
+      const pluText = normalizeDigits(text("scaleCode")).trim();
+      const scaleCode = /^\d{1,6}$/.test(pluText) ? Number(pluText) : 0;
 
       const base = {
         name,
@@ -125,6 +127,12 @@ export async function importProducts({
             ? Math.round(existing.minStock * QTY_SCALE)
             : 0,
         is_active: existing?.isActive ?? true,
+        // كود الميزان للموزون فقط. عمود فارغ/غير مربوط = نُبقي الحالي.
+        scale_code: !decimal
+          ? null
+          : scaleCode > 0
+            ? scaleCode
+            : (existing?.scaleCode ?? null),
       };
 
       if (existing) {

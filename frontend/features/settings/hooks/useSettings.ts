@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { setScaleConfig, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
+
 import { setCurrency, type Currency } from "@/lib/currency";
 import { setPaymentConfig, type PaymentConfig } from "@/lib/payments";
 import { extractErrorMessage } from "@/lib/errors";
@@ -18,6 +20,7 @@ import {
   restoreBackup,
   saveCurrency,
   saveDiscountLimit,
+  saveScaleBarcode,
   savePaymentConfig,
   setBackupLocation,
   type DiscountLimit,
@@ -195,5 +198,23 @@ export function useRestoreBackup() {
       toast.error(extractErrorMessage(e, "تعذّرت الاستعادة"), {
         duration: 10_000,
       }),
+  });
+}
+
+/* ---------- باركود الميزان ---------- */
+
+export function useSaveScaleBarcode() {
+  return useMutation({
+    mutationFn: (config: ScaleBarcodeConfig) => saveScaleBarcode(config),
+    onSuccess: (config) => {
+      setScaleConfig(config);
+      toast.success(
+        config.enabled
+          ? "تم حفظ صيغة باركود الميزان: الكاشير يقرأ الملصقات الآن"
+          : "تم إيقاف قراءة باركود الميزان",
+      );
+    },
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّر حفظ إعداد الميزان")),
   });
 }

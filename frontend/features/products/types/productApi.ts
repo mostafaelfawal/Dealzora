@@ -18,6 +18,7 @@ export interface ProductDto {
   sale_price: number;
   margin_percent: number | null; // null للكاشير
   min_stock: number;
+  scale_code: number | null;
   stock_qty: number;
   stock_level: "ok" | "low" | "out";
   is_active: boolean;
@@ -65,6 +66,7 @@ interface ProductPayloadBase {
   cost_price: number; // قروش
   sale_price: number; // قروش
   min_stock: number; // × 1000
+  scale_code: number | null;
   is_active: boolean;
   extra_units: ProductUnitPayload[];
 }

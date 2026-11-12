@@ -17,8 +17,9 @@ const HEADERS = [
   "الرصيد الحالي",
   "الحد الأدنى",
   "الحالة",
+  "كود الميزان",
 ];
-const WIDTHS = [32, 18, 16, 10, 12, 12, 14, 12, 10];
+const WIDTHS = [32, 18, 16, 10, 12, 12, 14, 12, 10, 12];
 
 type Cell = string | number;
 interface SheetSpec {
@@ -85,6 +86,7 @@ const toRow = (p: Product): Cell[] => [
   p.stock,
   p.minStock,
   p.isActive ? "مفعّل" : "معطّل",
+  p.scaleCode ?? "",
 ];
 
 export interface ExportResult {

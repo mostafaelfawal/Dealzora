@@ -14,6 +14,7 @@ MAX_EXTRA_UNITS = 5  # TODO: طابقها مع MAX_EXTRA_UNITS في frontend/con
 MAX_BULK_ITEMS = 200  # أقصى عدد عناصر في طلب جماعي واحد
 MAX_MONEY = 1_000_000_000  # بالقروش (10 مليون جنيه)
 MAX_QTY = 1_000_000 * QTY_SCALE
+MAX_SCALE_CODE = 999_999  # حتى 6 خانات على الميزان
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 500
 
@@ -40,6 +41,7 @@ PRODUCT_SNAPSHOT_FIELDS = (
     "sale_price",
     "min_stock",
     "is_active",
+    "scale_code",
 )
 
 
@@ -52,6 +54,7 @@ class ProductError(StrEnum):
     NO_STOCK_CHANGE = "no_stock_change"
     FRACTION_NOT_ALLOWED = "fraction_not_allowed"
     HAS_STOCK = "product_has_stock"
+    SCALE_CODE_TAKEN = "scale_code_taken"
 
 
 ERROR_MESSAGES: dict[ProductError, str] = {
@@ -62,5 +65,6 @@ ERROR_MESSAGES: dict[ProductError, str] = {
     ProductError.INSUFFICIENT_STOCK: "الكمية أكبر من الرصيد المتاح",
     ProductError.NO_STOCK_CHANGE: "لا يوجد تغيير في الرصيد",
     ProductError.FRACTION_NOT_ALLOWED: "هذا الصنف لا يقبل كسوراً",
+    ProductError.SCALE_CODE_TAKEN: "كود الميزان مستخدم لصنف آخر",
     ProductError.HAS_STOCK: "لا يمكن حذف صنف رصيده أكبر من صفر. صفّر الرصيد أولاً بالجرد",
 }

@@ -8,6 +8,7 @@ import {
   IconDevices,
   IconPalette,
   IconPercentage,
+  IconScale,
   IconShieldLock,
   IconWallet,
 } from "@tabler/icons-react";
@@ -30,6 +31,7 @@ import { DemoDataSection } from "./demoDataSection";
 import { LicenseSection } from "./licenseSection";
 import { PasswordSection } from "./passwordSection";
 import { PaymentsSection } from "./paymentsSection";
+import { ScaleBarcodeSection } from "./scaleBarcodeSection";
 import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
 
@@ -91,6 +93,16 @@ const SHARED: Section[] = [
     description:
       "أقصى نسبة خصم يمنحها الكاشير على الفاتورة (خصم الأصناف + خصم الفاتورة). المدير بلا حد.",
     content: <DiscountLimitSection />,
+  },
+  {
+    id: "scale",
+    group: "shop",
+    icon: <IconScale />,
+    title: "باركود الميزان",
+    hint: "ملصقات الأصناف الموزونة",
+    description:
+      "صيغة الملصق الذي يطبعه ميزان المحل (كود الصنف + الوزن أو السعر). الكاشير يمسحه فيضيف الصنف بوزنه مباشرة.",
+    content: <ScaleBarcodeSection />,
   },
   {
     id: "appearance",
@@ -190,8 +202,7 @@ export function SettingsScreen() {
     if (!step && edge === null) return;
     event.preventDefault();
     const index = ids.indexOf(current.id);
-    const next =
-      ids[edge ?? (index + step + ids.length) % ids.length];
+    const next = ids[edge ?? (index + step + ids.length) % ids.length];
     setActive(next);
     document.getElementById(tabId(next))?.focus();
   }

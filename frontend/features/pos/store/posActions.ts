@@ -15,7 +15,14 @@ import {
   recallHeldRemote,
 } from "../api/held.api";
 import { fetchPosProducts, toCompletedInvoice } from "../api/posCatalog.api";
-import { findByBarcode, lineDiscount, lineKey } from "../lib/posCalc";
+import { getScaleConfig, parseScaleBarcode } from "@/lib/scaleBarcode";
+import { formatQty } from "@/lib/format";
+import {
+  findByBarcode,
+  findByScaleBarcode,
+  lineDiscount,
+  lineKey,
+} from "../lib/posCalc";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
 import { focusSearch, selectSearchText } from "../lib/posFocus";
 import type {
@@ -139,6 +146,37 @@ export const submitEntry = (): AppThunk => (dispatch, getState) => {
   const exact = findByBarcode(selectProducts(state), entry.term);
   if (exact) {
     dispatch(addToCart(exact.product, entry.qty ?? 1, exact.unit?.id ?? null));
+    return;
+  }
+  // ملصق ميزان: الصنف من كوده على الميزان، والكمية من الوزن المطبوع (أو السعر ÷ سعر الكيلو).
+  const scaleConfig = getScaleConfig();
+  const scaled = findByScaleBarcode(
+    selectProducts(state),
+    entry.term,
+    scaleConfig,
+  );
+  if (scaled) {
+    dispatch(addToCart(scaled.product, scaled.qty));
+    toast.success(
+      `${scaled.product.name}: ${formatQty(scaled.qty)} ${scaled.product.unit}`,
+      {
+        description:
+          scaled.amount !== null
+            ? `قيمة الملصق ${formatMoneyText(scaled.amount)}`
+            : undefined,
+        duration: 2500,
+      },
+    );
+    return;
+  }
+  const scaleRead = parseScaleBarcode(entry.term, scaleConfig);
+  if (scaleRead) {
+    dispatch(
+      posUiActions.setNotFound(
+        `ملصق ميزان لصنف كوده ${scaleRead.scaleCode} غير مسجّل. أضف «كود الميزان» للصنف من شاشة الأصناف`,
+      ),
+    );
+    selectSearchText();
     return;
   }
   const product = selectSearchResults(state)[selectSafeIndex(state)];

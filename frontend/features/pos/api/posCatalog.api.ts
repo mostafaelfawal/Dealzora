@@ -27,6 +27,7 @@ const toPosProduct = (p: Product): PosProduct => ({
   allowDecimal: p.allowDecimal,
   stock: p.stock,
   minStock: p.minStock,
+  scaleCode: p.scaleCode,
   // سعر الوحدة الفارغ = سعر الأساسية × العدد (نفس حساب الـ backend).
   units: p.extraUnits.map((u) => ({
     id: u.id,

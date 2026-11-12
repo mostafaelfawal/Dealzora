@@ -31,6 +31,8 @@ class Product(SyncMixin, Base):
     cost_price: Mapped[int] = mapped_column(Integer, default=0)
     sale_price: Mapped[int] = mapped_column(Integer)
     min_stock: Mapped[int] = mapped_column(Integer, default=0)
+    # كود الصنف على الميزان (PLU) لملصقات الوزن. للأصناف الموزونة فقط، وفريد.
+    scale_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # رصيد مخزّن مؤقتاً لسرعة القوائم. المرجع الحقيقي = مجموع StockMovement.qty_delta،
     # ويُحدَّث هنا فقط داخل نفس معاملة تسجيل الحركة.
     stock_qty: Mapped[int] = mapped_column(Integer, default=0)

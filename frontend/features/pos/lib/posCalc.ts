@@ -1,3 +1,4 @@
+import { parseScaleBarcode, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
 import { normalizeDigits } from "@/lib/format";
 import type {
   CartLine,
@@ -64,6 +65,24 @@ export function findByBarcode(
     if (unit) return { product, unit };
   }
   return null;
+}
+
+/** ملصق ميزان ← الصنف والكمية (الوزن، أو قيمة الملصق ÷ سعر الكيلو). */
+export function findByScaleBarcode(
+  products: PosProduct[],
+  code: string,
+  cfg: ScaleBarcodeConfig,
+): { product: PosProduct; qty: number; amount: number | null } | null {
+  const read = parseScaleBarcode(code, cfg);
+  if (!read) return null;
+  const product = products.find((p) => p.scaleCode === read.scaleCode);
+  if (!product) return null;
+  const qty =
+    read.weight ??
+    (product.price > 0
+      ? Math.round(((read.amount ?? 0) / product.price) * 1000) / 1000
+      : 0);
+  return qty > 0 ? { product, qty, amount: read.amount } : null;
 }
 
 export function getStockLevel(

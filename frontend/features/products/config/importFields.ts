@@ -6,7 +6,8 @@ export type ImportFieldKey =
   | "costPrice"
   | "salePrice"
   | "stock"
-  | "minStock";
+  | "minStock"
+  | "scaleCode";
 
 export interface ImportField {
   key: ImportFieldKey;
@@ -23,6 +24,13 @@ export const IMPORT_FIELDS: ImportField[] = [
     label: "اسم الصنف",
     required: true,
     aliases: ["اسم", "صنف", "name", "product"],
+  },
+  // قبل «الباركود»: الربط التلقائي بالترتيب، و«كود الميزان» يحتوي كلمة «كود».
+  {
+    key: "scaleCode",
+    label: "كود الميزان",
+    required: false,
+    aliases: ["ميزان", "plu", "scale"],
   },
   {
     key: "barcode",

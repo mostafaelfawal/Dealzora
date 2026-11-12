@@ -24,6 +24,7 @@ from .constants import (
 )
 from .model import AppSetting
 from .payments import PaymentKind
+from .scale import ScaleBarcodeConfig
 from .schema import (
     CurrencyIn,
     CurrencyOut,
@@ -79,6 +80,15 @@ class SettingsService:
             percent = DEFAULT_CASHIER_DISCOUNT_PERCENT
         return DiscountLimitOut(enabled=enabled, max_percent=percent)
 
+    def scale_barcode(self) -> ScaleBarcodeConfig:
+        raw = self.get(SettingKey.SCALE_BARCODE)
+        if raw:
+            try:
+                return ScaleBarcodeConfig.model_validate_json(raw)
+            except ValueError:  # قيمة تالفة: متوقف حتى يُحفظ من جديد
+                pass
+        return ScaleBarcodeConfig()
+
     def payment_config(self) -> PaymentConfigOut:
         raw = self.get(SettingKey.PAY_METHODS)
         if raw:
@@ -127,6 +137,17 @@ class SettingsService:
             )  # fmt: skip
         self.session.commit()
         return after
+
+    def set_scale_barcode(self, actor: Actor, data: ScaleBarcodeConfig) -> ScaleBarcodeConfig:
+        before = self.scale_barcode()
+        self._set(actor, SettingKey.SCALE_BARCODE, data.model_dump_json())
+        if data != before:
+            record_audit(
+                self.session, actor, entity=ENTITY_SETTING, entity_id="scale_barcode", action="update",
+                changes={"scale_barcode": {"from": before.model_dump(mode="json"), "to": data.model_dump(mode="json")}},
+            )  # fmt: skip
+        self.session.commit()
+        return data
 
     def set_discount_limit(self, actor: Actor, data: DiscountLimitIn) -> DiscountLimitOut:
         before = self.discount_limit()

@@ -12,6 +12,7 @@ from .constants import (
     MAX_CURRENCY_SYMBOL,
     MAX_PATH_LEN,
 )
+from .scale import ScaleBarcodeConfig
 from .payments import (
     MAX_COUNTRY_LEN,
     MAX_METHOD_ACCOUNT,
@@ -151,6 +152,7 @@ class PublicSettingsOut(BaseModel):
     currency: CurrencyOut
     payments: PaymentConfigOut
     discount_limit: DiscountLimitOut
+    scale_barcode: ScaleBarcodeConfig
 
 
 class BackupLocationIn(BaseModel):

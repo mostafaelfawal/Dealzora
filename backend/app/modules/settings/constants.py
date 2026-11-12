@@ -27,6 +27,8 @@ class SettingKey(StrEnum):
     # حد خصم الكاشير: "1"/"0" والنسبة المئوية (0..100).
     DISCOUNT_LIMIT_ENABLED = "discount.cashier_limit_enabled"
     DISCOUNT_LIMIT_PERCENT = "discount.cashier_max_percent"
+    # صيغة باركود الميزان (JSON، انظر scale.py).
+    SCALE_BARCODE = "scale.barcode"
     # مفاتيح قديمة (قبل القوالب): تُقرأ مرة واحدة لترحيلها إلى PAY_METHODS.
     PAY_VODAFONE_CASH = "payments.vodafone_cash"
     PAY_INSTAPAY = "payments.instapay"

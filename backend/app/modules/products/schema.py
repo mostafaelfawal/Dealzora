@@ -11,7 +11,8 @@ from .constants import (
     MAX_NOTE_LEN,
     MAX_PAGE_SIZE,
     MAX_QTY,
-    MAX_BULK_ITEMS
+    MAX_BULK_ITEMS,
+    MAX_SCALE_CODE,
 )
 from .schema_validation import (
     Money,
@@ -62,11 +63,14 @@ class ProductBase(BaseModel):
     sale_price: SalePrice
     min_stock: Qty = 0
     is_active: bool = True
+    scale_code: int | None = Field(None, ge=1, le=MAX_SCALE_CODE)
     extra_units: list[UnitIn] = Field(default_factory=list, max_length=MAX_EXTRA_UNITS)
 
     @model_validator(mode="after")
     def _cross_field_rules(self):
         self.allow_decimal = resolve_allow_decimal(self.unit, self.allow_decimal)
+        if self.scale_code is not None and not self.allow_decimal:
+            raise ValueError("كود الميزان للأصناف التي تُباع بالوزن فقط")
         validate_granularity(
             self.allow_decimal,
             min_stock=self.min_stock,
@@ -98,6 +102,7 @@ class ProductOut(BaseModel):
     sale_price: int
     margin_percent: int | None  # None للكاشير
     min_stock: int
+    scale_code: int | None
     stock_qty: int
     stock_level: StockLevel
     is_active: bool
@@ -141,6 +146,9 @@ class ProductsSummaryOut(BaseModel):
 class BarcodeLookupOut(BaseModel):
     product: ProductOut
     matched_unit_id: str | None  # لو الباركود لوحدة إضافية (كرتونة مثلاً)
+    # ملصق ميزان: الكمية (× 1000) من الوزن، أو قيمة الملصق (قروش) في وضع السعر.
+    scale_qty: int | None = None
+    scale_amount: int | None = None
 
 
 # ================= المخزون =================

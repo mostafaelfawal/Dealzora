@@ -3,6 +3,8 @@ import type {
   ProductCreatePayload,
   ProductUpdatePayload,
 } from "../types/productApi";
+import { normalizeDigits } from "@/lib/format";
+
 import { parseNumber } from "./productCalc";
 import { MONEY_SCALE, QTY_SCALE } from "./productMapper";
 
@@ -24,6 +26,11 @@ function toBase(v: ProductSchemaType) {
     cost_price: scaled(v.costPrice, MONEY_SCALE),
     sale_price: scaled(v.salePrice, MONEY_SCALE),
     min_stock: scaled(v.minStock, QTY_SCALE),
+    // كود الميزان للأصناف الموزونة فقط: يُمسح لو أُلغي «يُباع بالوزن».
+    scale_code:
+      v.allowDecimal && v.scaleCode.trim()
+        ? Number(normalizeDigits(v.scaleCode).trim())
+        : null,
     is_active: v.isActive,
     extra_units: v.extraUnits.map((u) => ({
       id: u.id,

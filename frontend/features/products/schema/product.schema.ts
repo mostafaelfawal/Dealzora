@@ -60,6 +60,14 @@ function barcodeError(text: string) {
   return null;
 }
 
+function scaleCodeError(text: string) {
+  if (isBlank(text)) return null;
+  const value = normalizeDigits(text).trim();
+  if (!/^\d{1,6}$/.test(value) || Number(value) < 1)
+    return "كود الميزان رقم من 1 إلى 999999";
+  return null;
+}
+
 function costError(text: string) {
   if (isBlank(text)) return null;
   const scaled = toScaled(text, MONEY_SCALE);
@@ -126,6 +134,7 @@ export const productSchema = z
     costPrice: check(costError),
     salePrice: check(saleError),
     minStock: check(qtyError),
+    scaleCode: check(scaleCodeError),
     openingStock: check(qtyError),
     isActive: z.boolean(),
     extraUnits: z

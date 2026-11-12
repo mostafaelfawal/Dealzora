@@ -29,6 +29,7 @@ export function toProduct(dto: ProductDto): Product {
     marginPercent: dto.margin_percent,
     stock: qty(dto.stock_qty),
     minStock: qty(dto.min_stock),
+    scaleCode: dto.scale_code ?? null,
     isActive: dto.is_active,
     version: dto.version,
     extraUnits: dto.extra_units.map((u) => ({

@@ -44,6 +44,16 @@ class ProductRepository:
                 return product, unit
         return None
 
+    def find_by_scale_code(self, scale_code: int) -> Product | None:
+        stmt = select(Product).where(Product.scale_code == scale_code, Product.deleted_at.is_(None))
+        return self.session.scalars(stmt).first()
+
+    def scale_code_taken(self, scale_code: int, *, exclude_product_id: str | None = None) -> bool:
+        stmt = select(Product.id).where(Product.scale_code == scale_code, Product.deleted_at.is_(None))
+        if exclude_product_id:
+            stmt = stmt.where(Product.id != exclude_product_id)
+        return self.session.scalar(stmt.limit(1)) is not None
+
     def barcode_taken(self, barcode: str, *, exclude_product_id: str | None = None) -> bool:
         p = select(Product.id).where(Product.barcode == barcode, Product.deleted_at.is_(None))
         u = select(ProductUnit.id).where(

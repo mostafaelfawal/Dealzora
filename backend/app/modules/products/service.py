@@ -103,12 +103,36 @@ class ProductService(EntityService):
         return self._to_out(self._get_visible(product_id))
 
     def find_by_barcode(self, barcode: str) -> BarcodeLookupOut:
-        found = self.repo.find_by_barcode(normalize_digits(barcode).strip())
+        code = normalize_digits(barcode).strip()
+        found = self.repo.find_by_barcode(code)
+        if found is None and (scale := self._find_scale(code)):
+            return scale
         if found is None or (not self.is_manager and not found[0].is_active):
             raise self._err(NotFoundError, ProductError.NOT_FOUND)
         product, unit = found
         return BarcodeLookupOut(
             product=self._to_out(product), matched_unit_id=unit.id if unit else None
+        )
+
+    def _find_scale(self, code: str) -> BarcodeLookupOut | None:
+        """ملصق ميزان: الصنف من كود الميزان، والكمية من الوزن (أو السعر ÷ سعر الوحدة)."""
+        from app.modules.settings.scale import parse_scale_barcode  # متأخر: لا دوران
+        from app.modules.settings.service import SettingsService
+
+        read = parse_scale_barcode(code, SettingsService(self.session).scale_barcode())
+        if read is None:
+            return None
+        product = self.repo.find_by_scale_code(read.scale_code)
+        if product is None or (not self.is_manager and not product.is_active):
+            return None
+        qty = read.qty
+        if qty is None and read.amount is not None and product.sale_price > 0:
+            qty = round(read.amount * QTY_SCALE / product.sale_price)
+        return BarcodeLookupOut(
+            product=self._to_out(product),
+            matched_unit_id=None,
+            scale_qty=qty,
+            scale_amount=read.amount,
         )
 
     def list_ledger(self, product_id: str, query: LedgerQuery) -> StockLedgerOut:
@@ -374,6 +398,10 @@ class ProductService(EntityService):
         for code in filter(None, codes):
             if self.repo.barcode_taken(code, exclude_product_id=exclude_product_id):
                 raise self._err(ConflictError, ProductError.BARCODE_TAKEN, barcode=code)
+        if data.scale_code is not None and self.repo.scale_code_taken(
+            data.scale_code, exclude_product_id=exclude_product_id
+        ):
+            raise self._err(ConflictError, ProductError.SCALE_CODE_TAKEN, scale_code=data.scale_code)
 
     @staticmethod
     def _apply_fields(product: Product, data: ProductBase) -> None:
@@ -386,6 +414,7 @@ class ProductService(EntityService):
         product.sale_price = data.sale_price
         product.min_stock = data.min_stock
         product.is_active = data.is_active
+        product.scale_code = data.scale_code
 
     def _sync_units(self, product: Product, incoming: list[UnitIn]) -> None:
         existing = {u.id: u for u in product.units}
@@ -480,6 +509,7 @@ class ProductService(EntityService):
             if self.is_manager
             else None,
             min_stock=p.min_stock,
+            scale_code=p.scale_code,
             stock_qty=p.stock_qty,
             stock_level=calc_stock_level(p.stock_qty, p.min_stock),
             is_active=p.is_active,
