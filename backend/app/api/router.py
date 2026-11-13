@@ -6,6 +6,7 @@ from app.modules.audit.routes import router as audit_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.backup.routes import router as backup_router
 from app.modules.batches.routes import router as batches_router
+from app.modules.branch_sync.routes import router as branch_sync_router
 from app.modules.catalog.routes import router as catalog_router
 from app.modules.customers.routes import router as customers_router
 from app.modules.devices.routes import router as devices_router
@@ -52,6 +53,7 @@ routes = [
     audit_router,
     backup_router,
     batches_router,
+    branch_sync_router,
     realtime_router,
 ]
 

@@ -1,4 +1,5 @@
 import {
+  IconArrowsExchange,
   IconBuildingBank,
   IconBuildingStore,
   IconBuildingWarehouse,
@@ -64,6 +65,12 @@ export const NAVIGATION: NavGroup[] = [
         href: "/admin/expiry",
         feature: "expiry",
         icon: IconCalendarTime,
+      },
+      {
+        title: "تحويلات الفروع",
+        href: "/admin/transfers",
+        feature: "branches",
+        icon: IconArrowsExchange,
       },
       {
         title: "المشتريات",

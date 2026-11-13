@@ -27,6 +27,7 @@ TABLE_TOPICS: dict[str, str] = {
     "stock_movements": "products",
     "product_batches": "products",
     "batch_moves": "products",
+    "branch_transfers": "transfers",
     "customers": "customers",
     "customer_ledger": "customers",
     "loyalty_ledger": "customers",

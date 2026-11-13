@@ -7,7 +7,9 @@ export type MovementType =
   | "count"
   | "damage"
   | "gift"
-  | "adjustment";
+  | "adjustment"
+  | "transfer_out"
+  | "transfer_in";
 
 export type AdjustReason = "count" | "damage" | "gift" | "other";
 

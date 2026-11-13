@@ -29,6 +29,7 @@ import app.modules.purchase_orders.model  # noqa: F401
 import app.modules.promotions.model  # noqa: F401
 import app.modules.loyalty.model  # noqa: F401
 import app.modules.batches.model  # noqa: F401
+import app.modules.branch_sync.model  # noqa: F401
 import app.modules.devtools.model  # noqa: F401
 
 # تعديلات على جداول موجودة (create_all لا يعدّل جدولاً قائماً). كل خطوة آمنة للتكرار.

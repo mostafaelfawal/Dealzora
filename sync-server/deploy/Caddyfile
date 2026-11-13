@@ -1,0 +1,28 @@
+# HTTPS تلقائي (Let's Encrypt) للدومين في SYNC_DOMAIN.
+{
+	email {$ACME_EMAIL}
+}
+
+{$SYNC_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 20MB
+	}
+
+	# flush_interval -1: البث (SSE) يوصل للفرع فوراً بدون تخزين مؤقت.
+	reverse_proxy api:8000 {
+		flush_interval -1
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

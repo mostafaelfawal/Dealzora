@@ -1,0 +1,13 @@
+# تجربة محلية (Ubuntu / WSL): قاعدة Postgres + السيرفر فقط، على http://localhost:8001
+# بدون Caddy ولا دومين ولا HTTPS. صفحة /docs مفتوحة للتجربة.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build db api
+#
+# (البورت 8001 لأن 8000 مستخدم للـ backend المحلي للبرنامج نفسه.)
+services:
+  api:
+    ports:
+      - "8001:8000"
+    environment:
+      SYNC_DOCS_ENABLED: "true"
+      SYNC_WORKERS: "1"

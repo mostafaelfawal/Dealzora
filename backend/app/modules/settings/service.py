@@ -37,7 +37,7 @@ from .schema import (
 )
 
 # مفاتيح خاصة بالجهاز لا تُرفع للسحابة.
-_LOCAL_KEYS = frozenset({SettingKey.BACKUP_DIR})
+_LOCAL_KEYS = frozenset({SettingKey.BACKUP_DIR, SettingKey.BRANCH_SYNC})
 
 
 def _get_row(session: Session, key: SettingKey) -> AppSetting | None:
@@ -206,6 +206,12 @@ class SettingsService:
                 self.session, actor, entity=ENTITY_SETTING, entity_id="backup_dir", action="update",
                 changes={"backup_dir": {"from": before, "to": path}},
             )  # fmt: skip
+
+    def set_local(self, actor: Actor, key: SettingKey, value: str) -> None:
+        """إعداد خاص بهذا الجهاز (لا commit هنا). يُرفض لأي مفتاح يُرفع للمزامنة."""
+        if key not in _LOCAL_KEYS:
+            raise ValueError(f"{key} ليس إعداداً محلياً")
+        self._set(actor, key, value)
 
     def _set(self, actor: Actor, key: SettingKey, value: str) -> None:
         row = _get_row(self.session, key)

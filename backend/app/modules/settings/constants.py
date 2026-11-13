@@ -31,6 +31,8 @@ class SettingKey(StrEnum):
     SCALE_BARCODE = "scale.barcode"
     # نقاط الولاء (JSON، انظر loyalty/config.py).
     LOYALTY = "loyalty.config"
+    # ربط هذا الجهاز بسيرفر الفروع (JSON فيه سر الفرع): محلي فقط، لا يُرفع أبداً.
+    BRANCH_SYNC = "branch_sync.config"
     # مفاتيح قديمة (قبل القوالب): تُقرأ مرة واحدة لترحيلها إلى PAY_METHODS.
     PAY_VODAFONE_CASH = "payments.vodafone_cash"
     PAY_INSTAPAY = "payments.instapay"

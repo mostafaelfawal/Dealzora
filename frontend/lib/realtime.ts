@@ -22,7 +22,8 @@ export type RealtimeTopic =
   | "suppliers"
   | "users"
   | "settings"
-  | "devices";
+  | "devices"
+  | "transfers";
 
 /** يُطلق على window مع detail: المواضيع. "*" = اتصال رجع بعد انقطاع (قد تكون فاتتنا تغييرات). */
 export const REALTIME_EVENT = "dz:realtime";

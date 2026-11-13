@@ -59,6 +59,12 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
   users: [["users"], ["audit"]],
   settings: [["settings"], ["shop"], ["plan"]],
   devices: [["devices"]],
+  transfers: [
+    ["branch-transfers"],
+    ["products"],
+    ["inventory"],
+    ["pos", "catalog"],
+  ],
 };
 
 /** تغييرات متتالية (بيع واحد = عدة معاملات) تُجمع في إعادة جلب واحدة. */

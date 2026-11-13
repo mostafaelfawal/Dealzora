@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useSyncExternalStore } from "react";
 
+import { BranchSyncRunner } from "@/features/branchTransfers/components/branchSyncRunner";
 import { RealtimeSync } from "@/features/realtime/components/realtimeSync";
 import { AUTH_EXPIRED_EVENT } from "@/lib/axios";
 
@@ -54,6 +55,8 @@ export function AuthGuard({
       {children}
       {/* مزامنة لحظية مع باقي الأجهزة طالما المستخدم داخل */}
       <RealtimeSync />
+      {/* الأصناف والعملاء مع باقي الفروع (لو الجهاز مربوط بسيرفر الفروع) */}
+      <BranchSyncRunner />
     </>
   ) : null;
 }

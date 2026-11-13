@@ -38,6 +38,8 @@ class MovementType(StrEnum):
     DAMAGE = "damage"  # تالف
     GIFT = "gift"  # هدية
     ADJUSTMENT = "adjustment"  # تسوية أخرى
+    TRANSFER_OUT = "transfer_out"  # تحويل صادر لفرع آخر
+    TRANSFER_IN = "transfer_in"  # تحويل وارد من فرع آخر
 
 
 class AdjustReason(StrEnum):

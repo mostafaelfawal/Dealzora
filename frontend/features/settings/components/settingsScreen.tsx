@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconArrowsExchange,
   IconBuildingStore,
   IconCashRegister,
   IconCoins,
@@ -19,6 +20,7 @@ import {
 import { useEffect, type KeyboardEvent, type ReactNode } from "react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
+import { BranchConnectSection } from "@/features/branchTransfers/components/branchConnectSection";
 import {
   DevicesSection,
   ThisDeviceSection,
@@ -156,7 +158,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
         id: "safety",
         icon: <IconShieldCheck />,
         title: "الأجهزة والحماية",
-        hint: "نسخ احتياطي وأجهزة كاشير",
+        hint: "نسخ احتياطي وأجهزة كاشير وفروع",
         sections: [
           {
             id: "backup",
@@ -173,6 +175,14 @@ function buildPages(device: DeviceConfig | null): Page[] {
             description:
               "أجهزة تانية في المحل تبيع على نفس البيانات، ولكل جهاز درجه ووردياته.",
             content: <DevicesSection />,
+          },
+          {
+            id: "branches",
+            icon: <IconArrowsExchange />,
+            title: "الفروع",
+            description:
+              "اربط الجهاز ده بسيرفر الفروع عشان تبعت وتستلم بضاعة من فروعك التانية.",
+            content: <BranchConnectSection />,
           },
         ],
       };

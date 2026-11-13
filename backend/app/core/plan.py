@@ -46,6 +46,7 @@ class Feature(StrEnum):
     MULTI_USER = "multi_user"
     TERMINALS = "terminals"  # أجهزة كاشير إضافية
     EXPIRY = "expiry"  # تتبع الصلاحية والدفعات (سلسلة)
+    BRANCHES = "branches"  # تعدد الفروع وتحويل المخزون بينها (سلسلة)
 
 
 FEATURE_NAMES: dict[Feature, str] = {
@@ -63,6 +64,7 @@ FEATURE_NAMES: dict[Feature, str] = {
     Feature.MULTI_USER: "أكثر من مستخدم",
     Feature.TERMINALS: "أجهزة كاشير إضافية",
     Feature.EXPIRY: "تتبع الصلاحية والدفعات",
+    Feature.BRANCHES: "تعدد الفروع وتحويل المخزون",
 }
 
 # بَسطة: المالك يبيع بنفسه على جهاز واحد.
@@ -72,11 +74,12 @@ _UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
     Feature.AUDIT_LOG: Plan.PRO,
     Feature.TERMINALS: Plan.PRO,
     Feature.EXPIRY: Plan.ENTERPRISE,
+    Feature.BRANCHES: Plan.ENTERPRISE,
 }
 
 _RANK = {Plan.FREE: 0, Plan.BASIC: 1, Plan.PRO: 2, Plan.ENTERPRISE: 3}
 # ميزات تُفرض بالخطة فعلاً (الباقي: أي خطة مدفوعة تفتحه، كما كان قبل التقسيم).
-_STRICT = frozenset({Feature.EXPIRY})
+_STRICT = frozenset({Feature.EXPIRY, Feature.BRANCHES})
 
 
 def current_plan() -> Plan:

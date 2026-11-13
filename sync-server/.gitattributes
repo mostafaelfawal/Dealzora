@@ -1,0 +1,3 @@
+# سكربتات الحاوية لازم تكون بنهايات سطر Linux (LF) وإلا لن تعمل.
+*.sh text eol=lf
+Caddyfile text eol=lf

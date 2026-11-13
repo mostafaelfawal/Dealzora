@@ -26,6 +26,9 @@ from .model import BatchMove, ProductBatch
 
 SALE = "sale"
 SALE_RETURN = "sale_return"
+TRANSFER_OUT = "transfer_out"
+# خروج لعميل أو لفرع آخر: من الصالح فقط، والكمية المنتهية لا تخرج أبداً.
+_VALID_ONLY = frozenset({SALE, TRANSFER_OUT})
 PURCHASE = "purchase"
 PURCHASE_RETURN = "purchase_return"
 
@@ -186,7 +189,7 @@ class BatchEngine:
         today = local_today()
         batches = self.live_batches(product.id)
         valid = sorted((b for b in batches if not is_expired(b, today)), key=_fefo_key)
-        if movement_type == SALE:
+        if movement_type in _VALID_ONLY:
             return valid
         expired = sorted((b for b in batches if is_expired(b, today)), key=_fefo_key)
         preferred: list[ProductBatch] = []
@@ -219,7 +222,7 @@ class BatchEngine:
 
     def _consume(self, product, need: int, movement_type, batch_id, origin_id, ctx) -> None:  # noqa: ANN001
         ordered = self._order(product, movement_type, batch_id, origin_id)
-        if movement_type == SALE:
+        if movement_type in _VALID_ONLY:
             valid = sum(b.qty_remaining for b in ordered)
             expired = sum(b.qty_remaining for b in self.live_batches(product.id)) - valid
             if valid < need and expired > 0:

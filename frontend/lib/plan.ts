@@ -20,7 +20,8 @@ export type PlanFeature =
   | "full_reports"
   | "multi_user"
   | "terminals"
-  | "expiry";
+  | "expiry"
+  | "branches";
 
 export interface PlanInfo {
   plan: "free" | "basic" | "pro" | "enterprise";
@@ -58,6 +59,7 @@ export const FEATURE_INFO: Record<PlanFeature, { name: string; plan: string }> =
     multi_user: { name: "أكثر من مستخدم", plan: "دُكّان" },
     terminals: { name: "أجهزة كاشير إضافية", plan: "سوق" },
     expiry: { name: "تتبع الصلاحية والدفعات", plan: "سلسلة" },
+    branches: { name: "تعدد الفروع وتحويل المخزون", plan: "سلسلة" },
   };
 
 interface PlanDto {

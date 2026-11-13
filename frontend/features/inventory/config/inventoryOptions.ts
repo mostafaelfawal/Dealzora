@@ -29,6 +29,8 @@ export const MOVEMENT_LABEL: Record<MovementType, string> = {
   damage: "تالف",
   gift: "هدية",
   adjustment: "تسوية",
+  transfer_out: "تحويل لفرع",
+  transfer_in: "تحويل من فرع",
 };
 
 export const ADJUST_REASONS: {

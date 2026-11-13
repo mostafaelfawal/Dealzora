@@ -55,6 +55,8 @@ ENTITY_LABELS: dict[str, str] = {
     "held_invoice": "فاتورة معلّقة",
     "purchase_order": "طلب شراء",
     "promotion": "عرض",
+    "branch_transfer": "تحويل فروع",
+    "branch_sync": "ربط الفروع",
 }
 
 # مع «ال» للجمل: «عدّل الصنف «سكر»».
@@ -100,6 +102,19 @@ ACTION_LABELS: dict[str, str] = {
     "discard": "حذف فاتورة معلّقة",
     "loyalty_adjust": "تعديل نقاط الولاء",
     "batch_write_off": "إعدام دفعة",
+    "branch_connect": "ربط الفرع بسيرفر الفروع",
+    "sync_create": "إضافة من فرع آخر",
+    "sync_update": "تعديل من فرع آخر",
+    "sync_delete": "حذف من فرع آخر",
+    "sync_deactivate": "إيقاف من فرع آخر",
+    "branch_disconnect": "فصل الفرع عن سيرفر الفروع",
+    "transfer_send": "إرسال تحويل لفرع",
+    "transfer_request": "طلب تحويل من فرع",
+    "transfer_approve": "موافقة وإرسال طلب تحويل",
+    "transfer_reject": "رفض طلب تحويل",
+    "transfer_withdraw": "سحب طلب تحويل",
+    "transfer_cancel": "إلغاء تحويل",
+    "transfer_receive": "استلام تحويل وارد",
     "send": "إرسال طلب شراء للمورد",
     "cancel": "إلغاء طلب شراء",
     "receive": "استلام طلب شراء",
