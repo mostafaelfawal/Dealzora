@@ -48,7 +48,11 @@ export default function LoginFormContextProvider({
   useEffect(() => {
     const last = readLastLogin();
     if (!last) return;
-    reset({ role: last.role, username: last.username, password: "" });
+    reset({
+      role: last.role === "cashier" ? "cashier" : "manager", // المالك يدخل من تبويب الإدارة
+      username: last.username,
+      password: "",
+    });
     document.getElementById(LOGIN_FIELD_IDS.password)?.focus();
   }, [reset]);
 

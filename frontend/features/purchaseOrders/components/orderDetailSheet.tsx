@@ -266,8 +266,8 @@ function OrderBody({ o }: { o: PurchaseOrder }) {
           <DialogHeader className="text-start">
             <DialogTitle>إلغاء طلب الشراء #{o.number}؟</DialogTitle>
             <DialogDescription>
-              أصنافه ترجع تظهر في النواقص المقترحة. لا يؤثر على المخزون أو حساب
-              المورد.
+              تعود أصنافه للظهور في النواقص المقترحة. ولا يؤثر ذلك في المخزون أو
+              حساب المورد.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">

@@ -11,9 +11,9 @@ export const STATUS_INFO: Record<
   rejected: { label: "مرفوض", className: "bg-destructive/10 text-destructive" },
   withdrawn: { label: "مسحوب", className: "bg-muted text-muted-foreground" },
   sent: { label: "في الطريق", className: "bg-warning/15 text-warning" },
-  received: { label: "اتستلم", className: "bg-success/10 text-success" },
+  received: { label: "مُستلَم", className: "bg-success/10 text-success" },
   partial: {
-    label: "اتستلم بعجز",
+    label: "مُستلَم بعجز",
     className: "bg-destructive/10 text-destructive",
   },
   cancelled: { label: "ملغي", className: "bg-muted text-muted-foreground" },

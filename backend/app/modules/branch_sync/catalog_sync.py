@@ -4,6 +4,10 @@
 الميزان، تتبع الصلاحية، الإيقاف؛ والعميل: الاسم، التليفون، العنوان، الملاحظات، حد الائتمان،
 عميل جملة). ما لا يُشارك أبداً: المخزون، التكلفة، حد الطلب، ديون العملاء ونقاطهم ومشترياتهم.
 
+حساب المالك: واحد لكل الفروع. يمر اسم المستخدم وتجزئة كلمة المرور (Argon2id) والتفعيل فقط،
+ونرفع حسابات المالك وحدها (المديرون والكاشيرية خاصين بكل فرع). تغيير كلمة السر أو الإيقاف
+من فرع يلغي جلسات المالك المفتوحة في باقي الفروع.
+
 الدورة (run): 1) إعادة تطبيق ما فشل سابقاً  2) سحب تغييرات السيرفر وتطبيقها  3) رفع تعديلاتنا.
 - لا معاملة مفتوحة أثناء الاتصال بالسيرفر (commit قبل كل طلب): الكاشير لا يتعطل.
 - كل سجل يُطبَّق داخل savepoint: سجل فاشل (باركود محجوز محلياً مثلاً) يُسجَّل كخطأ ولا يوقف الباقي.
@@ -21,12 +25,13 @@ from datetime import timedelta
 from typing import Any
 
 from pydantic import ValidationError
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import record_audit
 from app.core.base import utcnow, uuid7
-from app.core.errors import AppError
-from app.core.security import Actor
+from app.core.errors import AppError, ConflictError
+from app.core.security import Actor, Role
 from app.core.snapshots import diff_snapshots
 from app.modules.customers.model import Customer
 from app.modules.customers.schema import CustomerCreate, CustomerUpdate
@@ -34,12 +39,13 @@ from app.modules.customers.service import CustomerService
 from app.modules.products.model import Category, Product
 from app.modules.products.schema import ProductCreate, ProductUpdate, UnitIn
 from app.modules.products.service import ProductService
+from app.modules.users.model import User
 
 from .client import RemoteError, SyncAuthLost, SyncClient, SyncUnavailable
 from .model import CatalogLink, CatalogState
 
-PRODUCT, CUSTOMER = "product", "customer"
-KINDS = (PRODUCT, CUSTOMER)
+PRODUCT, CUSTOMER, OWNER = "product", "customer", "owner"
+KINDS = (PRODUCT, CUSTOMER, OWNER)
 PUSH_BATCH = 200
 PULL_PAGE = 500
 MAX_PAGES = 40  # حتى 20 ألف تغيير في الدورة الواحدة، والباقي في الدورة التالية
@@ -83,8 +89,18 @@ def customer_data(c: Customer) -> dict[str, Any]:
     }
 
 
-EXTRACT: dict[str, Callable[[Any], dict[str, Any]]] = {PRODUCT: product_data, CUSTOMER: customer_data}
-MODEL: dict[str, type] = {PRODUCT: Product, CUSTOMER: Customer}
+def owner_data(u: User) -> dict[str, Any]:
+    return {"username": u.username, "password_hash": u.password_hash, "is_active": u.is_active}
+
+
+EXTRACT: dict[str, Callable[[Any], dict[str, Any]]] = {
+    PRODUCT: product_data, CUSTOMER: customer_data, OWNER: owner_data,
+}  # fmt: skip
+MODEL: dict[str, type] = {PRODUCT: Product, CUSTOMER: Customer, OWNER: User}
+
+
+def display_name(row: Any) -> str:
+    return getattr(row, "name", None) or getattr(row, "username", "") or ""
 
 
 def digest(data: dict[str, Any]) -> str:
@@ -98,6 +114,9 @@ def match_key(kind: str, data: dict[str, Any]) -> str | None:
             return "b:" + str(data["barcode"]).strip()
         name = " ".join(str(data.get("name", "")).split()).casefold()
         return "n:" + name if name else None
+    if kind == OWNER:
+        name = str(data.get("username") or "").strip().lower()
+        return "u:" + name if name else None
     phone = "".join(ch for ch in str(data.get("phone") or "") if ch.isdigit())
     return "p:" + phone if phone else None
 
@@ -160,7 +179,7 @@ class CatalogSync:
                 state = self._state()
                 state.last_error = (
                     "سيرفر الفروع غير متاح الآن" if isinstance(exc, SyncUnavailable)
-                    else "الربط اتلغى من السيرفر: اربط الفرع تاني بكود جديد" if isinstance(exc, SyncAuthLost)
+                    else "أُلغي الربط من السيرفر: أعد ربط الفرع بكود جديد" if isinstance(exc, SyncAuthLost)
                     else exc.message
                 )  # fmt: skip
                 self.session.commit()
@@ -272,6 +291,16 @@ class CatalogSync:
         key = match_key(kind, data)
         if not key:
             return None
+        if kind == OWNER:
+            user = self.session.scalars(
+                select(User).where(User.username == key[2:], User.deleted_at.is_(None), User.id.not_in(taken))
+            ).first()
+            if user is not None and user.role != Role.OWNER.value:
+                raise ConflictError(
+                    "owner_username_taken",
+                    f"اسم المستخدم «{user.username}» مستخدم لمدير أو كاشير في هذا الفرع. غيّر اسمه ليصل حساب المالك",
+                )
+            return user
         if kind == PRODUCT:
             if key.startswith("b:"):
                 cond = Product.barcode == key[2:]
@@ -406,17 +435,104 @@ class CatalogSync:
         svc._audit(customer, "sync_update", diff_snapshots(before, svc._snapshot(customer)))
         svc._enqueue(customer, base_version=None)
 
+    # ---------- حساب المالك ----------
+    def _owner_fields(self, d: dict[str, Any]) -> tuple[str, str, bool]:
+        import re
+
+        from app.modules.users.constants import USERNAME_PATTERN
+
+        username = str(d.get("username") or "").strip().lower()
+        password_hash = str(d.get("password_hash") or "")
+        if not re.fullmatch(USERNAME_PATTERN, username) or not password_hash.startswith("$argon2id$"):
+            raise ValueError("بيانات حساب المالك غير صالحة")
+        return username, password_hash, bool(d.get("is_active", True))
+
+    def _username_taken(self, username: str, exclude_id: str | None) -> bool:
+        q = select(User.id).where(User.username == username, User.deleted_at.is_(None))
+        if exclude_id:
+            q = q.where(User.id != exclude_id)
+        return self.session.scalar(q.limit(1)) is not None
+
+    def _audit_user(self, user: User, action: str, changes: dict | None) -> None:
+        record_audit(self.session, self.actor, entity="user", entity_id=user.id, action=action, changes=changes)
+
+    def _end_sessions(self, user_id: str) -> None:
+        from app.modules.auth.repository import AuthRepository
+
+        AuthRepository(self.session).delete_user_sessions(user_id)
+
+    def _create_owner(self, gid: str, d: dict[str, Any]) -> User:
+        username, password_hash, active = self._owner_fields(d)
+        if self._username_taken(username, None):
+            raise ConflictError("owner_username_taken", f"اسم المستخدم «{username}» مستخدم في هذا الفرع")
+        user = User(
+            id=gid if self.session.get(User, gid) is None else uuid7(),
+            username=username, password_hash=password_hash, role=Role.OWNER.value, is_active=active,
+            device_id=self.actor.device_id, created_by=None, password_changed_at=utcnow(),
+        )  # fmt: skip
+        self.session.add(user)
+        self.session.flush()
+        self._audit_user(user, "sync_create", {"username": username, "role": Role.OWNER.value})
+        return user
+
+    def _update_owner(self, user: User, d: dict[str, Any]) -> None:
+        if user.role != Role.OWNER.value:
+            raise ConflictError("owner_username_taken", "الحساب المحلي ليس حساب مالك")
+        username, password_hash, active = self._owner_fields(d)
+        if (user.username, user.password_hash, user.is_active) == (username, password_hash, active):
+            return
+        if username != user.username and self._username_taken(username, user.id):
+            raise ConflictError("owner_username_taken", f"اسم المستخدم «{username}» مستخدم في هذا الفرع")
+        changes: dict[str, Any] = {}
+        if username != user.username:
+            changes["username"] = {"from": user.username, "to": username}
+            user.username = username
+        if password_hash != user.password_hash:
+            changes["password"] = "changed"  # التجزئة نفسها لا تُسجَّل أبداً
+            user.password_hash = password_hash
+            user.password_changed_at = utcnow()
+            user.failed_attempts = 0
+            user.locked_until = None
+        if active != user.is_active:
+            changes["is_active"] = {"from": user.is_active, "to": active}
+            user.is_active = active
+        if "password" in changes or not active:
+            self._end_sessions(user.id)  # كلمة السر اتغيرت أو الحساب اتوقف: الجلسات القديمة تقفل
+        user.mark_modified()
+        self._audit_user(user, "sync_update", changes)
+
+    def _retire_owner(self, user: User) -> None:
+        if user.role != Role.OWNER.value:
+            return
+        others = self.session.scalar(
+            select(func.count()).select_from(User).where(
+                User.role == Role.OWNER.value, User.is_active.is_(True), User.deleted_at.is_(None), User.id != user.id
+            )
+        )  # fmt: skip
+        if not others:
+            raise ConflictError("last_owner", "لا يمكن حذف آخر حساب مالك في هذا الفرع")
+        self._end_sessions(user.id)
+        user.mark_deleted()
+        self._audit_user(user, "sync_delete", {"username": user.username})
+
     def _create(self, kind: str, gid: str, d: dict[str, Any]) -> Any:
+        if kind == OWNER:
+            return self._create_owner(gid, d)
         return self._create_product(gid, d) if kind == PRODUCT else self._create_customer(gid, d)
 
     def _update(self, kind: str, row: Any, d: dict[str, Any]) -> None:
-        if kind == PRODUCT:
+        if kind == OWNER:
+            self._update_owner(row, d)
+        elif kind == PRODUCT:
             self._update_product(row, d)
         else:
             self._update_customer(row, d)
 
     def _retire(self, kind: str, row: Any) -> None:
         """اتحذف من فرع آخر: نحذفه عندنا، إلا لو عندنا عليه رصيد/دين فنوقفه بس."""
+        if kind == OWNER:
+            self._retire_owner(row)
+            return
         svc = self.products if kind == PRODUCT else self.customers
         busy = row.stock_qty != 0 if kind == PRODUCT else (row.balance != 0 or row.loyalty_points != 0)
         if busy:
@@ -493,6 +609,8 @@ class CatalogSync:
             CatalogLink.kind == kind, CatalogLink.gid.is_not(None), CatalogLink.local_id.is_not(None)
         )
         query = select(model)
+        if kind == OWNER:
+            query = query.where(User.role == Role.OWNER.value)  # المديرون والكاشيرية لا يُرفعون أبداً
         if since is not None:
             query = query.where(or_(model.updated_at >= since, model.id.not_in(synced_ids)))
         out: list[dict[str, Any]] = []
@@ -541,7 +659,7 @@ class CatalogSync:
             canonical = res.get("canonical_gid")
             other = self._link(kind, gid=canonical)
             if other is not None and other.local_id and other.local_id != local_id:
-                self._fail(out, "مكرر: نفس الصنف/العميل مسجل عندك مرتين. ادمجهم أو غيّر الباركود/التليفون")
+                self._fail(out, "مكرر: الصنف/العميل نفسه مسجّل لديك مرتين. ادمجهما أو غيّر الباركود/رقم الهاتف")
                 return
             # أول ربط: بيانات السيرفر (أول فرع رفع الصنف) هي المرجع لسجلنا.
             link = self._link(kind, local_id=local_id) or self._new_link(kind, local_id=local_id)
@@ -563,8 +681,6 @@ class CatalogSync:
 
 # ================= الحالة للواجهة =================
 def catalog_status(session: Session) -> dict[str, Any]:
-    from sqlalchemy import func
-
     state = session.get(CatalogState, "catalog")
     linked = {
         kind: session.scalar(
@@ -579,7 +695,8 @@ def catalog_status(session: Session) -> dict[str, Any]:
         select(CatalogLink).where(CatalogLink.error.is_not(None)).order_by(CatalogLink.updated_at.desc()).limit(30)
     ).all():
         row = session.get(MODEL[link.kind], link.local_id) if link.local_id else None
-        name = row.name if row is not None else ((link.remote or {}).get("data") or {}).get("name", "")
+        remote = (link.remote or {}).get("data") or {}
+        name = display_name(row) if row is not None else (remote.get("name") or remote.get("username") or "")
         errors.append({"kind": link.kind, "name": name, "error": link.error, "local_id": link.local_id})
     error_count = session.scalar(
         select(func.count()).select_from(CatalogLink).where(CatalogLink.error.is_not(None))
@@ -589,6 +706,7 @@ def catalog_status(session: Session) -> dict[str, Any]:
         "last_error": state.last_error if state else None,
         "products": linked[PRODUCT],
         "customers": linked[CUSTOMER],
+        "owners": linked[OWNER],
         "error_count": error_count,
         "errors": errors,
     }

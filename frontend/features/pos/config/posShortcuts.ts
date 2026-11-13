@@ -115,7 +115,7 @@ export const POS_SEARCH_KEYS: PosKeyHint[] = [
 ];
 
 export const POS_PAYMENT_KEYS: PosKeyHint[] = [
-  { keys: "F1 / F2 / F3", description: "كاش / آجل / مختلط" },
+  { keys: "F1 / F2 / F3", description: "نقدي / آجل / مختلط" },
   { keys: "F6", description: "اختيار العميل" },
   { keys: "Enter", description: "تأكيد الدفع" },
   { keys: "Esc", description: "رجوع إلى الفاتورة" },

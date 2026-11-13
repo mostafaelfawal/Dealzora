@@ -20,6 +20,7 @@ export const EMPTY_SUMMARY: UsersSummary = {
   total: 0,
   cashiers: 0,
   managers: 0,
+  owners: 0,
   inactive: 0,
 };
 
@@ -30,6 +31,7 @@ export const summarize = (users: User[]): UsersSummary => ({
   total: users.length,
   cashiers: users.filter((u) => u.role === "cashier").length,
   managers: users.filter((u) => u.role === "manager").length,
+  owners: users.filter((u) => u.role === "owner").length,
   inactive: users.filter((u) => !u.isActive).length,
 });
 

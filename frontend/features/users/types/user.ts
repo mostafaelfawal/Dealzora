@@ -1,4 +1,5 @@
-export type UserRole = "manager" | "cashier";
+/** المالك ← المدير (واحد لكل فرع) ← الكاشيرية. */
+export type UserRole = "owner" | "manager" | "cashier";
 
 export interface User {
   id: string;
@@ -27,5 +28,6 @@ export interface UsersSummary {
   total: number;
   cashiers: number;
   managers: number;
+  owners: number;
   inactive: number;
 }

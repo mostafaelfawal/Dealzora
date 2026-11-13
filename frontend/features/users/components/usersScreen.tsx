@@ -1,5 +1,6 @@
 "use client";
 
+import { useSessionUser } from "@/hooks/useShellData";
 import { AppTableCardsSkeleton } from "@/components/shared/AppTable/AppTableCards";
 import { IconPlus } from "@tabler/icons-react";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export function UsersScreen() {
   const router = useRouter();
   const list = useUsersList();
   const currentUserId = useCurrentUserId();
+  const myRole = useSessionUser().role;
   const { view, setView } = useUsersView();
   const [resetTarget, setResetTarget] = useState<User | null>(null);
   const [removeTarget, setRemoveTarget] = useState<User | null>(null);
@@ -62,6 +64,7 @@ export function UsersScreen() {
 
   const actions = {
     currentUserId,
+    currentRole: myRole,
     onToggleActive: list.toggleActive,
     onResetPassword: (id: string) => setResetTarget(list.find(id) ?? null),
     onRemove: (id: string) => setRemoveTarget(list.find(id) ?? null),

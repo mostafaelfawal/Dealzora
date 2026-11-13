@@ -35,7 +35,7 @@ class PromotionIn(BaseModel):
             raise ValueError("أدخل مبلغ الخصم")
         if self.kind is PromoKind.BUY_GET:
             if not self.buy_qty or not self.get_qty:
-                raise ValueError("حدد «اشتري كام» و«خد كام مجاناً»")
+                raise ValueError("حدد كمية الشراء وكمية الهدية المجانية")
             self.value = 0
             self.min_qty = None
         else:

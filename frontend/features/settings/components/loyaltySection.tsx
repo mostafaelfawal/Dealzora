@@ -43,7 +43,8 @@ function parse(d: Draft): {
   const points = num(d.redeemPoints);
   const value = num(d.redeemValue);
   const pct = num(d.maxRedeemPercent);
-  if (!(earn > 0)) return { config: null, error: "اكتب المبلغ اللي يكسب نقطة" };
+  if (!(earn > 0))
+    return { config: null, error: "اكتب المبلغ الذي يكسب به العميل نقطة" };
   if (!(Number.isInteger(points) && points >= 1))
     return { config: null, error: "عدد نقاط الاستبدال رقم صحيح" };
   if (!(value > 0)) return { config: null, error: "اكتب قيمة الخصم" };
@@ -139,7 +140,7 @@ export function LoyaltySection() {
               value={d.earnAmount}
               onChange={(earnAmount) => patch({ earnAmount })}
             />
-            {symbol} يشتري بيهم = نقطة واحدة
+            {symbol} من المشتريات = نقطة واحدة
           </Inline>
         </div>
 
@@ -169,7 +170,7 @@ export function LoyaltySection() {
               value={d.maxRedeemPercent}
               onChange={(maxRedeemPercent) => patch({ maxRedeemPercent })}
             />
-            % من قيمة الفاتورة (الباقي يدفعه فلوس)
+            % من قيمة الفاتورة (ويُدفع الباقي نقداً)
           </Inline>
         </div>
 
@@ -181,12 +182,12 @@ export function LoyaltySection() {
               <IconGift className="mt-0.5 size-5 shrink-0 text-success" />
               <p className="leading-relaxed">
                 عميل اشترى بـ <Num>{sample}</Num> {symbol} يكسب{" "}
-                <Num>{sampleEarn}</Num> نقطة. لما يجمع{" "}
+                <Num>{sampleEarn}</Num> نقطة. وعندما يجمع{" "}
                 <Num>{example.redeemPoints}</Num> نقطة يخصم{" "}
                 <Num>
                   {formatQty(redeemDiscount(example, example.redeemPoints))}
                 </Num>{" "}
-                {symbol}. يعني بترجّع له حوالي{" "}
+                {symbol}. أي أنك تعيد إليه نحو{" "}
                 <Num>{formatQty(Math.round(backRate * 100) / 100)}%</Num> من
                 مشترياته.
               </p>

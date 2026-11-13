@@ -48,7 +48,7 @@ import {
 } from "../api/expiry.api";
 
 const STATUS_TABS: { id: ExpiryStatus; label: string }[] = [
-  { id: "soon", label: "قربت تنتهي" },
+  { id: "soon", label: "قاربت على الانتهاء" },
   { id: "expired", label: "منتهية" },
   { id: "valid", label: "كل الصالح" },
   { id: "all", label: "الكل" },
@@ -65,7 +65,7 @@ function daysText(b: Batch): { text: string; className: string } {
     return { text: "بدون تاريخ", className: "text-muted-foreground" };
   if (b.daysLeft < 0)
     return {
-      text: `منتهي من ${-b.daysLeft} يوم`,
+      text: `منتهٍ منذ ${-b.daysLeft} يوم`,
       className: "bg-destructive/10 text-destructive",
     };
   if (b.daysLeft === 0)
@@ -174,7 +174,7 @@ export function ExpiryScreen() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <PageHeader
         title="الصلاحية"
-        description="تابع الأصناف اللي قربت صلاحيتها عشان تبيعها أو تعمل عليها عرض قبل ما تنتهي، واعدم المنتهي. البيع بيسحب الأقرب انتهاءً تلقائياً والمنتهي ما يتباعش."
+        description="تابع الأصناف التي قاربت صلاحيتها على الانتهاء لتبيعها أو تضع عليها عرضاً قبل انتهائها، وأعدم المنتهي منها. يسحب البيع الأقرب انتهاءً تلقائياً، ولا يُباع المنتهي."
       />
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -254,7 +254,9 @@ export function ExpiryScreen() {
         <div className="flex flex-col items-center gap-2 border bg-card p-10 text-center">
           <IconCircleCheck className="size-10 text-success" />
           <p className="font-medium">
-            {status === "expired" ? "مافيش حاجة منتهية" : "مافيش دفعات هنا"}
+            {status === "expired"
+              ? "لا توجد دفعات منتهية"
+              : "لا توجد دفعات هنا"}
           </p>
           {!s?.trackedProducts && (
             <p className="max-w-md text-sm text-muted-foreground">
@@ -293,9 +295,10 @@ export function ExpiryScreen() {
           <DialogHeader className="text-start">
             <DialogTitle>إعدام دفعة «{target?.productName}»؟</DialogTitle>
             <DialogDescription>
-              هيتخصم <Num>{formatQty(target?.qtyRemaining ?? 0)}</Num>{" "}
+              ستُخصم <Num>{formatQty(target?.qtyRemaining ?? 0)}</Num>{" "}
               {target?.unit} من المخزون كـ«تالف» (قيمتها{" "}
-              {formatMoneyText(target?.value ?? 0)}). مش هينفع ترجع فيها.
+              {formatMoneyText(target?.value ?? 0)}). لا يمكن التراجع عن هذه
+              العملية.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">

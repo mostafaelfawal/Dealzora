@@ -76,6 +76,11 @@ _NEW_COLUMNS = (
 _POST_COLUMN_UPGRADES = (
     "CREATE UNIQUE INDEX IF NOT EXISTS uq_products_scale_code_live "
     "ON products (scale_code) WHERE deleted_at IS NULL AND scale_code IS NOT NULL",
+    # دور المالك: النسخ القديمة بلا مالك ← أقدم مدير (نشط أولاً) يصبح المالك. مرة واحدة فقط.
+    "UPDATE users SET role = 'owner' WHERE id = ("
+    "  SELECT id FROM users WHERE role = 'manager' AND deleted_at IS NULL"
+    "  ORDER BY is_active DESC, created_at, id LIMIT 1"
+    ") AND NOT EXISTS (SELECT 1 FROM users WHERE role = 'owner' AND deleted_at IS NULL)",
 )
 
 

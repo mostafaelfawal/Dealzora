@@ -12,6 +12,8 @@
   غريباً عند باقي الفروع (وكل فرع يتحقق مرة ثانية قبل التطبيق).
 - كل تغيير فعلي يأخذ seq جديد تحت قفل صف المحل، والفروع تسحب «بعد آخر seq».
 - المخزون والتكلفة وأرصدة العملاء ونقاطهم لا تمر من هنا: كل فرع له أرقامه.
+- حساب المالك (owner): واحد لكل فروع المحل. يمر اسم المستخدم وتجزئة كلمة المرور (Argon2id) فقط،
+  ولا تمر كلمة المرور نفسها أبداً. الفرع يرفع حسابات المالك فقط (لا مديرين ولا كاشيرية).
 """
 
 from typing import Annotated, Any, Literal
@@ -25,7 +27,7 @@ from ..errors import BadRequest
 from ..models import CatalogItem, Shop
 from .events import lock_shop
 
-Kind = Literal["product", "customer"]
+Kind = Literal["product", "customer", "owner"]
 Gid = Annotated[str, StringConstraints(min_length=8, max_length=36, pattern=r"^[0-9A-Za-z-]+$")]
 Money = Annotated[int, Field(ge=0, le=10**12)]
 Name200 = Annotated[str, StringConstraints(min_length=1, max_length=200)]
@@ -76,7 +78,14 @@ class CustomerData(_Strict):
     is_active: bool = True
 
 
-MODELS: dict[str, type[BaseModel]] = {"product": ProductData, "customer": CustomerData}
+class OwnerData(_Strict):
+    username: Annotated[str, StringConstraints(pattern=r"^[a-z0-9._\-]{3,50}$")]
+    # تجزئة Argon2id فقط (لا كلمة مرور صريحة ولا خوارزمية أضعف).
+    password_hash: Annotated[str, StringConstraints(min_length=40, max_length=255, pattern=r"^\$argon2id\$")]
+    is_active: bool = True
+
+
+MODELS: dict[str, type[BaseModel]] = {"product": ProductData, "customer": CustomerData, "owner": OwnerData}
 
 
 class PushItem(BaseModel):
@@ -129,6 +138,9 @@ def match_key(kind: str, data: dict[str, Any]) -> str | None:
             return "b:" + str(data["barcode"]).strip()
         name = " ".join(str(data.get("name", "")).split()).casefold()
         return ("n:" + name)[:240] if name else None
+    if kind == "owner":
+        name = str(data.get("username") or "").strip().lower()
+        return "u:" + name if name else None
     phone = "".join(ch for ch in str(data.get("phone") or "") if ch.isdigit())
     return "p:" + phone if phone else None
 
@@ -155,10 +167,12 @@ def _key_owner(session: Session, shop_id: str, kind: str, key: str | None, gid: 
 
 def _conflict_message(key: str) -> str:
     if key.startswith("b:"):
-        return f"الباركود {key[2:]} مستخدم لصنف آخر في فرع تاني"
+        return f"الباركود {key[2:]} مستخدم لصنف آخر في فرع آخر"
     if key.startswith("p:"):
-        return f"رقم التليفون {key[2:]} مستخدم لعميل آخر في فرع تاني"
-    return "فيه صنف تاني بنفس الاسم وبدون باركود في فرع تاني"
+        return f"رقم الهاتف {key[2:]} مستخدم لعميل آخر في فرع آخر"
+    if key.startswith("u:"):
+        return f"اسم المستخدم {key[2:]} مستخدم لحساب مالك آخر"
+    return "يوجد صنف آخر بالاسم نفسه وبدون باركود في فرع آخر"
 
 
 def check_size(items: list[PushItem], max_items: int) -> None:

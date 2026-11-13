@@ -1,5 +1,6 @@
 "use client";
 
+import { isManagement } from "@/config/roles";
 import {
   IconArrowRight,
   IconLogout,
@@ -48,7 +49,7 @@ export function PosTopBar() {
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-1 border-b px-2 sm:gap-2 sm:px-3">
-      {user.role === "manager" ? (
+      {isManagement(user.role) ? (
         <AppTooltip message="رجوع للوحة التحكم">
           <Button
             variant="ghost"

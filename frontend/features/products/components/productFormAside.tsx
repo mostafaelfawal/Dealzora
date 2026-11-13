@@ -82,7 +82,7 @@ function PosPreview() {
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-muted-foreground">
-        كده هيظهر في الكاشير
+        هكذا سيظهر في الكاشير
       </p>
       <div
         className={cn(
@@ -303,7 +303,7 @@ export function ProductFormAside() {
       <SwitchField
         id={IDS.isActive}
         label="يظهر في الكاشير"
-        description="اقفله لو الصنف مش متاح مؤقتاً بدل ما تمسحه."
+        description="أوقفه إذا لم يكن الصنف متاحاً مؤقتاً بدلاً من حذفه."
         checked={isActive}
         onCheckedChange={(checked) => setField("isActive", checked)}
         className="border-t pt-3"

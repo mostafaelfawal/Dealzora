@@ -150,7 +150,7 @@ export function PromotionsScreen() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <PageHeader
         title="العروض"
-        description="اعمل عرض مرة واحدة، والكاشير يطبقه لوحده على الفاتورة: اشتري 2 وخد 1، أو خصم على أصناف معينة لمدة محددة."
+        description="أنشئ العرض مرة واحدة، ويطبّقه الكاشير تلقائياً على الفاتورة: اشترِ 2 واحصل على 1، أو خصم على أصناف معينة لمدة محددة."
         actions={
           <Button
             size="lg"
@@ -167,7 +167,7 @@ export function PromotionsScreen() {
         <StatTile
           index={0}
           icon={<IconPlayerPlay />}
-          label="شغالة الآن"
+          label="مفعّلة الآن"
           tone="success"
           {...tile("active")}
         >
@@ -213,8 +213,8 @@ export function PromotionsScreen() {
             {items.length ? "لا عروض هنا" : "لا توجد عروض بعد"}
           </p>
           <p className="max-w-md text-sm text-muted-foreground">
-            جرّب «اشتري 2 وخد 1» على صنف بطيء البيع، أو خصم 10% على قسم كامل لمدة
-            أسبوع.
+            جرّب «اشترِ 2 واحصل على 1» على صنف بطيء البيع، أو خصم 10% على قسم كامل
+            لمدة أسبوع.
           </p>
           {!items.length && (
             <Button onClick={() => setCreating(true)} className="gap-2">
@@ -254,7 +254,8 @@ export function PromotionsScreen() {
           <DialogHeader className="text-start">
             <DialogTitle>حذف «{deleting?.name}»؟</DialogTitle>
             <DialogDescription>
-              الفواتير القديمة تحتفظ بخصمها. لو عايز توقفه مؤقتاً استخدم «إيقاف».
+              تحتفظ الفواتير السابقة بخصمها. وإن أردت إيقافه مؤقتاً فاستخدم
+              «إيقاف».
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">

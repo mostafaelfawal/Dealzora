@@ -81,7 +81,7 @@ export function SaleTotals({ sale }: { sale: Sale }) {
       </Row>
       <Separator className="my-2" />
       {sale.cashAmount > 0 && (
-        <Row label="كاش">
+        <Row label="نقدي">
           <Money amount={sale.cashAmount} />
         </Row>
       )}

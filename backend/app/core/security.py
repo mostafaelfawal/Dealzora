@@ -19,9 +19,19 @@ from app.core.errors import ForbiddenError, UnauthorizedError
 
 
 class Role(StrEnum):
+    """المالك ← المدير (واحد لكل فرع) ← الكاشيرية.
+
+    المالك: كل صلاحيات المدير + إدارة المدير + ربط الفرع بسيرفر الفروع والاشتراك،
+    وحسابه واحد في كل الفروع (يتزامن عبر سيرفر الفروع).
+    """
+
+    OWNER = "owner"
     MANAGER = "manager"
     CASHIER = "cashier"
-    # OWNER = "owner"
+
+
+# أدوار الإدارة: كل ما كان «للمدير» مسموح للمالك أيضاً.
+MANAGEMENT_ROLES = frozenset({Role.OWNER, Role.MANAGER})
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +39,14 @@ class Actor:
     user_id: str
     role: Role
     device_id: str
+
+    @property
+    def is_management(self) -> bool:
+        return self.role in MANAGEMENT_ROLES
+
+    @property
+    def is_owner(self) -> bool:
+        return self.role is Role.OWNER
 
 
 def require_app_token(caller: CallerDep) -> Caller:

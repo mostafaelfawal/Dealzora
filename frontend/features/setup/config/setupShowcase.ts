@@ -29,7 +29,7 @@ export const SHOWCASE_FEATURES: ShowcaseFeature[] = [
   },
   {
     title: "نقطة البيع",
-    description: "بحث سريع، خصومات، كاش وآجل، مرتجعات، وطباعة حرارية.",
+    description: "بحث سريع، خصومات، بيع نقدي وآجل، مرتجعات، وطباعة حرارية.",
     icon: IconCashRegister,
   },
   {

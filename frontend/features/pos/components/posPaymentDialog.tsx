@@ -52,7 +52,7 @@ interface MethodButton {
 }
 
 const BUILTIN_METHODS: MethodButton[] = [
-  { id: "cash", label: "كاش", key: "F1" },
+  { id: "cash", label: "نقدي", key: "F1" },
   { id: "credit", label: "آجل", key: "F2" },
   { id: "mixed", label: "مختلط", key: "F3" },
 ];
@@ -184,7 +184,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
     error = "اختر عميلاً أولاً للبيع الآجل.";
   } else if (method === "mixed" && !(cash > 0 && cash < total)) {
     error =
-      "في الدفع المختلط يجب أن يكون المدفوع كاشاً أكبر من صفر وأقل من الإجمالي.";
+      "في الدفع المختلط يجب أن يكون المدفوع نقداً أكبر من صفر وأقل من الإجمالي.";
   } else if (credit > available) {
     error =
       customer.creditLimit === 0
@@ -328,7 +328,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
       {method !== "credit" && !wallet && (
         <div className="space-y-2">
           <label htmlFor="pos-cash" className="text-xs text-muted-foreground">
-            {method === "cash" ? "المبلغ المستلم" : "المدفوع كاش"}
+            {method === "cash" ? "المبلغ المستلم" : "المدفوع نقداً"}
           </label>
           <InputGroup className="h-12">
             <InputGroupInput
@@ -406,7 +406,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         {method !== "cash" && !wallet && (
           <>
             <div className="flex items-center justify-between">
-              <dt className="text-muted-foreground">كاش</dt>
+              <dt className="text-muted-foreground">نقدي</dt>
               <dd>
                 <Money amount={applied} />
               </dd>

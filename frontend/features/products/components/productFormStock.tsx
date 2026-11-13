@@ -85,7 +85,7 @@ export function ProductFormStock() {
             {!canTrack && <PlanLock feature="expiry" />}
           </span>
         }
-        description="كل كمية تدخل بتاريخ صلاحيتها، والبيع من الأقرب انتهاءً، والمنتهي ما يتباعش. للألبان والأدوية والمعلبات."
+        description="كل كمية تدخل بتاريخ صلاحيتها، ويكون البيع من الأقرب انتهاءً، ولا يُباع المنتهي. للألبان والأدوية والمعلبات."
         checked={trackExpiry}
         disabled={!canTrack && !trackExpiry}
         onCheckedChange={(checked) => setField("trackExpiry", checked)}

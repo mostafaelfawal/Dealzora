@@ -1,5 +1,6 @@
 "use client";
 
+import { isManagement } from "@/config/roles";
 import { IconArrowRight, IconLogout } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -50,7 +51,7 @@ export function PosNoShift() {
           </CardHeader>
           <CardContent className="space-y-3">
             <OpenShiftForm />
-            {user.role === "manager" ? (
+            {isManagement(user.role) ? (
               <Button
                 size="lg"
                 variant="ghost"

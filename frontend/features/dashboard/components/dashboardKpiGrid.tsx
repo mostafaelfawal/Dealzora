@@ -45,7 +45,7 @@ export function DashboardKpiGrid({ o }: { o: Overview }) {
           note: "صافي المبيعات لكل يوم في الفترة (بعد خصم المرتجعات). مرّر على الخط لترى أي يوم.",
         }}
         hint={
-          `كاش ${formatNumber(k.cashSales)} · آجل ${formatNumber(k.creditSales)}` +
+          `نقدي ${formatNumber(k.cashSales)} · آجل ${formatNumber(k.creditSales)}` +
           (k.walletSales ? ` · محافظ ${formatNumber(k.walletSales)}` : "")
         }
       >

@@ -48,7 +48,7 @@ export function passwordError(text: string, username = ""): string | null {
 
 const base = {
   username: check(usernameError),
-  role: z.enum(["manager", "cashier"]),
+  role: z.enum(["owner", "manager", "cashier"]),
   isActive: z.boolean(),
 };
 

@@ -12,7 +12,7 @@ import {
 import type { ReorderSettings } from "../types/purchaseOrder";
 
 const days = (n: number) =>
-  n === 0 ? "نفس اليوم" : n === 1 ? "يوم" : n === 2 ? "يومين" : `${n} يوم`;
+  n === 0 ? "نفس اليوم" : n === 1 ? "يوم" : n === 2 ? "يومان" : `${n} يوم`;
 
 const opts = (values: readonly number[], fmt = days) =>
   values.map((v) => ({ value: String(v), label: fmt(v) }));
@@ -72,7 +72,10 @@ export function ReorderSettingsBar({
           className="w-full"
         />
       </Field>
-      <Field label="تقريب للكرتونة" hint="لو للصنف وحدة أكبر (كرتونة/دستة)">
+      <Field
+        label="تقريب للكرتونة"
+        hint="إذا كان للصنف وحدة أكبر (كرتونة/دستة)"
+      >
         <label className="flex h-10 items-center gap-2 border px-3 text-sm">
           <Switch
             checked={settings.roundPacks}

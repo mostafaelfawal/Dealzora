@@ -137,7 +137,7 @@ const ELECTRONIC_COLORS = [
 
 function PaymentSplitCard({ r }: { r: SalesReport }) {
   const slices = [
-    { key: "cash", label: "كاش", value: r.cash, color: CHART.main },
+    { key: "cash", label: "نقدي", value: r.cash, color: CHART.main },
     { key: "credit", label: "آجل", value: r.credit, color: CHART.muted },
     ...r.electronic
       .filter((e) => e.value > 0)
@@ -149,7 +149,7 @@ function PaymentSplitCard({ r }: { r: SalesReport }) {
   return (
     <ChartCard
       title="طريقة الدفع"
-      subtitle="الكاش سيولة الآن، والآجل يحتاج تحصيلاً، والمحافظ في حساب المحل"
+      subtitle="النقدي سيولة حاضرة، والآجل يحتاج إلى تحصيل، والمحافظ في حساب المحل"
     >
       <Donut
         slices={slices}
@@ -200,7 +200,7 @@ function SalesDaysTable({ r }: { r: SalesReport }) {
         </table>
       </div>
       <p className="text-[11px] text-muted-foreground">
-        كاش <Money amount={r.cash} className="text-[11px]" /> · آجل{" "}
+        نقدي <Money amount={r.cash} className="text-[11px]" /> · آجل{" "}
         <Money amount={r.credit} className="text-[11px]" />
         {r.electronic
           .filter((e) => e.value > 0)

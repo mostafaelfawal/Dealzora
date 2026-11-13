@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
-import { ROLE_LABEL, ROLE_TONE } from "../config/userOptions";
+import { canManageUser, ROLE_LABEL, ROLE_TONE } from "../config/userOptions";
 import { USER_ROUTES } from "../config/userRoutes";
 import { lastLoginLabel } from "../lib/userFormat";
 import type { User } from "../types/user";
@@ -94,7 +94,10 @@ export function UsersTable({
         <Switch
           size="sm"
           checked={u.isActive}
-          disabled={u.id === actions.currentUserId}
+          disabled={
+            u.id === actions.currentUserId ||
+            !canManageUser(actions.currentRole, u.role)
+          }
           onCheckedChange={() => actions.onToggleActive(u.id)}
           aria-label={`${u.isActive ? "تعطيل" : "تفعيل"} ${u.username}`}
         />

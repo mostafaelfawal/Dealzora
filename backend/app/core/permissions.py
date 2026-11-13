@@ -1,7 +1,8 @@
 """حماية المسارات بالأدوار. مصدر واحد لكل الـ modules (بدل middleware.py في كل موديول).
 
 - require_authenticated: أي مستخدم مسجّل (كاشير أو مدير).
-- require_manager: مدير فقط.
+- require_manager: المدير أو المالك (الإدارة).
+- require_owner / require_owner_write: المالك فقط (إدارة المدير، ربط الفرع، الاشتراك).
 - require_manager_write: مدير + تصريح كتابة ساري (الترخيص غير منتهٍ).
 - require_authenticated_write: أي مستخدم + تصريح كتابة (البيع والمرتجع وفتح/قفل الوردية).
 
@@ -21,8 +22,21 @@ def require_authenticated(actor: Annotated[Actor, Depends(get_actor)]) -> Actor:
 
 
 def require_manager(actor: Annotated[Actor, Depends(get_actor)]) -> Actor:
-    if actor.role is not Role.MANAGER:
+    if not actor.is_management:
         raise ForbiddenError("forbidden", "هذه العملية للمدير فقط")
+    return actor
+
+
+def require_owner(actor: Annotated[Actor, Depends(get_actor)]) -> Actor:
+    if actor.role is not Role.OWNER:
+        raise ForbiddenError("owner_only", "هذه العملية لمالك المحل فقط")
+    return actor
+
+
+def require_owner_write(
+    actor: Annotated[Actor, Depends(require_owner)],
+    _permit: Annotated[None, Depends(require_write_permit)],
+) -> Actor:
     return actor
 
 

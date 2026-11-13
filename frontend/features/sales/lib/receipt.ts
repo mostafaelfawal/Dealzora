@@ -69,7 +69,7 @@ export function buildReceiptHtml(sale: Sale, shopName: string): string {
   ${sale.loyaltyDiscount > 0 ? line(`خصم ${sale.loyaltyRedeemed} نقطة`, money(sale.loyaltyDiscount)) : ""}
   ${line(`الإجمالي (${currencySymbol()})`, money(sale.total), "total")}
   ${line("طريقة الدفع", sale.paymentLabel)}
-  ${sale.cashAmount > 0 ? line("المدفوع كاش", money(sale.received || sale.cashAmount)) : ""}
+  ${sale.cashAmount > 0 ? line("المدفوع نقداً", money(sale.received || sale.cashAmount)) : ""}
   ${sale.change > 0 ? line("الباقي", money(sale.change)) : ""}
   ${sale.creditAmount > 0 ? line("آجل على الحساب", money(sale.creditAmount)) : ""}
   ${sale.walletAmount > 0 ? line(`مدفوع ${sale.paymentLabel}`, money(sale.walletAmount)) : ""}

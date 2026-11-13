@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.caller import require_main_device
 from app.core.deps import ActorDep, SessionDep
-from app.core.permissions import require_authenticated_write, require_manager, require_manager_write
+from app.core.permissions import (
+    require_authenticated_write,
+    require_manager,
+    require_manager_write,
+    require_owner_write,
+)
 from app.core.plan import Feature, require_feature_for_writes
 
 from .schemas import ApproveIn, ConnectIn, ReceiveIn, RejectIn, RequestIn, SendIn
@@ -19,6 +24,7 @@ router = APIRouter(
 )
 Read = [Depends(require_manager)]
 Write = [Depends(require_manager_write)]
+OwnerWrite = [Depends(require_owner_write)]  # ربط/فصل الفرع: للمالك فقط
 
 
 def _svc(session: SessionDep, actor: ActorDep) -> BranchSyncService:
@@ -34,13 +40,13 @@ def status(svc: Svc, check: bool = False):
     return svc.status(check=check)
 
 
-@router.post("/connect", dependencies=Write)
+@router.post("/connect", dependencies=OwnerWrite)
 def connect(data: ConnectIn, svc: Svc):
     """ربط هذا الفرع بسيرفر الفروع بكود الربط (مرة واحدة)."""
     return svc.connect(data)
 
 
-@router.post("/disconnect", dependencies=Write)
+@router.post("/disconnect", dependencies=OwnerWrite)
 def disconnect(svc: Svc):
     return svc.disconnect()
 

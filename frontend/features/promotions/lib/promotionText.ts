@@ -8,7 +8,7 @@ export function promoHeadline(
   p: Pick<Promotion, "kind" | "value" | "buyQty" | "getQty">,
 ): string {
   if (p.kind === "buy_get")
-    return `اشتري ${p.buyQty ?? "؟"} وخد ${p.getQty ?? "؟"} مجاناً`;
+    return `اشترِ ${p.buyQty ?? "؟"} واحصل على ${p.getQty ?? "؟"} مجاناً`;
   if (p.kind === "percent") return `خصم ${p.value}%`;
   return `خصم ${formatQty(p.value)} على كل قطعة`;
 }
@@ -33,7 +33,7 @@ export const STATUS_INFO: Record<
   PromoStatus,
   { label: string; className: string }
 > = {
-  active: { label: "شغال الآن", className: "bg-success/10 text-success" },
+  active: { label: "مفعّل الآن", className: "bg-success/10 text-success" },
   scheduled: { label: "يبدأ قريباً", className: "bg-primary/10 text-primary" },
   expired: { label: "انتهى", className: "bg-muted text-muted-foreground" },
   paused: { label: "متوقف", className: "bg-warning/15 text-warning" },

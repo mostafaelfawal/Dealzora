@@ -38,7 +38,7 @@ export function UpgradeNotice({
       <h2 className="text-lg font-semibold">{info.name}</h2>
       <p className="text-sm text-muted-foreground">
         متاحة من خطة <b className="text-foreground">«{info.plan}»</b>. خطتك
-        الحالية «بَسطة» المجانية للمحل الصغير: جهاز واحد، 300 صنف، والبيع الكاش.
+        الحالية «بَسطة» المجانية للمحل الصغير: جهاز واحد، 300 صنف، والبيع النقدي.
       </p>
       <Button
         nativeButton={false}

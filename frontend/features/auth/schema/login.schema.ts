@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { MAX_PASSWORD_LEN, MAX_USERNAME_LEN } from "../config/authLimits";
-import { USER_ROLES } from "../config/authOptions";
 
 const check = (fn: (text: string) => string | null) =>
   z.string().superRefine((text, ctx) => {
@@ -26,7 +25,7 @@ function passwordError(text: string) {
 }
 
 export const loginSchema = z.object({
-  role: z.enum(USER_ROLES),
+  role: z.enum(["cashier", "manager"]), // تبويب الدخول فقط (المالك من «إدارة»)
   username: check(usernameError),
   password: check(passwordError),
 });

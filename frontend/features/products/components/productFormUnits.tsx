@@ -193,8 +193,8 @@ export function ProductFormUnits() {
       forceOpen={Boolean(errors.extraUnits)}
     >
       <p className="text-xs text-muted-foreground">
-        المخزون يُحسب دائماً بال{baseUnit}. اكتب كام {baseUnit} في الوحدة، والسعر
-        لو مختلف (فارغ = سعر ال{baseUnit} × العدد).
+        يُحسب المخزون دائماً بال{baseUnit}. اكتب عدد ال{baseUnit} في الوحدة،
+        والسعر إن كان مختلفاً (فارغ = سعر ال{baseUnit} × العدد).
       </p>
       {units.length > 0 && (
         <ul className="space-y-2">

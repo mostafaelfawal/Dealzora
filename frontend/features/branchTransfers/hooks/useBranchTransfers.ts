@@ -103,7 +103,9 @@ export function useConnectBranch() {
       connectBranch(v.serverUrl, v.code),
     onSuccess: (s) => {
       refresh();
-      toast.success(`اتربط الجهاز كـ «${s.branchName}» في «${s.shopName}»`);
+      toast.success(
+        `رُبط الجهاز بوصفه فرع «${s.branchName}» في «${s.shopName}»`,
+      );
     },
     onError: fail("تعذّر الربط"),
   });
@@ -115,7 +117,7 @@ export function useDisconnectBranch() {
     mutationFn: disconnectBranch,
     onSuccess: () => {
       refresh();
-      toast.success("اتفصل الجهاز عن سيرفر الفروع");
+      toast.success("فُصل الجهاز عن سيرفر الفروع");
     },
     onError: fail("تعذّر الفصل"),
   });
@@ -123,7 +125,7 @@ export function useDisconnectBranch() {
 
 function done(t: Transfer, ok: string) {
   if (t.queued)
-    toast.warning(t.message ?? "اتخصم من المخزون، وهيتبعت أول ما السيرفر يرجع");
+    toast.warning(t.message ?? "خُصم من المخزون، وسيُرسل فور عودة السيرفر");
   else toast.success(ok);
 }
 
@@ -139,7 +141,7 @@ export function useSendTransfer() {
       refresh();
       done(
         t,
-        `اتبعت التحويل #${t.number} لـ ${t.toBranchName}، واتخصم من مخزونك`,
+        `أُرسل التحويل #${t.number} إلى ${t.toBranchName}، وخُصم من مخزونك`,
       );
     },
     onError: fail("تعذّر إرسال التحويل"),
@@ -156,7 +158,7 @@ export function useRequestTransfer() {
     }) => requestTransfer(v.fromBranchId, v.items, v.note),
     onSuccess: (t) => {
       refresh();
-      toast.success(`اتبعت طلب #${t.number} لـ ${t.fromBranchName}`);
+      toast.success(`أُرسل الطلب #${t.number} إلى ${t.fromBranchName}`);
     },
     onError: fail("تعذّر إرسال الطلب"),
   });
@@ -171,10 +173,7 @@ export function useApproveTransfer() {
     }) => approveTransfer(v.id, v.items),
     onSuccess: (t) => {
       refresh();
-      done(
-        t,
-        `اتبعت الطلب #${t.number} لـ ${t.toBranchName}، واتخصم من مخزونك`,
-      );
+      done(t, `أُرسل الطلب #${t.number} إلى ${t.toBranchName}، وخُصم من مخزونك`);
     },
     onError: fail("تعذّرت الموافقة"),
   });
@@ -192,8 +191,8 @@ export function useReceiveTransfer() {
       refresh();
       toast.success(
         t.status === "partial"
-          ? `اتستلم التحويل #${t.number} بعجز، واللي وصل اتضاف لمخزونك`
-          : `اتستلم التحويل #${t.number} واتضاف لمخزونك`,
+          ? `استُلم التحويل #${t.number} بعجز، وأُضيف ما وصل إلى مخزونك`
+          : `استُلم التحويل #${t.number} وأُضيف إلى مخزونك`,
       );
     },
     onError: fail("تعذّر الاستلام"),
@@ -217,10 +216,10 @@ export function useTransferAction() {
       refresh();
       toast.success(
         v.action === "reject"
-          ? "اترفض الطلب"
+          ? "رُفض الطلب"
           : v.action === "withdraw"
-            ? "اتسحب الطلب"
-            : "اتلغى التحويل ورجعت البضاعة لمخزونك",
+            ? "سُحب الطلب"
+            : "أُلغي التحويل وعادت البضاعة إلى مخزونك",
       );
     },
     onError: fail("تعذّرت العملية"),
@@ -233,8 +232,8 @@ export function useRetryPending() {
     mutationFn: retryPending,
     onSuccess: (r) => {
       refresh();
-      if (r.sent) toast.success(`اتبعت ${r.sent} تحويل كان معلّق`);
-      else toast.info("السيرفر لسه مش متاح. هنحاول تاني تلقائياً");
+      if (r.sent) toast.success(`أُرسل ${r.sent} تحويل كان معلّقاً`);
+      else toast.info("السيرفر ما زال غير متاح. ستُعاد المحاولة تلقائياً");
     },
     onError: fail("تعذّرت إعادة الإرسال"),
   });
@@ -258,8 +257,8 @@ export function useSyncCatalogNow() {
       if (!r) return;
       if (!r.ok) toast.error(r.error ?? "تعذّرت المزامنة");
       else if (r.applied || r.pushed)
-        toast.success(`اتزامن: ${r.applied} تحديث وصل، و${r.pushed} اترفع`);
-      else toast.success("كل حاجة متزامنة");
+        toast.success(`تمت المزامنة: وصل ${r.applied} تحديث، ورُفع ${r.pushed}`);
+      else toast.success("كل البيانات متزامنة");
       if (r.applied) {
         void qc.invalidateQueries({ queryKey: ["products"] });
         void qc.invalidateQueries({ queryKey: ["customers"] });

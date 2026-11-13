@@ -323,7 +323,7 @@ export const retryPending = async () =>
 /* ---------- مزامنة الأصناف والعملاء ---------- */
 
 export interface CatalogSyncError {
-  kind: "product" | "customer";
+  kind: "product" | "customer" | "owner";
   name: string;
   error: string;
   localId: string | null;
@@ -335,6 +335,7 @@ export interface CatalogStatus {
   lastError: string | null;
   products: number;
   customers: number;
+  owners: number;
   errorCount: number;
   errors: CatalogSyncError[];
   /** نتيجة آخر دورة (من «مزامنة الآن» فقط). */
@@ -356,6 +357,7 @@ const toCatalog = (d: any): CatalogStatus => ({
   lastError: d.last_error ?? null,
   products: d.products ?? 0,
   customers: d.customers ?? 0,
+  owners: d.owners ?? 0,
   errorCount: d.error_count ?? 0,
   errors: (d.errors ?? []).map((e: any) => ({
     kind: e.kind,

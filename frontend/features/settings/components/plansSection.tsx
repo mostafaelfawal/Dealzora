@@ -59,7 +59,7 @@ export function PlansSection() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           {plan?.isFree
-            ? "محتاج ميزات أكثر؟ قارن الخطط واشترك برسالة واتساب واحدة."
+            ? "تحتاج إلى ميزات أكثر؟ قارن الخطط واشترك برسالة واتساب واحدة."
             : "للتجديد أو تغيير خطتك: قارن الخطط واطلب برسالة واتساب واحدة."}
         </p>
         <Button
@@ -105,8 +105,8 @@ function PlansList({
     <div id="plans-list" className="space-y-4 border-t pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          اضغط «اشترك»: هيتفتح واتساب برسالة جاهزة فيها رقم جهازك والمبلغ، وبعد
-          الدفع يوصلك مفتاح الترخيص تلصقه في خانة التفعيل تحت.
+          اضغط «اشترك»: سيُفتح واتساب برسالة جاهزة تتضمن رقم جهازك والمبلغ، وبعد
+          الدفع يصلك مفتاح الترخيص فتلصقه في خانة التفعيل بالأسفل.
         </p>
         <SegmentedTabs
           label="مدة الاشتراك"
@@ -237,7 +237,7 @@ function PlanCardView({
         )}
         <p className="flex h-4 items-center gap-1 text-[11px] text-muted-foreground">
           {free ? (
-            "ادر محلك مجانا"
+            "أدر محلك مجاناً"
           ) : billing === "yearly" ? (
             `يعادل ${formatPlanPrice(Math.round(plan.yearly! / 12))} شهرياً`
           ) : (

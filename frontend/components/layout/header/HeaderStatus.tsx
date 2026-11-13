@@ -1,6 +1,6 @@
 "use client";
 
-import { ROLE_PERMISSIONS } from "@/config/roles";
+import { ROLE_PERMISSIONS, isManagement } from "@/config/roles";
 import { useCreateBackup } from "@/features/settings/hooks/useSettings";
 import { useShellData } from "@/hooks/useShellData";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ export function HeaderStatus({
   const { user, shift, drawerBalance, sync, subscription } = useShellData();
   const canViewDrawerBalance = ROLE_PERMISSIONS[user.role].canViewDrawerBalance;
   const backup = useCreateBackup();
-  const isManager = user.role === "manager";
+  const isManager = isManagement(user.role);
 
   return (
     <div className={cn("items-center gap-1", className)}>

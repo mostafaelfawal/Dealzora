@@ -154,7 +154,7 @@ _VERB = {
 }
 
 _ENUMS: dict[str, dict[str, str]] = {
-    "role": {"manager": "مدير", "cashier": "كاشير"},
+    "role": {"owner": "مالك", "manager": "مدير", "cashier": "كاشير"},
     "direction": {"in": "داخل للخزنة", "out": "خارج من الخزنة"},
     "kind": {
         "expense": "مصروف",

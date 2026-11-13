@@ -32,14 +32,14 @@ class UserRepository:
         stmt = select(func.count()).select_from(User).where(User.deleted_at.is_(None))
         return self.session.scalar(stmt) or 0
 
-    def count_active_managers(self, *, exclude_id: str | None = None) -> int:
+    def count_active_managers(self, *, exclude_id: str | None = None, role: Role = Role.MANAGER) -> int:
         stmt = (
             select(func.count())
             .select_from(User)
             .where(
                 User.deleted_at.is_(None),
                 User.is_active.is_(True),
-                User.role == Role.MANAGER.value,
+                User.role == role.value,
             )
         )
         if exclude_id:

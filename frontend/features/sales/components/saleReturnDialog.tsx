@@ -145,8 +145,8 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
       <DialogHeader className="text-start">
         <DialogTitle>مرتجع من فاتورة #{sale.number}</DialogTitle>
         <DialogDescription>
-          {sale.customerName ?? "عميل نقدي"} · الأصناف ترجع للمخزون، والمبلغ
-          يُخصم من دين العميل أولاً (لو الفاتورة آجلة) ثم يُرد نقداً من الخزنة.
+          {sale.customerName ?? "عميل نقدي"} · تعود الأصناف إلى المخزون، والمبلغ
+          يُخصم من دين العميل أولاً (إن كانت الفاتورة آجلة) ثم يُرد نقداً من الخزنة.
         </DialogDescription>
       </DialogHeader>
 
@@ -182,7 +182,7 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
                 id: "wallet" as const,
                 label: `تحويل على ${sale.paymentLabel}`,
               },
-              { id: "cash" as const, label: "كاش من الدرج" },
+              { id: "cash" as const, label: "نقداً من الدرج" },
             ]}
             value={refundVia}
             onChange={setRefundVia}

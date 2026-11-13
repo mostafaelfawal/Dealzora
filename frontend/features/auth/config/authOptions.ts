@@ -1,8 +1,10 @@
-export const USER_ROLES = ["cashier", "manager"] as const;
+export const USER_ROLES = ["cashier", "manager", "owner"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
+/** تبويب شاشة الدخول (نص فقط؛ الدور الحقيقي من الـ backend). المالك يدخل من «إدارة». */
+export type LoginRole = "cashier" | "manager";
 
 export interface LoginRoleCopy {
-  value: UserRole;
+  value: LoginRole;
   label: string;
   title: string;
   description: string;
@@ -19,13 +21,13 @@ export const LOGIN_ROLE_OPTIONS: LoginRoleCopy[] = [
   },
   {
     value: "manager",
-    label: "مدير",
-    title: "دخول المدير",
-    description: "سجّل دخولك لإدارة المحل.",
+    label: "مدير / مالك",
+    title: "دخول الإدارة",
+    description: "سجّل دخولك كمدير الفرع أو مالك المحل.",
     submitLabel: "تسجيل الدخول",
   },
 ];
 
 export const LOGIN_ROLE_COPY = Object.fromEntries(
   LOGIN_ROLE_OPTIONS.map((option) => [option.value, option]),
-) as Record<UserRole, LoginRoleCopy>;
+) as Record<LoginRole, LoginRoleCopy>;

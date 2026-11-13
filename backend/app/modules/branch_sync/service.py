@@ -472,7 +472,7 @@ class BranchSyncService:
                 self.session.commit()
                 self._invalidate_summary()
                 return {"id": row.id, "status": "pending", "local": self._local(row), "queued": True,
-                        "message": "اتخصم من المخزون، وهيتبعت للفرع أول ما سيرفر الفروع يرجع"}  # fmt: skip
+                        "message": "خُصم من المخزون، وسيُرسل إلى الفرع فور عودة سيرفر الفروع"}  # fmt: skip
             if isinstance(exc, RemoteError):
                 # رفض نهائي (فرع موقوف، طلب اتسحب…): نرجّع المخزون كما كان بالضبط.
                 self._reverse(row, f"إرسال تحويل لم يكتمل: {exc.message}")

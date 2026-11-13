@@ -20,11 +20,13 @@ import {
 import { useEffect, type KeyboardEvent, type ReactNode } from "react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
+import { isOwner } from "@/config/roles";
 import { BranchConnectSection } from "@/features/branchTransfers/components/branchConnectSection";
 import {
   DevicesSection,
   ThisDeviceSection,
 } from "@/features/devices/components/devicesSection";
+import { useSessionUser } from "@/hooks/useShellData";
 import { isTerminal, useDeviceConfig, type DeviceConfig } from "@/lib/device";
 import { cn } from "@/lib/utils";
 
@@ -66,7 +68,7 @@ interface Page {
   sections: Section[];
 }
 
-function buildPages(device: DeviceConfig | null): Page[] {
+function buildPages(device: DeviceConfig | null, owner: boolean): Page[] {
   const terminal = isTerminal(device);
 
   const shop: Page = {
@@ -103,7 +105,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
         icon: <IconWallet />,
         title: "طرق الدفع",
         description:
-          "المحافظ والبطاقات والتحويلات اللي بتقبلها، مع رقم الحساب اللي يظهر للكاشير.",
+          "المحافظ والبطاقات والتحويلات التي تقبلها، مع رقم الحساب الذي يظهر للكاشير.",
         content: <PaymentsSection />,
       },
       {
@@ -111,7 +113,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
         icon: <IconPercentage />,
         title: "أقصى خصم للكاشير",
         description:
-          "الكاشير ما يقدرش يخصم أكتر من النسبة دي من الفاتورة. المدير بلا حد.",
+          "لا يستطيع الكاشير خصم أكثر من هذه النسبة من الفاتورة. المدير بلا حد.",
         content: <DiscountLimitSection />,
       },
       {
@@ -119,7 +121,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
         icon: <IconGift />,
         title: "نقاط الولاء",
         description:
-          "العميل المسجّل يكسب نقاط على كل شراء ويستبدلها خصماً، فيرجع يشتري منك تاني.",
+          "يكسب العميل المسجّل نقاطاً على كل عملية شراء ويستبدلها خصماً، فيعود للشراء منك مجدداً.",
         content: <LoyaltySection />,
       },
       {
@@ -127,7 +129,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
         icon: <IconScale />,
         title: "ميزان الأصناف الموزونة",
         description:
-          "لو عندك ميزان بيطبع ملصق باركود: الكاشير يمسحه فيتضاف الصنف بوزنه.",
+          "إذا كان لديك ميزان يطبع ملصق باركود: يمسحه الكاشير فيُضاف الصنف بوزنه.",
         content: <ScaleBarcodeSection />,
       },
     ],
@@ -165,7 +167,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
             icon: <IconDatabaseExport />,
             title: "النسخ الاحتياطي",
             description:
-              "بياناتك بتتحفظ تلقائياً. اختار مكان الحفظ (فلاشة مثلاً) أو رجّع نسخة قديمة.",
+              "تُحفظ بياناتك تلقائياً. اختر مكان الحفظ (فلاشة مثلاً) أو استرجع نسخة سابقة.",
             content: <BackupSection />,
           },
           {
@@ -173,7 +175,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
             icon: <IconDevices />,
             title: "أجهزة الكاشير",
             description:
-              "أجهزة تانية في المحل تبيع على نفس البيانات، ولكل جهاز درجه ووردياته.",
+              "أجهزة أخرى في المحل تبيع على البيانات نفسها، ولكل جهاز درجه ووردياته.",
             content: <DevicesSection />,
           },
           {
@@ -181,7 +183,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
             icon: <IconArrowsExchange />,
             title: "الفروع",
             description:
-              "اربط الجهاز ده بسيرفر الفروع عشان تبعت وتستلم بضاعة من فروعك التانية.",
+              "اربط هذا الجهاز بسيرفر الفروع لتتمكن من إرسال البضاعة واستلامها من فروعك الأخرى.",
             content: <BranchConnectSection />,
           },
         ],
@@ -197,7 +199,7 @@ function buildPages(device: DeviceConfig | null): Page[] {
         id: "password",
         icon: <IconShieldLock />,
         title: "كلمة المرور",
-        description: "غيّرها كل فترة، وما تديهاش للكاشير.",
+        description: "غيّرها من حين لآخر، ولا تعطها للكاشير.",
         content: <PasswordSection />,
       },
       {
@@ -223,7 +225,13 @@ function buildPages(device: DeviceConfig | null): Page[] {
         title: "الخطة والترخيص",
         description:
           "خطتك الحالية، الترقية، وتفعيل المفتاح. الترخيص مرتبط بهذا الجهاز.",
-        content: <LicenseSection />,
+        content: owner ? (
+          <LicenseSection />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            الاشتراك والتفعيل متاحان لحساب <b>مالك المحل</b> فقط.
+          </p>
+        ),
       },
     ],
   };
@@ -239,7 +247,8 @@ const tabId = (id: string) => `settings-tab-${id}`;
 export function SettingsScreen() {
   const device = useDeviceConfig();
   const terminal = isTerminal(device);
-  const pages = buildPages(device);
+  const owner = isOwner(useSessionUser().role);
+  const pages = buildPages(device, owner);
 
   // الرابط قد يكون صفحة (#selling) أو قسماً داخلها (#scale).
   const sectionPage = new Map(
@@ -282,7 +291,7 @@ export function SettingsScreen() {
         description={
           terminal
             ? "إعدادات المحل المشتركة. النسخ الاحتياطي والاشتراك من الجهاز الأساسي."
-            : "اختار اللي عايز تظبطه:"
+            : "اختر ما تريد ضبطه:"
         }
       />
 

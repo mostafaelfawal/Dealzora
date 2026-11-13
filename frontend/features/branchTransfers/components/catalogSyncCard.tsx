@@ -33,8 +33,13 @@ export function CatalogSyncCard() {
         <div className="space-y-0.5">
           <p className="text-sm font-medium">مزامنة الأصناف والعملاء</p>
           <p className="text-xs text-muted-foreground">
-            الأسماء والباركود والأسعار والعملاء بيتوحدوا بين كل الفروع تلقائياً
-            كل دقيقة. المخزون والتكلفة وديون العملاء ونقاطهم بتفضل خاصة بكل فرع.
+            تُوحَّد الأسماء والباركود والأسعار والعملاء بين جميع الفروع تلقائياً كل
+            دقيقة. أما المخزون والتكلفة وديون العملاء ونقاطهم فتبقى خاصة بكل
+            فرع.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            حساب المالك واحد في جميع الفروع (وتُعتمد كلمة مرور أول فرع يُربط)، أما
+            المدير والكاشيرية فخاصون بكل فرع.
           </p>
         </div>
         <Button
@@ -66,7 +71,7 @@ export function CatalogSyncCard() {
           </span>
           <span>
             آخر مزامنة:{" "}
-            {s.lastSyncAt ? formatWhen(Date.parse(s.lastSyncAt)) : "لسه"}
+            {s.lastSyncAt ? formatWhen(Date.parse(s.lastSyncAt)) : "لم تتم بعد"}
           </span>
         </div>
       )}
@@ -81,13 +86,18 @@ export function CatalogSyncCard() {
         <div className="space-y-1.5 border border-warning/40 bg-warning/5 p-2.5">
           <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
             <IconAlertTriangle className="size-4" />
-            {s.errorCount} سجل ما اتزامنش. عدّله وهيتزامن تلقائياً:
+            {s.errorCount} سجل لم تتم مزامنته. عدّله وستتم مزامنته تلقائياً:
           </p>
           <ul className="space-y-1 text-xs">
             {s.errors.map((e, i) => (
               <li key={`${e.localId ?? e.name}-${i}`}>
                 <b>
-                  {e.kind === "product" ? "صنف" : "عميل"} «{e.name}»
+                  {e.kind === "product"
+                    ? "صنف"
+                    : e.kind === "owner"
+                      ? "حساب المالك"
+                      : "عميل"}{" "}
+                  «{e.name}»
                 </b>
                 <span className="text-muted-foreground">: {e.error}</span>
               </li>

@@ -68,7 +68,7 @@ export function useTogglePromotion() {
     mutationFn: togglePromotion,
     onSuccess: (p) => {
       refresh();
-      toast.success(p.isActive ? `شغّلت «${p.name}»` : `أوقفت «${p.name}»`);
+      toast.success(p.isActive ? `فُعّل «${p.name}»` : `أُوقف «${p.name}»`);
     },
     onError: (e) => toast.error(extractErrorMessage(e, "تعذّر تحديث العرض")),
   });

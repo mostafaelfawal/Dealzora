@@ -165,7 +165,7 @@ export function ReturnsTable({
       empty={{
         icon: IconReceiptRefund,
         title: "لا توجد مرتجعات في هذه الفترة",
-        description: "ممتاز! لم يرجع أي صنف.",
+        description: "ممتاز! لم يُرجَع أي صنف.",
       }}
       rowHeightClassName="h-16"
       view={view}

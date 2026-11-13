@@ -144,11 +144,11 @@ export function TransfersScreen() {
       <div className="mx-auto flex max-w-xl flex-col items-center gap-3 py-16 text-center">
         <IconArrowsExchange className="size-12 text-muted-foreground" />
         <h1 className="text-lg font-semibold">
-          الجهاز ده مش مربوط بسيرفر الفروع
+          هذا الجهاز غير مربوط بسيرفر الفروع
         </h1>
         <p className="text-sm text-muted-foreground">
-          اربط كل فرع مرة واحدة بكود الربط، وبعدها تقدر تبعت بضاعة لفرع تاني أو
-          تطلب منه.
+          اربط كل فرع مرة واحدة بكود الربط، وبعدها يمكنك إرسال بضاعة إلى فرع آخر
+          أو تطلب منه.
         </p>
         <Button
           size="lg"
@@ -176,7 +176,7 @@ export function TransfersScreen() {
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <PageHeader
         title="تحويلات الفروع"
-        description={`أنت فرع «${status.data?.branchName ?? ""}». البضاعة بتتخصم منك لحظة الإرسال وبتتضاف للفرع التاني لما يستلمها.`}
+        description={`أنت فرع «${status.data?.branchName ?? ""}». تُخصم البضاعة من مخزونك لحظة الإرسال وتُضاف إلى الفرع الآخر عند استلامها.`}
         actions={
           <div className="flex gap-2">
             <Button
@@ -198,14 +198,14 @@ export function TransfersScreen() {
           <IconCloudOff className="size-4 shrink-0" />
           {s.unpaired ? (
             <>
-              الربط اتلغى من السيرفر (اتغيّر سر الفرع). اربطه تاني بكود جديد من{" "}
+              أُلغي الربط من السيرفر (تغيّر سر الفرع). أعد ربطه بكود جديد من{" "}
               <Link href="/admin/settings#branches" className="underline">
                 الإعدادات
               </Link>
               .
             </>
           ) : (
-            "سيرفر الفروع غير متاح الآن. تقدر تبعت تحويل وهيتخصم ويتبعت أول ما الاتصال يرجع."
+            "سيرفر الفروع غير متاح الآن. يمكنك إرسال تحويل، وسيُخصم ويُرسل فور عودة الاتصال."
           )}
         </p>
       )}
@@ -214,7 +214,7 @@ export function TransfersScreen() {
         <div className="flex flex-wrap items-center justify-between gap-2 border border-warning/40 bg-warning/5 p-3 text-sm">
           <span className="flex items-center gap-2">
             <IconAlertTriangle className="size-4 text-warning" />
-            {s?.pending} تحويل اتخصم من مخزونك ولسه ما وصلش للسيرفر.
+            {s?.pending} تحويل خُصم من مخزونك ولم يصل إلى السيرفر بعد.
           </span>
           <Button
             size="sm"
@@ -232,7 +232,7 @@ export function TransfersScreen() {
         <StatTile
           index={0}
           icon={<IconPackageImport />}
-          label="بضاعة جاية لك"
+          label="بضاعة واردة إليك"
           tone={s?.incoming ? "success" : "default"}
           onClick={() => setTab("in")}
           active={tab === "in"}
@@ -242,7 +242,7 @@ export function TransfersScreen() {
         <StatTile
           index={1}
           icon={<IconInbox />}
-          label="طلبات مستنياك"
+          label="طلبات بانتظارك"
           tone={s?.requests ? "warning" : "default"}
           onClick={() => setTab("requests")}
           active={tab === "requests"}
@@ -274,15 +274,15 @@ export function TransfersScreen() {
         </div>
       ) : list.isError ? (
         <p className="py-10 text-center text-sm text-muted-foreground">
-          تعذّر جلب التحويلات من السيرفر. هنحاول تاني تلقائياً.
+          تعذّر جلب التحويلات من السيرفر. ستُعاد المحاولة تلقائياً.
         </p>
       ) : items.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">
           {tab === "in"
-            ? "مافيش بضاعة جاية لك دلوقتي."
+            ? "لا توجد بضاعة واردة إليك حالياً."
             : tab === "requests"
-              ? "مافيش طلبات مستنياك."
-              : "مافيش تحويلات."}
+              ? "لا توجد طلبات بانتظارك."
+              : "لا توجد تحويلات."}
         </p>
       ) : (
         <ul className="space-y-2">

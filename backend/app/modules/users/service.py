@@ -21,7 +21,7 @@ from app.core.passwords import hash_password
 from app.core.security import Actor, Role
 from app.modules.auth.repository import AuthRepository
 from app.modules.shop.service import ShopService
-from .constants import ENTITY_USER, ERROR_MESSAGES, UserError
+from .constants import ENTITY_USER, ERROR_MESSAGES, MAX_ACTIVE_MANAGERS, UserError
 from .helper import (
     actor_for,
     password_contains_username,
@@ -49,9 +49,10 @@ class UserService:
         return self.repo.count_users() == 0
 
     def setup_first_manager(self, data: SetupIn) -> UserOut:
+        """أول حساب في النظام = مالك المحل."""
         if self.repo.count_users() > 0:
             raise _err(ConflictError, UserError.ALREADY_SETUP)
-        user = self._new_user(data.username, data.password, Role.MANAGER)
+        user = self._new_user(data.username, data.password, Role.OWNER)
         self.repo.add_user(user)
         self.repo.flush()
         actor = actor_for(user)
@@ -67,6 +68,9 @@ class UserService:
 
     def create_user(self, data: UserCreate) -> UserOut:
         actor = self._require_manager()
+        if data.role is Role.MANAGER:
+            self._require_owner(actor)
+            self._ensure_manager_slot()
         if is_free() and self.repo.count_users() >= FREE_LIMITS["users"]:
             raise limit_error("مستخدم — المالك يبيع بنفسه", FREE_LIMITS["users"])
         if self.repo.username_taken(data.username):
@@ -82,6 +86,8 @@ class UserService:
         actor = self._require_manager()
         user = self._get_or_404(user_id)
         is_self = user.id == actor.user_id
+        if not is_self:
+            self._ensure_can_manage(actor, user)
 
         # ---- فحوصات أولاً، ثم التطبيق ----
         if data.username is not None and data.username != user.username:
@@ -90,10 +96,19 @@ class UserService:
 
         role_changes = data.role is not None and data.role.value != user.role
         deactivating = data.is_active is False and user.is_active
+        reactivating = data.is_active is True and not user.is_active
         if role_changes or deactivating:
             if is_self:
                 raise _err(ForbiddenError, UserError.SELF_ACTION)
-            self._ensure_not_last_manager(user)
+            if role_changes and user.role == Role.OWNER.value:
+                raise _err(ForbiddenError, UserError.OWNER_ONLY)  # المالك لا يُخفَّض
+            self._ensure_not_last_owner(user)
+        becomes_manager = (data.role is Role.MANAGER and user.role != Role.MANAGER.value) or (
+            reactivating and (data.role or Role(user.role)) is Role.MANAGER
+        )
+        if becomes_manager:
+            self._require_owner(actor)
+            self._ensure_manager_slot(exclude_id=user.id)
 
         before = user_snapshot(user)
         if data.username is not None:
@@ -120,6 +135,7 @@ class UserService:
         user = self._get_or_404(user_id)
         if user.id == actor.user_id:  # لنفسه: عبر /auth/change-password بكلمة المرور الحالية
             raise _err(ForbiddenError, UserError.SELF_ACTION)
+        self._ensure_can_manage(actor, user)
         if password_contains_username(data.new_password, user.username):
             raise _err(BadRequestError, UserError.PASSWORD_HAS_USERNAME)
 
@@ -134,7 +150,8 @@ class UserService:
         user = self._get_or_404(user_id)
         if user.id == actor.user_id:
             raise _err(ForbiddenError, UserError.SELF_ACTION)
-        self._ensure_not_last_manager(user)
+        self._ensure_can_manage(actor, user)
+        self._ensure_not_last_owner(user)
 
         self.sessions.delete_user_sessions(user.id)
         user.mark_deleted()  # tombstone: الاسم يصبح متاحاً من جديد
@@ -148,22 +165,36 @@ class UserService:
         return self.actor
 
     def _require_manager(self) -> Actor:
-        """دفاع إضافي: الـ route يفحص الدور، والـ service يفحصه أيضاً."""
+        """دفاع إضافي: الـ route يفحص الدور، والـ service يفحصه أيضاً. (المدير أو المالك)"""
         actor = self._actor()
-        if actor.role is not Role.MANAGER:
+        if not actor.is_management:
             raise _err(ForbiddenError, UserError.FORBIDDEN)
         return actor
+
+    @staticmethod
+    def _require_owner(actor: Actor) -> None:
+        if not actor.is_owner:
+            raise _err(ForbiddenError, UserError.OWNER_ONLY)
+
+    def _ensure_can_manage(self, actor: Actor, user: User) -> None:
+        """المدير يدير الكاشيرية فقط. المدير والمالك يديرهم المالك."""
+        if user.role != Role.CASHIER.value:
+            self._require_owner(actor)
+
+    def _ensure_manager_slot(self, exclude_id: str | None = None) -> None:
+        if self.repo.count_active_managers(exclude_id=exclude_id) >= MAX_ACTIVE_MANAGERS:
+            raise _err(ConflictError, UserError.MANAGER_EXISTS)
+
+    def _ensure_not_last_owner(self, user: User) -> None:
+        is_active_owner = user.role == Role.OWNER.value and user.is_active
+        if is_active_owner and self.repo.count_active_managers(exclude_id=user.id, role=Role.OWNER) == 0:
+            raise _err(ConflictError, UserError.LAST_OWNER)
 
     def _get_or_404(self, user_id: str) -> User:
         user = self.repo.get_user(user_id)
         if user is None:
             raise _err(NotFoundError, UserError.USER_NOT_FOUND)
         return user
-
-    def _ensure_not_last_manager(self, user: User) -> None:
-        is_active_manager = user.role == Role.MANAGER.value and user.is_active
-        if is_active_manager and self.repo.count_active_managers(exclude_id=user.id) == 0:
-            raise _err(ConflictError, UserError.LAST_MANAGER)
 
     @staticmethod
     def _new_user(username: str, password: str, role: Role, created_by: str | None = None) -> User:

@@ -133,3 +133,26 @@ def test_push_limit(shop, monkeypatch):
     items = [{"kind": "product", "gid": gid(), "data": product(barcode=str(i))} for i in range(3)]
     r = b["A"].post("/v1/catalog/push", json={"items": items})
     assert r.status_code == 400 and r.json()["error"]["code"] == "push_too_large"
+
+
+HASH = "$argon2id$v=19$m=65536,t=3,p=4$" + "a" * 22 + "$" + "b" * 43
+
+
+def test_owner_account_sync(shop):
+    _, b = shop
+    g = gid()
+    [res] = push(b["A"], {"kind": "owner", "gid": g, "data": {"username": "owner", "password_hash": HASH}})
+    assert res["status"] == "ok"
+    # نفس اسم المستخدم من فرع تاني = نفس الحساب (دمج)، وتجزئة الفرع الأول هي المرجع
+    [res] = push(b["B"], {"kind": "owner", "gid": gid(), "data": {"username": "owner", "password_hash": HASH[:-1] + "c"}})
+    assert res["status"] == "merged" and res["canonical_gid"] == g and res["data"]["password_hash"] == HASH
+    items = pull(b["C"])["items"]
+    assert [(i["kind"], i["data"]["username"]) for i in items] == [("owner", "owner")]
+
+    bad = [
+        {"kind": "owner", "gid": gid(), "data": {"username": "x2", "password_hash": "plaintext-password-123456789012345678901234"}},
+        {"kind": "owner", "gid": gid(), "data": {"username": "Owner Two", "password_hash": HASH}},
+        {"kind": "owner", "gid": gid(), "data": {"username": "o3", "password_hash": HASH, "role": "owner"}},
+        {"kind": "owner", "gid": gid(), "data": {"username": "o4", "password_hash": "$argon2i$" + "x" * 50}},
+    ]
+    assert [r["status"] for r in push(b["A"], *bad)] == ["invalid"] * 4

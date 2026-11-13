@@ -15,7 +15,7 @@ export const DEFAULT_PAGE_SIZE = 24;
 export const SALES_SEARCH_DEBOUNCE_MS = 300;
 
 export const BUILTIN_LABEL: Record<BuiltinMethod, string> = {
-  cash: "كاش",
+  cash: "نقدي",
   credit: "آجل",
   mixed: "مختلط",
 };

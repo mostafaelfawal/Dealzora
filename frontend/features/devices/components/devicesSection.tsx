@@ -102,7 +102,7 @@ function DevicesPanel() {
               </div>
             ) : (
               <p className="text-warning">
-                لم نجد عنوان شبكة. تأكد أن الجهاز متصل بالراوتر (سلك أو واي
+                لم نجد عنوان شبكة. تأكد من أن الجهاز متصل بالراوتر (سلك أو واي
                 فاي).
               </p>
             )}
@@ -144,8 +144,8 @@ function LanToggle({ enabled }: { enabled: boolean }) {
 
   async function toggle(next: boolean) {
     const msg = next
-      ? "البرنامج هيقبل أجهزة الكاشير على شبكة المحل (ثوانٍ قليلة).\n\nلو ظهرت رسالة من ويندوز (Windows Firewall) اختر «السماح» على الشبكات الخاصة (Private). متابعة؟"
-      : "كل أجهزة الكاشير هتتوقف عن الاتصال. متابعة؟";
+      ? "سيقبل البرنامج اتصال أجهزة الكاشير على شبكة المحل (خلال ثوانٍ قليلة).\n\nإذا ظهرت رسالة من ويندوز (Windows Firewall) فاختر «السماح» على الشبكات الخاصة (Private). متابعة؟"
+      : "ستتوقف جميع أجهزة الكاشير عن الاتصال. متابعة؟";
     if (!window.confirm(msg)) return;
     setPending(true);
     try {
@@ -155,7 +155,7 @@ function LanToggle({ enabled }: { enabled: boolean }) {
       const now = qc.getQueryData<NetworkInfo>(deviceKeys.network);
       if (!back) {
         toast.error(
-          "الخادم المحلي تأخر في الرجوع. أغلق البرنامج وافتحه من جديد",
+          "تأخر الخادم المحلي في الاستجابة. أغلق البرنامج وافتحه من جديد",
         );
       } else if (now && now.lanEnabled !== next) {
         // وضع التطوير: الـ backend يعمل من VS Code ولا يعيد Rust تشغيله.
@@ -185,8 +185,8 @@ function LanToggle({ enabled }: { enabled: boolean }) {
       <div className="space-y-0.5">
         <Label htmlFor="lan-enabled">السماح لأجهزة الكاشير بالاتصال</Label>
         <p className="text-xs text-muted-foreground">
-          كل الأجهزة تعمل على بيانات هذا الجهاز. يجب ان يكون مفتوحاً طول وقت
-          البيع.
+          تعمل جميع الأجهزة على بيانات هذا الجهاز، لذا يجب أن يبقى مفتوحاً طوال
+          وقت البيع.
         </p>
       </div>
       <Switch

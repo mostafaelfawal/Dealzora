@@ -45,9 +45,9 @@ const KINDS: { id: PromoKind; label: string; icon: ReactNode; hint: string }[] =
   [
     {
       id: "buy_get",
-      label: "اشتري واحصل",
+      label: "اشترِ واحصل",
       icon: <IconGift />,
-      hint: "مثل: اشتري 2 وخد 1 مجاناً",
+      hint: "مثل: اشترِ 2 واحصل على 1 مجاناً",
     },
     {
       id: "percent",
@@ -59,7 +59,7 @@ const KINDS: { id: PromoKind; label: string; icon: ReactNode; hint: string }[] =
       id: "amount",
       label: "خصم مبلغ",
       icon: <IconTag />,
-      hint: "مثل: 5 جنيه أقل على كل قطعة",
+      hint: "مثل: خصم 5 جنيهات على كل قطعة",
     },
   ];
 
@@ -115,7 +115,7 @@ const int = (text: string) => {
 
 function validate(d: Draft): string | null {
   if (d.kind === "buy_get" && (!int(d.buyQty) || !int(d.getQty)))
-    return "اكتب «اشتري كام» و«خد كام» أرقاماً صحيحة";
+    return "اكتب كمية الشراء وكمية الهدية أرقاماً صحيحة";
   if (d.kind === "percent" && !(num(d.value) >= 1 && num(d.value) <= 100))
     return "نسبة الخصم من 1 إلى 100";
   if (d.kind === "amount" && !(num(d.value) > 0)) return "اكتب مبلغ الخصم";
@@ -321,25 +321,25 @@ function PromotionForm({
       {d.kind === "buy_get" ? (
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            اشتري
+            اشترِ
             <Input
               value={d.buyQty}
               onChange={(e) => patch({ buyQty: e.target.value })}
               inputMode="numeric"
               dir="ltr"
               className="h-10 w-16 text-center font-mono"
-              aria-label="اشتري كام"
+              aria-label="كمية الشراء"
             />
-            وخد
+            واحصل على
             <Input
               value={d.getQty}
               onChange={(e) => patch({ getQty: e.target.value })}
               inputMode="numeric"
               dir="ltr"
               className="h-10 w-16 text-center font-mono"
-              aria-label="خد كام مجاناً"
+              aria-label="كمية الهدية المجانية"
             />
-            مجاناً من نفس الصنف
+            مجاناً من الصنف نفسه
           </div>
           <div className="flex flex-wrap gap-1.5">
             {BUY_GET_PRESETS.map(([b, g]) => (
@@ -391,7 +391,7 @@ function PromotionForm({
             )}
           </Field>
           <Field
-            label="لما يشتري على الأقل (اختياري)"
+            label="عند شراء ما لا يقل عن (اختياري)"
             hint="مثال: 3 = الخصم يبدأ من 3 قطع. فارغ = من أول قطعة."
           >
             <Input
@@ -473,7 +473,7 @@ function PromotionForm({
 
       <label className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
         <span>
-          العرض شغال
+          العرض مفعّل
           <span className="block text-xs text-muted-foreground">
             يظهر في الكاشير ويُطبق تلقائياً على الفاتورة.
           </span>
@@ -526,8 +526,8 @@ export function PromotionFormDialog({
         <DialogHeader className="text-start">
           <DialogTitle>{promotion ? "تعديل العرض" : "عرض جديد"}</DialogTitle>
           <DialogDescription>
-            العرض يُطبَّق تلقائياً في الكاشير على الأصناف المختارة، بدون ما الكاشير
-            يعمل أي حاجة.
+            يُطبَّق العرض تلقائياً في الكاشير على الأصناف المختارة، دون أن يقوم
+            الكاشير بأي إجراء.
           </DialogDescription>
         </DialogHeader>
         {open && (

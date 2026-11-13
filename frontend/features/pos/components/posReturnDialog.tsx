@@ -1,5 +1,6 @@
 "use client";
 
+import { isManagement } from "@/config/roles";
 import { IconAlertTriangle, IconMinus, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
@@ -61,7 +62,7 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
   const [reason, setReason] = useState<ReturnReason | null>(null);
 
   // المدير يرجّع بدون مهلة (الـ backend يطبّق نفس القاعدة).
-  const isManager = useSessionUser().role === "manager";
+  const isManager = isManagement(useSessionUser().role);
   const expired =
     !isManager && now !== null && isReturnExpired(invoice.soldAt, now);
 

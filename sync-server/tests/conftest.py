@@ -15,6 +15,9 @@ os.environ.update(
     SYNC_MAX_PUSH_EVENTS="50",
     # الاختبارات كلها من نفس «IP»: حد عالٍ هنا، واختبار الحد نفسه يخفّضه مؤقتاً.
     SYNC_AUTH_RATE_PER_MIN="100000",
+    # متغيرات البيئة تغلب ملف .env المحلي (اللي ممكن يقصر لوحة الإدارة على IPs معينة).
+    SYNC_ADMIN_ALLOWED_IPS="",
+    SYNC_DOCS_ENABLED="false",
 )
 
 

@@ -49,7 +49,7 @@ function ProfitLine({
   if (!margin || !(cost > 0)) {
     return (
       <p className="text-xs text-muted-foreground">
-        اكتب سعر الشراء عشان نحسبلك ربحك في كل {unit}.
+        اكتب سعر الشراء لنحسب لك ربحك في كل {unit}.
       </p>
     );
   }
@@ -145,8 +145,8 @@ function WholesaleSection({ unit, sale }: { unit: string; sale: number }) {
         </FormField>
       </div>
       <p className="text-xs text-muted-foreground">
-        الكاشير يطبّقه لوحده: لعميل متسجّل «عميل جملة»، أو لأي عميل يشتري الكمية
-        دي أو أكتر.
+        يطبّقه الكاشير تلقائياً: لعميل مسجّل بصفة «عميل جملة»، أو لأي عميل يشتري
+        هذه الكمية أو أكثر.
       </p>
     </CollapsibleSection>
   );

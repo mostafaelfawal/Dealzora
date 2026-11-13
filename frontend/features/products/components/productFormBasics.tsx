@@ -259,7 +259,7 @@ export function ProductFormBasics() {
             />
           </div>
           <p className="text-[11px] text-muted-foreground">
-            نفس رقم الصنف المسجّل على الميزان. الكاشير يقرأ الوزن من الملصق
+            رقم الصنف نفسه المسجّل على الميزان. يقرأ الكاشير الوزن من الملصق
             مباشرة.{" "}
             {!scaleEnabled && (
               <Link

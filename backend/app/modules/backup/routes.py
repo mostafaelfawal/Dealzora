@@ -15,7 +15,6 @@ from app.core.init_db import init_db
 from app.core.outbox import OutboxEvent, OutboxStatus
 from app.core.plan import Feature, ensure_feature
 from app.core.permissions import require_authenticated, require_manager, require_manager_write
-from app.core.security import Role
 from app.modules.settings.schema import BackupLocationIn
 from app.modules.settings.service import SettingsService
 
@@ -97,7 +96,7 @@ def backup_status(session: SessionDep, actor: ActorDep, caller: CallerDep):
         auto_every_hours=AUTO_BACKUP_HOURS,
         keep=KEEP_BACKUPS,
         # المجلد على قرص الجهاز الأساسي: يُعرض للمدير على الجهاز الأساسي فقط.
-        location=_location_out() if actor.role is Role.MANAGER and caller.is_main else None,
+        location=_location_out() if actor.is_management and caller.is_main else None,
     )
 
 

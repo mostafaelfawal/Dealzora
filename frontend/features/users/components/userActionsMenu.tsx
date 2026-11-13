@@ -19,12 +19,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { canManageUser } from "../config/userOptions";
 import { USER_ROUTES } from "../config/userRoutes";
-import type { User } from "../types/user";
+import type { User, UserRole } from "../types/user";
 
 export interface UserActions {
   /** حساب المدير الحالي: التعطيل والحذف وتغيير كلمة المرور ممنوعة عليه من هنا. */
   currentUserId: string | null;
+  /** دور الحساب الحالي: المدير يدير الكاشيرية بس، والمالك يدير الكل. */
+  currentRole: UserRole | null;
   onToggleActive: (id: string) => void;
   onResetPassword: (id: string) => void;
   onRemove: (id: string) => void;
@@ -34,11 +37,14 @@ export interface UserActions {
 export function UserActionsMenu({
   user,
   currentUserId,
+  currentRole,
   onToggleActive,
   onResetPassword,
   onRemove,
 }: { user: User } & UserActions) {
   const isSelf = user.id === currentUserId;
+  // حسابك أو حساب أعلى منك: لا تعطيل ولا حذف ولا تغيير كلمة مرور من هنا.
+  const locked = isSelf || !canManageUser(currentRole, user.role);
 
   return (
     <DropdownMenu>
@@ -60,19 +66,22 @@ export function UserActionsMenu({
         className="w-48"
         onClick={(event) => event.stopPropagation()}
       >
-        <DropdownMenuItem render={<Link href={USER_ROUTES.edit(user.id)} />}>
+        <DropdownMenuItem
+          disabled={!isSelf && locked}
+          render={<Link href={USER_ROUTES.edit(user.id)} />}
+        >
           <IconPencil />
           تعديل
         </DropdownMenuItem>
         <DropdownMenuItem
-          disabled={isSelf}
+          disabled={locked}
           onClick={() => onResetPassword(user.id)}
         >
           <IconKey />
           تغيير كلمة المرور
         </DropdownMenuItem>
         <DropdownMenuItem
-          disabled={isSelf}
+          disabled={locked}
           onClick={() => onToggleActive(user.id)}
         >
           {user.isActive ? <IconEyeOff /> : <IconEye />}
@@ -81,7 +90,7 @@ export function UserActionsMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
-          disabled={isSelf}
+          disabled={locked}
           onClick={() => onRemove(user.id)}
         >
           <IconTrash />

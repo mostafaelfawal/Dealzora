@@ -33,7 +33,7 @@ import { SUPPORT_PHONE, SUPPORT_WHATSAPP } from "@/config/support";
 import { openExternal } from "@/lib/external";
 import { openWhatsapp } from "@/lib/whatsapp";
 
-const MESSAGE = "السلام عليكم، عندي مشكلة في برنامج Dealzora:\n";
+const MESSAGE = "السلام عليكم، لدي مشكلة في برنامج Dealzora:\n";
 
 const SOCIAL_LINKS = [
   {
@@ -95,11 +95,11 @@ export function SupportButton() {
 
   return (
     <>
-      <AppTooltip message="عندك مشكلة؟">
+      <AppTooltip message="هل لديك مشكلة؟">
         <Button
           variant="ghost"
           size="icon-lg"
-          aria-label="عندك مشكلة؟ تواصل مع الدعم"
+          aria-label="هل لديك مشكلة؟ تواصل مع الدعم"
           onClick={() => setOpen(true)}
         >
           <IconHelpCircle className="size-5" />
@@ -113,11 +113,11 @@ export function SupportButton() {
               <IconBrandWhatsapp className="size-7" />
             </span>
 
-            <DialogTitle>عندك مشكلة؟</DialogTitle>
+            <DialogTitle>هل لديك مشكلة؟</DialogTitle>
 
             <DialogDescription>
-              فريق Dealzora جاهز يساعدك. ابعتلنا على واتساب واكتب المشكلة، ولو
-              تقدر ابعت صورة من الشاشة.
+              فريق Dealzora جاهز لمساعدتك. راسلنا على واتساب واكتب المشكلة، وإن
+              استطعت فأرسل صورة من الشاشة.
             </DialogDescription>
           </DialogHeader>
 

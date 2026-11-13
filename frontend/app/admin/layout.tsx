@@ -5,7 +5,7 @@ import { AuthGuard } from "@/features/auth/components/authGuard";
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthGuard role="manager">
+    <AuthGuard role={["owner", "manager"]}>
       <AppShell>{children}</AppShell>
     </AuthGuard>
   );

@@ -83,8 +83,8 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
                   className="text-sm text-muted-foreground"
                   suppressHydrationWarning
                 >
-                  {shift.cashierName ?? "—"} · فُتحت{" "}
-                  {formatTime(shift.openedAt)} · {shift.salesCount} فاتورة
+                  {shift.cashierName ?? "—"} · فُتحت {formatTime(shift.openedAt)}{" "}
+                  · {shift.salesCount} فاتورة
                 </p>
               </div>
               <Button
@@ -100,7 +100,7 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                افتح وردية عشان تقدر تسجّل مبيعات وتتابع رصيد الدرج.
+                افتح وردية لتتمكن من تسجيل المبيعات ومتابعة رصيد الدرج.
               </p>
               <Button
                 size="lg"

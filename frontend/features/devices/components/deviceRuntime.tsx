@@ -99,8 +99,8 @@ function TerminalStatus() {
           <IconPlugConnectedX className="mx-auto size-10 text-warning" />
           <h2 className="text-lg font-semibold">أجهزة الكاشير متوقفة</h2>
           <p className="text-sm text-muted-foreground">
-            اشتراك المحل انتهى (أو الخطة لا تشمل أجهزة كاشير)، فالبيع الآن من
-            الجهاز الأساسي فقط. بعد التجديد هذا الجهاز يرجع يشتغل تلقائياً.
+            انتهى اشتراك المحل (أو أن الخطة لا تشمل أجهزة كاشير)، فالبيع الآن من
+            الجهاز الأساسي فقط. وبعد التجديد يعود هذا الجهاز إلى العمل تلقائياً.
           </p>
           <Button
             size="lg"
@@ -126,7 +126,7 @@ function TerminalStatus() {
           <IconPlugConnectedX className="mx-auto size-10 text-destructive" />
           <h2 className="text-lg font-semibold">تم إلغاء ربط هذا الجهاز</h2>
           <p className="text-sm text-muted-foreground">
-            المدير ألغى اقتران هذا الجهاز من الجهاز الأساسي. اطلب منه كود اقتران
+            ألغى المدير اقتران هذا الجهاز من الجهاز الأساسي. اطلب منه كود اقتران
             جديد لإعادة الربط.
           </p>
           <Button
@@ -158,8 +158,8 @@ function TerminalStatus() {
     >
       <IconWifiOff className="size-4 shrink-0" />
       <span>
-        غير متصل بالجهاز الأساسي. الفاتورة الحالية محفوظة هنا، والدفع يتم أول ما
-        يرجع الاتصال.
+        غير متصل بالجهاز الأساسي. الفاتورة الحالية محفوظة هنا، ويتم الدفع فور
+        عودة الاتصال.
       </span>
       <IconRefresh className="size-4 shrink-0 animate-spin" aria-hidden />
     </div>

@@ -3,9 +3,9 @@ import type { ComponentType } from "react";
 
 import { Button } from "@/components/ui/button";
 
-import { LOGIN_ROLE_OPTIONS, type UserRole } from "../config/authOptions";
+import { LOGIN_ROLE_OPTIONS, type LoginRole } from "../config/authOptions";
 
-const ROLE_ICONS: Record<UserRole, ComponentType<{ className?: string }>> = {
+const ROLE_ICONS: Record<LoginRole, ComponentType<{ className?: string }>> = {
   cashier: IconCashRegister,
   manager: IconUserShield,
 };
@@ -15,8 +15,8 @@ export function LoginRoleSwitch({
   onChange,
   disabled,
 }: {
-  value: UserRole;
-  onChange: (role: UserRole) => void;
+  value: LoginRole;
+  onChange: (role: LoginRole) => void;
   disabled?: boolean;
 }) {
   return (

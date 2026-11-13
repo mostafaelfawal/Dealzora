@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "الكاشير" };
 /** شاشة الكاشير: fullscreen بدون sidebar، خارج app/main. */
 export default function PosPage() {
   return (
-    <AuthGuard role={["cashier", "manager"]}>
+    <AuthGuard role={["cashier", "manager", "owner"]}>
       <PosScreen />
     </AuthGuard>
   );

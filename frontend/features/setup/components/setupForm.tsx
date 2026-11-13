@@ -8,10 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import {
-  SETUP_FIELD_IDS,
-  TRIAL_PERKS,
-} from "../config/setupOptions";
+import { SETUP_FIELD_IDS, TRIAL_PERKS } from "../config/setupOptions";
 import { useSetupFormContext } from "../context/SetupFormContext";
 import type { SetupStep } from "../types/setup";
 import { PasswordStrength } from "./passwordStrength";
@@ -70,7 +67,8 @@ export function SetupForm() {
       <header className="space-y-1">
         <h1 className="text-lg font-bold">مرحباً بك 👋 لنجهّز محلك</h1>
         <p className="text-xs text-muted-foreground">
-          دقيقة واحدة وتبدأ البيع. هذه بيانات حساب المدير الأول.
+          دقيقة واحدة وتبدأ البيع. هذا حساب مالك المحل: كل الصلاحيات، ومنه تضيف
+          مدير الفرع والكاشيرية.
         </p>
       </header>
 
@@ -113,7 +111,7 @@ export function SetupForm() {
 
       <Field
         id={SETUP_FIELD_IDS.username}
-        label="اسم مستخدم المدير"
+        label="اسم مستخدم المالك"
         hint="حروف إنجليزية صغيرة وأرقام، ستستخدمه عند كل دخول."
         error={errors.username?.message}
       >
@@ -128,7 +126,7 @@ export function SetupForm() {
           disabled={isSubmitting}
           aria-invalid={Boolean(errors.username)}
           aria-describedby={`${SETUP_FIELD_IDS.username}-error`}
-          placeholder="manager"
+          placeholder="owner"
           className="h-10 font-mono"
         />
       </Field>
@@ -188,7 +186,7 @@ export function SetupForm() {
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        احتفظ بكلمة المرور في مكان آمن، فهي حساب المدير الوحيد ولا يمكن
+        احتفظ بكلمة المرور في مكان آمن، فهي حساب المالك الوحيد ولا يمكن
         استرجاعها بدونه.
       </p>
     </form>

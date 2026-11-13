@@ -48,7 +48,7 @@ const KIND_LABEL: Record<Kind, string> = {
   earn: "كسب من فاتورة",
   redeem: "استبدال في فاتورة",
   return: "خصم بسبب مرتجع",
-  restore: "رجوع نقاط مستبدلة",
+  restore: "استرداد نقاط مستبدلة",
   adjust: "تعديل يدوي",
 };
 

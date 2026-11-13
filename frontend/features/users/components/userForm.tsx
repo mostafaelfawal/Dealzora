@@ -15,7 +15,10 @@ import { Switch } from "@/components/ui/switch";
 import { useHotkey } from "@/hooks/useHotkey";
 import { cn } from "@/lib/utils";
 
-import { ASSIGNABLE_ROLES, ROLE_HELP, ROLE_LABEL } from "../config/userOptions";
+import { isOwner } from "@/config/roles";
+import { useSessionUser } from "@/hooks/useShellData";
+
+import { assignableRoles, ROLE_HELP, ROLE_LABEL } from "../config/userOptions";
 import { USER_ROUTES } from "../config/userRoutes";
 import { USER_FORM_SHORTCUTS } from "../config/userShortcuts";
 import { useUserFormContext } from "../context/UserFormContext";
@@ -42,6 +45,7 @@ function focusFirstError(errors: FieldErrors<UserSchemaType>) {
 export function UserForm() {
   const { form, userId, userData, onSubmit, isSaving } = useUserFormContext();
   const currentUserId = useCurrentUserId();
+  const myRole = useSessionUser().role;
   const {
     register,
     watch,
@@ -152,14 +156,17 @@ export function UserForm() {
       <section className="space-y-3 border bg-card p-4">
         <h2 className="text-sm font-semibold">الدور</h2>
         <div role="group" aria-label="الدور" className="flex flex-wrap gap-1.5">
-          {ASSIGNABLE_ROLES.map((role) => (
+          {(values.role === "owner"
+            ? (["owner"] as const)
+            : assignableRoles(myRole)
+          ).map((role) => (
             <Button
               key={role}
               type="button"
               size="sm"
               variant={values.role === role ? "default" : "outline"}
               aria-pressed={values.role === role}
-              disabled={isSelf}
+              disabled={isSelf || values.role === "owner"}
               onClick={() => setField("role", role)}
               className="font-normal"
             >
@@ -168,9 +175,13 @@ export function UserForm() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          {isSelf
-            ? "لا يمكنك تغيير دور حسابك. اطلب ذلك من مدير آخر."
-            : ROLE_HELP[values.role]}
+          {values.role === "owner"
+            ? ROLE_HELP.owner
+            : isSelf
+              ? "لا يمكنك تغيير دور حسابك."
+              : !isOwner(myRole)
+                ? "يضيف المدير الكاشيرية فقط، أما إضافة مدير للفرع فمن حساب المالك."
+                : ROLE_HELP[values.role]}
         </p>
       </section>
 

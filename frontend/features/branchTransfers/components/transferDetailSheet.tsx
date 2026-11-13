@@ -85,7 +85,7 @@ function MapPicker({
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="اختر الصنف المقابل عندك"
+        placeholder="اختر الصنف المقابل لديك"
         className="h-8 ps-7 text-xs"
         aria-invalid
       />
@@ -120,7 +120,7 @@ function LineView({ l, t }: { l: TransferLine; t: Transfer }) {
           {t.role === "receiver" &&
             l.match &&
             l.match.name !== l.name &&
-            `عندك: ${l.match.name}`}
+            `لديك: ${l.match.name}`}
         </span>
       </span>
       <span className="text-end text-xs whitespace-nowrap">
@@ -223,7 +223,7 @@ function LinesForm({
                 <span className="text-[11px] text-muted-foreground">
                   {mode === "receive" ? (
                     <>
-                      اتبعت <Num>{formatQty(l.qtySent)}</Num> {l.unit}
+                      أُرسل <Num>{formatQty(l.qtySent)}</Num> {l.unit}
                     </>
                   ) : (
                     <>
@@ -266,7 +266,7 @@ function LinesForm({
         <Input
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="ملاحظة الاستلام (مثلاً: علبتين مكسورين)"
+          placeholder="ملاحظة الاستلام (مثلاً: علبتان مكسورتان)"
           maxLength={300}
           className="h-10"
         />
@@ -383,7 +383,7 @@ function Actions({ t, onClose }: { t: Transfer; onClose: () => void }) {
         onClick={() => run("cancel")}
       >
         <IconArrowBackUp className="size-4" />
-        إلغاء التحويل (ترجع البضاعة لمخزونك)
+        إلغاء التحويل (تعود البضاعة إلى مخزونك)
       </Button>
     );
   return null;
@@ -434,8 +434,8 @@ export function TransferDetailSheet({
             {t.local?.pending && (
               <p className="flex items-start gap-2 bg-warning/10 p-2 text-xs text-warning">
                 <IconAlertTriangle className="size-4 shrink-0" />
-                اتخصم من مخزونك ولسه ما وصلش للسيرفر. هيتبعت تلقائياً أول ما
-                الاتصال يرجع.
+                خُصم من مخزونك ولم يصل إلى السيرفر بعد. سيُرسل تلقائياً فور عودة
+                الاتصال.
               </p>
             )}
             <ul className="divide-y border">

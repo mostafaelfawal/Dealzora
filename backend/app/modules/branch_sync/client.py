@@ -70,7 +70,7 @@ def normalize_server_url(raw: str) -> str:
     if parts.scheme == "http" and not _is_local(parts.hostname):
         raise AppError(
             "sync_url_insecure",
-            "لازم السيرفر يكون https (الاتصال مشفّر). http مسموح فقط لتجربة على نفس الجهاز أو شبكة المحل",
+            "يجب أن يكون عنوان السيرفر https (اتصال مشفّر). ويُسمح بـ http فقط للتجربة على الجهاز نفسه أو شبكة المحل",
         )
     return f"{parts.scheme}://{parts.netloc}"
 

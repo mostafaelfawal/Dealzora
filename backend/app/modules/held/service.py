@@ -12,7 +12,7 @@ from app.core.audit import record_audit
 from app.core.base import utcnow, uuid7
 from app.core.errors import BadRequestError, ForbiddenError, NotFoundError
 from app.core.lookups import user_names
-from app.core.security import Actor, Role
+from app.core.security import Actor
 from app.core.text import collapse_spaces
 from app.modules.shifts.service import ShiftService
 
@@ -97,7 +97,7 @@ class HeldService:
 
     def discard(self, held_id: str) -> None:
         row = self._live(held_id)
-        if self.actor.role is not Role.MANAGER and row.created_by != self.actor.user_id:
+        if not self.actor.is_management and row.created_by != self.actor.user_id:
             raise ForbiddenError("held_not_yours", "حذف فاتورة معلّقة لكاشير آخر للمدير فقط")
         row.mark_deleted()
         self._audit(row, "discard", {"items": row.item_count, "total": row.total})

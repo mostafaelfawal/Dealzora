@@ -47,7 +47,7 @@ export function PosLoyaltyRow() {
       <div className="flex items-center justify-between gap-2 bg-success/5 px-2 py-1.5">
         <span className="flex items-center gap-1.5 text-muted-foreground">
           <IconGift className="size-3.5 text-success" />
-          نقاط الولاء: اختار العميل عشان يكسب ويستبدل
+          نقاط الولاء: اختر العميل ليكسب النقاط ويستبدلها
         </span>
         <Button
           type="button"
@@ -123,11 +123,11 @@ export function PosLoyaltyRow() {
         </div>
         <div className="flex justify-between text-[11px] text-muted-foreground">
           <span>
-            {redeemed > 0 ? "" : (reason ?? `حتى ${max} نقطة في الفاتورة دي`)}
+            {redeemed > 0 ? "" : (reason ?? `حتى ${max} نقطة في هذه الفاتورة`)}
           </span>
           {totals.pointsToEarn > 0 && (
             <span className="text-success">
-              هيكسب +<Num>{totals.pointsToEarn}</Num> نقطة
+              سيكسب +<Num>{totals.pointsToEarn}</Num> نقطة
             </span>
           )}
         </div>
@@ -140,7 +140,7 @@ export function PosLoyaltyRow() {
             <DialogDescription>
               رصيده <Num>{balance}</Num> نقطة. كل <Num>{step}</Num> نقطة ={" "}
               <Money amount={cfg.redeemValue} className="inline-flex" /> خصم،
-              وبحد أقصى <Num>{max}</Num> نقطة في الفاتورة دي.
+              وبحد أقصى <Num>{max}</Num> نقطة في هذه الفاتورة.
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center gap-3">

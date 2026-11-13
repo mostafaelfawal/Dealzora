@@ -113,7 +113,7 @@ function Form({ mode, onDone }: { mode: TransferMode; onDone: () => void }) {
           <p className="text-xs text-muted-foreground">جارٍ تحميل الفروع…</p>
         ) : others.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            مافيش فروع تانية مفعّلة في المحل.
+            لا توجد فروع أخرى مفعّلة في المحل.
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
@@ -285,8 +285,8 @@ export function NewTransferDialog({
           </DialogTitle>
           <DialogDescription>
             {mode === "send"
-              ? "البضاعة بتتخصم من مخزونك لحظة الإرسال، وبتتضاف للفرع التاني لما يستلمها."
-              : "الفرع التاني بيشوف طلبك، ويوافق ويبعت الكمية المتاحة عنده أو يرفض."}
+              ? "تُخصم البضاعة من مخزونك لحظة الإرسال، وتُضاف إلى الفرع الآخر عند استلامها."
+              : "يطّلع الفرع الآخر على طلبك، فيوافق ويرسل الكمية المتاحة لديه أو يرفض."}
           </DialogDescription>
         </DialogHeader>
         {mode && <Form key={mode} mode={mode} onDone={onClose} />}

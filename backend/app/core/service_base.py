@@ -37,7 +37,7 @@ class EntityService:
 
     @property
     def is_manager(self) -> bool:
-        return self.actor.role is Role.MANAGER
+        return self.actor.is_management  # المدير أو المالك
 
     # ---------- أخطاء ----------
     def _err(self, exc: type[AppError], code: StrEnum, **details: Any) -> AppError:

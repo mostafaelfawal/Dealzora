@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isOwner } from "@/config/roles";
+import { useSessionUser } from "@/hooks/useShellData";
 import { useFeature } from "@/lib/plan";
 
 import { fetchBranchStatus } from "../api/branchTransfers.api";
@@ -36,7 +38,10 @@ import { CatalogSyncCard } from "./catalogSyncCard";
 
 /** ربط هذا الجهاز بسيرفر الفروع (مرة واحدة بكود)، وحالة الاتصال. */
 export function BranchConnectSection() {
-  const allowed = useFeature("branches");
+  const planAllowed = useFeature("branches");
+  // ربط الفرع وفصله لمالك المحل بس (الـ backend بيفرضها كمان).
+  const owner = isOwner(useSessionUser().role);
+  const allowed = planAllowed && owner;
   const status = useBranchStatus();
   const connect = useConnectBranch();
   const disconnect = useDisconnectBranch();
@@ -71,7 +76,12 @@ export function BranchConnectSection() {
   if (!s.connected) {
     return (
       <form onSubmit={submit} className="space-y-4">
-        {!allowed && (
+        {planAllowed && !owner && (
+          <p className="text-xs text-muted-foreground">
+            ربط الفرع بسيرفر الفروع متاح لحساب <b>مالك المحل</b> فقط.
+          </p>
+        )}
+        {!planAllowed && (
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <PlanLock feature="branches" /> تعدد الفروع متاح في خطة «سلسلة».
           </p>
@@ -171,7 +181,7 @@ export function BranchConnectSection() {
       {s.pending > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 border border-warning/40 bg-warning/5 p-3 text-sm">
           <span>
-            {s.pending} تحويل اتخصم من المخزون ولسه ما اتبعتش (انقطاع النت).
+            {s.pending} تحويل خُصم من المخزون ولم يُرسل بعد (انقطاع الإنترنت).
           </span>
           <Button
             size="sm"
@@ -202,6 +212,8 @@ export function BranchConnectSection() {
         <Button
           variant="ghost"
           className="gap-1.5 text-destructive"
+          disabled={!owner}
+          title={owner ? undefined : "لمالك المحل فقط"}
           onClick={() => setConfirm(true)}
         >
           <IconPlugConnectedX className="size-4" /> فصل الفرع
@@ -213,8 +225,9 @@ export function BranchConnectSection() {
           <DialogHeader className="text-start">
             <DialogTitle>فصل هذا الجهاز عن سيرفر الفروع؟</DialogTitle>
             <DialogDescription>
-              مش هتقدر تبعت أو تستلم تحويلات لحد ما تربطه تاني بكود جديد.
-              {s.pending > 0 && " فيه تحويلات معلّقة لسه ما اتبعتتش!"}
+              لن تتمكن من إرسال التحويلات أو استلامها حتى تربطه من جديد بكود
+              جديد.
+              {s.pending > 0 && " توجد تحويلات معلّقة لم تُرسل بعد!"}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
