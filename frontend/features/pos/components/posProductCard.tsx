@@ -2,6 +2,7 @@
 
 import { IconBarcode } from "@tabler/icons-react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { formatQty } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
@@ -65,13 +66,14 @@ export function PosProductCard({ product }: { product: PosProduct }) {
         </span>
         <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
           <IconBarcode className="size-3.5 shrink-0" aria-hidden />
-          <span
-            dir="ltr"
-            className="min-w-0 truncate text-start font-mono text-[11px]"
-            title={product.barcode}
-          >
-            {product.barcode}
-          </span>
+          <AppTooltip message={product.barcode}>
+            <span
+              dir="ltr"
+              className="min-w-0 truncate text-start font-mono text-[11px]"
+            >
+              {product.barcode}
+            </span>
+          </AppTooltip>
         </span>
       </span>
 

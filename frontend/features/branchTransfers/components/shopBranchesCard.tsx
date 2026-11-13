@@ -12,6 +12,7 @@ import {
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -219,30 +220,32 @@ function BranchRow({
           >
             <IconKey className="size-3.5" /> كود ربط
           </Button>
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            aria-label={b.isActive ? `إيقاف ${b.name}` : `تفعيل ${b.name}`}
-            title={b.isActive ? "إيقاف الفرع" : "تفعيل الفرع"}
-            disabled={toggle.isPending}
-            onClick={() => toggle.mutate({ id: b.id, isActive: !b.isActive })}
-          >
-            {b.isActive ? (
-              <IconPlayerPause className="size-4" />
-            ) : (
-              <IconPlayerPlay className="size-4" />
-            )}
-          </Button>
-          {b.paired && (
+          <AppTooltip message={b.isActive ? "إيقاف الفرع" : "تفعيل الفرع"}>
             <Button
               size="icon-sm"
               variant="ghost"
-              aria-label={`إلغاء ربط جهاز ${b.name}`}
-              title="إلغاء ربط الجهاز"
-              onClick={onRevoke}
+              aria-label={b.isActive ? `إيقاف ${b.name}` : `تفعيل ${b.name}`}
+              disabled={toggle.isPending}
+              onClick={() => toggle.mutate({ id: b.id, isActive: !b.isActive })}
             >
-              <IconPlugConnectedX className="size-4 text-destructive" />
+              {b.isActive ? (
+                <IconPlayerPause className="size-4" />
+              ) : (
+                <IconPlayerPlay className="size-4" />
+              )}
             </Button>
+          </AppTooltip>
+          {b.paired && (
+            <AppTooltip message="إلغاء ربط الجهاز">
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`إلغاء ربط جهاز ${b.name}`}
+                onClick={onRevoke}
+              >
+                <IconPlugConnectedX className="size-4 text-destructive" />
+              </Button>
+            </AppTooltip>
           )}
         </span>
       )}

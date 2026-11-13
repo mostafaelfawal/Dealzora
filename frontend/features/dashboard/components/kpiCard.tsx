@@ -7,6 +7,7 @@ import {
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import {
   Sparkline,
   type SparkPoint,
@@ -58,26 +59,27 @@ export function KpiCard({
           {icon}
           {label}
         </span>
-        <span
-          className={cn(
-            "inline-flex shrink-0 items-center gap-0.5 text-[11px] font-medium",
-            good === null
-              ? "text-muted-foreground"
-              : good
-                ? "text-success"
-                : "text-destructive",
-          )}
-          title="مقارنة بالفترة السابقة بنفس الطول"
-        >
-          {flat ? (
-            <IconMinus className="size-3" />
-          ) : up ? (
-            <IconArrowUpRight className="size-3" />
-          ) : (
-            <IconArrowDownRight className="size-3" />
-          )}
-          {pct === null ? "جديد" : `${Math.abs(pct)}%`}
-        </span>
+        <AppTooltip message="مقارنة بالفترة السابقة بنفس الطول">
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center gap-0.5 text-[11px] font-medium",
+              good === null
+                ? "text-muted-foreground"
+                : good
+                  ? "text-success"
+                  : "text-destructive",
+            )}
+          >
+            {flat ? (
+              <IconMinus className="size-3" />
+            ) : up ? (
+              <IconArrowUpRight className="size-3" />
+            ) : (
+              <IconArrowDownRight className="size-3" />
+            )}
+            {pct === null ? "جديد" : `${Math.abs(pct)}%`}
+          </span>
+        </AppTooltip>
       </div>
       <div className="text-xl leading-none font-semibold">{children}</div>
       {spark && (

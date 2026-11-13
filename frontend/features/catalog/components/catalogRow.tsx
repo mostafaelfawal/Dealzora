@@ -231,17 +231,18 @@ export function CatalogRow({
 
   return (
     <li className="group flex items-center gap-2 border-b py-1.5 last:border-b-0">
-      <button
-        type="button"
-        onClick={startEdit}
-        className={cn(
-          "min-w-0 flex-1 truncate rounded-sm px-1 py-1 text-start text-sm outline-none",
-          "hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-primary/40",
-        )}
-        title="اضغط لإعادة التسمية"
-      >
-        {name}
-      </button>
+      <AppTooltip message="اضغط لإعادة التسمية">
+        <button
+          type="button"
+          onClick={startEdit}
+          className={cn(
+            "min-w-0 flex-1 truncate rounded-sm px-1 py-1 text-start text-sm outline-none",
+            "hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-primary/40",
+          )}
+        >
+          {name}
+        </button>
+      </AppTooltip>
       <span className="shrink-0 text-[11px] text-muted-foreground">{meta}</span>
       {extra}
       <Button

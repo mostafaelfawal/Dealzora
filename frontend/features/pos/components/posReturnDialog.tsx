@@ -1,10 +1,10 @@
 "use client";
 
-import { isManagement } from "@/config/roles";
 import { IconAlertTriangle, IconMinus, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { isManagement } from "@/config/roles";
 import { useNow } from "@/hooks/useNow";
 import { useSessionUser } from "@/hooks/useShellData";
 import { formatQty } from "@/lib/format";
@@ -240,21 +241,24 @@ function ReturnForm({ invoice }: { invoice: CompletedInvoice }) {
         >
           رجوع
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          disabled={!valid || !cartEmpty}
-          title={
-            !cartEmpty
-              ? "الفاتورة الحالية فيها أصناف، استخدم الاستبدال"
-              : undefined
-          }
-          onClick={() => submit("returnOnly")}
-          className="font-normal"
+        <AppTooltip
+          message="الفاتورة الحالية تحتوي على أصناف، فاستخدم الاستبدال"
+          side="top"
+          disabled={cartEmpty}
         >
-          مرتجع فقط
-        </Button>
+          <span className="flex">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled={!valid || !cartEmpty}
+              onClick={() => submit("returnOnly")}
+              className="flex-1 font-normal"
+            >
+              مرتجع فقط
+            </Button>
+          </span>
+        </AppTooltip>
         <Button type="submit" size="lg" disabled={!valid}>
           استبدال بصنف آخر
         </Button>

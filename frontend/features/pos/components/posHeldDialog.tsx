@@ -6,6 +6,7 @@ import {
   IconPlayerPause,
 } from "@tabler/icons-react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -102,13 +103,12 @@ function HeldItems() {
                   {formatQty(totals.qtyCount)} وحدة
                 </span>
                 <span aria-hidden>·</span>
-                <span
-                  className="flex items-center gap-1"
-                  title={formatTime(h.heldAt)}
-                >
-                  <IconClock className="size-3" aria-hidden />
-                  {now === null ? "" : formatTimeAgo(h.heldAt, now)}
-                </span>
+                <AppTooltip message={formatTime(h.heldAt)}>
+                  <span className="flex items-center gap-1">
+                    <IconClock className="size-3" aria-hidden />
+                    {now === null ? "" : formatTimeAgo(h.heldAt, now)}
+                  </span>
+                </AppTooltip>
                 {(h.deviceName || h.cashierName) && (
                   <>
                     <span aria-hidden>·</span>

@@ -2,6 +2,7 @@
 
 import { IconFileInvoice, IconLoader2, IconTruck } from "@tabler/icons-react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Num } from "@/components/shared/Num";
 import { OptionSelect } from "@/components/shared/OptionSelect";
@@ -32,12 +33,13 @@ export interface SupplierOption {
 function UrgencyBadge({ s }: { s: Suggestion }) {
   const info = URGENCY_INFO[s.urgency];
   return (
-    <span
-      title={info.hint}
-      className={cn("inline-flex px-1.5 py-0.5 text-[11px]", info.className)}
-    >
-      {info.label}
-    </span>
+    <AppTooltip message={info.hint}>
+      <span
+        className={cn("inline-flex px-1.5 py-0.5 text-[11px]", info.className)}
+      >
+        {info.label}
+      </span>
+    </AppTooltip>
   );
 }
 

@@ -67,7 +67,6 @@ export function RankBarChart({
             <span
               className="flex shrink-0 items-center gap-1.5 text-xs"
               style={{ width: labelWidth }}
-              title={item.label}
             >
               <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground">
                 {i + 1}

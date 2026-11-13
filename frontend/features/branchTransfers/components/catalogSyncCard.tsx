@@ -9,6 +9,7 @@ import {
   IconPackage,
 } from "@tabler/icons-react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Num } from "@/components/shared/Num";
 import { Button } from "@/components/ui/button";
 import { formatWhen } from "@/lib/dates";
@@ -42,21 +43,24 @@ export function CatalogSyncCard() {
             المدير والكاشيرية فخاصون بكل فرع.
           </p>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5"
-          disabled={!main || sync.isPending}
-          title={main ? undefined : "من الجهاز الأساسي فقط"}
-          onClick={() => sync.mutate()}
-        >
-          {sync.isPending ? (
-            <IconLoader2 className="size-4 animate-spin" />
-          ) : (
-            <IconRefresh className="size-4" />
-          )}
-          مزامنة الآن
-        </Button>
+        <AppTooltip message="من الجهاز الأساسي فقط" disabled={main}>
+          <span className="inline-flex">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={!main || sync.isPending}
+              onClick={() => sync.mutate()}
+            >
+              {sync.isPending ? (
+                <IconLoader2 className="size-4 animate-spin" />
+              ) : (
+                <IconRefresh className="size-4" />
+              )}
+              مزامنة الآن
+            </Button>
+          </span>
+        </AppTooltip>
       </div>
 
       {s && (

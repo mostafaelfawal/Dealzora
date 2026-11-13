@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -242,19 +243,20 @@ function UnitsPanel() {
                   busy || (remove.isPending && remove.variables?.id === u.id)
                 }
                 extra={
-                  <Switch
-                    checked={u.allowDecimal}
-                    disabled={busy}
-                    aria-label={`${u.name} تُباع بالوزن أو بكسور`}
-                    title="تُباع بالوزن (تقبل كسوراً)"
-                    onCheckedChange={(allowDecimal) =>
-                      update.mutate({
-                        id: u.id,
-                        input: { name: u.name, allowDecimal },
-                        version: u.version,
-                      })
-                    }
-                  />
+                  <AppTooltip message="تُباع بالوزن (تقبل كسوراً)">
+                    <Switch
+                      checked={u.allowDecimal}
+                      disabled={busy}
+                      aria-label={`${u.name} تُباع بالوزن أو بكسور`}
+                      onCheckedChange={(allowDecimal) =>
+                        update.mutate({
+                          id: u.id,
+                          input: { name: u.name, allowDecimal },
+                          version: u.version,
+                        })
+                      }
+                    />
+                  </AppTooltip>
                 }
                 deleteBlockedReason={
                   u.productCount > 0

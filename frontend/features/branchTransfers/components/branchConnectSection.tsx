@@ -11,6 +11,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { PlanLock } from "@/components/shared/PlanGate";
 import { Button } from "@/components/ui/button";
 import {
@@ -260,15 +261,18 @@ export function BranchConnectSection() {
           )}
           اختبار الاتصال
         </Button>
-        <Button
-          variant="ghost"
-          className="gap-1.5 text-destructive"
-          disabled={!owner}
-          title={owner ? undefined : "لمالك المحل فقط"}
-          onClick={() => setConfirm(true)}
-        >
-          <IconPlugConnectedX className="size-4" /> فصل الفرع
-        </Button>
+        <AppTooltip message="لمالك المحل فقط" disabled={owner}>
+          <span className="inline-flex">
+            <Button
+              variant="ghost"
+              className="gap-1.5 text-destructive"
+              disabled={!owner}
+              onClick={() => setConfirm(true)}
+            >
+              <IconPlugConnectedX className="size-4" /> فصل الفرع
+            </Button>
+          </span>
+        </AppTooltip>
       </div>
 
       <Dialog open={confirm} onOpenChange={setConfirm}>
