@@ -12,8 +12,17 @@ import {
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { Button } from "@/components/ui/button";
 
-import { PERIOD_TABS, REPORT_TABS } from "../config/reportOptions";
+import { isOwner } from "@/config/roles";
+import { useBranchStatus } from "@/features/branchTransfers/hooks/useBranchTransfers";
+import { useSessionUser } from "@/hooks/useShellData";
+
+import {
+  BRANCHES_TAB,
+  PERIOD_TABS,
+  REPORT_TABS,
+} from "../config/reportOptions";
 import type { ReportTab } from "../types/report";
+import { BranchesReportTab } from "./branchesReportTab";
 import { DebtsReportTab } from "./debtsReportTab";
 import { ProductsReportTab } from "./productsReportTab";
 import { SalesReportTab } from "./salesReportTab";
@@ -61,12 +70,20 @@ function ReportTabContent({
       return <DebtsReportTab />;
     case "treasury":
       return <TreasuryReportTab range={period.range} />;
+    case "branches":
+      return <BranchesReportTab range={period.range} />;
   }
 }
 
 /** التقارير: فترة واحدة تتحكم في كل التبويبات، وكل رقم له جدول تحته. */
 export function ReportsScreen() {
   const [tab, setTab] = useState<ReportTab>("sales");
+  // التقرير المجمّع: للمالك على الجهاز الرئيسي المربوط بسيرفر الفروع.
+  const branch = useBranchStatus();
+  const owner = isOwner(useSessionUser().role);
+  const showBranches =
+    owner && Boolean(branch.data?.connected && branch.data.isAdmin);
+  const tabs = showBranches ? [...REPORT_TABS, BRANCHES_TAB] : REPORT_TABS;
   const plan = usePlan().data;
   // بَسطة: آخر 7 أيام فقط، فنبدأ بـ «أسبوع» بدل «شهر».
   const [period, setPeriod] = useState<PeriodValue>(
@@ -78,6 +95,7 @@ export function ReportsScreen() {
     : null;
   const outOfPlan =
     !fullReports &&
+    tab !== "branches" &&
     (tab === "debts" ||
       (PERIOD_TABS.has(tab) && cutoff !== null && period.range.from < cutoff));
 
@@ -91,7 +109,7 @@ export function ReportsScreen() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <SegmentedTabs
           label="التقرير"
-          items={REPORT_TABS}
+          items={tabs}
           value={tab}
           onChange={setTab}
         />

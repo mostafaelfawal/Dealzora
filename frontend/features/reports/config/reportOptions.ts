@@ -13,7 +13,11 @@ export const PERIOD_TABS: ReadonlySet<ReportTab> = new Set([
   "sales",
   "products",
   "treasury",
+  "branches",
 ]);
+
+/** تبويب يظهر للمالك على الجهاز الرئيسي المربوط بسيرفر الفروع فقط. */
+export const BRANCHES_TAB = { id: "branches" as const, label: "كل الفروع" };
 
 export const PRODUCT_RANKS: {
   id: ProductRank;

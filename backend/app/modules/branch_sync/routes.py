@@ -1,5 +1,6 @@
 """الفروع وتحويلات المخزون (للمدير). كل الكتابة تحتاج خطة «سلسلة» وتصريح الكتابة (الترخيص)."""
 
+from datetime import date
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query
@@ -148,6 +149,16 @@ def admin_update(branch_id: str, data: BranchPatchIn, svc: Svc):
 def admin_revoke(branch_id: str, svc: Svc):
     """إلغاء ربط جهاز الفرع (ضاع/اتسرق/هيتغير): يتوقف فوراً."""
     return svc.admin_revoke(branch_id)
+
+
+@router.get("/report", dependencies=OwnerRead)
+def combined_report(
+    svc: Svc,
+    date_from: Annotated[date, Query()],
+    date_to: Annotated[date, Query()],
+):
+    """التقرير المجمّع لكل الفروع (المبيعات والأرباح والمصروفات لكل فرع وللمحل). للمالك فقط."""
+    return svc.combined_report(date_from, date_to)
 
 
 @router.get("/staff", dependencies=OwnerRead)

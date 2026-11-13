@@ -193,7 +193,7 @@ export function SupplierGroupCard({
       </header>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-180 text-sm">
           <thead className="bg-muted/50 text-xs text-muted-foreground">
             <tr>
               <th className="w-8 p-2 text-start">

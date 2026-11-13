@@ -95,11 +95,28 @@ def test_stream_notifies_changes(shop):
     assert events[:2] == ["hello", "changed"] and events[-1] == "reconnect"
 
 
+def _day(net, count, profit=0):  # noqa: ANN001, ANN202
+    return {"count": count, "revenue": net, "returns": 0, "net": net, "cost": net - profit, "profit": profit}
+
+
 def test_daily_stats(shop):
     _, b = shop
-    b["A"].put("/v1/stats/2026-11-10", json={"data": {"sales": 1500, "count": 12}})
-    b["A"].put("/v1/stats/2026-11-10", json={"data": {"sales": 1700, "count": 13}})  # تحديث
-    b["B"].put("/v1/stats/2026-11-10", json={"data": {"sales": 900, "count": 7}})
-    rows = b["C"].get("/v1/stats", params={"date_from": "2026-11-01", "date_to": "2026-11-30"}).json()
-    totals = {r["branch_id"]: r["data"]["sales"] for r in rows}
-    assert totals == {b["A"].id: 1700, b["B"].id: 900}
+    b["A"].put("/v1/stats/2026-11-10", json={"data": _day(1500, 12)})
+    b["A"].put("/v1/stats/2026-11-10", json={"data": _day(1700, 13)})  # تحديث
+    r = b["B"].post("/v1/stats/batch", json={"days": [{"day": "2026-11-10", "data": _day(900, 7)},
+                                                       {"day": "2026-11-11", "data": _day(400, 3)}]})  # fmt: skip
+    assert r.json() == {"saved": 2}
+    # شكل صارم: حقل زائد أو نص بدل رقم مرفوض
+    assert b["A"].put("/v1/stats/2026-11-12", json={"data": {**_day(1, 1), "secret": 5}}).status_code == 422
+    assert b["A"].put("/v1/stats/2026-11-12", json={"data": {**_day(1, 1), "net": "1"}}).status_code == 422
+
+    # فرع عادي يرى ملخصاته فقط، والفرع الرئيسي (المالك) يرى الكل
+    q = {"date_from": "2026-11-01", "date_to": "2026-11-30"}
+    assert {r["branch_id"] for r in b["C"].get("/v1/stats", params=q).json()} == set()
+    assert {r["branch_id"] for r in b["B"].get("/v1/stats", params=q).json()} == {b["B"].id}
+    from app.cli import main
+
+    assert main(["make-admin", b["A"].id]) == 0
+    rows = b["A"].get("/v1/stats", params=q).json()
+    totals = {(r["branch_id"], r["day"]): r["data"]["net"] for r in rows}
+    assert totals == {(b["A"].id, "2026-11-10"): 1700, (b["B"].id, "2026-11-10"): 900, (b["B"].id, "2026-11-11"): 400}

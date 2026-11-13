@@ -45,6 +45,7 @@ from .client import (
     is_transient,
     normalize_server_url,
 )
+from . import branch_stats
 from .catalog_sync import CatalogSync, catalog_status, global_product_id, local_product_id
 from .model import BranchTransfer
 from .schemas import (
@@ -605,6 +606,8 @@ class BranchSyncService:
         self._refresh_lease(client, cfg)  # قبل فحص الخطة: الفرع يرث خطة المحل من هنا
         ensure_feature(Feature.BRANCHES)
         result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run()
+        if result.get("ok"):
+            self._push_stats(client)
         sent = 0
         if result.get("ok"):
             try:
@@ -626,7 +629,44 @@ class BranchSyncService:
         client = SyncClient(cfg["server_url"], cfg["branch_id"], cfg["secret"])
         self._refresh_lease(client, cfg)
         result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run()
+        if result.get("ok"):
+            self._push_stats(client)
         return {"connected": True, "synced": bool(result.get("ok"))}
+
+    # ================= الملخص اليومي والتقرير المجمّع =================
+    def _push_stats(self, client: SyncClient) -> None:
+        """يرفع ملخصات أيام هذا الفرع (أرقام فقط) للتقرير المجمّع عند المالك. فشلها لا يوقف المزامنة."""
+        cfg = self.config()
+        if cfg is None:
+            return
+        rows, fresh = branch_stats.pending_upload(self.session, cfg)
+        self.session.commit()  # لا معاملة مفتوحة أثناء الشبكة
+        if not rows:
+            return
+        try:
+            for i in range(0, len(rows), 100):
+                client.call("POST", "/stats/batch", {"days": rows[i : i + 100]})
+        except (SyncUnavailable, SyncAuthLost, RemoteError):
+            return
+        latest = self.config() or cfg
+        latest.pop("stats_digest", None)
+        latest.pop("stats_through", None)
+        latest["stats_sent"] = fresh
+        self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(latest, ensure_ascii=False))
+        self.session.commit()
+
+    def combined_report(self, date_from: date, date_to: date) -> dict:
+        """التقرير المجمّع لكل الفروع (للمالك من الجهاز الرئيسي): نرفع ملخصنا أولاً ليكون محدّثاً."""
+        if date_from > date_to or (date_to - date_from).days > 366:
+            raise BadRequestError("bad_range", "الفترة غير صالحة (حتى سنة)")
+        client = self._admin_client()
+        try:
+            self._push_stats(client)
+        except Exception:  # noqa: BLE001 - التقرير يُعرض حتى لو فشل رفع ملخصنا الآن
+            self.session.rollback()
+        stats = client.call("GET", "/stats", params={"date_from": date_from.isoformat(), "date_to": date_to.isoformat()})
+        branches = client.call("GET", "/shop/branches")
+        return branch_stats.combine(stats or [], branches or [], date_from, date_to)
 
     # ================= إعادة المعلّق =================
     def retry_pending(self) -> int:

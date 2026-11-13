@@ -1,5 +1,6 @@
 export type ProductRank = "top" | "bottom" | "profit" | "revenue";
-export type ReportTab = "sales" | "products" | "stock" | "debts" | "treasury";
+export type ReportTab =
+  "sales" | "products" | "stock" | "debts" | "treasury" | "branches";
 export type SalesMetric = "net" | "profit" | "count";
 
 export interface SalesDay {
