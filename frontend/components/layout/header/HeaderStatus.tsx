@@ -1,6 +1,7 @@
 "use client";
 
 import { ROLE_PERMISSIONS, isManagement } from "@/config/roles";
+import { BranchSyncButton } from "@/features/branchTransfers/components/branchSyncButton";
 import { useCreateBackup } from "@/features/settings/hooks/useSettings";
 import { useShellData } from "@/hooks/useShellData";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,8 @@ export function HeaderStatus({
         showLabels={showLabels}
         onBackup={isManager ? () => backup.mutate() : undefined}
       />
+      {/* مزامنة الفروع: للإدارة فقط، ويظهر فقط لجهاز مربوط بسيرفر الفروع */}
+      {isManager && <BranchSyncButton showLabel={showLabels} />}
     </div>
   );
 }
