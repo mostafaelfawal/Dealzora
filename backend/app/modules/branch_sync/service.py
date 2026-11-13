@@ -46,7 +46,17 @@ from .client import (
 )
 from .catalog_sync import CatalogSync, catalog_status, global_product_id, local_product_id
 from .model import BranchTransfer
-from .schemas import ApproveIn, ConnectIn, ReceiveIn, RejectIn, RequestIn, SendIn
+from .schemas import (
+    ApproveIn,
+    BranchPatchIn,
+    ConnectIn,
+    NewBranchIn,
+    ReceiveIn,
+    RegisterShopIn,
+    RejectIn,
+    RequestIn,
+    SendIn,
+)
 
 REF = "branch_transfer"
 ENTITY = "branch_transfer"
@@ -101,6 +111,7 @@ class BranchSyncService:
             "branch_code": cfg.get("branch_code"),
             "shop_name": cfg.get("shop_name"),
             "paired_at": cfg.get("paired_at"),
+            "is_admin": bool(cfg.get("is_admin")),
             "pending": pending,
         }
         if check:
@@ -112,6 +123,22 @@ class BranchSyncService:
         ensure_feature(Feature.BRANCHES)
         url = normalize_server_url(data.server_url)
         creds = SyncClient(url).pair(data.code)
+        return self._save_connection(url, creds, admin=False)
+
+    def register(self, data: RegisterShopIn) -> dict:
+        """المالك يسجّل محله بنفسه بمفتاح الترخيص: هذا الجهاز يصبح الفرع الرئيسي الذي يدير الفروع."""
+        ensure_feature(Feature.BRANCHES)
+        if self.config() is not None:
+            raise ConflictError("branch_already_connected", "هذا الجهاز مربوط بالفعل. افصله أولاً")
+        url = normalize_server_url(data.server_url)
+        creds = SyncClient(url).register({
+            "license_key": data.license_key.strip(), "branch_name": data.branch_name.strip(),
+            "branch_code": data.branch_code, "recover": data.recover,
+        })  # fmt: skip
+        action = "shop_recover" if data.recover else "shop_register"
+        return self._save_connection(url, creds, admin=True, action=action)
+
+    def _save_connection(self, url: str, creds: dict, *, admin: bool, action: str = "branch_connect") -> dict:
         cfg = {
             "server_url": url,
             "branch_id": creds["branch_id"],
@@ -121,12 +148,13 @@ class BranchSyncService:
             "shop_id": creds.get("shop_id"),
             "shop_name": creds.get("shop_name"),
             "paired_at": utcnow().isoformat(),
+            "is_admin": admin,
         }
         forget_token(creds["branch_id"])
         self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(cfg, ensure_ascii=False))
         record_audit(
             self.session, self.actor, entity="branch_sync", entity_id=creds["branch_id"],
-            action="branch_connect",
+            action=action,
             changes={"server_url": url, "branch": cfg["branch_name"], "shop": cfg["shop_name"]},
         )  # fmt: skip
         self.session.commit()
@@ -419,6 +447,51 @@ class BranchSyncService:
         self._invalidate_summary()
         return self._decorate(remote)
 
+    # ================= إدارة فروع المحل (المالك من الفرع الرئيسي) =================
+    def _admin_client(self) -> SyncClient:
+        client, cfg = self._client()
+        if not cfg.get("is_admin"):
+            raise ConflictError("not_admin_branch", "إدارة الفروع من الجهاز الرئيسي للمالك فقط")
+        return client
+
+    def shop_info(self) -> dict:
+        client, _ = self._client()
+        return client.call("GET", "/shop")
+
+    def admin_branches(self) -> list[dict]:
+        return self._admin_client().call("GET", "/shop/branches")
+
+    def admin_create_branch(self, data: NewBranchIn) -> dict:
+        out = self._admin_client().call("POST", "/shop/branches", {"name": data.name.strip(), "code": data.code})
+        self._audit_admin("branch_created", {"name": data.name, "code": data.code.upper()})
+        return out
+
+    def admin_pairing_code(self, branch_id: str) -> dict:
+        out = self._admin_client().call("POST", f"/shop/branches/{_safe_id(branch_id)}/pairing-code")
+        self._audit_admin("pairing_code_created", {"branch": out.get("branch_name")})
+        return out
+
+    def admin_update(self, branch_id: str, data: BranchPatchIn) -> dict:
+        body = data.model_dump(exclude_none=True)
+        out = self._admin_client().call("PATCH", f"/shop/branches/{_safe_id(branch_id)}", body)
+        self._audit_admin("branch_updated", {"branch": out.get("name"), **body})
+        return out
+
+    def admin_revoke(self, branch_id: str) -> dict:
+        out = self._admin_client().call("POST", f"/shop/branches/{_safe_id(branch_id)}/revoke")
+        self._audit_admin("device_revoked", {"branch": out.get("name")})
+        return out
+
+    def renew_license(self, license_key: str) -> dict:
+        out = self._admin_client().call("POST", "/shop/license", {"license_key": license_key.strip()})
+        self._audit_admin("license_renewed", {"expires_at": out.get("license_expires_at")})
+        return out
+
+    def _audit_admin(self, action: str, changes: dict) -> None:
+        record_audit(self.session, self.actor, entity="branch_sync", entity_id=self._branch_id() or "-",
+                     action=action, changes=changes)  # fmt: skip
+        self.session.commit()
+
     # ================= مزامنة الأصناف والعملاء =================
     def catalog(self) -> dict:
         return {"connected": self.config() is not None, **catalog_status(self.session)}
@@ -697,3 +770,10 @@ def _date(value: str | None) -> date | None:
         return date.fromisoformat(value) if value else None
     except ValueError:
         return None
+
+
+def _safe_id(value: str) -> str:
+    """معرّف فرع في مسار URL: حروف وأرقام وشرطات فقط (لا حقن مسارات)."""
+    if not value or len(value) > 64 or not all(ch.isalnum() or ch == "-" for ch in value):
+        raise BadRequestError("branch_not_found", "الفرع غير موجود")
+    return value

@@ -22,6 +22,8 @@ export interface BranchStatus {
   /** تحويلات اتخصمت من المخزون ولسه ما وصلتش للسيرفر (انقطاع نت). */
   pending: number;
   reachable?: boolean;
+  /** الفرع الرئيسي (جهاز المالك): يدير فروع المحل وأكواد ربطها. */
+  isAdmin?: boolean;
 }
 
 export interface Branch {
@@ -173,6 +175,7 @@ const toStatus = (d: any): BranchStatus => ({
   pairedAt: d.paired_at,
   pending: d.pending ?? 0,
   reachable: d.reachable,
+  isAdmin: Boolean(d.is_admin),
 });
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -186,6 +189,28 @@ export const fetchBranchStatus = async (check = false) =>
 export const connectBranch = async (serverUrl: string, code: string) =>
   toStatus(
     (await api.post(`${BASE}/connect`, { server_url: serverUrl, code })).data,
+  );
+
+/** عنوان سيرفر الفروع الافتراضي (يُضبط وقت بناء البرنامج)، فلا يكتبه المالك بنفسه. */
+export const DEFAULT_SYNC_URL = process.env.NEXT_PUBLIC_SYNC_URL ?? "";
+
+export const registerShop = async (v: {
+  serverUrl: string;
+  licenseKey: string;
+  branchName: string;
+  branchCode: string;
+  recover: boolean;
+}) =>
+  toStatus(
+    (
+      await api.post(`${BASE}/register`, {
+        server_url: v.serverUrl,
+        license_key: v.licenseKey,
+        branch_name: v.branchName,
+        branch_code: v.branchCode,
+        recover: v.recover,
+      })
+    ).data,
   );
 
 export const disconnectBranch = async () =>
@@ -374,3 +399,103 @@ export const fetchCatalogStatus = async () =>
 
 export const syncCatalogNow = async () =>
   toCatalog((await api.post(`${BASE}/catalog/sync`)).data);
+
+/* ---------- إدارة فروع المحل (المالك من الفرع الرئيسي) ---------- */
+
+export interface ShopBranch {
+  id: string;
+  name: string;
+  code: string;
+  isActive: boolean;
+  isAdmin: boolean;
+  isMe: boolean;
+  online: boolean;
+  /** فيه جهاز مربوط بهذا الفرع حالياً. */
+  paired: boolean;
+  lastSeenAt: string | null;
+}
+
+export interface PairingCode {
+  branchId: string;
+  branchName: string;
+  code: string;
+  expiresAt: string;
+}
+
+export interface ShopInfo {
+  shopName: string;
+  isAdmin: boolean;
+  licensePlan: string | null;
+  licenseExpiresAt: string | null;
+  branches: number;
+  maxBranches: number;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- شكل الرد مكتوب في الـ backend */
+const toShopBranch = (b: any): ShopBranch => ({
+  id: b.id,
+  name: b.name,
+  code: b.code,
+  isActive: b.is_active,
+  isAdmin: b.is_admin,
+  isMe: b.is_me,
+  online: b.online,
+  paired: b.paired,
+  lastSeenAt: b.last_seen_at ?? null,
+});
+
+const toPairing = (c: any): PairingCode => ({
+  branchId: c.branch_id,
+  branchName: c.branch_name,
+  code: c.code,
+  expiresAt: c.expires_at,
+});
+
+const toShopInfo = (d: any): ShopInfo => ({
+  shopName: d.shop_name,
+  isAdmin: d.is_admin,
+  licensePlan: d.license_plan ?? null,
+  licenseExpiresAt: d.license_expires_at ?? null,
+  branches: d.branches,
+  maxBranches: d.max_branches,
+});
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export const fetchShopInfo = async () =>
+  toShopInfo((await api.get(`${BASE}/shop`)).data);
+
+export const fetchShopBranches = async (): Promise<ShopBranch[]> =>
+  (await api.get<unknown[]>(`${BASE}/shop/branches`)).data.map(toShopBranch);
+
+export const createShopBranch = async (name: string, code: string) => {
+  const d = (await api.post(`${BASE}/shop/branches`, { name, code })).data;
+  return { branch: toShopBranch(d.branch), pairing: toPairing(d.pairing) };
+};
+
+export const createPairingCode = async (branchId: string) =>
+  toPairing(
+    (await api.post(`${BASE}/shop/branches/${branchId}/pairing-code`)).data,
+  );
+
+export const updateShopBranch = async (
+  branchId: string,
+  patch: { name?: string; isActive?: boolean },
+) =>
+  toShopBranch(
+    (
+      await api.patch(`${BASE}/shop/branches/${branchId}`, {
+        ...(patch.name !== undefined ? { name: patch.name } : {}),
+        ...(patch.isActive !== undefined ? { is_active: patch.isActive } : {}),
+      })
+    ).data,
+  );
+
+export const revokeShopBranch = async (branchId: string) =>
+  toShopBranch(
+    (await api.post(`${BASE}/shop/branches/${branchId}/revoke`)).data,
+  );
+
+export const renewShopLicense = async (licenseKey: string) =>
+  toShopInfo(
+    (await api.post(`${BASE}/shop/license`, { license_key: licenseKey })).data,
+  );

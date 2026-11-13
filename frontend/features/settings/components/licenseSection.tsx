@@ -8,6 +8,10 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  fetchBranchStatus,
+  renewShopLicense,
+} from "@/features/branchTransfers/api/branchTransfers.api";
 import { activateLicense, LicenseError } from "@/features/setup/lib/license";
 import { sendLease } from "@/features/devices/api/devices.api";
 import { getLicenseLease, waitForLocalBackend } from "@/lib/device";
@@ -118,6 +122,14 @@ function ActivateForm() {
       // (يحمل الخطة الجديدة، فتنفتح الميزات حتى لو الخادم لم يُعد تشغيله كما في التطوير).
       await waitForLocalBackend();
       await sendLease(await getLicenseLease()).catch(() => undefined);
+      // جهاز المالك الرئيسي: نجدد ترخيص المحل على سيرفر الفروع بنفس المفتاح، فلا تتوقف الفروع.
+      const branch = await fetchBranchStatus().catch(() => null);
+      if (branch?.connected && branch.isAdmin)
+        await renewShopLicense(key.trim()).catch(() =>
+          toast.warning("فُعّل الترخيص، لكن تعذّر تجديده على سيرفر الفروع الآن", {
+            description: "أعد إدخال المفتاح لاحقاً عند توفر الإنترنت.",
+          }),
+        );
       await qc.invalidateQueries();
       setKey("");
       toast.success("تم تفعيل الترخيص", {

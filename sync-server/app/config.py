@@ -42,6 +42,15 @@ class Settings(BaseSettings):
 
     docs_enabled: bool = False
 
+    # التسجيل الذاتي للمحلات: المفتاح العام لتوقيع التراخيص (نفس DEALZORA_VENDOR_PUBKEY في البرنامج،
+    # base64url). فارغ = التسجيل الذاتي مقفول، والمحلات تُنشأ من أوامر الإدارة فقط.
+    vendor_pubkey: str = ""
+    # الخطط المسموح لها بإنشاء محل متعدد الفروع (ترخيص قديم بلا خطة = كل الميزات).
+    register_plans: Annotated[list[str], NoDecode] = ["enterprise"]
+    max_branches_per_shop: int = Field(50, ge=1, le=1000)
+    # بعد انتهاء الترخيص: كم يوم مهلة قبل إيقاف مزامنة المحل.
+    license_grace_days: int = Field(7, ge=0, le=90)
+
     @field_validator("jwt_secret", "admin_token")
     @classmethod
     def _strong(cls, value: str) -> str:
@@ -49,7 +58,7 @@ class Settings(BaseSettings):
             raise ValueError("يجب أن يكون 32 حرفاً على الأقل (openssl rand -hex 32)")
         return value
 
-    @field_validator("admin_allowed_ips", mode="before")
+    @field_validator("admin_allowed_ips", "register_plans", mode="before")
     @classmethod
     def _ips(cls, value: object) -> object:
         if isinstance(value, str):

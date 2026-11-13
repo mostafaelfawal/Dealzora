@@ -18,6 +18,7 @@ os.environ.update(
     # متغيرات البيئة تغلب ملف .env المحلي (اللي ممكن يقصر لوحة الإدارة على IPs معينة).
     SYNC_ADMIN_ALLOWED_IPS="",
     SYNC_DOCS_ENABLED="false",
+    SYNC_VENDOR_PUBKEY="",
 )
 
 

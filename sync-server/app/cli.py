@@ -39,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("branch_id")
     p = sub.add_parser("rotate-secret", help="سر جديد لفرع (القديم يتوقف فوراً)")
     p.add_argument("branch_id")
+    p = sub.add_parser("make-admin", help="اجعل فرعاً هو الفرع الرئيسي لمحله (لمحل أنشأته يدوياً)")
+    p.add_argument("branch_id")
     for name in ("disable-branch", "enable-branch"):
         p = sub.add_parser(name)
         p.add_argument("branch_id")
@@ -69,6 +71,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"صالح حتى: {out.expires_at.isoformat(timespec='minutes')} (مرة واحدة فقط)")
         elif args.cmd == "rotate-secret":
             _print_credentials(shops.rotate_secret(session, args.branch_id))
+        elif args.cmd == "make-admin":
+            from sqlalchemy import update
+
+            from .models import Branch
+
+            b = session.get(Branch, args.branch_id)
+            if b is None:
+                print("الفرع غير موجود")
+                return 1
+            session.execute(update(Branch).where(Branch.shop_id == b.shop_id).values(is_admin=False))
+            b.is_admin = True
+            session.commit()
+            print(f"«{b.name}» أصبح الفرع الرئيسي: يدير فروع محله من البرنامج.")
         elif args.cmd in ("disable-branch", "enable-branch"):
             b = shops.update_branch(
                 session, args.branch_id, BranchPatch(is_active=args.cmd == "enable-branch")

@@ -4,6 +4,14 @@ import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/errors";
 
 import {
+  createPairingCode,
+  createShopBranch,
+  fetchShopBranches,
+  fetchShopInfo,
+  registerShop,
+  renewShopLicense,
+  revokeShopBranch,
+  updateShopBranch,
   approveTransfer,
   cancelTransfer,
   connectBranch,
@@ -34,6 +42,8 @@ export const branchKeys = {
   detail: (id: string) => [...branchKeys.all, "detail", id] as const,
   summary: () => [...branchKeys.all, "summary"] as const,
   catalog: () => [...branchKeys.all, "catalog"] as const,
+  shopBranches: () => [...branchKeys.all, "shop-branches"] as const,
+  shopInfo: () => [...branchKeys.all, "shop-info"] as const,
 };
 
 export const useBranchStatus = () =>
@@ -266,4 +276,87 @@ export function useSyncCatalogNow() {
     },
     onError: fail("تعذّرت المزامنة"),
   });
+}
+
+/* ---------- المالك: تسجيل المحل وإدارة الفروع ---------- */
+
+export function useRegisterShop() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: registerShop,
+    onSuccess: (s, v) => {
+      refresh();
+      toast.success(
+        v.recover
+          ? `استُرجع المحل «${s.shopName}» على هذا الجهاز`
+          : `سُجّل المحل «${s.shopName}»، وهذا الجهاز هو الفرع الرئيسي`,
+      );
+    },
+    onError: fail("تعذّر تسجيل المحل"),
+  });
+}
+
+export const useShopInfo = (enabled: boolean) =>
+  useQuery({
+    queryKey: branchKeys.shopInfo(),
+    queryFn: fetchShopInfo,
+    enabled,
+    retry: false,
+  });
+
+export const useShopBranches = (enabled: boolean) =>
+  useQuery({
+    queryKey: branchKeys.shopBranches(),
+    queryFn: fetchShopBranches,
+    enabled,
+    refetchInterval: 30_000,
+    retry: false,
+  });
+
+export function useShopBranchActions() {
+  const qc = useQueryClient();
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: branchKeys.shopBranches() });
+    void qc.invalidateQueries({ queryKey: branchKeys.branches() });
+    void qc.invalidateQueries({ queryKey: branchKeys.shopInfo() });
+  };
+  return {
+    create: useMutation({
+      mutationFn: (v: { name: string; code: string }) =>
+        createShopBranch(v.name, v.code),
+      onSuccess: refresh,
+      onError: fail("تعذّرت إضافة الفرع"),
+    }),
+    code: useMutation({
+      mutationFn: createPairingCode,
+      onError: fail("تعذّر إصدار كود الربط"),
+    }),
+    toggle: useMutation({
+      mutationFn: (v: { id: string; isActive: boolean }) =>
+        updateShopBranch(v.id, { isActive: v.isActive }),
+      onSuccess: (b) => {
+        refresh();
+        toast.success(
+          b.isActive ? `فُعّل فرع «${b.name}»` : `أُوقف فرع «${b.name}»`,
+        );
+      },
+      onError: fail("تعذّر تحديث الفرع"),
+    }),
+    revoke: useMutation({
+      mutationFn: revokeShopBranch,
+      onSuccess: (b) => {
+        refresh();
+        toast.success(`أُلغي ربط جهاز «${b.name}». اربط جهازاً جديداً بكود جديد`);
+      },
+      onError: fail("تعذّر إلغاء الربط"),
+    }),
+    renew: useMutation({
+      mutationFn: renewShopLicense,
+      onSuccess: () => {
+        refresh();
+        toast.success("جُدّد ترخيص المحل على سيرفر الفروع");
+      },
+      onError: fail("تعذّر تجديد الترخيص"),
+    }),
+  };
 }

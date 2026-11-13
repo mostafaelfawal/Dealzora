@@ -47,6 +47,21 @@ curl https://sync.yourdomain.com/health   # {"status":"ok"}
 
 ## 2) إضافة محل وفروعه
 
+### الطريقة الأساسية: المالك يعمل كل حاجة بنفسه (بدون تدخلك)
+1. ضع `SYNC_VENDOR_PUBKEY` في `.env` = نفس المفتاح العام `DEALZORA_VENDOR_PUBKEY` اللي بتبني بيه البرنامج.
+2. ابنِ الواجهة ومعها `NEXT_PUBLIC_SYNC_URL=https://sync.example.com` (عنوان السيرفر)، فالمالك لا يكتبه.
+3. المالك (خطة «سلسلة») على جهازه الرئيسي: الإعدادات ← الأجهزة والحماية ← الفروع ← «محل جديد (أنا المالك)»
+   ← يلصق مفتاح الترخيص ← يتسجّل المحل، والجهاز يصبح **الفرع الرئيسي**.
+4. من نفس المكان: «إضافة فرع» ← يظهر كود ربط ← يكتبه على جهاز الفرع («فرع تابع»).
+   ويقدر يطلع كود جديد، يوقف فرعاً، أو يلغي ربط جهاز ضاع — كله من البرنامج.
+
+- السيرفر يتحقق من توقيع الترخيص بالمفتاح العام فقط: لا أحد يقدر يعمل محلاً بدون ترخيص صادر منك.
+- محل واحد لكل ترخيص. نفس الترخيص على جهاز رئيسي جديد = «استرجاع المحل» (القديم يتوقف فوراً).
+- بعد انتهاء الترخيص بمهلة `SYNC_LICENSE_GRACE_DAYS` تتوقف مزامنة المحل، وتعود فور التجديد
+  (تفعيل المفتاح الجديد على جهاز المالك يجدده على السيرفر تلقائياً).
+
+### الطريقة اليدوية (للطوارئ أو المحلات القديمة)
+
 ```bash
 docker compose exec api python -m app.cli create-shop "سوبر ماركت النور"
 # shop_id: 8a1b6280-…
@@ -62,6 +77,7 @@ docker compose exec api python -m app.cli pair-code <branch_id>
 docker compose exec api python -m app.cli list                       # المحلات والفروع وآخر ظهور
 docker compose exec api python -m app.cli rotate-secret <branch_id>  # جهاز ضاع؟ سر جديد والقديم وتوكناته يتوقفوا فوراً
 docker compose exec api python -m app.cli disable-branch <branch_id> # إيقاف فرع (اشتراك انتهى…)
+docker compose exec api python -m app.cli make-admin <branch_id>     # محل قديم أنشأته يدوياً: اجعل فرعاً هو الرئيسي
 ```
 
 نفس الأوامر متاحة كـ API تحت `/v1/admin/*` بـ `Authorization: Bearer <SYNC_ADMIN_TOKEN>` (للوحة إدارة لاحقاً).

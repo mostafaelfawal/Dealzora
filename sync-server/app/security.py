@@ -83,6 +83,19 @@ def get_caller(
     session: Annotated[Session, Depends(get_session)],
     authorization: Annotated[str | None, Header()] = None,
 ) -> Caller:
+    return _caller(request, session, authorization, enforce_license=True)
+
+
+def get_caller_for_renewal(
+    request: Request,
+    session: Annotated[Session, Depends(get_session)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> Caller:
+    """مثل get_caller لكن يسمح بترخيص منتهٍ: لتجديده فقط."""
+    return _caller(request, session, authorization, enforce_license=False)
+
+
+def _caller(request: Request, session: Session, authorization: str | None, *, enforce_license: bool) -> Caller:
     try:
         claims = jwt.decode(
             _bearer(authorization),
@@ -114,6 +127,11 @@ def get_caller(
         raise Forbidden("branch_disabled", "هذا الفرع موقوف")
 
     now = utcnow()
+    expires = shop.license_expires_at
+    if enforce_license and expires is not None:
+        expires = expires if expires.tzinfo else expires.replace(tzinfo=UTC)
+        if now > expires + timedelta(days=get_settings().license_grace_days):
+            raise Forbidden("license_expired", "انتهى ترخيص المحل. جدّد الاشتراك من الجهاز الرئيسي للمالك")
     seen = branch.last_seen_at
     if seen is None or now - (seen if seen.tzinfo else seen.replace(tzinfo=UTC)) > _TOUCH_EVERY:
         branch.last_seen_at = now  # «متصل» في قائمة الفروع، بدون كتابة في كل طلب
@@ -128,6 +146,7 @@ def get_caller(
 
 
 CallerDep = Annotated[Caller, Depends(get_caller)]
+RenewalCallerDep = Annotated[Caller, Depends(get_caller_for_renewal)]
 
 
 def require_admin(request: Request, authorization: Annotated[str | None, Header()] = None) -> None:

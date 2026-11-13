@@ -26,7 +26,10 @@ import { isOwner } from "@/config/roles";
 import { useSessionUser } from "@/hooks/useShellData";
 import { useFeature } from "@/lib/plan";
 
-import { fetchBranchStatus } from "../api/branchTransfers.api";
+import {
+  DEFAULT_SYNC_URL,
+  fetchBranchStatus,
+} from "../api/branchTransfers.api";
 import {
   branchKeys,
   useBranchStatus,
@@ -35,6 +38,9 @@ import {
   useRetryPending,
 } from "../hooks/useBranchTransfers";
 import { CatalogSyncCard } from "./catalogSyncCard";
+import { RegisterShopForm } from "./registerShopForm";
+import { SyncUrlMissing } from "./syncUrlMissing";
+import { ShopBranchesCard } from "./shopBranchesCard";
 
 /** ربط هذا الجهاز بسيرفر الفروع (مرة واحدة بكود)، وحالة الاتصال. */
 export function BranchConnectSection() {
@@ -47,7 +53,8 @@ export function BranchConnectSection() {
   const disconnect = useDisconnectBranch();
   const retry = useRetryPending();
   const qc = useQueryClient();
-  const [url, setUrl] = useState("");
+  // جهاز المالك الرئيسي يسجّل المحل، وجهاز أي فرع آخر يربط بكود من المالك.
+  const [mode, setMode] = useState<"join" | "register">("register");
   const [code, setCode] = useState("");
   const [checking, setChecking] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -64,9 +71,9 @@ export function BranchConnectSection() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    if (url.trim() && code.trim())
+    if (DEFAULT_SYNC_URL && code.trim())
       connect.mutate(
-        { serverUrl: url.trim(), code: code.trim() },
+        { serverUrl: DEFAULT_SYNC_URL, code: code.trim() },
         { onSuccess: () => setCode("") },
       );
   }
@@ -74,8 +81,65 @@ export function BranchConnectSection() {
   if (!s) return <p className="text-xs text-muted-foreground">جارِ التحميل…</p>;
 
   if (!s.connected) {
+    const modes = (
+      <div
+        role="group"
+        aria-label="نوع الربط"
+        className="grid grid-cols-2 gap-2"
+      >
+        {(
+          [
+            [
+              "register",
+              "محل جديد (أنا المالك)",
+              "هذا الجهاز الرئيسي ومعي مفتاح الترخيص",
+            ],
+            ["join", "فرع تابع", "معي كود ربط من جهاز المالك"],
+          ] as const
+        ).map(([id, title, hint]) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={mode === id}
+            onClick={() => setMode(id)}
+            className={
+              "border p-2.5 text-start " +
+              (mode === id ? "border-primary bg-primary/5" : "hover:bg-muted")
+            }
+          >
+            <span className="block text-sm font-medium">{title}</span>
+            <span className="text-[11px] text-muted-foreground">{hint}</span>
+          </button>
+        ))}
+      </div>
+    );
+    if (mode === "register")
+      return (
+        <div className="space-y-4">
+          {!planAllowed && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <PlanLock feature="branches" /> تعدد الفروع متاح في خطة «سلسلة».
+            </p>
+          )}
+          {planAllowed && !owner && (
+            <p className="text-xs text-muted-foreground">
+              تسجيل المحل متاح لحساب <b>مالك المحل</b> فقط.
+            </p>
+          )}
+          {modes}
+          <RegisterShopForm allowed={allowed} />
+        </div>
+      );
+    if (!DEFAULT_SYNC_URL)
+      return (
+        <div className="space-y-4">
+          {modes}
+          <SyncUrlMissing />
+        </div>
+      );
     return (
       <form onSubmit={submit} className="space-y-4">
+        {modes}
         {planAllowed && !owner && (
           <p className="text-xs text-muted-foreground">
             ربط الفرع بسيرفر الفروع متاح لحساب <b>مالك المحل</b> فقط.
@@ -88,27 +152,12 @@ export function BranchConnectSection() {
         )}
         <ol className="list-inside list-decimal space-y-1 text-sm text-muted-foreground">
           <li>
-            اطلب من مسؤول البرنامج «كود ربط» لهذا الفرع (صالح دقائق ولمرة
-            واحدة).
+            اطلب من مالك المحل «كود ربط» لهذا الفرع من جهازه الرئيسي (صالح دقائق
+            ولمرة واحدة).
           </li>
-          <li>اكتب عنوان سيرفر الفروع والكود هنا.</li>
+          <li>اكتب الكود هنا.</li>
         </ol>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="bs-url">عنوان سيرفر الفروع</Label>
-            <Input
-              id="bs-url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://sync.example.com"
-              dir="ltr"
-              className="h-10 font-mono"
-              disabled={!allowed}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              للتجربة على نفس الجهاز: http://localhost:8001
-            </p>
-          </div>
+        <div className="max-w-xs">
           <div className="space-y-1.5">
             <Label htmlFor="bs-code">كود الربط</Label>
             <Input
@@ -131,7 +180,7 @@ export function BranchConnectSection() {
             disabled={
               !allowed ||
               connect.isPending ||
-              !url.trim() ||
+              !DEFAULT_SYNC_URL ||
               code.trim().length < 12
             }
           >
@@ -177,6 +226,8 @@ export function BranchConnectSection() {
       </div>
 
       <CatalogSyncCard />
+
+      {s.isAdmin && owner && <ShopBranchesCard />}
 
       {s.pending > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 border border-warning/40 bg-warning/5 p-3 text-sm">

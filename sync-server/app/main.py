@@ -6,6 +6,8 @@
 """
 
 import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -14,9 +16,29 @@ from sqlalchemy import text
 from .config import get_settings
 from .db import get_engine
 from .errors import register_error_handlers
-from .routers import admin, auth, branches, catalog, stats, sync, transfers
+from .routers import admin, auth, branches, catalog, shop, stats, sync, transfers
 
 API_PREFIX = "/v1"
+
+
+def migrate_sqlite() -> None:
+    """التشغيل المحلي على SQLite: إنشاء/تحديث الجداول تلقائياً عند الإقلاع (ملف مُسح أو جديد).
+    PostgreSQL (الإنتاج) يُحدَّث من deploy/entrypoint.sh قبل تشغيل الـ workers، لا هنا."""
+    if get_engine().dialect.name != "sqlite":
+        return
+    from alembic import command
+    from alembic.config import Config
+
+    root = Path(__file__).resolve().parents[1]
+    cfg = Config(str(root / "alembic.ini"))
+    cfg.set_main_option("script_location", str(root / "alembic"))
+    command.upgrade(cfg, "head")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    migrate_sqlite()
+    yield
 
 
 def create_app() -> FastAPI:
@@ -28,6 +50,7 @@ def create_app() -> FastAPI:
         docs_url="/docs" if settings.docs_enabled else None,
         redoc_url=None,
         openapi_url="/openapi.json" if settings.docs_enabled else None,
+        lifespan=lifespan,
     )
     register_error_handlers(app)
     log = logging.getLogger("sync")
@@ -55,7 +78,8 @@ def create_app() -> FastAPI:
         return response
 
     routers = (
-        auth.router, branches.router, sync.router, catalog.router, transfers.router, stats.router, admin.router,
+        auth.router, shop.router, branches.router, sync.router, catalog.router, transfers.router, stats.router,
+        admin.router,
     )  # fmt: skip
     for router in routers:
         app.include_router(router, prefix=API_PREFIX)

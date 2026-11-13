@@ -41,6 +41,11 @@ class Shop(Base):
     last_transfer_no: Mapped[int] = mapped_column(Integer, default=0)
     # آخر رقم تغيير في كتالوج الأصناف والعملاء المشترك (عدّاد منفصل عن الأحداث).
     last_catalog_seq: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0")
+    # تسجيل ذاتي بترخيص «سلسلة»: محل واحد لكل ترخيص، ويتوقف بعد انتهاء الترخيص (بمهلة).
+    # المحلات اللي أنشأها المورّد يدوياً بلا ترخيص هنا (لا انتهاء).
+    license_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    license_plan: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    license_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     branches: Mapped[list["Branch"]] = relationship(back_populates="shop", order_by="Branch.created_at")
@@ -62,6 +67,8 @@ class Branch(Base):
     acked_seq: Mapped[int] = mapped_column(BigInteger, default=0)
     # يزيد مع تغيير السر أو الربط: كل التوكنات القديمة تتوقف فوراً.
     token_version: Mapped[int] = mapped_column(Integer, default=1)
+    # الفرع الرئيسي (جهاز المالك): يدير فروع محله وأكواد ربطها من البرنامج نفسه.
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
     shop: Mapped[Shop] = relationship(back_populates="branches")
 

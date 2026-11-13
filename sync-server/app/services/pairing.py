@@ -39,7 +39,9 @@ def _aware(value: datetime) -> datetime:
     return value if value.tzinfo else value.replace(tzinfo=UTC)
 
 
-def create_code(session: Session, branch_id: str, *, ip: str | None = None) -> PairingCodeOut:
+def create_code(
+    session: Session, branch_id: str, *, ip: str | None = None, actor: str = "admin"
+) -> PairingCodeOut:
     branch = session.get(Branch, branch_id)
     if branch is None:
         raise NotFound("branch_not_found", "الفرع غير موجود")
@@ -52,7 +54,7 @@ def create_code(session: Session, branch_id: str, *, ip: str | None = None) -> P
     session.execute(delete(PairingCode).where(PairingCode.branch_id == branch_id))
     session.add(PairingCode(code_hash=_hash(code), branch_id=branch_id, expires_at=expires))
     record(
-        session, "pairing_code_created", actor="admin",
+        session, "pairing_code_created", actor=actor,
         shop_id=branch.shop_id, branch_id=branch.id, ip=ip,
     )  # fmt: skip
     session.commit()

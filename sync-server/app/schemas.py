@@ -323,3 +323,50 @@ class AuditOut(BaseModel):
     branch_id: str | None
     ip: str | None
     details: dict[str, Any] | None
+
+
+# ================= التسجيل الذاتي وإدارة المالك =================
+class RegisterIn(Strict):
+    """مالك بترخيص «سلسلة» يسجّل محله، أو يسترجعه على جهاز جديد (recover)."""
+
+    license_key: str = Field(min_length=20, max_length=4096)
+    shop_name: str | None = Field(None, min_length=2, max_length=120)
+    branch_name: str = Field("الفرع الرئيسي", min_length=2, max_length=120)
+    branch_code: str = Field("MAIN", min_length=1, max_length=12, pattern=r"^[A-Za-z0-9]+$")
+    recover: bool = False
+
+    @field_validator("branch_code")
+    @classmethod
+    def _upper(cls, v: str) -> str:
+        return v.upper()
+
+
+class LicenseIn(Strict):
+    license_key: str = Field(min_length=20, max_length=4096)
+
+
+class ShopInfoOut(BaseModel):
+    shop_id: str
+    shop_name: str
+    is_admin: bool
+    license_plan: str | None
+    license_expires_at: datetime | None
+    branches: int
+    max_branches: int
+
+
+class AdminBranchOut(BaseModel):
+    id: str
+    name: str
+    code: str
+    is_active: bool
+    is_admin: bool
+    is_me: bool
+    online: bool
+    paired: bool  # فيه جهاز مربوط حالياً
+    last_seen_at: datetime | None
+
+
+class NewBranchOut(BaseModel):
+    branch: AdminBranchOut
+    pairing: PairingCodeOut

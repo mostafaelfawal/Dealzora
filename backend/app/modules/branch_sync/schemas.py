@@ -12,6 +12,30 @@ class ConnectIn(Strict):
     code: str = Field(min_length=12, max_length=20)
 
 
+class RegisterShopIn(Strict):
+    """المالك يسجّل محله على سيرفر الفروع بمفتاح ترخيص «سلسلة» (هذا الجهاز = الفرع الرئيسي)."""
+
+    server_url: str = Field(min_length=4, max_length=200)
+    license_key: str = Field(min_length=20, max_length=4096)
+    branch_name: str = Field("الفرع الرئيسي", min_length=2, max_length=120)
+    branch_code: str = Field("MAIN", min_length=1, max_length=12, pattern=r"^[A-Za-z0-9]+$")
+    recover: bool = False
+
+
+class NewBranchIn(Strict):
+    name: str = Field(min_length=2, max_length=120)
+    code: str = Field(min_length=1, max_length=12, pattern=r"^[A-Za-z0-9]+$")
+
+
+class BranchPatchIn(Strict):
+    name: str | None = Field(None, min_length=2, max_length=120)
+    is_active: bool | None = None
+
+
+class LicenseKeyIn(Strict):
+    license_key: str = Field(min_length=20, max_length=4096)
+
+
 class LineIn(Strict):
     product_id: str = Field(min_length=1, max_length=36)
     qty: int = Field(gt=0, le=1_000_000_000)

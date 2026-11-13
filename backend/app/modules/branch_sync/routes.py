@@ -10,11 +10,23 @@ from app.core.permissions import (
     require_authenticated_write,
     require_manager,
     require_manager_write,
+    require_owner,
     require_owner_write,
 )
 from app.core.plan import Feature, require_feature_for_writes
 
-from .schemas import ApproveIn, ConnectIn, ReceiveIn, RejectIn, RequestIn, SendIn
+from .schemas import (
+    ApproveIn,
+    BranchPatchIn,
+    ConnectIn,
+    LicenseKeyIn,
+    NewBranchIn,
+    ReceiveIn,
+    RegisterShopIn,
+    RejectIn,
+    RequestIn,
+    SendIn,
+)
 from .service import BranchSyncService
 
 router = APIRouter(
@@ -25,6 +37,7 @@ router = APIRouter(
 Read = [Depends(require_manager)]
 Write = [Depends(require_manager_write)]
 OwnerWrite = [Depends(require_owner_write)]  # ربط/فصل الفرع: للمالك فقط
+OwnerRead = [Depends(require_owner)]
 
 
 def _svc(session: SessionDep, actor: ActorDep) -> BranchSyncService:
@@ -44,6 +57,51 @@ def status(svc: Svc, check: bool = False):
 def connect(data: ConnectIn, svc: Svc):
     """ربط هذا الفرع بسيرفر الفروع بكود الربط (مرة واحدة)."""
     return svc.connect(data)
+
+
+@router.post("/register", dependencies=OwnerWrite)
+def register(data: RegisterShopIn, svc: Svc):
+    """المالك يسجّل محله على سيرفر الفروع بمفتاح ترخيص «سلسلة» (أو يسترجعه على جهاز جديد)."""
+    return svc.register(data)
+
+
+@router.get("/shop", dependencies=Read)
+def shop_info(svc: Svc):
+    """بيانات المحل والترخيص على سيرفر الفروع."""
+    return svc.shop_info()
+
+
+@router.post("/shop/license", dependencies=OwnerWrite)
+def renew_license(data: LicenseKeyIn, svc: Svc):
+    return svc.renew_license(data.license_key)
+
+
+@router.get("/shop/branches", dependencies=OwnerRead)
+def admin_branches(svc: Svc):
+    """فروع المحل (من الجهاز الرئيسي للمالك)."""
+    return svc.admin_branches()
+
+
+@router.post("/shop/branches", dependencies=OwnerWrite)
+def admin_create_branch(data: NewBranchIn, svc: Svc):
+    """فرع جديد + كود ربط يكتبه جهاز الفرع."""
+    return svc.admin_create_branch(data)
+
+
+@router.post("/shop/branches/{branch_id}/pairing-code", dependencies=OwnerWrite)
+def admin_pairing_code(branch_id: str, svc: Svc):
+    return svc.admin_pairing_code(branch_id)
+
+
+@router.patch("/shop/branches/{branch_id}", dependencies=OwnerWrite)
+def admin_update(branch_id: str, data: BranchPatchIn, svc: Svc):
+    return svc.admin_update(branch_id, data)
+
+
+@router.post("/shop/branches/{branch_id}/revoke", dependencies=OwnerWrite)
+def admin_revoke(branch_id: str, svc: Svc):
+    """إلغاء ربط جهاز الفرع (ضاع/اتسرق/هيتغير): يتوقف فوراً."""
+    return svc.admin_revoke(branch_id)
 
 
 @router.post("/disconnect", dependencies=OwnerWrite)

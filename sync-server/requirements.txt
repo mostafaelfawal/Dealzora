@@ -7,3 +7,5 @@ alembic==1.20.1
 pydantic==2.14.3
 pydantic-settings==2.16.2
 PyJWT==2.15.1
+# التحقق من توقيع مفتاح الترخيص (Ed25519) في التسجيل الذاتي
+cryptography==50.0.2

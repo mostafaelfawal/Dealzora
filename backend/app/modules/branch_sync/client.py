@@ -176,6 +176,15 @@ class SyncClient:
             raise self._error(status, data)
         return data
 
+    def register(self, body: dict) -> dict:
+        """تسجيل المحل ذاتياً بمفتاح الترخيص (أو استرجاعه على جهاز جديد)."""
+        status, data = self._raw("POST", "/v1/shops/register", body)
+        if status >= 400:
+            if status >= 500:
+                raise SyncUnavailable(f"register {status}")
+            raise self._error(status, data)
+        return data
+
     def health(self) -> bool:
         try:
             status, _ = self._raw("GET", "/health")
