@@ -6,4 +6,4 @@ pydantic-settings>=2.3
 sqlcipher3-wheels>=0.5.2
 alembic>=1.13
 argon2-cffi>=23.1
-cryptography>=43  # التحقق من شهادات الفروع (Ed25519)
+cryptography>=43  # Branch certificate verification (Ed25519)

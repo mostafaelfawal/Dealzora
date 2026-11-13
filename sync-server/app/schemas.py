@@ -377,6 +377,7 @@ class LeaseOut(BaseModel):
 
     lease: str
     plan: str
+    terminals: int = 0
     expires_at: datetime
 
 

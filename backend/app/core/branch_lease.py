@@ -19,7 +19,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from .build_keys import SYNC_LEASE_PUBKEY
 
 _lock = threading.Lock()
-_state: dict[str, Any] = {"loaded": False, "plan": None, "exp": 0}
+_state: dict[str, Any] = {"loaded": False, "plan": None, "terminals": 0, "exp": 0}
 _FROZEN = getattr(sys, "frozen", False)
 
 
@@ -57,13 +57,24 @@ def verify(token: str | None, branch_id: str | None) -> dict | None:
 def remember(token: str | None, branch_id: str | None) -> dict | None:
     payload = verify(token, branch_id)
     with _lock:
-        _state.update(loaded=True, plan=payload["plan"] if payload else None, exp=payload["exp"] if payload else 0)
+        _state.update(
+            loaded=True,
+            plan=payload["plan"] if payload else None,
+            terminals=_terminals(payload),
+            exp=payload["exp"] if payload else 0,
+        )
     return payload
+
+
+def _terminals(payload: dict | None) -> int:
+    """الشهادات القديمة بلا الحقل = 0."""
+    value = payload.get("terminals") if payload else None
+    return min(max(value, 0), 1000) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def forget() -> None:
     with _lock:
-        _state.update(loaded=True, plan=None, exp=0)
+        _state.update(loaded=True, plan=None, terminals=0, exp=0)
 
 
 def _load() -> None:
@@ -88,6 +99,14 @@ def current_plan() -> str | None:
         if _state["plan"] and _state["exp"] > time.time():
             return _state["plan"]
     return None
+
+
+def current_terminals() -> int:
+    """أجهزة الكاشير الموروثة من ترخيص المحل الآن (0 لو لا شهادة سارية)."""
+    if not _state["loaded"]:
+        _load()
+    with _lock:
+        return _state["terminals"] if _state["plan"] and _state["exp"] > time.time() else 0
 
 
 def info() -> dict:

@@ -98,6 +98,7 @@ def _apply_license(shop: Shop, lic: licensing.License) -> None:
     if current is None or lic.expires_at > current:
         shop.license_expires_at = lic.expires_at
     shop.license_plan = lic.plan
+    shop.license_terminals = lic.terminals
 
 
 def renew(session: Session, caller: Caller, key: str) -> ShopInfoOut:

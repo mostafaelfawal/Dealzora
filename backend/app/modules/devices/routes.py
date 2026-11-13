@@ -134,7 +134,7 @@ def network(session: SessionDep):
         lan_enabled=settings.host not in ("127.0.0.1", "localhost"),
         addresses=lan_addresses(),
         port=settings.port,
-        max_terminals=lease.max_terminals if lease else None,
+        max_terminals=runtime.max_terminals(lease) if lease else None,
         pairing_expires_at=_ts(runtime.pairing_status()),
         devices=[
             DeviceOut(

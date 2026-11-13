@@ -197,6 +197,7 @@ def test_branch_lease(vendor, monkeypatch):
     signer.public_key().verify(base64.urlsafe_b64decode(sig + "=="), body.encode())  # توقيع صحيح
     payload = json.loads(base64.urlsafe_b64decode(body + "=="))
     assert payload["plan"] == "enterprise" and payload["branch_id"] == new["branch"]["id"]
+    assert payload["terminals"] == 2 and out["terminals"] == 2  # الفرع يرث أجهزة الكاشير من ترخيص المحل
     # لا تتجاوز ترخيص المحل + المهلة، ولا عمر الشهادة
     assert payload["exp"] - payload["iat"] <= 7 * 86400 + 5
 

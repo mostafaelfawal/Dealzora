@@ -40,6 +40,8 @@ def issue(shop: Shop, branch: Branch) -> tuple[str, dict]:
         "shop_id": shop.id,
         "branch_id": branch.id,
         "plan": shop.license_plan or settings.legacy_shop_plan,
+        # أجهزة الكاشير المسموحة لكل فرع (نفس عدد ترخيص المحل).
+        "terminals": shop.license_terminals or 0,
         "iat": int(now.timestamp()),
         "exp": int(expires.timestamp()),
     }

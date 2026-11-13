@@ -79,10 +79,11 @@ class DeviceService:
         reason = runtime.consume_pairing_code(code)
         if reason:
             raise UnauthorizedError(f"pairing_{reason}", _PAIR_ERRORS[reason])
-        if self.count_live() >= lease.max_terminals:
+        limit = runtime.max_terminals(lease)
+        if self.count_live() >= limit:
             raise ConflictError(
                 "device_limit_reached",
-                f"وصلت للحد الأقصى لأجهزة الكاشير في ترخيصك ({lease.max_terminals}). "
+                f"وصلت للحد الأقصى لأجهزة الكاشير في ترخيصك ({limit}). "
                 "ألغِ جهازاً قديماً أو رقِّ الترخيص",
             )
         token = secrets.token_urlsafe(32)

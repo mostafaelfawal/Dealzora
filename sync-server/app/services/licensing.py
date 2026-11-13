@@ -26,6 +26,7 @@ class License:
     shop_name: str
     plan: str | None
     expires_at: datetime
+    terminals: int = 0
 
 
 def _b64(text: str) -> bytes:
@@ -59,6 +60,7 @@ def verify(key: str) -> License:
             shop_name=str(payload.get("shop_name") or "")[:120],
             plan=payload.get("plan"),
             expires_at=datetime.fromtimestamp(int(payload["expires_at"]), tz=UTC),
+            terminals=min(max(int(payload.get("terminals") or 0), 0), 1000),
         )
     except (KeyError, ValueError, TypeError, OverflowError, OSError) as exc:
         raise _invalid() from exc

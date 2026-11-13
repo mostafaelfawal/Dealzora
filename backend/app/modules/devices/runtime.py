@@ -82,6 +82,13 @@ def active_lease(now: float | None = None) -> Lease | None:
         return _lease if _lease and _lease.expires_at > now else None
 
 
+def max_terminals(lease: Lease) -> int:
+    """الأكبر بين ترخيص هذا الجهاز وما يرثه كفرع من ترخيص المحل (شهادة الفرع)."""
+    from app.core.branch_lease import current_terminals  # متأخر: لا دوران
+
+    return max(lease.max_terminals, current_terminals())
+
+
 # ================= الاقتران =================
 @dataclass(slots=True)
 class _Pairing:

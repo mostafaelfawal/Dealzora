@@ -93,7 +93,7 @@ def lease(caller: CallerDep, session: SessionDep):
     shop = session.get(Shop, caller.shop_id)
     branch = session.get(Branch, caller.branch_id)
     token, payload = lease_svc.issue(shop, branch)
-    return LeaseOut(lease=token, plan=payload["plan"], expires_at=datetime.fromtimestamp(payload["exp"], tz=UTC))
+    return LeaseOut(lease=token, plan=payload["plan"], terminals=payload["terminals"], expires_at=datetime.fromtimestamp(payload["exp"], tz=UTC))
 
 
 @router.get("/shop/staff", response_model=list[StaffOut])

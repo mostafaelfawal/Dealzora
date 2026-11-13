@@ -46,6 +46,8 @@ class Shop(Base):
     license_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     license_plan: Mapped[str | None] = mapped_column(String(16), nullable=True)
     license_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # عدد أجهزة الكاشير في ترخيص المحل: يرثه كل فرع مع الخطة (عبر الشهادة).
+    license_terminals: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     branches: Mapped[list["Branch"]] = relationship(back_populates="shop", order_by="Branch.created_at")
