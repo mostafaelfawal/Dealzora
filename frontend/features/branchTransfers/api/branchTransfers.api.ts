@@ -521,3 +521,64 @@ export const joinBranch = async (code: string, serverUrl: string) =>
 
 export const joinBranchSync = async () =>
   toJoin((await api.post(`${BASE}/join/sync`)).data);
+
+/* ---------- موظفو كل الفروع (المالك من الجهاز الرئيسي) ---------- */
+
+export type StaffRole = "manager" | "cashier";
+
+export interface Staff {
+  id: string;
+  username: string;
+  role: StaffRole;
+  isActive: boolean;
+  /** معرّفات الفروع التي يعمل بها. */
+  branches: string[];
+}
+
+export interface StaffInput {
+  username: string;
+  password: string;
+  role: StaffRole;
+  branches: string[];
+}
+
+export interface StaffPatch {
+  username?: string;
+  password?: string;
+  role?: StaffRole;
+  isActive?: boolean;
+  branches?: string[];
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- شكل الرد مكتوب في الـ backend */
+const toStaff = (d: any): Staff => ({
+  id: d.id,
+  username: d.username,
+  role: d.role,
+  isActive: d.is_active,
+  branches: d.branches ?? [],
+});
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export const fetchStaff = async (): Promise<Staff[]> =>
+  (await api.get<unknown[]>(`${BASE}/staff`)).data.map(toStaff);
+
+export const createStaff = async (v: StaffInput) =>
+  toStaff((await api.post(`${BASE}/staff`, v)).data);
+
+export const updateStaff = async (id: string, p: StaffPatch) =>
+  toStaff(
+    (
+      await api.patch(`${BASE}/staff/${id}`, {
+        ...(p.username !== undefined ? { username: p.username } : {}),
+        ...(p.password ? { password: p.password } : {}),
+        ...(p.role !== undefined ? { role: p.role } : {}),
+        ...(p.isActive !== undefined ? { is_active: p.isActive } : {}),
+        ...(p.branches !== undefined ? { branches: p.branches } : {}),
+      })
+    ).data,
+  );
+
+export const deleteStaff = async (id: string) => {
+  await api.delete(`${BASE}/staff/${id}`);
+};

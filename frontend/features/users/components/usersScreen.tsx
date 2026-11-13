@@ -7,7 +7,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { isOwner } from "@/config/roles";
+import { BranchStaffPanel } from "@/features/branchTransfers/components/branchStaffPanel";
+import { useBranchStatus } from "@/features/branchTransfers/hooks/useBranchTransfers";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
@@ -33,6 +37,12 @@ export function UsersScreen() {
   const router = useRouter();
   const list = useUsersList();
   const currentUserId = useCurrentUserId();
+  const branch = useBranchStatus();
+  // المالك على الجهاز الرئيسي: يدير موظفي كل الفروع مركزياً.
+  const central =
+    isOwner(useSessionUser().role) &&
+    Boolean(branch.data?.connected && branch.data.isAdmin);
+  const [scope, setScope] = useState<"here" | "all">("here");
   const myRole = useSessionUser().role;
   const { view, setView } = useUsersView();
   const [resetTarget, setResetTarget] = useState<User | null>(null);
@@ -168,79 +178,99 @@ export function UsersScreen() {
             أضف الكاشير وحدّد كلمات مرورهم، وعطّل أو احذف من تريد.
           </p>
         </div>
-        <Button
-          size="lg"
-          nativeButton={false}
-          render={<Link href={USER_ROUTES.new} />}
-          className="h-10 gap-2"
-        >
-          <IconPlus className="size-4" />
-          مستخدم جديد
-          <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-            {USERS_SHORTCUTS.newUser.label}
-          </ShortcutBadge>
-        </Button>
-      </header>
-
-      <UsersStats
-        summary={list.summary}
-        filters={list.filters}
-        onChange={list.patchFilters}
-      />
-
-      <UsersToolbar
-        filters={list.filters}
-        onChange={list.patchFilters}
-        view={view}
-        onViewChange={setView}
-      />
-
-      <p aria-live="polite" className="text-xs text-muted-foreground">
-        عرض{" "}
-        <bdi dir="ltr" className="font-mono">
-          {list.total}
-        </bdi>{" "}
-        من{" "}
-        <bdi dir="ltr" className="font-mono">
-          {list.summary.total}
-        </bdi>{" "}
-        مستخدم
-        {list.filtered && (
+        {scope === "here" && (
           <Button
-            type="button"
-            variant="link"
-            size="xs"
-            onClick={list.clearFilters}
-            className="font-normal"
+            size="lg"
+            nativeButton={false}
+            render={<Link href={USER_ROUTES.new} />}
+            className="h-10 gap-2"
           >
-            مسح الفلاتر
+            <IconPlus className="size-4" />
+            مستخدم جديد
+            <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+              {USERS_SHORTCUTS.newUser.label}
+            </ShortcutBadge>
           </Button>
         )}
-      </p>
+      </header>
 
-      <div
-        aria-busy={list.isFetching}
-        className={cn(
-          "transition-opacity",
-          list.isFetching && !list.isPending && "opacity-60",
-        )}
-      >
-        {renderBody()}
-      </div>
+      {central && (
+        <SegmentedTabs
+          label="نطاق المستخدمين"
+          items={[
+            { id: "here" as const, label: "هذا الفرع" },
+            { id: "all" as const, label: "موظفو كل الفروع" },
+          ]}
+          value={scope}
+          onChange={setScope}
+        />
+      )}
 
-      <ResetPasswordDialog
-        user={resetTarget}
-        onClose={() => setResetTarget(null)}
-      />
-      <DeleteUserDialog
-        user={removeTarget}
-        isPending={list.removing}
-        onConfirm={(user) => {
-          list.remove(user.id);
-          setRemoveTarget(null);
-        }}
-        onClose={() => setRemoveTarget(null)}
-      />
+      {central && scope === "all" ? (
+        <BranchStaffPanel />
+      ) : (
+        <>
+          <UsersStats
+            summary={list.summary}
+            filters={list.filters}
+            onChange={list.patchFilters}
+          />
+
+          <UsersToolbar
+            filters={list.filters}
+            onChange={list.patchFilters}
+            view={view}
+            onViewChange={setView}
+          />
+
+          <p aria-live="polite" className="text-xs text-muted-foreground">
+            عرض{" "}
+            <bdi dir="ltr" className="font-mono">
+              {list.total}
+            </bdi>{" "}
+            من{" "}
+            <bdi dir="ltr" className="font-mono">
+              {list.summary.total}
+            </bdi>{" "}
+            مستخدم
+            {list.filtered && (
+              <Button
+                type="button"
+                variant="link"
+                size="xs"
+                onClick={list.clearFilters}
+                className="font-normal"
+              >
+                مسح الفلاتر
+              </Button>
+            )}
+          </p>
+
+          <div
+            aria-busy={list.isFetching}
+            className={cn(
+              "transition-opacity",
+              list.isFetching && !list.isPending && "opacity-60",
+            )}
+          >
+            {renderBody()}
+          </div>
+
+          <ResetPasswordDialog
+            user={resetTarget}
+            onClose={() => setResetTarget(null)}
+          />
+          <DeleteUserDialog
+            user={removeTarget}
+            isPending={list.removing}
+            onConfirm={(user) => {
+              list.remove(user.id);
+              setRemoveTarget(null);
+            }}
+            onClose={() => setRemoveTarget(null)}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@
   PATCH /v1/shop/branches/{id}                تغيير الاسم / إيقاف / تفعيل
   POST  /v1/shop/branches/{id}/revoke         إلغاء ربط جهاز الفرع (يتوقف فوراً)
   GET   /v1/shop/lease                        شهادة الفرع الموقّعة (يرث خطة المحل)
+  GET/POST /v1/shop/staff, PATCH/DELETE /v1/shop/staff/{id}   موظفو كل الفروع (المالك)
 """
 
 from datetime import UTC, datetime
@@ -28,11 +29,15 @@ from ..schemas import (
     PairOut,
     RegisterIn,
     ShopInfoOut,
+    StaffIn,
+    StaffOut,
+    StaffPatch,
 )
 from ..security import CallerDep, RenewalCallerDep
 from ..models import Branch, Shop
 from ..services import lease as lease_svc
 from ..services import self_service as svc
+from ..services import staff as staff_svc
 
 router = APIRouter(tags=["shop"])
 
@@ -89,3 +94,23 @@ def lease(caller: CallerDep, session: SessionDep):
     branch = session.get(Branch, caller.branch_id)
     token, payload = lease_svc.issue(shop, branch)
     return LeaseOut(lease=token, plan=payload["plan"], expires_at=datetime.fromtimestamp(payload["exp"], tz=UTC))
+
+
+@router.get("/shop/staff", response_model=list[StaffOut])
+def list_staff(caller: CallerDep, session: SessionDep):
+    return staff_svc.list_staff(session, caller)
+
+
+@router.post("/shop/staff", response_model=StaffOut, status_code=status.HTTP_201_CREATED)
+def create_staff(data: StaffIn, caller: CallerDep, session: SessionDep):
+    return staff_svc.create(session, caller, data)
+
+
+@router.patch("/shop/staff/{staff_id}", response_model=StaffOut)
+def update_staff(staff_id: str, data: StaffPatch, caller: CallerDep, session: SessionDep):
+    return staff_svc.update(session, caller, staff_id, data)
+
+
+@router.delete("/shop/staff/{staff_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_staff(staff_id: str, caller: CallerDep, session: SessionDep):
+    staff_svc.delete(session, caller, staff_id)

@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -378,3 +378,39 @@ class LeaseOut(BaseModel):
     lease: str
     plan: str
     expires_at: datetime
+
+
+# ================= إدارة الموظفين المركزية (المالك) =================
+_USERNAME = r"^[a-z0-9._\-]{3,50}$"
+_HASH = r"^\$argon2id\$"
+_BRANCH_ID = r"^[0-9A-Za-z-]{8,36}$"
+
+
+class StaffIn(Strict):
+    """كلمة المرور لا تصل هنا: التجزئة (Argon2id) من البرنامج المحلي للمالك."""
+
+    username: str = Field(pattern=_USERNAME)
+    password_hash: str = Field(min_length=40, max_length=255, pattern=_HASH)
+    role: Literal["manager", "cashier"]
+    is_active: bool = True
+    branches: list[Annotated[str, Field(pattern=_BRANCH_ID)]] = Field(min_length=1, max_length=50)
+
+
+class StaffPatch(Strict):
+    username: str | None = Field(None, pattern=_USERNAME)
+    password_hash: str | None = Field(None, min_length=40, max_length=255, pattern=_HASH)
+    role: Literal["manager", "cashier"] | None = None
+    is_active: bool | None = None
+    branches: list[Annotated[str, Field(pattern=_BRANCH_ID)]] | None = Field(None, min_length=1, max_length=50)
+
+
+class StaffOut(BaseModel):
+    """بدون تجزئة كلمة المرور."""
+
+    id: str
+    username: str
+    role: str
+    is_active: bool
+    branches: list[str]
+    updated_at: datetime | None
+    updated_by_branch_id: str | None

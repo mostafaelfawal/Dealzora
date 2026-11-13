@@ -199,3 +199,82 @@ def test_branch_lease(vendor, monkeypatch):
     assert payload["plan"] == "enterprise" and payload["branch_id"] == new["branch"]["id"]
     # لا تتجاوز ترخيص المحل + المهلة، ولا عمر الشهادة
     assert payload["exp"] - payload["iat"] <= 7 * 86400 + 5
+
+
+H = "$argon2id$v=19$m=65536,t=3,p=4$" + "a" * 22 + "$" + "b" * 43
+
+
+def staff_item(gid_, branches, role="cashier", username="cash1", **kw):  # noqa: ANN001, ANN003, ANN201
+    return {"kind": "staff", "gid": gid_, "data": {"username": username, "password_hash": H, "role": role,
+            "is_active": True, "branches": branches}, **kw}  # fmt: skip
+
+
+def test_central_staff_management(vendor):
+    owner = as_branch(vendor, register(vendor, license_key()[0], branch_name="المعادي", branch_code="MA").json())
+    me = owner.get("/v1/shop/branches").json()[0]["id"]
+    nb = owner.post("/v1/shop/branches", json={"name": "مدينة نصر", "code": "NC"}).json()
+    nc_id = nb["branch"]["id"]
+    nc = as_branch(vendor, vendor.post("/v1/auth/pair", json={"code": nb["pairing"]["code"]}).json())
+
+    # المالك يضيف مدير لفرع مدينة نصر، وكاشير يعمل في الفرعين
+    r = owner.post("/v1/shop/staff", json={"username": "nasr.mgr", "password_hash": H, "role": "manager",
+                                          "branches": [nc_id]})  # fmt: skip
+    assert r.status_code == 201, r.text
+    mgr = r.json()
+    assert "password_hash" not in mgr
+    cash = owner.post("/v1/shop/staff", json={"username": "ali", "password_hash": H, "role": "cashier",
+                                             "branches": [me, nc_id]}).json()  # fmt: skip
+    # مدير ثاني لنفس الفرع مرفوض، واسم مكرر مرفوض (حتى مع اسم المالك)، وفرع من محل آخر مرفوض
+    r = owner.post("/v1/shop/staff", json={"username": "mgr2", "password_hash": H, "role": "manager", "branches": [nc_id]})
+    assert r.json()["error"]["code"] == "manager_exists"
+    r = owner.post("/v1/shop/staff", json={"username": "ali", "password_hash": H, "role": "cashier", "branches": [me]})
+    assert r.json()["error"]["code"] == "username_taken"
+    r = owner.post("/v1/shop/staff", json={"username": "x99", "password_hash": H, "role": "cashier",
+                                          "branches": [str(uuid.uuid4())]})  # fmt: skip
+    assert r.json()["error"]["code"] == "staff_bad_branch"
+    # الفرع العادي لا يستخدم الإدارة المركزية
+    assert nc.get("/v1/shop/staff").status_code == 403
+
+    # الموظفون يصلون مع سحب الكتالوج (بفروعهم)
+    staff = {i["data"]["username"]: i for i in nc.get("/v1/catalog/pull").json()["items"] if i["kind"] == "staff"}
+    assert staff["nasr.mgr"]["data"]["branches"] == [nc_id] and set(staff["ali"]["data"]["branches"]) == {me, nc_id}
+
+    # فرع يرفع كاشير محلي لنفسه فقط
+    [r1] = nc.post("/v1/catalog/push", json={"items": [staff_item(str(uuid.uuid4()), [nc_id], username="nasr.c1")]}).json()
+    assert r1["status"] == "ok"
+    [r2] = nc.post("/v1/catalog/push", json={"items": [staff_item(str(uuid.uuid4()), [me], username="spy")]}).json()
+    assert r2["status"] == "invalid"
+    # اسم موجود في فرع آخر = تعارض (لا دمج حسابات أشخاص مختلفين)
+    [r3] = nc.post("/v1/catalog/push", json={"items": [staff_item(str(uuid.uuid4()), [nc_id], username="ali")]}).json()
+    assert r3["status"] == "conflict"
+    # الفرع لا يغيّر فروع موظف، ولا دور/حذف موظف مشترك
+    [r4] = nc.post("/v1/catalog/push", json={"items": [staff_item(cash["id"], [nc_id], username="ali",
+                                                                 fields=["branches"])]}).json()  # fmt: skip
+    assert r4["status"] == "ok" and set(r4["data"]["branches"]) == {me, nc_id}
+    [r5] = nc.post("/v1/catalog/push", json={"items": [staff_item(cash["id"], [me, nc_id], role="manager", username="ali",
+                                                                 fields=["role"])]}).json()  # fmt: skip
+    assert r5["status"] == "invalid"
+    [r6] = nc.post("/v1/catalog/push", json={"items": [staff_item(cash["id"], [me, nc_id], username="ali", deleted=True)]}).json()
+    assert r6["status"] == "invalid"
+    # لكن يقدر يغيّر كلمة سر موظف يعمل عنده
+    [r7] = nc.post("/v1/catalog/push", json={"items": [{**staff_item(cash["id"], [me, nc_id], username="ali"),
+               "data": {**staff_item(cash["id"], [me, nc_id], username="ali")["data"], "password_hash": H[:-1] + "c"},
+               "fields": ["password_hash"]}]}).json()  # fmt: skip
+    assert r7["status"] == "ok"
+
+    # المالك ينقل المدير، ويوقف، ويحذف
+    r = vendor.patch(f"/v1/shop/staff/{cash['id']}", json={"branches": [me]}, headers=owner.headers)
+    assert r.status_code == 200 and r.json()["branches"] == [me]
+    assert vendor.delete(f"/v1/shop/staff/{mgr['id']}", headers=owner.headers).status_code == 204
+    names = {s["username"] for s in owner.get("/v1/shop/staff").json()}
+    assert names == {"ali", "nasr.c1"}
+
+
+def test_owner_cannot_merge_into_staff(vendor):
+    owner = as_branch(vendor, register(vendor, license_key()[0]).json())
+    me = owner.get("/v1/shop/branches").json()[0]["id"]
+    owner.post("/v1/shop/staff", json={"username": "zed", "password_hash": H, "role": "cashier", "branches": [me]})
+    [r] = owner.post("/v1/catalog/push", json={"items": [{"kind": "owner", "gid": str(uuid.uuid4()),
+                     "data": {"username": "zed", "password_hash": H}}]}).json()  # fmt: skip
+    assert r["status"] == "conflict"
+    assert [i["kind"] for i in owner.get("/v1/catalog/pull").json()["items"]] == ["staff"]

@@ -57,6 +57,8 @@ from .schemas import (
     RejectIn,
     RequestIn,
     SendIn,
+    StaffCreateIn,
+    StaffPatchIn,
 )
 
 REF = "branch_transfer"
@@ -541,6 +543,45 @@ class BranchSyncService:
         out = self._admin_client().call("POST", "/shop/license", {"license_key": license_key.strip()})
         self._audit_admin("license_renewed", {"expires_at": out.get("license_expires_at")})
         return out
+
+    # ---------- موظفو كل الفروع ----------
+    def staff_list(self) -> list[dict]:
+        return self._admin_client().call("GET", "/shop/staff")
+
+    def staff_create(self, data: StaffCreateIn) -> dict:
+        from app.core.passwords import hash_password
+
+        body = {"username": data.username, "password_hash": hash_password(data.password),
+                "role": data.role.value, "branches": [_safe_id(b) for b in data.branches]}  # fmt: skip
+        out = self._admin_client().call("POST", "/shop/staff", body)
+        self._audit_admin("staff_created", {"username": data.username, "role": data.role.value,
+                                            "branches": len(data.branches)})  # fmt: skip
+        return out
+
+    def staff_update(self, staff_id: str, data: StaffPatchIn) -> dict:
+        from app.core.passwords import hash_password
+
+        body: dict = {}
+        if data.username is not None:
+            body["username"] = data.username
+        if data.password:
+            body["password_hash"] = hash_password(data.password)
+        if data.role is not None:
+            body["role"] = data.role.value
+        if data.is_active is not None:
+            body["is_active"] = data.is_active
+        if data.branches is not None:
+            body["branches"] = [_safe_id(b) for b in data.branches]
+        out = self._admin_client().call("PATCH", f"/shop/staff/{_safe_id(staff_id)}", body)
+        changes = {k: v for k, v in body.items() if k != "password_hash"}
+        if "password_hash" in body:
+            changes["password"] = "changed"
+        self._audit_admin("staff_updated", {"username": out.get("username"), **changes})
+        return out
+
+    def staff_delete(self, staff_id: str) -> None:
+        self._admin_client().call("DELETE", f"/shop/staff/{_safe_id(staff_id)}")
+        self._audit_admin("staff_deleted", {"staff_id": staff_id})
 
     def _audit_admin(self, action: str, changes: dict) -> None:
         record_audit(self.session, self.actor, entity="branch_sync", entity_id=self._branch_id() or "-",

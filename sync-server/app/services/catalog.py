@@ -12,6 +12,9 @@
   غريباً عند باقي الفروع (وكل فرع يتحقق مرة ثانية قبل التطبيق).
 - كل تغيير فعلي يأخذ seq جديد تحت قفل صف المحل، والفروع تسحب «بعد آخر seq».
 - المخزون والتكلفة وأرصدة العملاء ونقاطهم لا تمر من هنا: كل فرع له أرقامه.
+- موظفو الفروع (staff: مدير/كاشير): كل موظف مربوط بفرع أو أكثر (branches)، وكل فرع يطبّق
+  موظفيه فقط ويحذف من نُقل لفرع آخر. الفرع يرفع موظفيه المحليين لنفسه فقط، ولا يقدر يعدّل فروع
+  موظف أو دوره إن كان يعمل في فروع أخرى: هذا من إدارة الموظفين المركزية للمالك (services/staff).
 - حساب المالك (owner): واحد لكل فروع المحل. يمر اسم المستخدم وتجزئة كلمة المرور (Argon2id) فقط،
   ولا تمر كلمة المرور نفسها أبداً. الفرع يرفع حسابات المالك فقط (لا مديرين ولا كاشيرية).
 """
@@ -27,7 +30,7 @@ from ..errors import BadRequest
 from ..models import CatalogItem, Shop
 from .events import lock_shop
 
-Kind = Literal["product", "customer", "owner"]
+Kind = Literal["product", "customer", "owner", "staff"]
 Gid = Annotated[str, StringConstraints(min_length=8, max_length=36, pattern=r"^[0-9A-Za-z-]+$")]
 Money = Annotated[int, Field(ge=0, le=10**12)]
 Name200 = Annotated[str, StringConstraints(min_length=1, max_length=200)]
@@ -85,7 +88,19 @@ class OwnerData(_Strict):
     is_active: bool = True
 
 
-MODELS: dict[str, type[BaseModel]] = {"product": ProductData, "customer": CustomerData, "owner": OwnerData}
+class StaffData(_Strict):
+    username: Annotated[str, StringConstraints(pattern=r"^[a-z0-9._\-]{3,50}$")]
+    password_hash: Annotated[str, StringConstraints(min_length=40, max_length=255, pattern=r"^\$argon2id\$")]
+    role: Literal["manager", "cashier"]
+    is_active: bool = True
+    branches: list[Gid] = Field(min_length=1, max_length=50)
+
+
+MODELS: dict[str, type[BaseModel]] = {
+    "product": ProductData, "customer": CustomerData, "owner": OwnerData, "staff": StaffData,
+}  # fmt: skip
+# أسماء المستخدمين فريدة على مستوى المحل كله (المالك والموظفون معاً).
+USER_KINDS = ("owner", "staff")
 
 
 class PushItem(BaseModel):
@@ -138,7 +153,7 @@ def match_key(kind: str, data: dict[str, Any]) -> str | None:
             return "b:" + str(data["barcode"]).strip()
         name = " ".join(str(data.get("name", "")).split()).casefold()
         return ("n:" + name)[:240] if name else None
-    if kind == "owner":
+    if kind in USER_KINDS:
         name = str(data.get("username") or "").strip().lower()
         return "u:" + name if name else None
     phone = "".join(ch for ch in str(data.get("phone") or "") if ch.isdigit())
@@ -152,11 +167,12 @@ def _validate(kind: str, data: dict[str, Any]) -> dict[str, Any]:
 def _key_owner(session: Session, shop_id: str, kind: str, key: str | None, gid: str) -> CatalogItem | None:
     if not key:
         return None
+    kinds = USER_KINDS if kind in USER_KINDS else (kind,)
     return session.scalars(
         select(CatalogItem)
         .where(
             CatalogItem.shop_id == shop_id,
-            CatalogItem.kind == kind,
+            CatalogItem.kind.in_(kinds),
             CatalogItem.match_key == key,
             CatalogItem.deleted.is_(False),
             CatalogItem.id != gid,
@@ -171,13 +187,31 @@ def _conflict_message(key: str) -> str:
     if key.startswith("p:"):
         return f"رقم الهاتف {key[2:]} مستخدم لعميل آخر في فرع آخر"
     if key.startswith("u:"):
-        return f"اسم المستخدم {key[2:]} مستخدم لحساب مالك آخر"
+        return f"اسم المستخدم {key[2:]} مستخدم لحساب آخر في المحل (في فرع آخر أو للمالك)"
     return "يوجد صنف آخر بالاسم نفسه وبدون باركود في فرع آخر"
 
 
 def check_size(items: list[PushItem], max_items: int) -> None:
     if len(items) > max_items:
         raise BadRequest("push_too_large", f"أقصى عدد سجلات في الحزمة {max_items}", {"max": max_items})
+
+
+def _staff_denied(row: CatalogItem | None, item: PushItem, data: dict[str, Any], branch_id: str) -> str | None:
+    """قواعد رفع الموظفين من جهاز فرع (أي فرع، حتى الرئيسي): نطاقه فرعه فقط."""
+    if row is None:
+        if data["branches"] != [branch_id]:
+            return "الفرع يضيف موظفين لنفسه فقط"
+        return None
+    current = row.data.get("branches") or []
+    if branch_id not in current:
+        return "هذا الموظف لا يعمل في هذا الفرع"
+    only_mine = current == [branch_id]
+    if item.deleted and not only_mine:
+        return "الموظف يعمل في فروع أخرى: أزله من إدارة الموظفين عند المالك"
+    wanted = item.fields if item.fields is not None else list(MODELS["staff"].model_fields)
+    if "role" in wanted and data.get("role") != row.data.get("role") and not only_mine:
+        return "دور موظف يعمل في أكثر من فرع يُغيَّر من إدارة الموظفين عند المالك"
+    return None
 
 
 def push(session: Session, *, shop_id: str, branch_id: str, items: list[PushItem]) -> list[PushResult]:
@@ -204,6 +238,11 @@ def push(session: Session, *, shop_id: str, branch_id: str, items: list[PushItem
             msg = str(exc.errors()[0].get("msg", "بيانات غير صالحة"))[:200]
             out.append(PushResult(gid=item.gid, status="invalid", message=msg))
             continue
+        if item.kind == "staff":
+            denied = _staff_denied(row, item, data, branch_id)
+            if denied:
+                out.append(PushResult(gid=item.gid, status="invalid", message=denied))
+                continue
 
         if row is None:
             if item.deleted:  # اتحذف قبل ما يترفع أصلاً
@@ -211,6 +250,11 @@ def push(session: Session, *, shop_id: str, branch_id: str, items: list[PushItem
                 continue
             key = match_key(item.kind, data)
             owner = _key_owner(session, shop_id, item.kind, key, item.gid)
+            if owner is not None and (item.kind == "staff" or owner.kind != item.kind):
+                # موظف بنفس الاسم في فرع آخر = شخص آخر غالباً، وحساب مالك لا يُدمج في حساب موظف:
+                # لا دمج، والاسم محجوز.
+                out.append(PushResult(gid=item.gid, status="conflict", message=_conflict_message(key or "")))
+                continue
             if owner is not None:
                 out.append(
                     PushResult(gid=item.gid, status="merged", canonical_gid=owner.id,
@@ -239,6 +283,8 @@ def push(session: Session, *, shop_id: str, branch_id: str, items: list[PushItem
 
         allowed = MODELS[item.kind].model_fields
         wanted = item.fields if item.fields is not None else list(allowed)
+        if item.kind == "staff":  # فروع الموظف تُغيَّر من الإدارة المركزية فقط
+            wanted = [f for f in wanted if f != "branches"]
         merged = {**row.data, **{f: data[f] for f in wanted if f in allowed}}
         try:
             merged = _validate(item.kind, merged)  # الدمج نفسه لازم يطلع سجل صالح

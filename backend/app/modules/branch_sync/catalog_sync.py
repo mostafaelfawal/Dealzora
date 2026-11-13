@@ -8,6 +8,9 @@
 ونرفع حسابات المالك وحدها (المديرون والكاشيرية خاصين بكل فرع). تغيير كلمة السر أو الإيقاف
 من فرع يلغي جلسات المالك المفتوحة في باقي الفروع.
 
+موظفو الفروع (مدير/كاشير): كل موظف مربوط بفروع (branches) من إدارة المالك المركزية. الفرع يطبّق
+موظفيه فقط، ويحذف من نُقل منه (وتُقفل جلساته)، ويرفع موظفيه المحليين لنفسه فقط.
+
 الدورة (run): 1) إعادة تطبيق ما فشل سابقاً  2) سحب تغييرات السيرفر وتطبيقها  3) رفع تعديلاتنا.
 - لا معاملة مفتوحة أثناء الاتصال بالسيرفر (commit قبل كل طلب): الكاشير لا يتعطل.
 - كل سجل يُطبَّق داخل savepoint: سجل فاشل (باركود محجوز محلياً مثلاً) يُسجَّل كخطأ ولا يوقف الباقي.
@@ -44,8 +47,9 @@ from app.modules.users.model import User
 from .client import RemoteError, SyncAuthLost, SyncClient, SyncUnavailable
 from .model import CatalogLink, CatalogState
 
-PRODUCT, CUSTOMER, OWNER = "product", "customer", "owner"
-KINDS = (PRODUCT, CUSTOMER, OWNER)
+PRODUCT, CUSTOMER, OWNER, STAFF = "product", "customer", "owner", "staff"
+KINDS = (PRODUCT, CUSTOMER, OWNER, STAFF)
+STAFF_ROLES = (Role.MANAGER.value, Role.CASHIER.value)
 PUSH_BATCH = 200
 PULL_PAGE = 500
 MAX_PAGES = 40  # حتى 20 ألف تغيير في الدورة الواحدة، والباقي في الدورة التالية
@@ -93,10 +97,15 @@ def owner_data(u: User) -> dict[str, Any]:
     return {"username": u.username, "password_hash": u.password_hash, "is_active": u.is_active}
 
 
+def staff_data(u: User) -> dict[str, Any]:
+    """بدون الفروع: الفرع لا يعرف إلا نفسه، والفروع تأتي من آخر نسخة متفق عليها مع السيرفر."""
+    return {"username": u.username, "password_hash": u.password_hash, "role": u.role, "is_active": u.is_active}
+
+
 EXTRACT: dict[str, Callable[[Any], dict[str, Any]]] = {
-    PRODUCT: product_data, CUSTOMER: customer_data, OWNER: owner_data,
+    PRODUCT: product_data, CUSTOMER: customer_data, OWNER: owner_data, STAFF: staff_data,
 }  # fmt: skip
-MODEL: dict[str, type] = {PRODUCT: Product, CUSTOMER: Customer, OWNER: User}
+MODEL: dict[str, type] = {PRODUCT: Product, CUSTOMER: Customer, OWNER: User, STAFF: User}
 
 
 def display_name(row: Any) -> str:
@@ -114,7 +123,7 @@ def match_key(kind: str, data: dict[str, Any]) -> str | None:
             return "b:" + str(data["barcode"]).strip()
         name = " ".join(str(data.get("name", "")).split()).casefold()
         return "n:" + name if name else None
-    if kind == OWNER:
+    if kind in (OWNER, STAFF):
         name = str(data.get("username") or "").strip().lower()
         return "u:" + name if name else None
     phone = "".join(ch for ch in str(data.get("phone") or "") if ch.isdigit())
@@ -250,6 +259,8 @@ class CatalogSync:
         self, kind: str, gid: str, version: int, data: dict[str, Any], deleted: bool,
         link: CatalogLink | None,
     ) -> None:  # fmt: skip
+        if kind == STAFF and self.branch_id not in (data.get("branches") or []):
+            deleted = True  # نُقل لفرع آخر أو لا يخصنا: يُحذف من هنا (لو موجود)
         row = self._local_row(kind, gid, link, data)
         if row is not None and row.deleted_at is not None:
             # محذوف عندنا: لا نرجّعه، والرفع يبلغ السيرفر بالحذف.
@@ -258,7 +269,10 @@ class CatalogSync:
         if deleted:
             if row is not None:
                 self._retire(kind, row)
-            self._bind(kind, gid, row.id if row is not None else None, version, data)
+            # الحذف جاء من السيرفر: نفك ربط السجل المحلي المحذوف، فلا نرفع «حذفاً» مرتداً
+            # (مهم للموظف المنقول لفرع آخر: هو لم يُحذف من المحل).
+            keep = row is not None and row.deleted_at is None  # صنف/عميل أُوقف فقط لأن عليه رصيد
+            self._bind(kind, gid, row.id if keep else None, version, data)
             return
 
         target = dict(data)
@@ -291,6 +305,13 @@ class CatalogSync:
         key = match_key(kind, data)
         if not key:
             return None
+        if kind == STAFF:
+            user = self.session.scalars(
+                select(User).where(User.username == key[2:], User.deleted_at.is_(None), User.id.not_in(taken))
+            ).first()
+            if user is not None and user.role == Role.OWNER.value:
+                raise ConflictError("staff_username_taken", f"اسم المستخدم «{user.username}» هو حساب المالك")
+            return user
         if kind == OWNER:
             user = self.session.scalars(
                 select(User).where(User.username == key[2:], User.deleted_at.is_(None), User.id.not_in(taken))
@@ -444,7 +465,7 @@ class CatalogSync:
         username = str(d.get("username") or "").strip().lower()
         password_hash = str(d.get("password_hash") or "")
         if not re.fullmatch(USERNAME_PATTERN, username) or not password_hash.startswith("$argon2id$"):
-            raise ValueError("بيانات حساب المالك غير صالحة")
+            raise ValueError("بيانات الحساب غير صالحة")
         return username, password_hash, bool(d.get("is_active", True))
 
     def _username_taken(self, username: str, exclude_id: str | None) -> bool:
@@ -515,13 +536,70 @@ class CatalogSync:
         user.mark_deleted()
         self._audit_user(user, "sync_delete", {"username": user.username})
 
+    # ---------- موظفو الفروع ----------
+    def _staff_fields(self, d: dict[str, Any]) -> tuple[str, str, bool, str]:
+        username, password_hash, active = self._owner_fields(d)
+        role = d.get("role")
+        if role not in STAFF_ROLES:
+            raise ValueError("دور الموظف غير صالح")
+        return username, password_hash, active, role
+
+    def _create_staff(self, gid: str, d: dict[str, Any]) -> User:
+        username, password_hash, active, role = self._staff_fields(d)
+        if self._username_taken(username, None):
+            raise ConflictError("staff_username_taken", f"اسم المستخدم «{username}» مستخدم في هذا الفرع")
+        user = User(
+            id=gid if self.session.get(User, gid) is None else uuid7(),
+            username=username, password_hash=password_hash, role=role, is_active=active,
+            device_id=self.actor.device_id, created_by=None, password_changed_at=utcnow(),
+        )  # fmt: skip
+        self.session.add(user)
+        self.session.flush()
+        self._audit_user(user, "sync_create", {"username": username, "role": role})
+        return user
+
+    def _update_staff(self, user: User, d: dict[str, Any]) -> None:
+        if user.role not in STAFF_ROLES:
+            raise ConflictError("staff_username_taken", "الحساب المحلي ليس حساب موظف")
+        username, password_hash, active, role = self._staff_fields(d)
+        if (user.username, user.password_hash, user.is_active, user.role) == (username, password_hash, active, role):
+            return
+        if username != user.username and self._username_taken(username, user.id):
+            raise ConflictError("staff_username_taken", f"اسم المستخدم «{username}» مستخدم في هذا الفرع")
+        changes: dict[str, Any] = {}
+        for field, new in (("username", username), ("role", role), ("is_active", active)):
+            if getattr(user, field) != new:
+                changes[field] = {"from": getattr(user, field), "to": new}
+                setattr(user, field, new)
+        if password_hash != user.password_hash:
+            changes["password"] = "changed"
+            user.password_hash = password_hash
+            user.password_changed_at = utcnow()
+            user.failed_attempts = 0
+            user.locked_until = None
+        if "password" in changes or "role" in changes or not active:
+            self._end_sessions(user.id)  # صلاحيات أو كلمة سر جديدة: الجلسات القديمة تقفل
+        user.mark_modified()
+        self._audit_user(user, "sync_update", changes)
+
+    def _retire_staff(self, user: User) -> None:
+        if user.role not in STAFF_ROLES:
+            return
+        self._end_sessions(user.id)
+        user.mark_deleted()
+        self._audit_user(user, "sync_delete", {"username": user.username})
+
     def _create(self, kind: str, gid: str, d: dict[str, Any]) -> Any:
+        if kind == STAFF:
+            return self._create_staff(gid, d)
         if kind == OWNER:
             return self._create_owner(gid, d)
         return self._create_product(gid, d) if kind == PRODUCT else self._create_customer(gid, d)
 
     def _update(self, kind: str, row: Any, d: dict[str, Any]) -> None:
-        if kind == OWNER:
+        if kind == STAFF:
+            self._update_staff(row, d)
+        elif kind == OWNER:
             self._update_owner(row, d)
         elif kind == PRODUCT:
             self._update_product(row, d)
@@ -530,6 +608,9 @@ class CatalogSync:
 
     def _retire(self, kind: str, row: Any) -> None:
         """اتحذف من فرع آخر: نحذفه عندنا، إلا لو عندنا عليه رصيد/دين فنوقفه بس."""
+        if kind == STAFF:
+            self._retire_staff(row)
+            return
         if kind == OWNER:
             self._retire_owner(row)
             return
@@ -610,7 +691,9 @@ class CatalogSync:
         )
         query = select(model)
         if kind == OWNER:
-            query = query.where(User.role == Role.OWNER.value)  # المديرون والكاشيرية لا يُرفعون أبداً
+            query = query.where(User.role == Role.OWNER.value)
+        elif kind == STAFF:
+            query = query.where(User.role.in_(STAFF_ROLES))
         if since is not None:
             query = query.where(or_(model.updated_at >= since, model.id.not_in(synced_ids)))
         out: list[dict[str, Any]] = []
@@ -623,6 +706,8 @@ class CatalogSync:
                                 "wire": {"kind": kind, "gid": link.gid, "data": data, "deleted": True}})  # fmt: skip
                 continue
             data = EXTRACT[kind](row)
+            if kind == STAFF:
+                data["branches"] = list((link.synced or {}).get("branches") or [self.branch_id]) if link else [self.branch_id]
             h = digest(data)
             if link is not None and link.error_hash == h:
                 continue  # فشل قبل كده بنفس البيانات: نستنى تعديل جديد
@@ -707,6 +792,7 @@ def catalog_status(session: Session) -> dict[str, Any]:
         "products": linked[PRODUCT],
         "customers": linked[CUSTOMER],
         "owners": linked[OWNER],
+        "staff": linked[STAFF],
         "error_count": error_count,
         "errors": errors,
     }

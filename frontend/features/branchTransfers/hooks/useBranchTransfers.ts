@@ -4,6 +4,13 @@ import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/errors";
 
 import {
+  createStaff,
+  deleteStaff,
+  fetchStaff,
+  updateStaff,
+  type Staff,
+  type StaffInput,
+  type StaffPatch,
   createPairingCode,
   createShopBranch,
   fetchShopBranches,
@@ -44,6 +51,7 @@ export const branchKeys = {
   catalog: () => [...branchKeys.all, "catalog"] as const,
   shopBranches: () => [...branchKeys.all, "shop-branches"] as const,
   shopInfo: () => [...branchKeys.all, "shop-info"] as const,
+  staff: () => [...branchKeys.all, "staff"] as const,
 };
 
 export const useBranchStatus = () =>
@@ -357,6 +365,52 @@ export function useShopBranchActions() {
         toast.success("جُدّد ترخيص المحل على سيرفر الفروع");
       },
       onError: fail("تعذّر تجديد الترخيص"),
+    }),
+  };
+}
+
+/* ---------- موظفو كل الفروع ---------- */
+
+export const useStaff = (enabled: boolean) =>
+  useQuery({
+    queryKey: branchKeys.staff(),
+    queryFn: fetchStaff,
+    enabled,
+    retry: false,
+  });
+
+export function useStaffActions() {
+  const qc = useQueryClient();
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: branchKeys.staff() });
+    // الجهاز الرئيسي فرع أيضاً: موظفوه يصلون لقائمة «المستخدمون» بعد المزامنة
+    void qc.invalidateQueries({ queryKey: ["users"] });
+  };
+  return {
+    create: useMutation({
+      mutationFn: (v: StaffInput) => createStaff(v),
+      onSuccess: (s) => {
+        refresh();
+        toast.success(`أُضيف «${s.username}»، ويصل لأجهزة فروعه خلال دقيقة`);
+      },
+      onError: fail("تعذّرت إضافة الموظف"),
+    }),
+    update: useMutation({
+      mutationFn: (v: { id: string; patch: StaffPatch }) =>
+        updateStaff(v.id, v.patch),
+      onSuccess: (s) => {
+        refresh();
+        toast.success(`حُفظ «${s.username}»`);
+      },
+      onError: fail("تعذّر تعديل الموظف"),
+    }),
+    remove: useMutation({
+      mutationFn: (s: Staff) => deleteStaff(s.id),
+      onSuccess: (_r, s) => {
+        refresh();
+        toast.success(`حُذف «${s.username}» من كل الفروع`);
+      },
+      onError: fail("تعذّر حذف الموظف"),
     }),
   };
 }

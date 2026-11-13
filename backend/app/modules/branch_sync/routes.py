@@ -28,6 +28,8 @@ from .schemas import (
     RejectIn,
     RequestIn,
     SendIn,
+    StaffCreateIn,
+    StaffPatchIn,
 )
 from .service import BranchSyncService
 
@@ -138,6 +140,28 @@ def admin_update(branch_id: str, data: BranchPatchIn, svc: Svc):
 def admin_revoke(branch_id: str, svc: Svc):
     """إلغاء ربط جهاز الفرع (ضاع/اتسرق/هيتغير): يتوقف فوراً."""
     return svc.admin_revoke(branch_id)
+
+
+@router.get("/staff", dependencies=OwnerRead)
+def staff_list(svc: Svc):
+    """موظفو كل الفروع (المديرون والكاشيرية) وفروع كل واحد. من الجهاز الرئيسي للمالك."""
+    return svc.staff_list()
+
+
+@router.post("/staff", dependencies=OwnerWrite)
+def staff_create(data: StaffCreateIn, svc: Svc):
+    """موظف جديد لفرع أو أكثر: يصل لأجهزة فروعه مع المزامنة (خلال دقيقة)."""
+    return svc.staff_create(data)
+
+
+@router.patch("/staff/{staff_id}", dependencies=OwnerWrite)
+def staff_update(staff_id: str, data: StaffPatchIn, svc: Svc):
+    return svc.staff_update(staff_id, data)
+
+
+@router.delete("/staff/{staff_id}", dependencies=OwnerWrite, status_code=204)
+def staff_delete(staff_id: str, svc: Svc):
+    svc.staff_delete(staff_id)
 
 
 @router.post("/disconnect", dependencies=OwnerConnect)

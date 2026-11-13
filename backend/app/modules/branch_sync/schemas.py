@@ -1,6 +1,14 @@
 """طلبات شاشة «تحويلات الفروع». الكميات × 1000 بالوحدة الأساسية والمال بالقروش (قواعد البرنامج)."""
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.core.security import Role
+from app.modules.users.schema_validation import (
+    AssignableRole,
+    NewPassword,
+    Username,
+    validate_password_vs_username,
+)
 
 
 class Strict(BaseModel):
@@ -77,3 +85,35 @@ class ReceiveIn(Strict):
 
 class RejectIn(Strict):
     reason: str = Field(min_length=2, max_length=300)
+
+
+# ================= موظفو كل الفروع (المالك من الجهاز الرئيسي) =================
+_BranchId = Field(min_length=8, max_length=36, pattern=r"^[0-9A-Za-z-]+$")
+
+
+class StaffCreateIn(Strict):
+    """نفس قواعد شاشة المستخدمين (الاسم وقوة كلمة المرور). كلمة المرور تُجزَّأ هنا ولا تُرسل."""
+
+    username: Username
+    password: NewPassword
+    role: AssignableRole = Role.CASHIER
+    branches: list[str] = Field(min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def _rules(self):
+        validate_password_vs_username(self.password, self.username)
+        return self
+
+
+class StaffPatchIn(Strict):
+    username: Username | None = None
+    password: NewPassword | None = None
+    role: AssignableRole | None = None
+    is_active: bool | None = None
+    branches: list[str] | None = Field(None, min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def _rules(self):
+        if self.password and self.username:
+            validate_password_vs_username(self.password, self.username)
+        return self
