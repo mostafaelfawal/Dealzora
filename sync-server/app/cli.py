@@ -39,12 +39,28 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("branch_id")
     p = sub.add_parser("rotate-secret", help="سر جديد لفرع (القديم يتوقف فوراً)")
     p.add_argument("branch_id")
+    sub.add_parser("lease-keygen", help="مفتاح توقيع شهادات الفروع (الخاص للسيرفر، والعام لبناء البرنامج)")
     p = sub.add_parser("make-admin", help="اجعل فرعاً هو الفرع الرئيسي لمحله (لمحل أنشأته يدوياً)")
     p.add_argument("branch_id")
     for name in ("disable-branch", "enable-branch"):
         p = sub.add_parser(name)
         p.add_argument("branch_id")
     args = parser.parse_args(argv)
+
+    if args.cmd == "lease-keygen":
+        import base64
+
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from cryptography.hazmat.primitives.serialization import (
+            Encoding, NoEncryption, PrivateFormat, PublicFormat,
+        )  # fmt: skip
+
+        key = Ed25519PrivateKey.generate()
+        enc = lambda b: base64.urlsafe_b64encode(b).rstrip(b"=").decode()  # noqa: E731
+        print("SYNC_LEASE_KEY=" + enc(key.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())))
+        print("DEALZORA_SYNC_LEASE_PUBKEY=" + enc(key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)))
+        print("⚠ الأول في .env السيرفر فقط (سري). الثاني متغير بيئة وقت بناء البرنامج (build-backend.ps1).")
+        return 0
 
     with get_sessionmaker()() as session:
         if args.cmd == "create-shop":

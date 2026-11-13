@@ -499,3 +499,25 @@ export const renewShopLicense = async (licenseKey: string) =>
   toShopInfo(
     (await api.post(`${BASE}/shop/license`, { license_key: licenseKey })).data,
   );
+
+/* ---------- انضمام جهاز فرع جديد (شاشة الإعداد الأول، لا مستخدمين بعد) ---------- */
+
+export interface JoinResult extends BranchStatus {
+  /** وصل حساب المالك: يقدر يسجّل الدخول وينشئ مدير الفرع. */
+  ownerReady: boolean;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- شكل الرد مكتوب في الـ backend */
+const toJoin = (d: any): JoinResult => ({
+  ...toStatus(d),
+  ownerReady: Boolean(d.owner_ready),
+});
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export const joinBranch = async (code: string, serverUrl: string) =>
+  toJoin(
+    (await api.post(`${BASE}/join`, { code, server_url: serverUrl })).data,
+  );
+
+export const joinBranchSync = async () =>
+  toJoin((await api.post(`${BASE}/join/sync`)).data);

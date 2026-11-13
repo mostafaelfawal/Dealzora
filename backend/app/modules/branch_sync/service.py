@@ -21,6 +21,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core import branch_lease
 from app.core.audit import record_audit
 from app.core.base import uuid7, utcnow
 from app.core.constants import QTY_SCALE
@@ -113,6 +114,7 @@ class BranchSyncService:
             "paired_at": cfg.get("paired_at"),
             "is_admin": bool(cfg.get("is_admin")),
             "pending": pending,
+            "lease": branch_lease.info(),
         }
         if check:
             client, _ = self._client()
@@ -120,10 +122,61 @@ class BranchSyncService:
         return out
 
     def connect(self, data: ConnectIn) -> dict:
-        ensure_feature(Feature.BRANCHES)
+        # بدون فحص الخطة: كود الربط من المالك هو الإثبات، والجهاز يرث خطة المحل بعد الربط.
+        if self.config() is not None:
+            raise ConflictError("branch_already_connected", "هذا الجهاز مربوط بالفعل. افصله أولاً")
         url = normalize_server_url(data.server_url)
         creds = SyncClient(url).pair(data.code)
         return self._save_connection(url, creds, admin=False)
+
+    def join(self, code: str, server_url: str) -> dict:
+        """جهاز فرع جديد (لا مستخدمين بعد): يُربط بالكود، يرث خطة المحل، ويسحب حساب المالك والأصناف.
+        بعدها يدخل المالك بحسابه المعتاد وينشئ مدير الفرع والكاشيرية."""
+        from app.modules.shop.service import ShopService
+        from app.modules.users.repository import UserRepository
+
+        if UserRepository(self.session).count_users() > 0:
+            raise ConflictError("already_setup", "هذا الجهاز مُعدّ بالفعل. اربطه من الإعدادات بحساب المالك")
+        url = normalize_server_url(server_url)
+        if self.config() is None:
+            creds = SyncClient(url).pair(code)
+            self._save_connection(url, creds, admin=False, action="branch_join")
+        status = self.join_sync()
+        cfg = self.config() or {}
+        if ShopService(self.session).repo.get() is None:
+            ShopService(self.session).create_initial(self.actor, cfg.get("shop_name") or "محلي")
+            self.session.commit()
+        return status
+
+    def join_sync(self) -> dict:
+        """أول مزامنة لجهاز الفرع الجديد: الشهادة ثم الأصناف والعملاء وحساب المالك."""
+        from app.modules.users.model import User
+
+        cfg = self.config()
+        if cfg is None:
+            raise NotConnected()
+        client = SyncClient(cfg["server_url"], cfg["branch_id"], cfg["secret"])
+        self._refresh_lease(client, cfg)
+        result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run()
+        owners = self.session.scalar(
+            select(func.count()).select_from(User).where(User.role == "owner", User.deleted_at.is_(None))
+        ) or 0
+        return {**self.status(), "owner_ready": owners > 0, "sync": result}
+
+    def _refresh_lease(self, client: SyncClient, cfg: dict) -> None:
+        """شهادة الفرع (خطة المحل). فشلها لا يوقف شيئاً: الشهادة المحفوظة تبقى حتى انتهائها."""
+        try:
+            out = client.call("GET", "/shop/lease")
+        except (SyncUnavailable, SyncAuthLost, RemoteError):
+            return
+        token = out.get("lease") if isinstance(out, dict) else None
+        if branch_lease.remember(token, cfg["branch_id"]) is None:
+            return
+        latest = self.config() or cfg
+        if latest.get("lease") != token:
+            latest["lease"] = token
+            self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(latest, ensure_ascii=False))
+            self.session.commit()
 
     def register(self, data: RegisterShopIn) -> dict:
         """المالك يسجّل محله بنفسه بمفتاح الترخيص: هذا الجهاز يصبح الفرع الرئيسي الذي يدير الفروع."""
@@ -158,6 +211,7 @@ class BranchSyncService:
             changes={"server_url": url, "branch": cfg["branch_name"], "shop": cfg["shop_name"]},
         )  # fmt: skip
         self.session.commit()
+        self._refresh_lease(SyncClient(url, creds["branch_id"], creds["secret"]), cfg)
         return self.status()
 
     def disconnect(self) -> dict:
@@ -165,6 +219,7 @@ class BranchSyncService:
         if cfg is None:
             return self.status()
         forget_token(cfg["branch_id"])
+        branch_lease.forget()  # الجهاز يرجع لخطته الأصلية فوراً
         self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, "")
         record_audit(
             self.session, self.actor, entity="branch_sync", entity_id=cfg["branch_id"],
@@ -501,8 +556,9 @@ class BranchSyncService:
         cfg = self.config()
         if cfg is None:
             return {"connected": False}
-        ensure_feature(Feature.BRANCHES)
         client = SyncClient(cfg["server_url"], cfg["branch_id"], cfg["secret"])
+        self._refresh_lease(client, cfg)  # قبل فحص الخطة: الفرع يرث خطة المحل من هنا
+        ensure_feature(Feature.BRANCHES)
         result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run()
         sent = 0
         if result.get("ok"):

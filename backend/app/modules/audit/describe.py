@@ -104,6 +104,7 @@ ACTION_LABELS: dict[str, str] = {
     "batch_write_off": "إعدام دفعة",
     "branch_connect": "ربط الفرع بسيرفر الفروع",
     "shop_register": "تسجيل المحل على سيرفر الفروع",
+    "branch_join": "انضمام هذا الجهاز كفرع جديد",
     "shop_recover": "استرجاع المحل على جهاز جديد",
     "branch_created": "إضافة فرع",
     "pairing_code_created": "إصدار كود ربط فرع",

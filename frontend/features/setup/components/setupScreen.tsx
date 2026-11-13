@@ -31,7 +31,7 @@ export function SetupScreen() {
           {ready ? (
             <>
               <SetupForm />
-              <ConnectLink />
+              <ConnectLink withBranch />
             </>
           ) : (
             <div

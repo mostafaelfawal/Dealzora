@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     max_branches_per_shop: int = Field(50, ge=1, le=1000)
     # بعد انتهاء الترخيص: كم يوم مهلة قبل إيقاف مزامنة المحل.
     license_grace_days: int = Field(7, ge=0, le=90)
+    # شهادة الفرع: أجهزة الفروع ترث خطة المحل. مفتاح Ed25519 خاص (base64url، 32 بايت):
+    #   python -m app.cli lease-keygen   ← يطبع المفتاح الخاص (هنا) والعام (في بناء البرنامج).
+    lease_key: str = ""
+    lease_ttl_days: int = Field(7, ge=1, le=30)
+    # خطة المحلات اللي أنشأتها يدوياً بلا ترخيص.
+    legacy_shop_plan: str = "enterprise"
 
     @field_validator("jwt_secret", "admin_token")
     @classmethod

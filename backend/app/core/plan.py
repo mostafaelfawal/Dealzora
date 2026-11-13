@@ -99,8 +99,15 @@ def current_plan() -> Plan:
         return Plan.FREE  # قيمة غير معروفة = الأضيق (لا نفتح ميزة بالخطأ)
     # الاشتراك انتهى والبرنامج مفتوح: نكمل على «بَسطة» (البيع لا يتوقف، والمدفوع يُقفل).
     if plan is not Plan.FREE and expires_at and time.time() >= expires_at:
-        return Plan.FREE
-    return plan
+        plan = Plan.FREE
+    # جهاز فرع مربوط بمحل خطته أعلى: يرث خطة المحل (شهادة موقّعة من سيرفر الفروع).
+    from .branch_lease import current_plan as lease_plan  # متأخر: لا دوران
+
+    try:
+        inherited = Plan(lease_plan() or "")
+    except ValueError:
+        return plan
+    return inherited if _RANK[inherited] > _RANK[plan] else plan
 
 
 def is_free() -> bool:

@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     # نهاية الاشتراك المدفوع (unix). عند تجاوزها يرجع الـ backend لـ«بَسطة» بنفسه دون إعادة تشغيل.
     plan_expires_at: int | None = None
     debug: bool = False
+    # للتطوير فقط: المفتاح العام لشهادات الفروع (النسخة المبنية تستخدم build_keys المثبّت).
+    sync_lease_pubkey: str = ""
     cors_origins: list[str] = [
         "tauri://localhost",
         "http://tauri.localhost",

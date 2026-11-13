@@ -177,3 +177,25 @@ def test_legacy_admin_shop_and_branch_limit(vendor, monkeypatch, shop):
     r = b["A"].post("/v1/shop/branches", json={"name": "رابع", "code": "D"})
     assert r.json()["error"]["code"] == "branch_limit"
     assert admin(vendor, "GET", "/v1/admin/shops").status_code == 200
+
+
+def test_branch_lease(vendor, monkeypatch):
+    from app.config import get_settings
+
+    owner_reg = register(vendor, license_key(days=30)[0]).json()
+    owner = as_branch(vendor, owner_reg)
+    assert owner.get("/v1/shop/lease").json()["error"]["code"] == "lease_disabled"
+
+    signer = Ed25519PrivateKey.generate()
+    raw = signer.private_bytes_raw() if hasattr(signer, "private_bytes_raw") else None
+    monkeypatch.setattr(get_settings(), "lease_key", b64(raw))
+    new = owner.post("/v1/shop/branches", json={"name": "فرع 2", "code": "B2"}).json()
+    branch = as_branch(vendor, vendor.post("/v1/auth/pair", json={"code": new["pairing"]["code"]}).json())
+
+    out = branch.get("/v1/shop/lease").json()
+    body, sig = out["lease"].split(".")
+    signer.public_key().verify(base64.urlsafe_b64decode(sig + "=="), body.encode())  # توقيع صحيح
+    payload = json.loads(base64.urlsafe_b64decode(body + "=="))
+    assert payload["plan"] == "enterprise" and payload["branch_id"] == new["branch"]["id"]
+    # لا تتجاوز ترخيص المحل + المهلة، ولا عمر الشهادة
+    assert payload["exp"] - payload["iat"] <= 7 * 86400 + 5

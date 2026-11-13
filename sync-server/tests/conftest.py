@@ -19,6 +19,7 @@ os.environ.update(
     SYNC_ADMIN_ALLOWED_IPS="",
     SYNC_DOCS_ENABLED="false",
     SYNC_VENDOR_PUBKEY="",
+    SYNC_LEASE_KEY="",
 )
 
 

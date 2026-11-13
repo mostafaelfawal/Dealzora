@@ -8,7 +8,10 @@
   POST  /v1/shop/branches/{id}/pairing-code   كود ربط جديد (يلغي القديم)
   PATCH /v1/shop/branches/{id}                تغيير الاسم / إيقاف / تفعيل
   POST  /v1/shop/branches/{id}/revoke         إلغاء ربط جهاز الفرع (يتوقف فوراً)
+  GET   /v1/shop/lease                        شهادة الفرع الموقّعة (يرث خطة المحل)
 """
+
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request, status
 
@@ -18,6 +21,7 @@ from ..schemas import (
     AdminBranchOut,
     BranchIn,
     BranchPatch,
+    LeaseOut,
     LicenseIn,
     NewBranchOut,
     PairingCodeOut,
@@ -26,6 +30,8 @@ from ..schemas import (
     ShopInfoOut,
 )
 from ..security import CallerDep, RenewalCallerDep
+from ..models import Branch, Shop
+from ..services import lease as lease_svc
 from ..services import self_service as svc
 
 router = APIRouter(tags=["shop"])
@@ -74,3 +80,12 @@ def update_branch(branch_id: str, data: BranchPatch, caller: CallerDep, session:
 @router.post("/shop/branches/{branch_id}/revoke", response_model=AdminBranchOut)
 def revoke(branch_id: str, caller: CallerDep, session: SessionDep):
     return svc.revoke_device(session, caller, branch_id)
+
+
+@router.get("/shop/lease", response_model=LeaseOut)
+def lease(caller: CallerDep, session: SessionDep):
+    """أي فرع مربوط (والمحل ساري الترخيص) يأخذ شهادة بخطة محله."""
+    shop = session.get(Shop, caller.shop_id)
+    branch = session.get(Branch, caller.branch_id)
+    token, payload = lease_svc.issue(shop, branch)
+    return LeaseOut(lease=token, plan=payload["plan"], expires_at=datetime.fromtimestamp(payload["exp"], tz=UTC))

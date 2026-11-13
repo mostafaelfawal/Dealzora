@@ -14,6 +14,8 @@ from app.core.permissions import (
     require_owner_write,
 )
 from app.core.plan import Feature, require_feature_for_writes
+from app.core.security import require_write_permit
+from pydantic import BaseModel, ConfigDict, Field
 
 from .schemas import (
     ApproveIn,
@@ -29,15 +31,49 @@ from .schemas import (
 )
 from .service import BranchSyncService
 
-router = APIRouter(
-    prefix="/branch-sync",
-    tags=["branch-sync"],
-    dependencies=[require_feature_for_writes(Feature.BRANCHES)],
-)
+router = APIRouter(prefix="/branch-sync", tags=["branch-sync"])
+# خطة «سلسلة» (أو موروثة من المحل) لكل عمليات التحويل وإدارة الفروع. الربط بكود والمزامنة بدونها:
+# كود المالك هو الإثبات، والجهاز يرث الخطة بعد الربط.
+_Plan = require_feature_for_writes(Feature.BRANCHES)
 Read = [Depends(require_manager)]
-Write = [Depends(require_manager_write)]
-OwnerWrite = [Depends(require_owner_write)]  # ربط/فصل الفرع: للمالك فقط
+Write = [Depends(require_manager_write), _Plan]
+OwnerWrite = [Depends(require_owner_write), _Plan]  # للمالك فقط
+OwnerConnect = [Depends(require_owner_write)]
 OwnerRead = [Depends(require_owner)]
+
+
+class JoinIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(min_length=12, max_length=20)
+    server_url: str = Field(min_length=4, max_length=200)
+
+
+def _system_svc(session: SessionDep) -> BranchSyncService:
+    """جهاز جديد بلا مستخدمين: نعمل باسم «النظام» (الـ service يرفض لو فيه مستخدمين)."""
+    from app.core.config import get_settings
+    from app.core.security import Actor, Role
+
+    return BranchSyncService(session, Actor("system", Role.OWNER, get_settings().device_id))
+
+
+JoinDeps = [Depends(require_write_permit), Depends(require_main_device)]
+
+
+@router.post("/join", dependencies=JoinDeps)
+def join(data: JoinIn, svc: Annotated[BranchSyncService, Depends(_system_svc)]):
+    """شاشة الإعداد الأول لجهاز فرع جديد: ربط بكود المالك + سحب حساب المالك والأصناف."""
+    return svc.join(data.code, data.server_url)
+
+
+@router.post("/join/sync", dependencies=JoinDeps)
+def join_sync(svc: Annotated[BranchSyncService, Depends(_system_svc)]):
+    """إعادة المحاولة لو حساب المالك لم يصل بعد (جهاز المالك لم يزامن، أو النت انقطع)."""
+    from app.core.errors import ConflictError
+    from app.modules.users.repository import UserRepository
+
+    if UserRepository(svc.session).count_users() > 0:
+        raise ConflictError("already_setup", "هذا الجهاز مُعدّ بالفعل")
+    return svc.join_sync()
 
 
 def _svc(session: SessionDep, actor: ActorDep) -> BranchSyncService:
@@ -53,7 +89,7 @@ def status(svc: Svc, check: bool = False):
     return svc.status(check=check)
 
 
-@router.post("/connect", dependencies=OwnerWrite)
+@router.post("/connect", dependencies=OwnerConnect)
 def connect(data: ConnectIn, svc: Svc):
     """ربط هذا الفرع بسيرفر الفروع بكود الربط (مرة واحدة)."""
     return svc.connect(data)
@@ -104,7 +140,7 @@ def admin_revoke(branch_id: str, svc: Svc):
     return svc.admin_revoke(branch_id)
 
 
-@router.post("/disconnect", dependencies=OwnerWrite)
+@router.post("/disconnect", dependencies=OwnerConnect)
 def disconnect(svc: Svc):
     return svc.disconnect()
 

@@ -370,3 +370,11 @@ class AdminBranchOut(BaseModel):
 class NewBranchOut(BaseModel):
     branch: AdminBranchOut
     pairing: PairingCodeOut
+
+
+class LeaseOut(BaseModel):
+    """شهادة الفرع الموقّعة: البرنامج يتحقق منها بالمفتاح العام المثبّت فيه."""
+
+    lease: str
+    plan: str
+    expires_at: datetime

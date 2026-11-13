@@ -24,6 +24,19 @@ if (-not $SkipBackend) {
         Remove-Item (Join-Path $backend $name) -Recurse -Force -ErrorAction SilentlyContinue
     }
 
+    # المفتاح العام لشهادات الفروع يُثبَّت داخل النسخة (لا يُقرأ من البيئة على جهاز التاجر).
+    # من: (sync-server) python -m app.cli lease-keygen  ← السطر DEALZORA_SYNC_LEASE_PUBKEY
+    $leaseKey = $env:DEALZORA_SYNC_LEASE_PUBKEY
+    if (-not $leaseKey) {
+        Write-Warning "DEALZORA_SYNC_LEASE_PUBKEY غير مضبوط: أجهزة الفروع لن ترث خطة المحل في هذه النسخة."
+        $leaseKey = ""
+    }
+    if ($leaseKey -notmatch '^[A-Za-z0-9_-]*$') { throw "DEALZORA_SYNC_LEASE_PUBKEY غير صالح" }
+    $keysFile = Join-Path $backend "app\core\build_keys.py"
+    $keysOriginal = Get-Content $keysFile -Raw -Encoding utf8
+    ($keysOriginal -replace 'SYNC_LEASE_PUBKEY = ".*"', "SYNC_LEASE_PUBKEY = `"$leaseKey`"") |
+        Set-Content $keysFile -Encoding utf8 -NoNewline
+
     Push-Location $backend
     try {
         & $python -m PyInstaller --noconfirm --clean --onefile --noconsole `
@@ -39,6 +52,8 @@ if (-not $SkipBackend) {
     }
     finally {
         Pop-Location
+        # نرجّع الملف كما كان (المفتاح لا يُحفظ في git)
+        Set-Content $keysFile $keysOriginal -Encoding utf8 -NoNewline
     }
 }
 
