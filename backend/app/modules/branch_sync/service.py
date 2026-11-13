@@ -68,6 +68,10 @@ _summary_cache: dict[str, tuple[float, dict]] = {}  # لكل فرع
 _summary_lock = threading.Lock()
 # آخر قائمة فروع معروفة: الإرسال يعمل حتى لو السيرفر غير متاح لحظتها (يُعلَّق ويُعاد).
 _branches_cache: dict[str, list[dict]] = {}
+# مزامنة شاشة الدخول (بلا مستخدم): حد أدنى بين المرات حتى لا تُستغل لإغراق السيرفر.
+_DEVICE_SYNC_MIN_SECONDS = 10.0
+_last_device_sync = 0.0
+_device_sync_lock = threading.Lock()
 
 
 class NotConnected(ConflictError):
@@ -608,6 +612,21 @@ class BranchSyncService:
             except (SyncUnavailable, SyncAuthLost, RemoteError):
                 pass
         return {"result": {**result, "transfers_sent": sent}, **self.catalog()}
+
+    def device_sync(self) -> dict:
+        global _last_device_sync
+        cfg = self.config()
+        if cfg is None:
+            return {"connected": False, "synced": False}
+        now = time.monotonic()
+        with _device_sync_lock:
+            if now - _last_device_sync < _DEVICE_SYNC_MIN_SECONDS:
+                return {"connected": True, "synced": False, "throttled": True}
+            _last_device_sync = now
+        client = SyncClient(cfg["server_url"], cfg["branch_id"], cfg["secret"])
+        self._refresh_lease(client, cfg)
+        result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run()
+        return {"connected": True, "synced": bool(result.get("ok"))}
 
     # ================= إعادة المعلّق =================
     def retry_pending(self) -> int:

@@ -78,6 +78,14 @@ def join_sync(svc: Annotated[BranchSyncService, Depends(_system_svc)]):
     return svc.join_sync()
 
 
+@router.post("/device-sync", dependencies=JoinDeps)
+def device_sync(svc: Annotated[BranchSyncService, Depends(_system_svc)]):
+    """مزامنة على مستوى الجهاز قبل تسجيل الدخول (شاشة الدخول): تنزّل حسابات المالك والموظفين
+    الجديدة فيقدروا يدخلوا فوراً. توكن التطبيق + تصريح الكتابة + الجهاز الأساسي فقط، وبحد أدنى
+    بين المرات. لا يرجّع أي بيانات (لا أسماء ولا أخطاء): فقط هل تمت."""
+    return svc.device_sync()
+
+
 def _svc(session: SessionDep, actor: ActorDep) -> BranchSyncService:
     return BranchSyncService(session, actor)
 

@@ -3,8 +3,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createContext, type ReactNode, useContext, useEffect } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+} from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
+
+import { deviceSync } from "@/features/branchTransfers/api/branchTransfers.api";
+import { ApiError } from "@/lib/axios";
 
 import { AUTH_ROUTES } from "../config/authRoutes";
 import useLogin from "../hooks/useLogin";
@@ -57,25 +65,40 @@ export default function LoginFormContextProvider({
   }, [reset]);
 
   const submit = handleSubmit((values) => {
-    loginMutation.mutate(
-      { username: values.username.trim(), password: values.password },
-      {
-        onSuccess: (session) => {
-          saveSession(session);
-          saveLastLogin({
-            role: session.user.role,
-            username: session.user.username,
-          });
-          queryClient.clear();
-          router.replace(AUTH_ROUTES.home[session.user.role]);
-        },
-        onError: () => {
-          resetField("password", { defaultValue: "" });
-          document.getElementById(LOGIN_FIELD_IDS.password)?.focus();
-        },
-      },
-    );
+    const credentials = {
+      username: values.username.trim(),
+      password: values.password,
+    };
+    attempt(credentials, false);
   });
+
+  /** retried: حساب جديد أنشأه المالك من جهازه ولم يصل بعد ← نزامن ونعيد المحاولة مرة واحدة فقط. */
+  function attempt(
+    credentials: { username: string; password: string },
+    retried: boolean,
+  ) {
+    loginMutation.mutate(credentials, {
+      onSuccess: (session) => {
+        saveSession(session);
+        saveLastLogin({
+          role: session.user.role,
+          username: session.user.username,
+        });
+        queryClient.clear();
+        router.replace(AUTH_ROUTES.home[session.user.role]);
+      },
+      onError: async (error) => {
+        const unknownAccount =
+          error instanceof ApiError && error.code === "invalid_credentials";
+        if (unknownAccount && !retried) {
+          const r = await deviceSync().catch(() => null);
+          if (r?.synced) return attempt(credentials, true);
+        }
+        resetField("password", { defaultValue: "" });
+        document.getElementById(LOGIN_FIELD_IDS.password)?.focus();
+      },
+    });
+  }
 
   return (
     <LoginFormContext.Provider

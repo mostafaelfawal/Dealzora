@@ -582,3 +582,12 @@ export const updateStaff = async (id: string, p: StaffPatch) =>
 export const deleteStaff = async (id: string) => {
   await api.delete(`${BASE}/staff/${id}`);
 };
+
+/** مزامنة على مستوى الجهاز قبل تسجيل الدخول: تنزّل الحسابات الجديدة (المالك والموظفين). */
+export const deviceSync = async (): Promise<{
+  connected: boolean;
+  synced: boolean;
+}> => {
+  const d = (await api.post(`${BASE}/device-sync`)).data;
+  return { connected: Boolean(d.connected), synced: Boolean(d.synced) };
+};
