@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { isTerminal, useDeviceConfig } from "@/lib/device";
-import { useFeature } from "@/lib/plan";
+import { planKey } from "@/lib/plan";
 
 import { syncCatalogNow } from "../api/branchTransfers.api";
 import { branchKeys } from "../hooks/useBranchTransfers";
@@ -14,17 +14,18 @@ const IDLE_MS = 5 * 60_000; // الجهاز مش مربوط: نفحص على ف�
 const FIRST_MS = 5_000;
 
 /**
- * مزامنة الأصناف والعملاء مع باقي الفروع في الخلفية (الجهاز الأساسي فقط، وخطة «سلسلة»).
+ * مزامنة الأصناف والعملاء مع باقي الفروع في الخلفية (الجهاز الأساسي فقط). الخطة تُفحص في الـ backend
+ * بعد تجديد شهادة الفرع، فجهاز فرع على الخطة المجانية يرث «سلسلة» من هنا.
  * يمر عبر الـ backend بتصريح الكتابة، فيحترم الترخيص. أي خطأ صامت هنا: الحالة تظهر في الإعدادات.
  */
 export function BranchSyncRunner() {
   const device = useDeviceConfig();
-  const allowed = useFeature("branches");
   const qc = useQueryClient();
   const main = device !== null && !isTerminal(device);
 
   useEffect(() => {
-    if (!main || !allowed) return;
+    // بدون شرط الخطة: جهاز الفرع يرث خطة المحل من هذه المزامنة نفسها (شهادة الفرع).
+    if (!main) return;
     let timer: ReturnType<typeof setTimeout>;
     let stopped = false;
 
@@ -34,6 +35,8 @@ export function BranchSyncRunner() {
         const s = await syncCatalogNow();
         if (!s.connected) next = IDLE_MS;
         qc.setQueryData(branchKeys.catalog(), s);
+        // الخطة قد تتغير مع شهادة الفرع (ورث «سلسلة» أو انتهت): نحدّث القفل في الواجهة.
+        void qc.invalidateQueries({ queryKey: planKey });
       } catch {
         next = EVERY_MS * 2; // ترخيص/شبكة: نحاول لاحقاً بهدوء
       }
@@ -45,7 +48,7 @@ export function BranchSyncRunner() {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [main, allowed, qc]);
+  }, [main, qc]);
 
   return null;
 }

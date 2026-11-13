@@ -28,11 +28,12 @@ def _b64(text: str) -> bytes:
 
 
 def _pubkey() -> str:
-    if SYNC_LEASE_PUBKEY or _FROZEN:  # النسخة المبنية: المفتاح المثبّت فقط
+    if _FROZEN:  # النسخة المبنية: المفتاح المثبّت فقط (لا يُستبدل من البيئة على جهاز التاجر)
         return SYNC_LEASE_PUBKEY
     from .config import get_settings
 
-    return get_settings().sync_lease_pubkey
+    # التطوير: POS_SYNC_LEASE_PUBKEY (لو موجود) لتجربة سيرفر بمفتاح آخر، وإلا المثبّت.
+    return get_settings().sync_lease_pubkey or SYNC_LEASE_PUBKEY
 
 
 def verify(token: str | None, branch_id: str | None) -> dict | None:

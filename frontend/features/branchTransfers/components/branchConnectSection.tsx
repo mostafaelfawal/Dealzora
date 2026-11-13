@@ -226,6 +226,14 @@ export function BranchConnectSection() {
         </div>
       </div>
 
+      {!s.isAdmin && !s.leasePlan && (
+        <p className="flex items-start gap-2 border border-warning/40 bg-warning/5 p-3 text-xs text-warning">
+          <IconCloudOff className="mt-0.5 size-4 shrink-0" />
+          هذا الفرع لم يرث خطة المحل بعد، لذا قد تظهر بعض الميزات مقفلة. تأكد من الاتصال
+          بالإنترنت، ثم اضغط «مزامنة الآن». إن استمرت المشكلة فتواصل مع الدعم.
+        </p>
+      )}
+
       <CatalogSyncCard />
 
       {s.isAdmin && owner && <ShopBranchesCard />}

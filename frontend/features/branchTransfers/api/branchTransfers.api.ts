@@ -24,6 +24,8 @@ export interface BranchStatus {
   reachable?: boolean;
   /** الفرع الرئيسي (جهاز المالك): يدير فروع المحل وأكواد ربطها. */
   isAdmin?: boolean;
+  /** الخطة الموروثة من المحل (شهادة الفرع) أو null لو لم تصل/غير صالحة. */
+  leasePlan?: string | null;
 }
 
 export interface Branch {
@@ -176,6 +178,7 @@ const toStatus = (d: any): BranchStatus => ({
   pending: d.pending ?? 0,
   reachable: d.reachable,
   isAdmin: Boolean(d.is_admin),
+  leasePlan: d.lease?.plan ?? null,
 });
 /* eslint-enable @typescript-eslint/no-explicit-any */
 

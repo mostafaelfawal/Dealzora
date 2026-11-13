@@ -24,18 +24,19 @@ if (-not $SkipBackend) {
         Remove-Item (Join-Path $backend $name) -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    # المفتاح العام لشهادات الفروع يُثبَّت داخل النسخة (لا يُقرأ من البيئة على جهاز التاجر).
-    # من: (sync-server) python -m app.cli lease-keygen  ← السطر DEALZORA_SYNC_LEASE_PUBKEY
-    $leaseKey = $env:DEALZORA_SYNC_LEASE_PUBKEY
-    if (-not $leaseKey) {
-        Write-Warning "DEALZORA_SYNC_LEASE_PUBKEY غير مضبوط: أجهزة الفروع لن ترث خطة المحل في هذه النسخة."
-        $leaseKey = ""
-    }
-    if ($leaseKey -notmatch '^[A-Za-z0-9_-]*$') { throw "DEALZORA_SYNC_LEASE_PUBKEY غير صالح" }
+    # المفتاح العام لشهادات الفروع مثبّت في app\core\build_keys.py (ليس سرياً).
+    # DEALZORA_SYNC_LEASE_PUBKEY اختياري: يستبدله لهذا البناء فقط (مثلاً سيرفر فروع آخر).
     $keysFile = Join-Path $backend "app\core\build_keys.py"
     $keysOriginal = Get-Content $keysFile -Raw -Encoding utf8
-    ($keysOriginal -replace 'SYNC_LEASE_PUBKEY = ".*"', "SYNC_LEASE_PUBKEY = `"$leaseKey`"") |
-        Set-Content $keysFile -Encoding utf8 -NoNewline
+    $leaseKey = $env:DEALZORA_SYNC_LEASE_PUBKEY
+    if ($leaseKey) {
+        if ($leaseKey -notmatch '^[A-Za-z0-9_-]{40,60}$') { throw "DEALZORA_SYNC_LEASE_PUBKEY غير صالح" }
+        ($keysOriginal -replace 'SYNC_LEASE_PUBKEY = ".*"', "SYNC_LEASE_PUBKEY = `"$leaseKey`"") |
+            Set-Content $keysFile -Encoding utf8 -NoNewline
+    }
+    elseif ($keysOriginal -match 'SYNC_LEASE_PUBKEY = ""') {
+        Write-Warning "مفتاح شهادات الفروع فارغ في build_keys.py: أجهزة الفروع لن ترث خطة المحل في هذه النسخة."
+    }
 
     Push-Location $backend
     try {
