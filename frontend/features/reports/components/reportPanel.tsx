@@ -81,3 +81,55 @@ export function ReportListEmpty({ text }: { text: string }) {
     <li className="py-6 text-center text-xs text-muted-foreground">{text}</li>
   );
 }
+
+export interface ReportColumn<T> {
+  header: string;
+  cell: (row: T) => ReactNode;
+  className?: string;
+}
+
+/** جدول تقرير بسيط داخل لوحة: عنوان، أعمدة، صفوف، ورسالة لو فارغ. */
+export function ReportTable<T>({
+  title,
+  rows,
+  columns,
+  getKey,
+  empty,
+  action,
+  minWidth = "min-w-130",
+}: {
+  title: string;
+  rows: T[];
+  columns: ReportColumn<T>[];
+  getKey: (row: T) => string;
+  empty: string;
+  action?: ReactNode;
+  minWidth?: string;
+}) {
+  return (
+    <ReportPanel title={title} action={action}>
+      {rows.length === 0 ? (
+        <p className="py-6 text-center text-xs text-muted-foreground">
+          {empty}
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className={`w-full ${minWidth}`}>
+            <ReportTableHead columns={columns.map((c) => c.header)} />
+            <tbody>
+              {rows.map((row) => (
+                <tr key={getKey(row)} className="border-b last:border-0">
+                  {columns.map((c) => (
+                    <td key={c.header} className={`${reportTd} ${c.className ?? ""}`}>
+                      {c.cell(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </ReportPanel>
+  );
+}

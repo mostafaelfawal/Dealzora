@@ -1,12 +1,13 @@
 """تجميع التقارير. قراءة فقط ولا تعرض إلا للمدير (التكلفة والأرباح)."""
 
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
 from app.core.base import utcnow
 from app.core.lookups import user_names
-from app.core.periods import iter_days, local_today
+from app.core.periods import day_bounds_utc, iter_days, local_today
+from app.core.plan import Feature, has_feature
 from app.modules.expenses.constants import CATEGORY_LABELS
 from app.core.security import Actor
 from app.modules.customers.helper import is_overdue
@@ -19,11 +20,15 @@ from .repository import ReportRepository
 from .schema import (
     CashDayOut,
     CashierOut,
+    CategorySalesOut,
+    CustomersBriefOut,
     DebtorOut,
     DebtsReportOut,
+    ExpiryBriefOut,
     HealthOut,
     HeatCellOut,
     KpisOut,
+    LoyaltyBriefOut,
     NamedValueOut,
     OverviewOut,
     PayableOut,
@@ -31,6 +36,8 @@ from .schema import (
     ProductRowOut,
     ProductsQuery,
     ProductsReportOut,
+    PromotionsBriefOut,
+    PurchasingBriefOut,
     RangeQuery,
     RecentSaleOut,
     SalesDayOut,
@@ -47,6 +54,9 @@ from .schema import (
 RECENT_SALES = 8
 TOP_PRODUCTS = 8
 TOP_CATEGORIES = 8
+TOP_PROMOS = 5
+NO_CATEGORY = "none"
+TOP_CUSTOMERS = 5
 STAGNANT_DAYS = 30
 # Python: الاثنين = 0. نعيد الترقيم ليبدأ الأسبوع بالسبت (0) كما في مصر.
 _SAT_FIRST = {5: 0, 6: 1, 0: 2, 1: 3, 2: 4, 3: 5, 4: 6}
@@ -98,7 +108,12 @@ class ReportService:
         net = tot["revenue"] - tot["returns"]
         profit = net - tot["cost"]
         expenses = self.repo.expenses_total(q.date_from, q.date_to)
+        promo_d, lines_d, invoice_d, loyalty_d = self.repo.discount_breakdown(q.date_from, q.date_to)
         return SalesReportOut(
+            promo_discount=promo_d,
+            lines_discount=lines_d,
+            invoice_discount=invoice_d,
+            loyalty_discount=loyalty_d,
             days=days,
             count=tot["count"],
             revenue=tot["revenue"],
@@ -118,13 +133,22 @@ class ReportService:
     # ================= الأصناف =================
     def products(self, q: ProductsQuery) -> ProductsReportOut:
         stats = self.repo.product_sales(q.date_from, q.date_to)
+        categories = self._categories(stats)
+
+        def in_category(p: Product) -> bool:
+            if q.category_id is None:
+                return True
+            if q.category_id == NO_CATEGORY:
+                return not p.category_id
+            return p.category_id == q.category_id
+
         if q.rank is ProductRank.BOTTOM:
             # الأقل مبيعاً يشمل الأصناف النشطة التي لم تُبع إطلاقاً في الفترة.
-            items = self.repo.products(only_active=True)
+            items = [p for p in self.repo.products(only_active=True) if in_category(p)]
             rows = [self._row(p, stats.get(p.id, [0, 0, 0])) for p in items]
             rows.sort(key=lambda r: (r.qty, r.revenue, r.name))
         else:
-            items = self.repo.products(set(stats))
+            items = [p for p in self.repo.products(set(stats)) if in_category(p)]
             rows = [self._row(p, stats[p.id]) for p in items]
             key = {
                 ProductRank.TOP: lambda r: (-r.qty, -r.revenue),
@@ -133,7 +157,25 @@ class ReportService:
             }[q.rank]
             rows = [r for r in rows if r.qty > 0 or r.revenue > 0]
             rows.sort(key=key)
-        return ProductsReportOut(items=rows[: q.limit])
+        return ProductsReportOut(items=rows[: q.limit], categories=categories)
+
+    def _categories(self, stats: dict[str, list[int]]) -> list[CategorySalesOut]:
+        """كل الأقسام (حتى بدون مبيعات) بإيرادها وربحها وكميتها في الفترة، الأعلى إيراداً أولاً."""
+        agg: dict[str, CategorySalesOut] = {
+            cid: CategorySalesOut(id=cid, name=name, revenue=0, profit=0, qty=0, products=0)
+            for cid, name in self.repo.all_categories()
+        }
+        for pid, (cid, cname) in self.repo.category_names(set(stats)).items():
+            key = cid or NO_CATEGORY
+            row = agg.setdefault(
+                key, CategorySalesOut(id=key, name=cname, revenue=0, profit=0, qty=0, products=0)
+            )
+            qty, revenue, cost = stats[pid]
+            row.qty += qty
+            row.revenue += revenue
+            row.profit += revenue - cost
+            row.products += 1
+        return sorted(agg.values(), key=lambda c: (-c.revenue, c.name))
 
     @staticmethod
     def _row(p: Product, s: list[int]) -> ProductRowOut:
@@ -332,6 +374,17 @@ class ReportService:
         labels = {k: m.name for k, m in SettingsService(self.session).payment_methods().items()}
 
         return OverviewOut(
+            return_reasons=[
+                NamedValueOut(key=r, label=r, value=t, extra=n)
+                for r, t, n in self.repo.return_reasons(q.date_from, q.date_to)
+            ],
+            promotions=self._promotions(q, prev_from, prev_to),
+            loyalty=self._loyalty(q) if has_feature(Feature.CUSTOMERS) else None,
+            customers=self._customers(q) if has_feature(Feature.CUSTOMERS) else None,
+            purchasing=(
+                self._purchasing(q, prev_from, prev_to) if has_feature(Feature.SUPPLIERS) else None
+            ),
+            expiry=self._expiry() if has_feature(Feature.EXPIRY) else None,
             date_from=q.date_from,
             date_to=q.date_to,
             prev_from=prev_from,
@@ -383,6 +436,73 @@ class ReportService:
                 for s in self.repo.recent_sales(RECENT_SALES)
             ],
         )
+
+    # ---------- أقسام اللوحة حسب الخطة ----------
+    def _promotions(self, q: RangeQuery, prev_from: date, prev_to: date) -> PromotionsBriefOut:
+        from app.modules.promotions.service import PromotionService  # متأخر: لا دوران
+
+        status = PromotionService(self.session, self.actor).summary()
+        discount, invoices = self.repo.promo_totals(q.date_from, q.date_to)
+        prev_discount, _ = self.repo.promo_totals(prev_from, prev_to)
+        return PromotionsBriefOut(
+            active=status.active,
+            scheduled=status.scheduled,
+            discount=discount,
+            prev_discount=prev_discount,
+            invoices=invoices,
+            top=[
+                NamedValueOut(key=name, label=name, value=total, extra=lines)
+                for name, total, lines in self.repo.top_promos(q.date_from, q.date_to, TOP_PROMOS)
+            ],
+        )
+
+    def _loyalty(self, q: RangeQuery) -> LoyaltyBriefOut:
+        cfg = SettingsService(self.session).loyalty()
+        earned, redeemed, value = self.repo.loyalty_period(q.date_from, q.date_to)
+        points, owed, members = self.repo.loyalty_outstanding(cfg.redeem_points, cfg.redeem_value)
+        return LoyaltyBriefOut(
+            enabled=cfg.enabled,
+            earned=earned,
+            redeemed=redeemed,
+            redeem_value=value,
+            outstanding_points=points,
+            outstanding_value=owed,
+            members=members,
+        )
+
+    def _customers(self, q: RangeQuery) -> CustomersBriefOut:
+        start, end = day_bounds_utc(q.date_from, q.date_to)
+        return CustomersBriefOut(
+            new_customers=self.repo.new_customers(start, end),
+            active_customers=self.repo.active_customers(q.date_from, q.date_to),
+            top=[
+                NamedValueOut(key=cid, label=name, value=total, extra=count)
+                for cid, name, total, count in self.repo.top_customers(
+                    q.date_from, q.date_to, TOP_CUSTOMERS
+                )
+            ],
+        )
+
+    def _purchasing(self, q: RangeQuery, prev_from: date, prev_to: date) -> PurchasingBriefOut:
+        from app.modules.purchase_orders.service import PurchaseOrderService  # متأخر: لا دوران
+
+        total, count = self.repo.purchases_totals(q.date_from, q.date_to)
+        prev_total, _ = self.repo.purchases_totals(prev_from, prev_to)
+        orders = PurchaseOrderService(self.session, self.actor).summary()
+        return PurchasingBriefOut(
+            purchases_total=total,
+            prev_purchases_total=prev_total,
+            purchases_count=count,
+            draft_orders=orders.draft,
+            sent_orders=orders.sent,
+            open_orders_total=orders.open_total,
+            received_month=orders.received_month,
+        )
+
+    def _expiry(self) -> ExpiryBriefOut:
+        from app.modules.batches.routes import summary as expiry_summary  # متأخر: لا دوران
+
+        return ExpiryBriefOut(**expiry_summary(self.session).model_dump())
 
     def _electronic(self, d1, d2) -> list[NamedValueOut]:
         """الطرق المفعّلة في الإعدادات (حتى لو صفر) ثم أي طريقة أخرى استُخدمت في الفترة."""

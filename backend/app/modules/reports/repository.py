@@ -298,3 +298,136 @@ class ReportRepository:
                 select(Sale).where(live(Sale)).order_by(Sale.number.desc()).limit(limit)
             ).all()
         )
+
+    # ---------- العروض والمرتجعات ----------
+    def promo_totals(self, d1: date, d2: date) -> tuple[int, int]:
+        """(مجموع خصم العروض، عدد الفواتير التي طُبق فيها عرض)."""
+        total, count = self.session.execute(
+            select(
+                func.coalesce(func.sum(Sale.promo_discount), 0),
+                func.count().filter(Sale.promo_discount > 0),
+            ).where(live(Sale), Sale.sold_on.between(d1, d2))
+        ).one()
+        return int(total or 0), int(count or 0)
+
+    def top_promos(self, d1: date, d2: date, limit: int) -> list[tuple[str, int, int]]:
+        """(اسم العرض، الخصم، عدد السطور) الأعلى خصماً في الفترة."""
+        rows = self.session.execute(
+            select(SaleLine.promo_name, func.sum(SaleLine.promo_discount), func.count())
+            .join(Sale, Sale.id == SaleLine.sale_id)
+            .where(
+                live(Sale),
+                Sale.sold_on.between(d1, d2),
+                SaleLine.promo_discount > 0,
+                SaleLine.promo_name.is_not(None),
+            )
+            .group_by(SaleLine.promo_name)
+            .order_by(func.sum(SaleLine.promo_discount).desc())
+            .limit(limit)
+        ).all()
+        return [(n, int(t or 0), int(c)) for n, t, c in rows]
+
+    def return_reasons(self, d1: date, d2: date) -> list[tuple[str, int, int]]:
+        """(السبب، القيمة، العدد) للمرتجعات في الفترة."""
+        rows = self.session.execute(
+            select(SaleReturn.reason, func.sum(SaleReturn.total), func.count())
+            .where(live(SaleReturn), SaleReturn.returned_on.between(d1, d2))
+            .group_by(SaleReturn.reason)
+            .order_by(func.sum(SaleReturn.total).desc())
+        ).all()
+        return [(r, int(t or 0), int(c)) for r, t, c in rows]
+
+    # ---------- العملاء والولاء ----------
+    def loyalty_period(self, d1: date, d2: date) -> tuple[int, int, int]:
+        """(نقاط مكتسبة، نقاط مستبدلة، قيمة الاستبدال) في الفترة، بعد ما ألغاه المرتجع."""
+        earned, redeemed, value = self.session.execute(
+            select(
+                func.coalesce(func.sum(Sale.loyalty_earned - Sale.loyalty_earn_reversed), 0),
+                func.coalesce(func.sum(Sale.loyalty_redeemed - Sale.loyalty_redeem_restored), 0),
+                func.coalesce(func.sum(Sale.loyalty_discount), 0),
+            ).where(live(Sale), Sale.sold_on.between(d1, d2))
+        ).one()
+        return int(earned), int(redeemed), int(value)
+
+    def loyalty_outstanding(self, redeem_points: int, redeem_value: int) -> tuple[int, int, int]:
+        """(مجموع أرصدة النقاط، قيمتها بالباقات الكاملة، عدد العملاء أصحاب الرصيد)."""
+        points, value, members = self.session.execute(
+            select(
+                func.coalesce(func.sum(Customer.loyalty_points), 0),
+                func.coalesce(
+                    func.sum((Customer.loyalty_points // redeem_points) * redeem_value), 0
+                ),
+                func.count().filter(Customer.loyalty_points > 0),
+            ).where(live(Customer))
+        ).one()
+        return int(points), int(value), int(members)
+
+    def top_customers(self, d1: date, d2: date, limit: int) -> list[tuple[str, str, int, int]]:
+        """(المعرّف، الاسم، صافي المشتريات بعد المرتجع، عدد الفواتير)."""
+        rows = self.session.execute(
+            select(
+                Customer.id,
+                Customer.name,
+                func.sum(Sale.total - Sale.returned_total),
+                func.count(),
+            )
+            .join(Customer, Customer.id == Sale.customer_id)
+            .where(live(Sale), Sale.sold_on.between(d1, d2))
+            .group_by(Customer.id, Customer.name)
+            .order_by(func.sum(Sale.total - Sale.returned_total).desc())
+            .limit(limit)
+        ).all()
+        return [(i, n, int(t or 0), int(c)) for i, n, t, c in rows]
+
+    def active_customers(self, d1: date, d2: date) -> int:
+        return int(
+            self.session.scalar(
+                select(func.count(func.distinct(Sale.customer_id))).where(
+                    live(Sale), Sale.sold_on.between(d1, d2), Sale.customer_id.is_not(None)
+                )
+            )
+            or 0
+        )
+
+    def new_customers(self, start: datetime, end: datetime) -> int:
+        return int(
+            self.session.scalar(
+                select(func.count()).where(
+                    live(Customer), Customer.created_at >= start, Customer.created_at < end
+                )
+            )
+            or 0
+        )
+
+    # ---------- المشتريات ----------
+    def purchases_totals(self, d1: date, d2: date) -> tuple[int, int]:
+        """(صافي المشتريات بعد مرتجع الشراء، عدد الفواتير)."""
+        from app.modules.purchases.model import Purchase  # متأخر: الموديول اختياري في الخطة
+
+        total, count = self.session.execute(
+            select(
+                func.coalesce(func.sum(Purchase.total - Purchase.returned_total), 0),
+                func.count(),
+            ).where(live(Purchase), Purchase.purchased_on.between(d1, d2))
+        ).one()
+        return int(total), int(count)
+
+    def all_categories(self) -> list[tuple[str, str]]:
+        return [
+            (cid, name)
+            for cid, name in self.session.execute(
+                select(Category.id, Category.name).where(live(Category)).order_by(Category.name)
+            ).all()
+        ]
+
+    def discount_breakdown(self, d1: date, d2: date) -> tuple[int, int, int, int]:
+        """(العروض، خصم السطور، خصم الفاتورة، خصم نقاط الولاء) في الفترة."""
+        row = self.session.execute(
+            select(
+                func.coalesce(func.sum(Sale.promo_discount), 0),
+                func.coalesce(func.sum(Sale.lines_discount), 0),
+                func.coalesce(func.sum(Sale.invoice_discount), 0),
+                func.coalesce(func.sum(Sale.loyalty_discount), 0),
+            ).where(live(Sale), Sale.sold_on.between(d1, d2))
+        ).one()
+        return tuple(int(v) for v in row)  # type: ignore[return-value]

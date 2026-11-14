@@ -33,6 +33,8 @@ class RangeQuery(BaseModel):
 class ProductsQuery(RangeQuery):
     rank: ProductRank = ProductRank.TOP
     limit: int = Field(20, ge=1, le=200)
+    # قسم واحد فقط. "none" = الأصناف بدون قسم.
+    category_id: str | None = Field(None, max_length=36)
 
 
 class StockQuery(BaseModel):
@@ -62,6 +64,12 @@ class SalesReportOut(BaseModel):
     cost: int
     profit: int
     discounts: int
+    # تفصيل الخصومات: العروض التلقائية / خصم الكاشير على السطور / خصم الفاتورة / نقاط الولاء.
+    # discounts = الثلاثة الأولى (كما كان)، ونقاط الولاء منفصلة.
+    promo_discount: int = 0
+    lines_discount: int = 0
+    invoice_discount: int = 0
+    loyalty_discount: int = 0
     cash: int
     credit: int
     wallet: int  # كل الدفع الإلكتروني
@@ -82,8 +90,18 @@ class ProductRowOut(BaseModel):
     stock_qty: int
 
 
+class CategorySalesOut(BaseModel):
+    id: str  # "none" = بدون قسم
+    name: str
+    revenue: int
+    profit: int
+    qty: int  # وحدات أساسية × 1000
+    products: int  # أصناف بيعت منه
+
+
 class ProductsReportOut(BaseModel):
     items: list[ProductRowOut]
+    categories: list[CategorySalesOut]
 
 
 # ---------- المخزون ----------
@@ -234,6 +252,58 @@ class ShiftBriefOut(BaseModel):
     expected_cash: int
 
 
+class PromotionsBriefOut(BaseModel):
+    """العروض التلقائية: الحالة الآن، وأثرها في الفترة مقارنة بالسابقة."""
+
+    active: int
+    scheduled: int
+    discount: int  # مجموع خصم العروض في الفترة
+    prev_discount: int
+    invoices: int  # فواتير طُبق فيها عرض
+    top: list["NamedValueOut"]  # اسم العرض، value = الخصم، extra = عدد السطور
+
+
+class LoyaltyBriefOut(BaseModel):
+    """نقاط الولاء (خطة فيها العملاء). المبالغ بالقروش."""
+
+    enabled: bool
+    earned: int  # نقاط اكتسبها العملاء في الفترة (بعد المرتجع)
+    redeemed: int  # نقاط استبدلوها في الفترة (بعد المرتجع)
+    redeem_value: int  # قيمة خصم الاستبدال في الفترة
+    outstanding_points: int  # أرصدة العملاء الآن
+    outstanding_value: int  # قيمتها لو استُبدلت (التزام على المحل)
+    members: int  # عملاء لديهم رصيد
+
+
+class CustomersBriefOut(BaseModel):
+    new_customers: int
+    active_customers: int  # اشتروا في الفترة
+    top: list["NamedValueOut"]  # value = صافي المشتريات، extra = عدد الفواتير
+
+
+class PurchasingBriefOut(BaseModel):
+    """المشتريات وطلبات الشراء (خطة فيها الموردين)."""
+
+    purchases_total: int
+    prev_purchases_total: int
+    purchases_count: int
+    draft_orders: int
+    sent_orders: int
+    open_orders_total: int
+    received_month: int
+
+
+class ExpiryBriefOut(BaseModel):
+    """الصلاحية (خطة سلسلة)."""
+
+    tracked_products: int
+    expired_batches: int
+    expired_value: int
+    soon_7: int
+    soon_30: int
+    soon_30_value: int
+
+
 class OverviewOut(BaseModel):
     date_from: date
     date_to: date
@@ -252,6 +322,14 @@ class OverviewOut(BaseModel):
     health: HealthOut
     shift: ShiftBriefOut | None
     recent_sales: list[RecentSaleOut]
+    # أسباب المرتجع في الفترة: value = القيمة، extra = العدد.
+    return_reasons: list[NamedValueOut]
+    promotions: PromotionsBriefOut
+    # None = الميزة ليست في خطة المحل (لا تُحسب ولا تُعرض).
+    loyalty: LoyaltyBriefOut | None
+    customers: CustomersBriefOut | None
+    purchasing: PurchasingBriefOut | None
+    expiry: ExpiryBriefOut | None
 
 
 SalesReportOut.model_rebuild()

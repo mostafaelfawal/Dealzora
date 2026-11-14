@@ -7,6 +7,7 @@ import {
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 
+import { Money } from "@/components/shared/Money";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,9 +27,32 @@ import { useSale } from "../hooks/useSales";
 import { printReceipt, sendWhatsapp } from "../lib/receipt";
 import type { Sale } from "../types/sale";
 import { SaleBadges } from "./saleBadges";
-import { SaleLinesList, SaleTotals } from "./saleDetailParts";
+import { SaleReceiptPreview } from "./saleReceiptPreview";
 
 const DEFAULT_SHOP_NAME = "Dealzora";
+
+/** معلومات داخلية للمدير (لا تظهر في إيصال العميل): الربح والملاحظة. */
+function SaleInternalInfo({ sale }: { sale: Sale }) {
+  if (sale.profit === null && !sale.note) return null;
+  return (
+    <dl className="space-y-1.5 border p-3 text-xs">
+      {sale.profit !== null && (
+        <div className="flex items-center justify-between gap-3">
+          <dt className="text-muted-foreground">صافي الربح</dt>
+          <dd>
+            <Money
+              amount={sale.profit}
+              className={sale.profit < 0 ? "text-destructive" : "text-success"}
+            />
+          </dd>
+        </div>
+      )}
+      {sale.note && (
+        <p className="text-muted-foreground">ملاحظة: {sale.note}</p>
+      )}
+    </dl>
+  );
+}
 
 const saleSubtitle = (sale: Sale) =>
   `${formatDateTime(sale.soldAt)} · ${sale.cashierName ?? "—"} · ${sale.customerName ?? "عميل نقدي"}`;
@@ -140,8 +164,14 @@ export function SaleDetailSheet({
           </div>
         ) : (
           <div className="flex flex-1 flex-col gap-4 p-4">
-            <SaleLinesList lines={sale.lines} />
-            <SaleTotals sale={sale} />
+            <div className="-mx-4 -mt-4 bg-muted/60 px-4 pt-5">
+              <SaleReceiptPreview
+                key={sale.id}
+                sale={sale}
+                shopName={shopName}
+              />
+            </div>
+            <SaleInternalInfo sale={sale} />
             <SaleActions
               sale={sale}
               onPrint={print}

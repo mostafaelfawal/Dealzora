@@ -64,6 +64,26 @@ export function buildInsights(o: Overview, max = 6): Insight[] {
       href: "/admin/inventory",
     });
 
+  if (o.expiry && o.expiry.expiredBatches > 0)
+    out.push({
+      tone: "bad",
+      text: `${o.expiry.expiredBatches} دفعة منتهية الصلاحية على الرف بقيمة ${formatMoneyText(o.expiry.expiredValue)} — أعدمها قبل ما تتباع.`,
+      href: "/admin/expiry",
+    });
+  else if (o.expiry && o.expiry.soon7 > 0)
+    out.push({
+      tone: "bad",
+      text: `${o.expiry.soon7} دفعة تنتهي خلال أسبوع — اعمل عليها عرضاً لتصريفها.`,
+      href: "/admin/expiry",
+    });
+
+  if (o.purchasing && o.purchasing.sentOrders > 0)
+    out.push({
+      tone: "info",
+      text: `${o.purchasing.sentOrders} طلب شراء أُرسل للموردين ولم يُستلم بعد بقيمة ${formatMoneyText(o.purchasing.openOrdersTotal)}.`,
+      href: "/admin/purchase-orders",
+    });
+
   if (o.health.overdueCustomers > 0)
     out.push({
       tone: "bad",
@@ -92,6 +112,14 @@ export function buildInsights(o: Overview, max = 6): Insight[] {
       text: `الذروة حوالي ${hourLabel(peakHour)}${o.trend.length >= 7 ? `، وأقوى أيامك ${WEEKDAYS[peakDay]}` : ""} — جهّز الكاشير والبضاعة قبلها.`,
     });
   }
+
+  const promo = o.promotions;
+  if (promo.discount > 0 && k.invoices > 0)
+    out.push({
+      tone: "info",
+      text: `العروض وفّرت للعملاء ${formatMoneyText(promo.discount)} في ${promo.invoices} فاتورة (${Math.round((promo.invoices / k.invoices) * 100)}% من الفواتير).`,
+      href: "/admin/promotions",
+    });
 
   if (o.health.stagnantValue > 0)
     out.push({

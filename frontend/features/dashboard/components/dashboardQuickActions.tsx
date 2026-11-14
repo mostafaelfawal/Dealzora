@@ -2,6 +2,7 @@
 
 import {
   IconBox,
+  IconDiscount,
   IconPlus,
   IconShoppingCartPlus,
   IconTruckDelivery,
@@ -12,23 +13,33 @@ import type { ComponentType } from "react";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
 import { SHORTCUTS } from "@/config/shortcuts";
+import { usePlan, type PlanFeature } from "@/lib/plan";
 
 const SECONDARY_ACTIONS: {
   href: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
+  /** يظهر فقط لو الميزة في خطة المحل. */
+  feature?: PlanFeature;
 }[] = [
   {
     href: "/admin/purchases/new",
     label: "فاتورة شراء",
     icon: IconTruckDelivery,
+    feature: "suppliers",
   },
+  { href: "/admin/promotions", label: "عرض جديد", icon: IconDiscount },
   { href: "/admin/products/new", label: "صنف جديد", icon: IconPlus },
   { href: "/admin/inventory", label: "جرد المخزون", icon: IconBox },
 ];
 
 /** أكثر الإجراءات استخداماً في يوم العمل. */
 export function DashboardQuickActions() {
+  const { data: plan } = usePlan();
+  // أثناء تحميل الخطة نعرض الكل (لا نومض اختفاء زر عند عميل مدفوع).
+  const actions = SECONDARY_ACTIONS.filter(
+    (a) => !a.feature || !plan || plan.features.includes(a.feature),
+  );
   return (
     <div className="flex flex-wrap gap-2">
       <Button
@@ -43,7 +54,7 @@ export function DashboardQuickActions() {
           {SHORTCUTS.newSale.label}
         </ShortcutBadge>
       </Button>
-      {SECONDARY_ACTIONS.map(({ href, label, icon: Icon }) => (
+      {actions.map(({ href, label, icon: Icon }) => (
         <Button
           key={href}
           size="lg"

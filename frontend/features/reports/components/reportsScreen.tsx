@@ -1,7 +1,12 @@
 "use client";
 
-import { IconPrinter } from "@tabler/icons-react";
-import { useState } from "react";
+import {
+  IconFileSpreadsheet,
+  IconLoader2,
+  IconPrinter,
+} from "@tabler/icons-react";
+import { useRef, useState, type RefObject } from "react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import {
@@ -22,13 +27,23 @@ import {
   REPORT_TABS,
 } from "../config/reportOptions";
 import type { ReportTab } from "../types/report";
+import { exportReportTables } from "../lib/reportExcel";
 import { BranchesReportTab } from "./branchesReportTab";
 import { DebtsReportTab } from "./debtsReportTab";
+import {
+  CashiersReportTab,
+  CustomersReportTab,
+  PromotionsReportTab,
+  PurchasesReportTab,
+  ReturnsReportTab,
+} from "./extendedReportTabs";
 import { ProductsReportTab } from "./productsReportTab";
 import { SalesReportTab } from "./salesReportTab";
 import { StockReportTab } from "./stockReportTab";
 import { TreasuryReportTab } from "./treasuryReportTab";
-import { UpgradeNotice } from "@/components/shared/PlanGate";
+import { PlanLock, UpgradeNotice } from "@/components/shared/PlanGate";
+import { extractErrorMessage } from "@/lib/errors";
+import { toastFileSaved } from "@/lib/fileToast";
 import { usePlan, useFeature } from "@/lib/plan";
 
 /** تاريخ قبل n يوم بتوقيت الجهاز (YYYY-MM-DD) لمقارنته بـ range.from. */
@@ -52,6 +67,63 @@ function PrintButton() {
   );
 }
 
+/** تصدير جداول التبويب الظاهر إلى Excel (ميزة خطط مدفوعة). */
+function ExportButton({
+  contentRef,
+  title,
+  periodLabel,
+}: {
+  contentRef: RefObject<HTMLDivElement | null>;
+  title: string;
+  periodLabel: string;
+}) {
+  const canExport = useFeature("excel");
+  const [busy, setBusy] = useState(false);
+
+  async function run() {
+    if (!contentRef.current || busy) return;
+    setBusy(true);
+    try {
+      const result = await exportReportTables(
+        contentRef.current,
+        title,
+        periodLabel,
+      );
+      if (!result) {
+        toast.info("لا توجد جداول فيها بيانات لتصديرها في هذا التقرير");
+        return;
+      }
+      toastFileSaved({
+        title: "تم تصدير التقرير",
+        file: result.file,
+        detail: `${result.sheets} ورقة`,
+      });
+    } catch (e) {
+      toast.error(extractErrorMessage(e, "تعذّر تصدير التقرير"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="lg"
+      onClick={canExport ? run : undefined}
+      disabled={busy || !canExport}
+      className="h-10 gap-2 font-normal"
+    >
+      {busy ? (
+        <IconLoader2 className="size-4 animate-spin" />
+      ) : (
+        <IconFileSpreadsheet className="size-4" />
+      )}
+      Excel
+      {!canExport && <PlanLock feature="excel" />}
+    </Button>
+  );
+}
+
 function ReportTabContent({
   tab,
   period,
@@ -64,6 +136,16 @@ function ReportTabContent({
       return <SalesReportTab range={period.range} />;
     case "products":
       return <ProductsReportTab range={period.range} />;
+    case "purchases":
+      return <PurchasesReportTab range={period.range} />;
+    case "promotions":
+      return <PromotionsReportTab range={period.range} />;
+    case "returns":
+      return <ReturnsReportTab range={period.range} />;
+    case "customers":
+      return <CustomersReportTab range={period.range} />;
+    case "cashiers":
+      return <CashiersReportTab range={period.range} />;
     case "stock":
       return <StockReportTab />;
     case "debts":
@@ -77,14 +159,21 @@ function ReportTabContent({
 
 /** التقارير: فترة واحدة تتحكم في كل التبويبات، وكل رقم له جدول تحته. */
 export function ReportsScreen() {
-  const [tab, setTab] = useState<ReportTab>("sales");
+  const [selected, setTab] = useState<ReportTab>("sales");
+  const contentRef = useRef<HTMLDivElement>(null);
   // التقرير المجمّع: للمالك على الجهاز الرئيسي المربوط بسيرفر الفروع.
   const branch = useBranchStatus();
   const owner = isOwner(useSessionUser().role);
   const showBranches =
     owner && Boolean(branch.data?.connected && branch.data.isAdmin);
-  const tabs = showBranches ? [...REPORT_TABS, BRANCHES_TAB] : REPORT_TABS;
   const plan = usePlan().data;
+  // تبويبات ميزات خارج الخطة لا تظهر (أثناء تحميل الخطة نعرض الكل).
+  const planTabs = REPORT_TABS.filter(
+    (t) => !t.feature || !plan || plan.features.includes(t.feature),
+  );
+  const tabs = showBranches ? [...planTabs, BRANCHES_TAB] : planTabs;
+  const tab = tabs.some((t) => t.id === selected) ? selected : "sales";
+  const tabLabel = tabs.find((t) => t.id === tab)?.label ?? "";
   // بَسطة: آخر 7 أيام فقط، فنبدأ بـ «أسبوع» بدل «شهر».
   const [period, setPeriod] = useState<PeriodValue>(
     periodOf(plan?.isFree ? "week" : "month"),
@@ -103,25 +192,41 @@ export function ReportsScreen() {
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
       <PageHeader
         title="التقارير"
-        description="المبيعات والأرباح، الأكثر والأقل مبيعاً، النواقص والراكد، المديونيات المتأخرة، وملخص الخزنة."
-        actions={<PrintButton />}
+        description="المبيعات والأرباح والخصومات، الأصناف والأقسام، المشتريات، العروض، المرتجعات، العملاء والنقاط، الكاشيرية والورديات، المخزون، المديونيات، والخزنة."
+        actions={
+          <div className="flex gap-2">
+            <ExportButton
+              contentRef={contentRef}
+              title={tabLabel}
+              periodLabel={
+                PERIOD_TABS.has(tab)
+                  ? `الفترة ${period.range.from} إلى ${period.range.to}`
+                  : `حتى ${period.range.to}`
+              }
+            />
+            <PrintButton />
+          </div>
+        }
       />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <SegmentedTabs
-          label="التقرير"
-          items={tabs}
-          value={tab}
-          onChange={setTab}
-        />
-        {PERIOD_TABS.has(tab) && (
+      <SegmentedTabs
+        label="التقرير"
+        items={tabs}
+        value={tab}
+        onChange={setTab}
+        className="flex-wrap"
+      />
+      {PERIOD_TABS.has(tab) && (
+        <div className="flex justify-end">
           <PeriodPicker value={period} onChange={setPeriod} />
+        </div>
+      )}
+      <div ref={contentRef}>
+        {outOfPlan ? (
+          <UpgradeNotice feature="full_reports" className="mt-4" />
+        ) : (
+          <ReportTabContent tab={tab} period={period} />
         )}
       </div>
-      {outOfPlan ? (
-        <UpgradeNotice feature="full_reports" className="mt-4" />
-      ) : (
-        <ReportTabContent tab={tab} period={period} />
-      )}
     </div>
   );
 }

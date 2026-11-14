@@ -4,6 +4,8 @@ import {
   IconCash,
   IconChartLine,
   IconCoin,
+  IconDiscount,
+  IconPackages,
   IconReceipt,
   IconReceiptRefund,
   IconShoppingBag,
@@ -14,6 +16,7 @@ import {
 
 import { Money } from "@/components/shared/Money";
 import { formatNumber, formatQty } from "@/lib/format";
+import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 import { discountSharePct, sparkPoints } from "../lib/dashboardSeries";
@@ -23,10 +26,23 @@ import { KpiCard } from "./kpiCard";
 
 const MONEY_CLASS = "text-xl";
 
-/** المؤشرات الرئيسية الثمانية، كل منها مقارنة بالفترة السابقة. */
+/**
+ * المؤشرات الرئيسية الثمانية، كل منها مقارنة بالفترة السابقة.
+ * بدون المصروفات في الخطة: «خصم العروض» و«الوحدات المباعة» مكان صافي الربح والمصروفات.
+ * ما خارج الخطة يختفي، إلا لو له قيمة فعلية (بيانات من قبل نزول الخطة).
+ */
 export function DashboardKpiGrid({ o }: { o: Overview }) {
   const { kpis: k, prev, trend } = o;
   const discountShare = discountSharePct(k.netSales, k.discounts);
+  const hasExpenses = useFeature("expenses") || k.expenses > 0;
+  const hasCredit = useFeature("customers") || k.creditSales > 0;
+  const hasWallets = useFeature("wallets") || k.walletSales > 0;
+  const salesHint =
+    `نقدي ${formatNumber(k.cashSales)}` +
+    (hasCredit ? ` · آجل ${formatNumber(k.creditSales)}` : "") +
+    (hasWallets && k.walletSales
+      ? ` · محافظ ${formatNumber(k.walletSales)}`
+      : "");
 
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -44,10 +60,7 @@ export function DashboardKpiGrid({ o }: { o: Overview }) {
           ),
           note: "صافي المبيعات لكل يوم في الفترة (بعد خصم المرتجعات). مرّر على الخط لترى أي يوم.",
         }}
-        hint={
-          `نقدي ${formatNumber(k.cashSales)} · آجل ${formatNumber(k.creditSales)}` +
-          (k.walletSales ? ` · محافظ ${formatNumber(k.walletSales)}` : "")
-        }
+        hint={salesHint}
       >
         <Money amount={k.netSales} className={MONEY_CLASS} />
       </KpiCard>
@@ -71,19 +84,33 @@ export function DashboardKpiGrid({ o }: { o: Overview }) {
         <Money amount={k.grossProfit} className={MONEY_CLASS} />
       </KpiCard>
 
-      <KpiCard
-        index={2}
-        icon={k.netProfit >= 0 ? <IconTrendingUp /> : <IconTrendingDown />}
-        label="صافي الربح بعد المصروفات"
-        current={k.netProfit}
-        previous={prev.netProfit}
-        hint={`المصروفات ${formatNumber(k.expenses)}`}
-      >
-        <Money
-          amount={k.netProfit}
-          className={cn(MONEY_CLASS, k.netProfit < 0 && "text-destructive")}
-        />
-      </KpiCard>
+      {hasExpenses ? (
+        <KpiCard
+          index={2}
+          icon={k.netProfit >= 0 ? <IconTrendingUp /> : <IconTrendingDown />}
+          label="صافي الربح بعد المصروفات"
+          current={k.netProfit}
+          previous={prev.netProfit}
+          hint={`المصروفات ${formatNumber(k.expenses)}`}
+        >
+          <Money
+            amount={k.netProfit}
+            className={cn(MONEY_CLASS, k.netProfit < 0 && "text-destructive")}
+          />
+        </KpiCard>
+      ) : (
+        <KpiCard
+          index={2}
+          icon={<IconDiscount />}
+          label="خصم العروض التلقائية"
+          current={o.promotions.discount}
+          previous={o.promotions.prevDiscount}
+          inverse
+          hint={`${formatNumber(o.promotions.invoices)} فاتورة فيها عرض`}
+        >
+          <Money amount={o.promotions.discount} className={MONEY_CLASS} />
+        </KpiCard>
+      )}
 
       <KpiCard
         index={3}
@@ -137,16 +164,28 @@ export function DashboardKpiGrid({ o }: { o: Overview }) {
         <Money amount={k.returns} className={MONEY_CLASS} />
       </KpiCard>
 
-      <KpiCard
-        index={7}
-        icon={<IconCash />}
-        label="المصروفات"
-        current={k.expenses}
-        previous={prev.expenses}
-        inverse
-      >
-        <Money amount={k.expenses} className={MONEY_CLASS} />
-      </KpiCard>
+      {hasExpenses ? (
+        <KpiCard
+          index={7}
+          icon={<IconCash />}
+          label="المصروفات"
+          current={k.expenses}
+          previous={prev.expenses}
+          inverse
+        >
+          <Money amount={k.expenses} className={MONEY_CLASS} />
+        </KpiCard>
+      ) : (
+        <KpiCard
+          index={7}
+          icon={<IconPackages />}
+          label="الوحدات المباعة"
+          current={k.itemsSold}
+          previous={prev.itemsSold}
+        >
+          <span className="font-mono">{formatQty(k.itemsSold)}</span>
+        </KpiCard>
+      )}
     </div>
   );
 }

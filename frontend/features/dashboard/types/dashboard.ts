@@ -56,6 +56,53 @@ export interface Health {
   treasuryBalance: number;
 }
 
+/** العروض التلقائية: الحالة الآن وأثرها في الفترة. */
+export interface PromotionsBrief {
+  active: number;
+  scheduled: number;
+  discount: number;
+  prevDiscount: number;
+  invoices: number;
+  /** value = الخصم، extra = عدد السطور. */
+  top: NamedValue[];
+}
+
+export interface LoyaltyBrief {
+  enabled: boolean;
+  earned: number;
+  redeemed: number;
+  redeemValue: number;
+  outstandingPoints: number;
+  outstandingValue: number;
+  members: number;
+}
+
+export interface CustomersBrief {
+  newCustomers: number;
+  activeCustomers: number;
+  /** value = صافي المشتريات، extra = عدد الفواتير. */
+  top: NamedValue[];
+}
+
+export interface PurchasingBrief {
+  purchasesTotal: number;
+  prevPurchasesTotal: number;
+  purchasesCount: number;
+  draftOrders: number;
+  sentOrders: number;
+  openOrdersTotal: number;
+  receivedMonth: number;
+}
+
+export interface ExpiryBrief {
+  trackedProducts: number;
+  expiredBatches: number;
+  expiredValue: number;
+  soon7: number;
+  soon30: number;
+  soon30Value: number;
+}
+
 export interface Overview {
   dateFrom: string;
   dateTo: string;
@@ -87,6 +134,14 @@ export interface Overview {
     paymentLabel: string;
     total: number;
   }[];
+  /** key = السبب، value = القيمة، extra = العدد. */
+  returnReasons: NamedValue[];
+  promotions: PromotionsBrief;
+  /** null = الميزة ليست في خطة المحل. */
+  loyalty: LoyaltyBrief | null;
+  customers: CustomersBrief | null;
+  purchasing: PurchasingBrief | null;
+  expiry: ExpiryBrief | null;
 }
 
 export type TrendMetric = "net" | "profit" | "invoices";

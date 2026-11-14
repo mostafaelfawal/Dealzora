@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { ChartCard } from "@/components/shared/charts/ChartCard";
 import { Money } from "@/components/shared/Money";
+import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 import type { Health } from "../types/dashboard";
@@ -32,8 +33,16 @@ const money = (amount: number, className?: string) => (
   <Money amount={amount} className={cn("text-xs", className)} />
 );
 
-/** يحوّل أرقام الصحة إلى صفوف قابلة للنقر، كل صف يقود لشاشته. */
-function healthRows(h: Health): HealthRow[] {
+/**
+ * يحوّل أرقام الصحة إلى صفوف قابلة للنقر، كل صف يقود لشاشته.
+ * الديون والموردين تظهر لو الميزة في الخطة، أو لو فيها رصيد فعلي (من قبل نزول الخطة).
+ */
+function healthRows(
+  h: Health,
+  plan: { customers: boolean; suppliers: boolean },
+): HealthRow[] {
+  const showDebts = plan.customers || h.customersDebt !== 0;
+  const showPayable = plan.suppliers || h.suppliersPayable !== 0;
   return [
     {
       label: "قيمة المخزون",
@@ -58,22 +67,30 @@ function healthRows(h: Health): HealthRow[] {
       tone: h.stagnantValue ? "warn" : undefined,
       href: "/admin/inventory",
     },
-    {
-      label: "ديون العملاء",
-      value: money(h.customersDebt),
-      href: "/admin/customers",
-    },
-    {
-      label: `متأخرة (${h.overdueCustomers} عميل)`,
-      value: money(h.overdueDebt),
-      tone: h.overdueDebt ? "bad" : undefined,
-      href: "/admin/reports",
-    },
-    {
-      label: "مستحق للموردين",
-      value: money(h.suppliersPayable),
-      href: "/admin/suppliers",
-    },
+    ...(showDebts
+      ? [
+          {
+            label: "ديون العملاء",
+            value: money(h.customersDebt),
+            href: "/admin/customers",
+          },
+          {
+            label: `متأخرة (${h.overdueCustomers} عميل)`,
+            value: money(h.overdueDebt),
+            tone: h.overdueDebt ? ("bad" as const) : undefined,
+            href: "/admin/reports",
+          },
+        ]
+      : []),
+    ...(showPayable
+      ? [
+          {
+            label: "مستحق للموردين",
+            value: money(h.suppliersPayable),
+            href: "/admin/suppliers",
+          },
+        ]
+      : []),
     {
       label: "رصيد الخزنة الآن",
       value: money(
@@ -86,6 +103,10 @@ function healthRows(h: Health): HealthRow[] {
 }
 
 export function DashboardHealth({ health }: { health: Health }) {
+  const plan = {
+    customers: useFeature("customers"),
+    suppliers: useFeature("suppliers"),
+  };
   return (
     <ChartCard
       index={10}
@@ -93,7 +114,7 @@ export function DashboardHealth({ health }: { health: Health }) {
       subtitle="المخزون والديون والخزنة (لا تتأثر بالفترة)"
     >
       <ul className="divide-y text-xs">
-        {healthRows(health).map((row) => (
+        {healthRows(health, plan).map((row) => (
           <li key={row.label}>
             <Link
               href={row.href}

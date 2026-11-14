@@ -22,6 +22,14 @@ from .schema import (
     StockReportOut,
     TreasuryReportOut,
 )
+from .extended import (
+    CashiersReportOut,
+    CustomersReportOut,
+    ExtendedReportService,
+    PromotionsReportOut,
+    PurchasesReportOut,
+    ReturnsReportOut,
+)
 from .service import ReportService
 
 router = APIRouter(prefix="/reports", tags=["reports"], dependencies=[Depends(require_manager)])
@@ -69,3 +77,39 @@ def debts_report(service: Service):
 def treasury_report(service: Service, query: Annotated[RangeQuery, Query()]):
     _check_range(query)
     return service.treasury(query)
+
+
+# ================= تقارير الميزات الإضافية (extended.py) =================
+Extended = service_dependency(ExtendedReportService)
+
+
+@router.get("/purchases", response_model=PurchasesReportOut)
+def purchases_report(service: Extended, query: Annotated[RangeQuery, Query()]):
+    ensure_feature(Feature.SUPPLIERS)
+    _check_range(query)
+    return service.purchases(query)
+
+
+@router.get("/promotions", response_model=PromotionsReportOut)
+def promotions_report(service: Extended, query: Annotated[RangeQuery, Query()]):
+    _check_range(query)
+    return service.promotions(query)
+
+
+@router.get("/returns", response_model=ReturnsReportOut)
+def returns_report(service: Extended, query: Annotated[RangeQuery, Query()]):
+    _check_range(query)
+    return service.returns(query)
+
+
+@router.get("/customers", response_model=CustomersReportOut)
+def customers_report(service: Extended, query: Annotated[RangeQuery, Query()]):
+    ensure_feature(Feature.CUSTOMERS)
+    _check_range(query)
+    return service.customers(query)
+
+
+@router.get("/cashiers", response_model=CashiersReportOut)
+def cashiers_report(service: Extended, query: Annotated[RangeQuery, Query()]):
+    _check_range(query)
+    return service.cashiers(query)

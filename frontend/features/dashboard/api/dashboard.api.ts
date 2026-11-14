@@ -72,6 +72,46 @@ interface OverviewDto {
     payment_label: string;
     total: number;
   }[];
+  return_reasons: NamedDto[];
+  promotions: {
+    active: number;
+    scheduled: number;
+    discount: number;
+    prev_discount: number;
+    invoices: number;
+    top: NamedDto[];
+  };
+  loyalty: {
+    enabled: boolean;
+    earned: number;
+    redeemed: number;
+    redeem_value: number;
+    outstanding_points: number;
+    outstanding_value: number;
+    members: number;
+  } | null;
+  customers: {
+    new_customers: number;
+    active_customers: number;
+    top: NamedDto[];
+  } | null;
+  purchasing: {
+    purchases_total: number;
+    prev_purchases_total: number;
+    purchases_count: number;
+    draft_orders: number;
+    sent_orders: number;
+    open_orders_total: number;
+    received_month: number;
+  } | null;
+  expiry: {
+    tracked_products: number;
+    expired_batches: number;
+    expired_value: number;
+    soon_7: number;
+    soon_30: number;
+    soon_30_value: number;
+  } | null;
 }
 
 const p = toPounds;
@@ -167,5 +207,45 @@ export async function fetchOverview(range: DateRange): Promise<Overview> {
       paymentLabel: s.payment_label,
       total: p(s.total),
     })),
+    returnReasons: data.return_reasons.map((x) => toNamed(x, false)),
+    promotions: {
+      active: data.promotions.active,
+      scheduled: data.promotions.scheduled,
+      discount: p(data.promotions.discount),
+      prevDiscount: p(data.promotions.prev_discount),
+      invoices: data.promotions.invoices,
+      top: data.promotions.top.map((x) => toNamed(x, false)),
+    },
+    loyalty: data.loyalty && {
+      enabled: data.loyalty.enabled,
+      earned: data.loyalty.earned,
+      redeemed: data.loyalty.redeemed,
+      redeemValue: p(data.loyalty.redeem_value),
+      outstandingPoints: data.loyalty.outstanding_points,
+      outstandingValue: p(data.loyalty.outstanding_value),
+      members: data.loyalty.members,
+    },
+    customers: data.customers && {
+      newCustomers: data.customers.new_customers,
+      activeCustomers: data.customers.active_customers,
+      top: data.customers.top.map((x) => toNamed(x, false)),
+    },
+    purchasing: data.purchasing && {
+      purchasesTotal: p(data.purchasing.purchases_total),
+      prevPurchasesTotal: p(data.purchasing.prev_purchases_total),
+      purchasesCount: data.purchasing.purchases_count,
+      draftOrders: data.purchasing.draft_orders,
+      sentOrders: data.purchasing.sent_orders,
+      openOrdersTotal: p(data.purchasing.open_orders_total),
+      receivedMonth: data.purchasing.received_month,
+    },
+    expiry: data.expiry && {
+      trackedProducts: data.expiry.tracked_products,
+      expiredBatches: data.expiry.expired_batches,
+      expiredValue: p(data.expiry.expired_value),
+      soon7: data.expiry.soon_7,
+      soon30: data.expiry.soon_30,
+      soon30Value: p(data.expiry.soon_30_value),
+    },
   };
 }

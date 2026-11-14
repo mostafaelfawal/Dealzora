@@ -9,6 +9,7 @@ import {
 } from "@/components/shared/charts/MiscCharts";
 import { RankBarChart } from "@/components/shared/charts/RankBarChart";
 import { formatNumber } from "@/lib/format";
+import { useFeature } from "@/lib/plan";
 
 import { cashFlowSeries } from "../lib/dashboardSeries";
 import type { NamedValue, Overview } from "../types/dashboard";
@@ -60,9 +61,14 @@ const ELECTRONIC_COLORS = [
 ];
 
 export function PaymentsCard({ payments }: { payments: NamedValue[] }) {
+  const hasCredit = useFeature("customers");
+  const hasWallets = useFeature("wallets");
   const total = payments.reduce((sum, p) => sum + p.value, 0);
-  // الكاش والآجل دائماً، ثم كل طريقة إلكترونية مفعّلة (حتى لو صفر) أو استُخدمت في الفترة.
-  const shown = payments;
+  // الكاش دائماً، ثم الآجل والطرق الإلكترونية لو في الخطة (حتى لو صفر) أو استُخدمت في الفترة.
+  const shown = payments.filter((p) => {
+    if (p.key === "cash" || p.value !== 0) return true;
+    return p.key === "credit" ? hasCredit : hasWallets;
+  });
   let e = 0;
   const colorOf = (key: string) =>
     PAYMENT_COLORS[key] ??
@@ -128,7 +134,14 @@ export function CategoriesCard({ categories }: { categories: NamedValue[] }) {
   );
 }
 
-export function CashFlowCard({ cashFlow }: { cashFlow: Overview["cashFlow"] }) {
+export function CashFlowCard({
+  cashFlow,
+  className,
+}: {
+  cashFlow: Overview["cashFlow"];
+  /** بدون بطاقة المصروفات بجانبها: تأخذ الصف كله. */
+  className?: string;
+}) {
   const hasMovement = cashFlow.some((c) => c.cashIn || c.cashOut);
   return (
     <ChartCard
@@ -136,7 +149,7 @@ export function CashFlowCard({ cashFlow }: { cashFlow: Overview["cashFlow"] }) {
       title="حركة الخزنة يومياً"
       subtitle="كل ما دخل (مبيعات، تحصيل) وكل ما خرج (مشتريات، مصروفات، مرتجع)"
       href="/admin/treasury"
-      className="lg:col-span-2"
+      className={className ?? "lg:col-span-2"}
     >
       {hasMovement ? (
         <CashFlowChart data={cashFlowSeries(cashFlow)} />

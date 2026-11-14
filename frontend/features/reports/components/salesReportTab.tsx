@@ -18,6 +18,7 @@ import { StatTile } from "@/components/shared/StatTile";
 import type { DateRange } from "@/lib/dates";
 import { formatDayLabel } from "@/lib/dates";
 import { formatNumber } from "@/lib/format";
+import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 import { SALES_METRICS } from "../config/reportOptions";
@@ -58,6 +59,8 @@ const Cell = ({
 );
 
 function SalesStats({ r }: { r: SalesReport }) {
+  // بدون المصروفات في الخطة: لا نعرض أصفاراً بلا معنى (إلا لو فيه مصروفات من قبل).
+  const hasExpenses = useFeature("expenses") || r.expenses > 0;
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
       <StatTile
@@ -77,20 +80,48 @@ function SalesStats({ r }: { r: SalesReport }) {
       >
         <Money amount={r.profit} className="text-lg" />
       </StatTile>
-      <StatTile index={2} icon={<IconCash />} label="المصروفات" tone="warning">
-        <Money amount={r.expenses} className="text-lg" />
-      </StatTile>
-      <StatTile
-        index={3}
-        icon={<IconWallet />}
-        label="صافي الربح بعد المصروفات"
-        tone={r.netProfit < 0 ? "danger" : "success"}
-      >
-        <Money
-          amount={r.netProfit}
-          className={cn("text-lg", r.netProfit < 0 && "text-destructive")}
-        />
-      </StatTile>
+      {hasExpenses ? (
+        <>
+          <StatTile
+            index={2}
+            icon={<IconCash />}
+            label="المصروفات"
+            tone="warning"
+          >
+            <Money amount={r.expenses} className="text-lg" />
+          </StatTile>
+          <StatTile
+            index={3}
+            icon={<IconWallet />}
+            label="صافي الربح بعد المصروفات"
+            tone={r.netProfit < 0 ? "danger" : "success"}
+          >
+            <Money
+              amount={r.netProfit}
+              className={cn("text-lg", r.netProfit < 0 && "text-destructive")}
+            />
+          </StatTile>
+        </>
+      ) : (
+        <>
+          <StatTile
+            index={2}
+            icon={<IconWallet />}
+            label="الخصومات والعروض"
+            tone="warning"
+          >
+            <Money amount={r.discounts} className="text-lg" />
+          </StatTile>
+          <StatTile
+            index={3}
+            icon={<IconCash />}
+            label="المرتجعات"
+            tone="danger"
+          >
+            <Money amount={r.returns} className="text-lg" />
+          </StatTile>
+        </>
+      )}
     </div>
   );
 }
@@ -157,6 +188,103 @@ function PaymentSplitCard({ r }: { r: SalesReport }) {
         centerValue={formatNumber(slices.reduce((sum, s) => sum + s.value, 0))}
       />
     </ChartCard>
+  );
+}
+
+/**
+ * من أين جاءت الخصومات؟ العروض قرار مخطط مسبقاً، وخصم الكاشير قرار لحظي يحتاج متابعة،
+ * ونقاط الولاء مكافأة مستحقة للعميل.
+ */
+function DiscountBreakdown({ r }: { r: SalesReport }) {
+  const parts = [
+    {
+      key: "promo",
+      label: "العروض التلقائية",
+      note: "عروضك المخططة (شاشة العروض)",
+      value: r.promoDiscount,
+      color: CHART.main,
+    },
+    {
+      key: "lines",
+      label: "خصم الكاشير على الأصناف",
+      note: "يدوي على سطر في الفاتورة",
+      value: r.linesDiscount,
+      color: CHART.seq[3],
+    },
+    {
+      key: "invoice",
+      label: "خصم على إجمالي الفاتورة",
+      note: "يدوي من الكاشير",
+      value: r.invoiceDiscount,
+      color: CHART.seq[2],
+    },
+    {
+      key: "loyalty",
+      label: "استبدال نقاط الولاء",
+      note: "مكافأة مستحقة للعميل",
+      value: r.loyaltyDiscount,
+      color: CHART.seq[1],
+    },
+  ];
+  const total = parts.reduce((sum, p) => sum + p.value, 0);
+  const manual = r.linesDiscount + r.invoiceDiscount;
+  return (
+    <ReportPanel title="تفصيل الخصومات">
+      {total === 0 ? (
+        <p className="py-6 text-center text-xs text-muted-foreground">
+          لا توجد خصومات في هذه الفترة
+        </p>
+      ) : (
+        <div className="space-y-3">
+          <div
+            aria-hidden
+            className="flex h-2.5 w-full overflow-hidden bg-muted"
+          >
+            {parts.map((p) =>
+              p.value > 0 ? (
+                <span
+                  key={p.key}
+                  style={{
+                    width: `${(p.value / total) * 100}%`,
+                    background: p.color,
+                  }}
+                />
+              ) : null,
+            )}
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {parts.map((p) => (
+              <li key={p.key} className="flex items-start gap-2 text-xs">
+                <span
+                  aria-hidden
+                  className="mt-1 size-2.5 shrink-0"
+                  style={{ background: p.color }}
+                />
+                <span className="min-w-0">
+                  <span className="block font-medium">{p.label}</span>
+                  <Money amount={p.value} className="text-sm" />
+                  <span className="ms-1 font-mono text-[11px] text-muted-foreground">
+                    {total ? Math.round((p.value / total) * 100) : 0}%
+                  </span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    {p.note}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          {manual > 0 && r.revenue > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              الخصم اليدوي من الكاشيرية ={" "}
+              <b className="font-mono text-foreground">
+                {Math.round((manual / (r.revenue + manual)) * 1000) / 10}%
+              </b>{" "}
+              من قيمة البيع. التفصيل لكل كاشير في تبويب «الكاشيرية والورديات».
+            </p>
+          )}
+        </div>
+      )}
+    </ReportPanel>
   );
 }
 
@@ -230,6 +358,7 @@ export function SalesReportTab({ range }: { range: DateRange }) {
         <SalesTrendCard r={r} />
         <PaymentSplitCard r={r} />
       </div>
+      <DiscountBreakdown r={r} />
       <SalesDaysTable r={r} />
     </div>
   );
