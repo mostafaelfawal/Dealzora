@@ -1,8 +1,8 @@
 import { z } from "zod";
 
+import { passwordError } from "@/features/users/schema/user.schema";
+
 import {
-  PASSWORD_MAX,
-  PASSWORD_MIN,
   SHOP_NAME_MAX,
   SHOP_NAME_MIN,
   USERNAME_MAX,
@@ -42,33 +42,19 @@ function usernameError(text: string) {
   return null;
 }
 
-function passwordError(text: string) {
-  const p = text.normalize("NFKC");
-  if (!p) return "اكتب كلمة المرور";
-  if (length(p) < PASSWORD_MIN)
-    return `كلمة المرور ${PASSWORD_MIN} خانات على الأقل`;
-  if (length(p) > PASSWORD_MAX)
-    return `كلمة المرور أطول من ${PASSWORD_MAX} خانة`;
-  if (!p.trim()) return "كلمة المرور لا يمكن أن تكون مسافات فقط";
-  if (new Set(p).size < 4) return "كلمة المرور ضعيفة: حروفها متكررة";
-  return null;
-}
-
 export const setupSchema = z
   .object({
     shopName: check(shopNameError),
     username: check(usernameError),
-    password: check(passwordError),
+    password: z.string(),
     confirm: z.string(),
   })
   .superRefine((v, ctx) => {
-    const u = cleanUsername(v.username);
-    if (u && v.password.normalize("NFKC").toLowerCase().includes(u))
-      ctx.addIssue({
-        code: "custom",
-        path: ["password"],
-        message: "كلمة المرور لا يجب أن تحتوي اسم المستخدم",
-      });
+    // نفس قواعد الـ backend (مصدر واحد مع شاشة المستخدمين)
+    const message = v.password
+      ? passwordError(v.password, v.username)
+      : "اكتب كلمة المرور";
+    if (message) ctx.addIssue({ code: "custom", path: ["password"], message });
     if (v.confirm !== v.password)
       ctx.addIssue({
         code: "custom",

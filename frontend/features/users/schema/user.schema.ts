@@ -37,12 +37,13 @@ export function passwordError(text: string, username = ""): string | null {
   if (length(value) > MAX_PASSWORD_LEN)
     return `كلمة المرور أطول من ${MAX_PASSWORD_LEN} خانة`;
   if (!value.trim()) return "كلمة المرور لا يمكن أن تكون مسافات فقط";
-  if (new Set(value).size < 4) return "كلمة المرور ضعيفة: حروفها متكررة";
+  if (new Set(value).size < 2)
+    return "كلمة المرور لا يمكن أن تكون خانة واحدة مكررة";
   if (COMMON_PASSWORDS.has(value.toLowerCase()))
     return "كلمة المرور شائعة وسهلة التخمين";
   const name = cleanUsername(username);
-  if (name && value.trim().toLowerCase().includes(name))
-    return "كلمة المرور لا يجب أن تحتوي اسم المستخدم";
+  if (name && cleanUsername(value) === name)
+    return "كلمة المرور لا يجب أن تكون نفس اسم المستخدم";
   return null;
 }
 

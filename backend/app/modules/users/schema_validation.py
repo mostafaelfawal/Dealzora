@@ -27,8 +27,8 @@ def _check_password(value: str) -> str:
         raise ValueError(f"كلمة المرور يجب ألا تقل عن {MIN_PASSWORD_LEN} خانات")
     if not normalized.strip():
         raise ValueError("كلمة المرور لا يمكن أن تكون مسافات فقط")
-    if len(set(normalized)) < 4:
-        raise ValueError("كلمة المرور ضعيفة: حروفها متكررة")
+    if len(set(normalized)) < 2:
+        raise ValueError("كلمة المرور لا يمكن أن تكون خانة واحدة مكررة")
     if normalized.casefold() in COMMON_PASSWORDS:
         raise ValueError("كلمة المرور شائعة وسهلة التخمين")
     return value
@@ -47,4 +47,4 @@ AssignableRole = Annotated[Role, AfterValidator(_assignable_role)]
 
 def validate_password_vs_username(password: str, username: str) -> None:
     if password_contains_username(password, username):
-        raise ValueError("كلمة المرور لا يجب أن تحتوي اسم المستخدم")
+        raise ValueError("كلمة المرور لا يجب أن تكون نفس اسم المستخدم")

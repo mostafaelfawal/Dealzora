@@ -1,8 +1,10 @@
 import {
   IconBuildingStore,
   IconCashRegister,
+  IconCloudOff,
   IconChartBar,
   IconDatabaseExport,
+  IconLock,
   IconPackage,
   IconShieldLock,
   IconTruckDelivery,
@@ -65,3 +67,37 @@ export const SHOWCASE_FEATURES: ShowcaseFeature[] = [
 ];
 
 export const SHOWCASE_ICON = IconBuildingStore;
+
+/** ماذا يحدث بعد الإعداد مباشرة: يطمئن التاجر أن البداية سهلة. */
+export const SHOWCASE_NEXT_STEPS = [
+  {
+    title: "أضف أصنافك",
+    description: "بالباركود واحداً واحداً، أو استوردها كلها من Excel.",
+  },
+  {
+    title: "أضف فريقك",
+    description: "حساب لكل كاشير ومدير بصلاحيات محددة.",
+  },
+  {
+    title: "ابدأ البيع",
+    description: "أول فاتورة في دقائق، والأرباح تظهر لحظياً.",
+  },
+] as const;
+
+export const SHOWCASE_TRUST: ShowcaseFeature[] = [
+  {
+    title: "يعمل بدون إنترنت",
+    description: "البيع لا يتوقف لو انقطع الإنترنت.",
+    icon: IconCloudOff,
+  },
+  {
+    title: "بياناتك على جهازك",
+    description: "قاعدة بيانات مشفّرة محفوظة عندك أنت.",
+    icon: IconLock,
+  },
+  {
+    title: "نسخة احتياطية يومية",
+    description: "تلقائية ومشفّرة، واستعادة بضغطة.",
+    icon: IconDatabaseExport,
+  },
+];

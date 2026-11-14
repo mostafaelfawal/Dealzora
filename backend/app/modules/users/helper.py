@@ -17,7 +17,8 @@ def normalize_username(text: str) -> str:
 
 
 def password_contains_username(password: str, username: str) -> bool:
-    return bool(username) and username in normalize_username(password)
+    # تطابق تام فقط: «ahmed2024» مقبولة لمستخدم ahmed لأنها أسهل على التاجر.
+    return bool(username) and normalize_username(password) == username
 
 
 def parse_role(value: str) -> Role | None:

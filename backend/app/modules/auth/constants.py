@@ -31,5 +31,5 @@ ERROR_MESSAGES: dict[AuthError, str] = {
     AuthError.ACCOUNT_LOCKED: "الحساب مقفل مؤقتاً، حاول بعد قليل",
     AuthError.WRONG_PASSWORD: "كلمة المرور الحالية غير صحيحة",
     AuthError.SAME_PASSWORD: "كلمة المرور الجديدة يجب أن تختلف عن الحالية",
-    AuthError.PASSWORD_HAS_USERNAME: "كلمة المرور لا يجب أن تحتوي اسم المستخدم",
+    AuthError.PASSWORD_HAS_USERNAME: "كلمة المرور لا يجب أن تكون نفس اسم المستخدم",
 }

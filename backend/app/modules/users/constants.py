@@ -17,6 +17,8 @@ MAX_ACTIVE_MANAGERS = 1
 
 COMMON_PASSWORDS = frozenset(
     {
+        "123456", "1234567", "12345678", "123456789", "654321", "123123",
+        "112233", "121212", "qwerty", "abc123", "abcdef", "admin123",
         "password", "password1", "password123", "passw0rd123", "1234567890",
         "12345678910", "0123456789", "123456789a", "qwertyuiop", "qwerty12345",
         "admin12345", "administrator", "welcome123", "letmein123", "iloveyou123",
@@ -49,7 +51,7 @@ ERROR_MESSAGES: dict[UserError, str] = {
     UserError.ALREADY_SETUP: "تم إعداد النظام بالفعل",
     UserError.USER_NOT_FOUND: "لم نجد هذا المستخدم",
     UserError.USERNAME_TAKEN: "اسم المستخدم مستخدم بالفعل",
-    UserError.PASSWORD_HAS_USERNAME: "كلمة المرور لا يجب أن تحتوي اسم المستخدم",
+    UserError.PASSWORD_HAS_USERNAME: "كلمة المرور لا يجب أن تكون نفس اسم المستخدم",
     UserError.LAST_MANAGER: "لا يمكن تعطيل أو حذف أو تخفيض آخر مدير في النظام",
     UserError.LAST_OWNER: "لا يمكن تعطيل أو حذف آخر حساب مالك",
     UserError.OWNER_ONLY: "إدارة المدير وحسابات المالك لمالك المحل فقط. المدير يدير الكاشيرية",

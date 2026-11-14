@@ -11,7 +11,8 @@ ARGON2_MEMORY_KIB = 64 * 1024
 ARGON2_PARALLELISM = 2
 
 # ---- الحدود ----
-MIN_PASSWORD_LEN = 10
+# قصيرة عمداً: صاحب المحل يحتاج كلمة يتذكرها. الحماية الفعلية من تشفير قاعدة البيانات وتحديد محاولات الدخول.
+MIN_PASSWORD_LEN = 6
 MAX_PASSWORD_LEN = 128
 
 _hasher = PasswordHasher(

@@ -4,6 +4,7 @@ import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 
+import { BrandLogo } from "@/components/shared/BrandLogo";
 import { Button } from "@/components/ui/button";
 
 interface BackendState {
@@ -13,6 +14,8 @@ interface BackendState {
 }
 
 const CHECK_EVERY_MS = 2000;
+/** بعدها نطمئن المستخدم أن التأخير طبيعي في أول تشغيل. */
+const SLOW_HINT_AFTER_MS = 6000;
 
 /**
  * يظهر أثناء انتظار الخادم المحلي عند فتح البرنامج (أول تشغيل لنسخة الـ exe قد يأخذ ثوانٍ،
@@ -20,6 +23,12 @@ const CHECK_EVERY_MS = 2000;
  */
 export function BackendStartup({ failed }: { failed: boolean }) {
   const [backend, setBackend] = useState<BackendState | null>(null);
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), SLOW_HINT_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!isTauri()) return;
@@ -42,10 +51,19 @@ export function BackendStartup({ failed }: { failed: boolean }) {
     return (
       <main
         role="status"
-        className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-background text-muted-foreground"
+        className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-background p-6 text-center"
       >
-        <IconLoader2 className="size-7 animate-spin" />
-        <p className="text-sm">جارٍ تشغيل البرنامج…</p>
+        <BrandLogo variant="icon" className="h-12" />
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <IconLoader2 className="size-4 animate-spin" aria-hidden />
+          جارٍ تشغيل البرنامج…
+        </div>
+        {slow && (
+          <p className="max-w-xs text-xs text-muted-foreground">
+            أول تشغيل قد يستغرق حتى دقيقة بينما يجهّز البرنامج قاعدة بياناتك
+            المشفّرة. لا تغلق النافذة.
+          </p>
+        )}
       </main>
     );
   }

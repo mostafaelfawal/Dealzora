@@ -279,20 +279,6 @@ fn spawn_backend(_: &str, _: &str) -> Option<Child> {
     None // في التطوير الـ backend بيشتغل من VS Code task
 }
 
-#[cfg(debug_assertions)]
-#[tauri::command]
-fn reset_license_dev() -> Result<(), String> {
-    license::reset_dev()
-}
-
-/// نسخة الإنتاج: الأمر مسجّل في generate_handler لكل البنايات، فلازم يوجد، لكنه مرفوض دائماً.
-/// (بدونه يفشل `tauri build`.)
-#[cfg(not(debug_assertions))]
-#[tauri::command]
-fn reset_license_dev() -> Result<(), String> {
-    Err("not_available".into())
-}
-
 /// يفتح رابط واتساب فقط (قائمة بيضاء) في المتصفح/التطبيق الافتراضي لإرسال الفاتورة.
 /// rundll32 لا يمر عبر cmd، فلا يوجد حقن أوامر، والرابط مُرمَّز بالكامل من الواجهة.
 #[tauri::command]
@@ -383,7 +369,6 @@ pub fn run() {
                 set_lan_enabled,
                 start_trial,
                 activate_license,
-                reset_license_dev,
                 open_whatsapp,
                 open_external,
                 downloads::save_download,

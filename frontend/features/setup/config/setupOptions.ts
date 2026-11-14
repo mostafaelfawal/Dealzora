@@ -2,8 +2,10 @@ export const SHOP_NAME_MIN = 2;
 export const SHOP_NAME_MAX = 100;
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 50;
-export const PASSWORD_MIN = 10;
-export const PASSWORD_MAX = 128;
+export {
+  MIN_PASSWORD_LEN as PASSWORD_MIN,
+  MAX_PASSWORD_LEN as PASSWORD_MAX,
+} from "@/features/users/config/userLimits";
 
 export const SETUP_FIELD_IDS = {
   shopName: "setup-shop-name",
