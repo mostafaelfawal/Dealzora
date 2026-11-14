@@ -1,6 +1,6 @@
 "use client";
 
-import { IconReceiptRefund } from "@tabler/icons-react";
+import { IconPrinter, IconReceiptRefund } from "@tabler/icons-react";
 
 import { AppTable } from "@/components/shared/AppTable/AppTable";
 import {
@@ -11,6 +11,8 @@ import {
 import type { AppTableColumn } from "@/components/shared/AppTable/types";
 import { Money } from "@/components/shared/Money";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useShopName } from "@/features/settings/hooks/useSettings";
 import type { ViewMode } from "@/hooks/useViewMode";
 import { formatWhen } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
@@ -18,6 +20,7 @@ import { formatQty } from "@/lib/format";
 
 import { PAGE_SIZES, RETURN_REASON_LABEL } from "../config/saleOptions";
 import type { ReturnsFilters } from "../hooks/useReturnsFilters";
+import { printReturnReceipt } from "../lib/receipt";
 import type { SaleReturn } from "../types/sale";
 
 function RefundBadges({ ret: r }: { ret: SaleReturn }) {
@@ -85,7 +88,33 @@ const COLUMNS: AppTableColumn<SaleReturn>[] = [
     cellClassName: "text-xs text-muted-foreground",
     cell: (r) => `${formatWhen(r.returnedAt)} · ${r.cashierName ?? "—"}`,
   },
+  {
+    id: "print",
+    header: "",
+    cellClassName: "w-10",
+    cell: (r) => <PrintReturnButton ret={r} />,
+  },
 ];
+
+/** إعادة طباعة إيصال المرتجع (بدون فتح الدرج). */
+function PrintReturnButton({ ret }: { ret: SaleReturn }) {
+  const shopName = useShopName().data ?? "Dealzora";
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={`طباعة إيصال المرتجع ${ret.number}`}
+      title="طباعة إيصال المرتجع"
+      onClick={(e) => {
+        e.stopPropagation();
+        void printReturnReceipt(ret, shopName);
+      }}
+    >
+      <IconPrinter className="size-4" />
+    </Button>
+  );
+}
 
 /** بطاقة مرتجع: القيمة والسبب، ثم الأصناف الراجعة وطريقة الرد. */
 function ReturnCard({ ret: r }: { ret: SaleReturn }) {

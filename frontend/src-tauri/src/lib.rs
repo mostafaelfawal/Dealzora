@@ -2,6 +2,7 @@ mod device;
 mod downloads;
 mod hardware;
 mod license;
+mod printing;
 
 use std::process::Child;
 use std::sync::Mutex;
@@ -373,7 +374,9 @@ pub fn run() {
                 open_external,
                 downloads::save_download,
                 downloads::reveal_download,
-                hardware::get_hardware_info
+                hardware::get_hardware_info,
+                printing::list_printers,
+                printing::print_raw
             ]
         )
         .build(tauri::generate_context!())

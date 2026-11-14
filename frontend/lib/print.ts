@@ -1,3 +1,10 @@
+import { invoke, isTauri } from "@tauri-apps/api/core";
+import { toast } from "sonner";
+
+import { bytesToBase64, canvasToEscPos } from "./escpos";
+import { renderHtmlToCanvas } from "./htmlRaster";
+import { getPrinterPrefs } from "./printerPrefs";
+
 /**
  * يطبع مستند HTML مستقل عبر iframe مخفي (نافذة الطباعة الأصلية للنظام،
  * تشمل الطابعة الحرارية وطابعة الملصقات). مقاس الورق يحدده @page داخل المستند.
@@ -24,4 +31,75 @@ export function printHtml(html: string) {
     win.print();
     cleanup();
   }, 50);
+}
+
+/* ---------- الطباعة الحرارية المباشرة (بدون نافذة الطباعة) ---------- */
+
+export interface PrinterInfo {
+  name: string;
+  is_default: boolean;
+}
+
+export const canPrintDirect = () => isTauri();
+
+export const listPrinters = () => invoke<PrinterInfo[]>("list_printers");
+
+/** مهام الطباعة بالترتيب (مثلاً إيصال المرتجع ثم فاتورة الاستبدال). */
+let queue: Promise<unknown> = Promise.resolve();
+
+async function sendToPrinter(
+  html: string,
+  printer: string,
+  jobName: string,
+  openDrawer: boolean,
+) {
+  const prefs = getPrinterPrefs();
+  const canvas = await renderHtmlToCanvas(html, prefs.paperMm);
+  const bytes = canvasToEscPos(canvas, {
+    cut: prefs.cut,
+    feedLines: prefs.feedLines,
+    openDrawer: openDrawer && prefs.openDrawer,
+  });
+  await invoke("print_raw", {
+    printer,
+    data: bytesToBase64(bytes),
+    jobName,
+  });
+}
+
+/**
+ * يطبع إيصالاً (بيع/مرتجع) على الطابعة الحرارية المختارة فوراً بدون نافذة.
+ * بدون طابعة مختارة، أو خارج البرنامج (المتصفح)، أو في وضع «نافذة الطباعة»: نافذة الطباعة العادية.
+ */
+export function printReceiptHtml(
+  html: string,
+  opts: { jobName: string; openDrawer?: boolean },
+): Promise<void> {
+  const prefs = getPrinterPrefs();
+  if (!canPrintDirect() || prefs.mode === "dialog") {
+    printHtml(html);
+    return Promise.resolve();
+  }
+  const printer = prefs.printer;
+  if (!printer) {
+    toast.info("لم تُختر طابعة الإيصالات بعد", {
+      description: "اخترها من الإعدادات ← البيع ← الطباعة لتطبع مباشرة بدون نافذة.",
+      duration: 6000,
+    });
+    printHtml(html);
+    return Promise.resolve();
+  }
+  const job = queue.then(() =>
+    sendToPrinter(html, printer, opts.jobName, Boolean(opts.openDrawer)).catch(
+      (e: unknown) => {
+        toast.error("تعذّرت الطباعة على الطابعة الحرارية", {
+          description: typeof e === "string" ? e : (e as Error)?.message,
+          duration: 10_000,
+          action: { label: "طباعة عادية", onClick: () => printHtml(html) },
+        });
+      },
+    ),
+  );
+  queue = job;
+  return job;
 }

@@ -11,6 +11,7 @@ import {
   IconGift,
   IconPalette,
   IconPercentage,
+  IconPrinter,
   IconScale,
   IconShieldCheck,
   IconShieldLock,
@@ -40,6 +41,7 @@ import { LicenseSection } from "./licenseSection";
 import { LoyaltySection } from "./loyaltySection";
 import { PasswordSection } from "./passwordSection";
 import { PaymentsSection } from "./paymentsSection";
+import { PrinterSection } from "./printerSection";
 import { ScaleBarcodeSection } from "./scaleBarcodeSection";
 import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
@@ -131,6 +133,14 @@ function buildPages(device: DeviceConfig | null, owner: boolean): Page[] {
         description:
           "إذا كان لديك ميزان يطبع ملصق باركود: يمسحه الكاشير فيُضاف الصنف بوزنه.",
         content: <ScaleBarcodeSection />,
+      },
+      {
+        id: "printer",
+        icon: <IconPrinter />,
+        title: "الطباعة",
+        description:
+          "طابعة الإيصالات الحرارية: طباعة الفاتورة والمرتجع فوراً بدون نافذة الطباعة.",
+        content: <PrinterSection />,
       },
     ],
   };

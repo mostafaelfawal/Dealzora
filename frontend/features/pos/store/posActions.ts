@@ -1,7 +1,11 @@
 import { toast } from "sonner";
 
 import { createExchange, createSale } from "@/features/sales/api/sales.api";
-import { printReceipt, sendWhatsapp } from "@/features/sales/lib/receipt";
+import {
+  printReceipt,
+  printReturnReceipt,
+  sendWhatsapp,
+} from "@/features/sales/lib/receipt";
 import type { Sale, SaleInput } from "@/features/sales/types/sale";
 import { fetchShopName } from "@/features/settings/api/settings.api";
 import { newClientRef } from "@/lib/apiMap";
@@ -540,7 +544,7 @@ export const confirmPayment =
       dispatch(cartActions.completeInvoice(sale.number));
 
       const name = await shopName();
-      if (result.print) printReceipt(sale, name);
+      if (result.print) void printReceipt(sale, name, { openDrawer: true });
 
       const description =
         sale.walletAmount > 0
@@ -673,10 +677,15 @@ export const confirmExchange =
           })),
         }),
       );
+      if (print) {
+        // إيصال المرتجع أولاً ثم فاتورة الاستبدال (الطباعة بالترتيب). الدرج يفتح لو فيه نقدية.
+        const name = await shopName();
+        void printReturnReceipt(saleReturn, name, { openDrawer: !sale });
+        if (sale) void printReceipt(sale, name, { openDrawer: true });
+      }
       if (sale) {
         dispatch(recordSaved(sale));
         dispatch(cartActions.completeInvoice(sale.number));
-        if (print) printReceipt(sale, await shopName());
       } else dispatch(posUiActions.closeDialog());
       dispatch(exchangeActions.clear());
 

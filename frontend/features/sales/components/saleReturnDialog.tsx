@@ -4,6 +4,7 @@ import {
   IconLoader2,
   IconMinus,
   IconPlus,
+  IconPrinter,
   IconReceiptRefund,
 } from "@tabler/icons-react";
 import { useState } from "react";
@@ -12,6 +13,8 @@ import { Money } from "@/components/shared/Money";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useShopName } from "@/features/settings/hooks/useSettings";
 import {
   Dialog,
   DialogContent,
@@ -31,9 +34,11 @@ import {
   saleReturnSelection,
   type SaleReturnQtys,
 } from "../lib/saleReturn";
+import { printReturnReceipt } from "../lib/receipt";
 import type { RefundVia, ReturnReason, Sale, SaleLine } from "../types/sale";
 
 const NOTE_MAX = 200;
+const DEFAULT_SHOP_NAME = "Dealzora";
 
 /** سطر بكمية قابلة للزيادة والنقص، و"الكل" لإرجاع المتاح كله. */
 function ReturnLineStepper({
@@ -109,6 +114,8 @@ function ReturnLineStepper({
 
 function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   const create = useCreateReturn();
+  const shopName = useShopName().data ?? DEFAULT_SHOP_NAME;
+  const [print, setPrint] = useState(true);
   const [qtys, setQtys] = useState<SaleReturnQtys>({});
   const [reason, setReason] = useState<ReturnReason>("customer_changed");
   const [note, setNote] = useState("");
@@ -129,7 +136,12 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
           ...(paidByWallet ? { refundVia } : {}),
         },
       },
-      { onSuccess: onClose },
+      {
+        onSuccess: (ret) => {
+          if (print) void printReturnReceipt(ret, shopName, { openDrawer: true });
+          onClose();
+        },
+      },
     );
   }
 
@@ -203,6 +215,15 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
         </span>
         <Money amount={selection.estimate} className="text-2xl leading-none" />
       </div>
+
+      <label className="flex items-center gap-2 text-xs">
+        <Checkbox
+          checked={print}
+          onCheckedChange={(value) => setPrint(Boolean(value))}
+        />
+        طباعة إيصال المرتجع
+        <IconPrinter className="size-5" />
+      </label>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button
