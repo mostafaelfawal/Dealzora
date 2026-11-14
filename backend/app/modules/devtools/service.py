@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.audit import record_audit
 from app.core.base import Base, uuid7
 from app.core.config import get_settings
+from app.core.database import get_engine
 from app.core.errors import ConflictError, NotFoundError
 from app.core.security import Actor
 from app.modules.shifts.repository import ShiftRepository
@@ -45,6 +46,11 @@ class DemoSeedOut(BaseModel):
     purchases: int
     expenses: int
     shifts: int
+    users: int
+    promotions: int
+    purchase_orders: int
+    loyalty_redemptions: int
+    loyalty_adjustments: int
     skipped: int
     notes: list[str]
 
@@ -100,6 +106,11 @@ class DemoService:
             purchases=stats.purchases,
             expenses=stats.expenses,
             shifts=stats.shifts,
+            users=stats.users,
+            promotions=stats.promotions,
+            purchase_orders=stats.purchase_orders,
+            loyalty_redemptions=stats.loyalty_redemptions,
+            loyalty_adjustments=stats.loyalty_adjustments,
             skipped=stats.skipped,
             notes=stats.errors,
         )
@@ -141,6 +152,15 @@ class DemoService:
                 "demo_referenced",
                 "بيانات حقيقية مرتبطة ببيانات تجريبية (مثل بيع صنف تجريبي)، لذلك لم يُحذف شيء",
             ) from exc
-        # استرجاع المساحة بعد حذف آلاف الصفوف (خارج أي معاملة).
-        self.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE)"))
+        # استرجاع المساحة بعد حذف آلاف الصفوف. لازم خارج أي معاملة: session.execute تبدأ
+        # BEGIN IMMEDIATE فيفشل الأمر بـ "table is locked"، لذلك اتصال خام مباشر.
+        # تحسين فقط: فشله لا يلغي حذفاً تم بالفعل.
+        self.session.close()
+        raw = get_engine().raw_connection()
+        try:
+            raw.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        except Exception:  # noqa: BLE001
+            pass
+        finally:
+            raw.close()
         return DemoClearOut(deleted=deleted, seconds=round(time.perf_counter() - started, 1))

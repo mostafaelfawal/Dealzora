@@ -1,6 +1,6 @@
 "use client";
 
-import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react";
+import { IconAlertTriangle, IconInfoCircle } from "@tabler/icons-react";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 
@@ -16,6 +16,14 @@ interface BackendState {
 const CHECK_EVERY_MS = 2000;
 /** بعدها نطمئن المستخدم أن التأخير طبيعي في أول تشغيل. */
 const SLOW_HINT_AFTER_MS = 6000;
+/** رسائل حالة متتابعة تطمئن المستخدم أن العمل يتقدم؛ تتوقف عند آخر رسالة. */
+const STEPS = [
+  "تشغيل الخادم المحلي…",
+  "فتح قاعدة البيانات المشفّرة…",
+  "تحميل بياناتك وإعداداتك…",
+  "لحظات ويصبح كل شيء جاهزاً…",
+] as const;
+const STEP_EVERY_MS = 2500;
 
 /**
  * يظهر أثناء انتظار الخادم المحلي عند فتح البرنامج (أول تشغيل لنسخة الـ exe قد يأخذ ثوانٍ،
@@ -24,10 +32,18 @@ const SLOW_HINT_AFTER_MS = 6000;
 export function BackendStartup({ failed }: { failed: boolean }) {
   const [backend, setBackend] = useState<BackendState | null>(null);
   const [slow, setSlow] = useState(false);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => setSlow(true), SLOW_HINT_AFTER_MS);
-    return () => clearTimeout(timer);
+    const stepTimer = setInterval(
+      () => setStep((s) => Math.min(s + 1, STEPS.length - 1)),
+      STEP_EVERY_MS,
+    );
+    return () => {
+      clearTimeout(timer);
+      clearInterval(stepTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -51,19 +67,69 @@ export function BackendStartup({ failed }: { failed: boolean }) {
     return (
       <main
         role="status"
-        className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-background p-6 text-center"
+        aria-live="polite"
+        aria-busy="true"
+        className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-background p-6 text-center"
       >
-        <BrandLogo variant="icon" className="h-12" />
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <IconLoader2 className="size-4 animate-spin" aria-hidden />
-          جارٍ تشغيل البرنامج…
+        {/* هالة خلفية ناعمة تعطي عمقاً بدون تشتيت */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-primary)_0%,transparent_60%)] opacity-[0.06]"
+        />
+
+        <div className="relative flex flex-col items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
+          {/* الشعار داخل حلقة دوّارة */}
+          <div className="relative grid size-28 place-items-center">
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full border-2 border-primary/10"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-primary animation-duration-[1.1s]"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-3 animate-pulse rounded-full bg-primary/5"
+            />
+            <BrandLogo variant="icon" className="relative h-12" />
+          </div>
+
+          <div className="flex w-64 flex-col items-center gap-3">
+            <h1 className="text-base font-semibold tracking-tight">
+              جارٍ تشغيل البرنامج
+            </h1>
+
+            {/* شريط تقدم غير محدد — يتحرك من اليمين لليسار ليناسب RTL */}
+            <div
+              dir="ltr"
+              aria-hidden
+              className="relative h-1 w-full -scale-x-100 overflow-hidden rounded-full bg-muted"
+            >
+              <span className="absolute inset-y-0 left-0 w-2/5 animate-indeterminate rounded-full bg-primary" />
+            </div>
+
+            <p
+              key={step}
+              className="h-5 text-xs text-muted-foreground animate-in fade-in slide-in-from-bottom-1 duration-300"
+            >
+              {STEPS[step]}
+            </p>
+          </div>
+
+          {slow && (
+            <div className="flex max-w-xs items-start gap-2 rounded-lg border bg-card/60 p-3 text-start text-xs leading-relaxed text-muted-foreground backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <IconInfoCircle
+                className="mt-0.5 size-4 shrink-0 text-primary"
+                aria-hidden
+              />
+              <span>
+                أول تشغيل قد يستغرق حتى دقيقة بينما يجهّز البرنامج قاعدة بياناتك
+                المشفّرة. <strong className="font-medium text-foreground">لا تغلق النافذة.</strong>
+              </span>
+            </div>
+          )}
         </div>
-        {slow && (
-          <p className="max-w-xs text-xs text-muted-foreground">
-            أول تشغيل قد يستغرق حتى دقيقة بينما يجهّز البرنامج قاعدة بياناتك
-            المشفّرة. لا تغلق النافذة.
-          </p>
-        )}
       </main>
     );
   }

@@ -16,7 +16,13 @@ export async function runSetup(
     onStep("trial");
     status = await startTrial(payload.shopName);
   }
-  if (status.state !== "trial" && status.state !== "licensed") {
+  // expired = اشتراك مدفوع انتهى: البرنامج يكمل على «بَسطة» (Rust يصدر تصريح الكتابة له)،
+  // وسجل الترخيص يبقى في ProgramData/LocalAppData/الريجستري حتى لو حُذفت قاعدة البيانات.
+  if (
+    status.state !== "trial" &&
+    status.state !== "licensed" &&
+    status.state !== "expired"
+  ) {
     throw new LicenseError(`license_${status.state}`);
   }
 

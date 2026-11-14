@@ -28,7 +28,7 @@ export function ProductFormFooter({
   const saving = isSaving && pendingAction === "save";
 
   return (
-    <div className="sticky bottom-0 -mx-1 flex flex-col-reverse gap-2 border-t bg-background/95 px-1 py-3 backdrop-blur sm:flex-row sm:justify-end">
+    <div className="sticky -bottom-6 -mx-1 flex flex-col-reverse gap-2 border-t bg-background/95 px-1 py-3 backdrop-blur sm:flex-row sm:justify-end">
       <Button
         type="button"
         variant="outline"

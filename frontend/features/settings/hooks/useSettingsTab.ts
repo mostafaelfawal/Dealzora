@@ -15,15 +15,23 @@ interface NavigationLike {
  */
 function subscribe(onChange: () => void) {
   const nav = (window as unknown as { navigation?: NavigationLike }).navigation;
+  // currententrychange ينطلق متزامناً داخل history.pushState، و Next يستدعيه من
+  // useInsertionEffect، فالتحديث الفوري يرمي «useInsertionEffect must not schedule updates».
+  let cancelled = false;
+  const onEntryChange = () =>
+    queueMicrotask(() => {
+      if (!cancelled) onChange();
+    });
   window.addEventListener("hashchange", onChange);
   window.addEventListener("popstate", onChange);
   window.addEventListener(CHANGE_EVENT, onChange);
-  nav?.addEventListener("currententrychange", onChange);
+  nav?.addEventListener("currententrychange", onEntryChange);
   return () => {
+    cancelled = true;
     window.removeEventListener("hashchange", onChange);
     window.removeEventListener("popstate", onChange);
     window.removeEventListener(CHANGE_EVENT, onChange);
-    nav?.removeEventListener("currententrychange", onChange);
+    nav?.removeEventListener("currententrychange", onEntryChange);
   };
 }
 

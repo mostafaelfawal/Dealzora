@@ -21,6 +21,11 @@ export interface SeedResult {
   products: number;
   customers: number;
   suppliers: number;
+  users: number;
+  promotions: number;
+  purchase_orders: number;
+  loyalty_redemptions: number;
+  loyalty_adjustments: number;
 }
 
 export interface ClearResult {

@@ -29,7 +29,7 @@ export function useDemoMutations({ onSettled }: { onSettled: () => void }) {
     onSuccess: (r) => {
       refreshAll();
       toast.success(`تم إنشاء بيانات ${r.days} يوماً`, {
-        description: `${r.sales} فاتورة · ${r.purchases} فاتورة شراء · ${r.products} صنف · ${r.customers} عميل (${r.records} سجل في ${r.seconds} ث)`,
+        description: `${r.sales} فاتورة · ${r.purchases} فاتورة شراء · ${r.purchase_orders} طلب شراء · ${r.promotions} عرض · ${r.loyalty_redemptions} استبدال نقاط · ${r.products} صنف · ${r.customers} عميل · ${r.users} مستخدم (${r.records} سجل في ${r.seconds} ث)`,
         duration: 10_000,
       });
     },
