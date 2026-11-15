@@ -4,7 +4,7 @@ import { IconDeviceFloppy, IconLoader2 } from "@tabler/icons-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 
 import { FormField } from "@/components/shared/form";
-import { OptionSelect } from "@/components/shared/OptionSelect";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,13 +15,9 @@ import {
   useSaveEtaBranch,
   useSaveEtaConfig,
 } from "../hooks/useEta";
-import type { EtaBranch, EtaConfig, EtaEnvironment } from "../types/eta";
+import type { EtaBranch, EtaConfig } from "../types/eta";
 import { EtaCodeSelect, orNull } from "./etaCodeSelect";
-
-const ENVIRONMENTS: { value: EtaEnvironment; label: string }[] = [
-  { value: "preprod", label: "تجريبية (Pre-production)" },
-  { value: "prod", label: "فعلية (Production)" },
-];
+import { EtaEnvironmentSwitch } from "./etaEnvironment";
 
 function SaveBar({ changed, pending }: { changed: boolean; pending: boolean }) {
   return (
@@ -76,18 +72,18 @@ function TextField({
 
 /* ---------- بيانات المحل (seller) ---------- */
 
-type ShopDraft = Record<"rin" | "tradeName" | "activity", string> & {
-  environment: EtaEnvironment;
-};
+type ShopDraft = Record<"rin" | "tradeName" | "activity", string>;
 
 const shopDraft = (c: EtaConfig): ShopDraft => ({
   rin: c.rin ?? "",
   tradeName: c.company_trade_name ?? "",
   activity: c.activity_code ?? "",
-  environment: c.environment,
 });
 
-/** رقم التسجيل والاسم التجاري وكود النشاط والبيئة. التفعيل نفسه من قسم «الجاهزية». */
+/**
+ * رقم التسجيل والاسم التجاري وكود النشاط. التفعيل من قسم «الجاهزية»، والبيئة (تجريبية/فعلية) بزر
+ * مستقل بتأكيد صريح لأنها تبدأ سلسلة جديدة وتُغلق المعلّق.
+ */
 export function EtaShopForm() {
   const { data } = useEtaConfig();
   const save = useSaveEtaConfig();
@@ -100,7 +96,6 @@ export function EtaShopForm() {
     rin: orNull(d.rin),
     company_trade_name: orNull(d.tradeName),
     activity_code: orNull(d.activity),
-    environment: d.environment,
   };
   const changed = JSON.stringify(next) !== JSON.stringify(data);
 
@@ -137,15 +132,8 @@ export function EtaShopForm() {
             placeholder="اختر نشاط المحل"
           />
         </FormField>
-        <FormField id="eta-env" label="البيئة">
-          <OptionSelect
-            label="البيئة"
-            items={ENVIRONMENTS}
-            value={d.environment}
-            onChange={(environment) => patch({ environment })}
-          />
-        </FormField>
       </div>
+      <EtaEnvironmentSwitch current={data.environment} />
       {data.enabled && (
         <p className="text-xs text-muted-foreground">
           المنظومة مفعّلة: الحفظ يُفحص بالقيم الجديدة، ويُرفض لو نقص بند مطلوب.

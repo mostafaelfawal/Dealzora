@@ -82,6 +82,9 @@ def validate(doc: dict[str, Any], *, now: datetime | None = None) -> list[str]:
     previous = header.get("previousUUID", None)
     if previous is None or (previous != "" and not _HEX64.match(previous)):
         err("الـ UUID السابق للجهاز غير صالح")
+    old = header.get("referenceOldUUID")
+    if old is not None and (not _HEX64.match(old) or old == header.get("uuid")):
+        err("UUID الإيصال المرفوض (referenceOldUUID) غير صالح")  # core rule 14: لا يساوي UUID
     if kind == RECEIPT_TYPE_RETURN and not _HEX64.match(header.get("referenceUUID") or ""):
         err("إيصال المرتجع يحتاج UUID فاتورة البيع الأصلية")
     if header.get("currency") != CURRENCY:

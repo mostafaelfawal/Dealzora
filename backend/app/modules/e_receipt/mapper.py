@@ -94,6 +94,8 @@ class ReceiptSpec:
     buyer: BuyerSpec
     payment_code: str
     lines: list[LineSpec]
+    # تصحيح إيصال رفضته المنظومة (receiptissuancefaq «Re-submitting Invalid Receipts»): UUID القديم.
+    reference_old_uuid: str | None = None
 
 
 def discount_parts(
@@ -185,6 +187,8 @@ def build_document(spec: ReceiptSpec) -> dict[str, Any]:
     }
     if spec.reference_uuid is not None:
         header["referenceUUID"] = spec.reference_uuid
+    if spec.reference_old_uuid is not None:  # ترتيب جدول header: بعد previousUUID/referenceUUID
+        header["referenceOldUUID"] = spec.reference_old_uuid
     header["currency"] = CURRENCY
 
     s = spec.seller

@@ -119,6 +119,11 @@ _NEW_COLUMNS = (
     ("sale_returns", "eta_sent_at", "DATETIME"),
     # المرحلة 5: قرار المدير بإرسال مرتجع رغم رفض فاتورته الأصلية (يفك إيقاف سلسلة الجهاز).
     ("sale_returns", "eta_release", "BOOLEAN NOT NULL DEFAULT 0"),
+    # المرحلة 8: بيئة الإيصال (تجريبية/فعلية) و UUID الإيصال المرفوض الذي صُحّح (referenceOldUUID).
+    ("sales", "eta_environment", "VARCHAR(10)"),
+    ("sales", "eta_replaced_uuid", "VARCHAR(64)"),
+    ("sale_returns", "eta_environment", "VARCHAR(10)"),
+    ("sale_returns", "eta_replaced_uuid", "VARCHAR(64)"),
 )
 
 # فهارس على أعمدة أُضيفت بـ _NEW_COLUMNS (تُنشأ بعدها).

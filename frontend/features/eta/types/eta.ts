@@ -147,3 +147,95 @@ export interface Readiness {
   warnings: number;
   items: ReadinessItem[];
 }
+
+/* ---------- متابعة الإيصالات (المرحلة 8) ---------- */
+
+export type EReceiptStatus =
+  | "not_sent"
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "not_required"
+  | "invalid";
+
+/** ماذا يفعل زر «إعادة الإرسال»: تصحيح مرفوض / إعادة توليد خطأ تحقق / إرسال فوري. */
+export type ResendMode = "correct" | "regenerate" | "send";
+
+export interface ReceiptItem {
+  kind: "sale" | "return";
+  id: string;
+  /** الفاتورة المرتبطة (للمرتجع: فاتورته الأصلية). */
+  sale_id: string;
+  number: number;
+  receipt_number: string | null;
+  issued_at: string;
+  device_id: string | null;
+  device_name: string | null;
+  status: EReceiptStatus;
+  uuid: string | null;
+  replaced_uuid: string | null;
+  reference_uuid: string | null;
+  environment: EtaEnvironment | null;
+  total: number; // قروش
+  tax_total: number | null;
+  /** رسالة المنظومة أو التحقق المحلي كما هي. */
+  error: string | null;
+  /** ترجمتها: ما المشكلة، وماذا أفعل. */
+  help_title: string | null;
+  help_action: string | null;
+  sent_at: string | null;
+  late: boolean;
+  overdue: boolean;
+  /** مرفوض ومرّ عليه أكثر من 96 ساعة: التصحيح يحتاج تأكيداً. */
+  amendment_late: boolean;
+  resend: ResendMode | null;
+}
+
+export interface ReceiptList {
+  items: ReceiptItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  devices: { id: string; name: string }[];
+}
+
+export interface ReceiptFiltersQuery {
+  status?: EReceiptStatus | "attention";
+  kind?: "sale" | "return";
+  device_id?: string;
+  date_from?: string;
+  date_to?: string;
+  q?: string;
+  page: number;
+  page_size: number;
+}
+
+export interface ResendResult {
+  corrected: number;
+  regenerated: number;
+  queued: number;
+  errors: { id: string; number: number | null; message: string; code: string }[];
+}
+
+export interface QueueInfo {
+  enabled: boolean;
+  waiting: number;
+  rejected: number;
+  late: number;
+  overdue: number;
+}
+
+export interface EReceiptReport extends Record<EReceiptStatus, number> {
+  issued: number;
+  sent: number;
+  tax_sales: number; // قروش
+  tax_returns: number;
+  tax_reported: number;
+  accepted_total: number;
+}
+
+export interface EnvironmentPreview {
+  current: EtaEnvironment;
+  /** إيصالات البيئة الحالية التي لم يكتمل إرسالها (ستصبح «غير مطلوب»). */
+  unsent: number;
+}

@@ -45,10 +45,23 @@ def anchor_path() -> Path:
     return Path(get_settings().db_path).parent / ANCHOR_FILE_NAME
 
 
+# ذاكرة مؤقتة للقراءة: الملف يُقرأ مرتين في كل بيع (داخل معاملة الكتابة). المفتاح المسار + توقيع
+# الملف (mtime/الحجم) فأي تغيير عليه من خارج العملية يُبطلها؛ نعيد نسخة كي لا يعدّلها المستدعي.
+_cache: tuple[tuple, dict[str, Link]] | None = None
+
+
 def read_anchor() -> dict[str, Link]:
+    global _cache
+    path = anchor_path()
     try:
-        raw = json.loads(anchor_path().read_text(encoding="utf-8"))
-        return {d: Link(int(v["seq"]), str(v["uuid"])) for d, v in raw.get("devices", {}).items()}
+        st = path.stat()
+        key = (str(path), st.st_mtime_ns, st.st_size)
+        if _cache is not None and _cache[0] == key:
+            return dict(_cache[1])
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        links = {d: Link(int(v["seq"]), str(v["uuid"])) for d, v in raw.get("devices", {}).items()}
+        _cache = (key, links)
+        return dict(links)
     except FileNotFoundError:
         return {}
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
@@ -57,6 +70,7 @@ def read_anchor() -> dict[str, Link]:
 
 
 def _write(updates: dict[str, Link], *, force: bool = False) -> None:
+    global _cache
     with _lock:
         current = read_anchor()
         for device, link in updates.items():
@@ -68,6 +82,8 @@ def _write(updates: dict[str, Link], *, force: bool = False) -> None:
         payload = {"devices": {d: {"seq": l.seq, "uuid": l.uuid} for d, l in current.items()}}
         tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         os.replace(tmp, path)
+        st = path.stat()  # كل بيع يكتب المرساة: نحدّث الذاكرة هنا كي لا يعيد البيع التالي قراءة الملف
+        _cache = ((str(path), st.st_mtime_ns, st.st_size), dict(current))
 
 
 def _after_commit(session: Session) -> None:

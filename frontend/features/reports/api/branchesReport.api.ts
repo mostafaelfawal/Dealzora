@@ -16,6 +16,10 @@ export interface BranchTotals {
   wallet: number;
   expenses: number;
   netProfit: number;
+  /** الإيصال الإلكتروني (أعداد): لم يصل بعد / مقبول / مرفوض. صفر لفرع بنسخة أقدم. */
+  etaWaiting: number;
+  etaAccepted: number;
+  etaRejected: number;
 }
 
 export interface BranchReportRow extends BranchTotals {
@@ -57,6 +61,9 @@ const toTotals = (d: any): BranchTotals => ({
   wallet: toPounds(d.wallet ?? 0),
   expenses: toPounds(d.expenses ?? 0),
   netProfit: toPounds(d.net_profit ?? (d.profit ?? 0) - (d.expenses ?? 0)),
+  etaWaiting: d.eta_waiting ?? 0,
+  etaAccepted: d.eta_accepted ?? 0,
+  etaRejected: d.eta_rejected ?? 0,
 });
 
 export async function fetchCombinedReport(r: {

@@ -112,6 +112,9 @@ class EtaService(EntityService):
         return _load(EtaConfig, self.settings.get(SettingKey.ETA_CONFIG))  # type: ignore[return-value]
 
     def set_config(self, data: EtaConfig) -> EtaConfig:
+        if data.environment != self.config().environment:
+            # التحويل تجريبي ↔ فعلي يغيّر السلسلة والطابور: له مسار خاص بتأكيد صريح (e_receipt).
+            raise BadRequestError("eta_environment_locked", "لتغيير البيئة استخدم زر «تغيير البيئة» (يحتاج تأكيداً)")
         if data.activity_code and not is_valid(CodeTable.ACTIVITIES, data.activity_code):
             raise self._err(BadRequestError, EtaError.UNKNOWN_ACTIVITY_CODE, code=data.activity_code)
         if data.enabled:

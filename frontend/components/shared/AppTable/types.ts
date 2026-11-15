@@ -40,7 +40,16 @@ export interface AppTablePaginationProps {
   itemsLabel?: string;
 }
 
+export interface AppTableBulkExtraAction<T> {
+  key: string;
+  label: string;
+  icon?: TableIcon;
+  onClick: (rows: T[], clear: () => void) => void;
+}
+
 export interface AppTableBulkActions<T> {
+  /** أزرار إضافية خاصة بالشاشة (مثل «إعادة الإرسال»)، قبل الحذف والتعطيل. */
+  extra?: AppTableBulkExtraAction<T>[];
   /** وجودها يُظهر زر الحذف. clear تلغي التحديد بعد النجاح. */
   onDelete?: (rows: T[], clear: () => void) => void;
   /** وجودها يُظهر زر التعطيل. */

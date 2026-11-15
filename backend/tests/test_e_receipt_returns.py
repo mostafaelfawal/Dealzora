@@ -33,7 +33,9 @@ CONFIG = {"enabled": True, "environment": "preprod", "rin": "123456789", "compan
           "activity_code": "4711"}  # fmt: skip
 
 
-class ReturnsTests(EtaDbCase):
+class FullEtaCase(EtaDbCase):
+    """قاعدة مؤقتة بمنظومة مفعّلة فعلاً: بيانات المحل والفرع وجهازان وأصناف بأكوادها وورديات مفتوحة."""
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -113,6 +115,8 @@ class ReturnsTests(EtaDbCase):
             SettingsService(s).put(OWNER, SettingKey.ETA_CONFIG, json.dumps({**CONFIG, **patch}))
             s.commit()
 
+
+class ReturnsTests(FullEtaCase):
     # ---------- 1) مرتجع يشير للأصل وبضريبته الأصلية ----------
     def test_return_references_original_with_original_tax_rate(self):
         from app.modules.products.model import Product

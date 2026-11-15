@@ -24,6 +24,7 @@ import {
   formatWhen,
 } from "@/lib/dates";
 import { formatNumber } from "@/lib/format";
+import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 import {
@@ -267,6 +268,45 @@ function BranchesTable({ r }: { r: CombinedReport }) {
 }
 
 /** التقرير المجمّع لكل الفروع (للمالك من الجهاز الرئيسي). */
+/** حالة الإيصال الإلكتروني لكل فرع (أعداد فقط؛ التفاصيل من شاشة الإيصالات على جهاز الفرع نفسه). */
+function EReceiptsByBranch({ r }: { r: CombinedReport }) {
+  const allowed = useFeature("e_receipt");
+  const any = r.branches.some((b) => b.etaWaiting + b.etaAccepted + b.etaRejected > 0);
+  if (!allowed || !any) return null;
+  return (
+    <section className="space-y-2 border bg-card p-4">
+      <h3 className="text-sm font-semibold">الإيصال الإلكتروني حسب الفرع</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-96 text-sm">
+          <thead className="text-xs text-muted-foreground">
+            <tr className="border-b">
+              <th className="py-1.5 text-start font-normal">الفرع</th>
+              <th className="text-start font-normal">لم يصل بعد</th>
+              <th className="text-start font-normal">مقبول</th>
+              <th className="text-start font-normal">مرفوض</th>
+            </tr>
+          </thead>
+          <tbody>
+            {r.branches.map((b) => (
+              <tr key={b.id} className="border-b last:border-0">
+                <td className="py-1.5">{b.name}</td>
+                <td className="font-mono">{formatNumber(b.etaWaiting)}</td>
+                <td className="font-mono text-success">{formatNumber(b.etaAccepted)}</td>
+                <td className={cn("font-mono", b.etaRejected > 0 && "text-destructive")}>
+                  {formatNumber(b.etaRejected)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        كل فرع يرسل إيصالاته بنفسه. لمتابعة إيصال بعينه افتح شاشة «الإيصالات الإلكترونية» على جهاز ذلك الفرع.
+      </p>
+    </section>
+  );
+}
+
 export function BranchesReportTab({ range }: { range: DateRange }) {
   const q = useQuery({
     queryKey: ["reports", "branches", range.from, range.to],
@@ -281,6 +321,7 @@ export function BranchesReportTab({ range }: { range: DateRange }) {
       <Totals r={q.data} />
       <Comparison r={q.data} />
       <BranchesTable r={q.data} />
+      <EReceiptsByBranch r={q.data} />
     </div>
   );
 }

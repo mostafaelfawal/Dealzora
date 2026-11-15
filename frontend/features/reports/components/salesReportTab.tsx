@@ -21,6 +21,7 @@ import { formatDayLabel } from "@/lib/dates";
 import { formatNumber } from "@/lib/format";
 import { useFeature } from "@/lib/plan";
 import { useTaxConfig } from "@/lib/tax";
+import { EReceiptReportPanel } from "@/features/eta/components/eReceiptWidgets";
 import { cn } from "@/lib/utils";
 
 import { SALES_METRICS } from "../config/reportOptions";
@@ -393,6 +394,7 @@ export function SalesReportTab({ range }: { range: DateRange }) {
       </div>
       <DiscountBreakdown r={r} />
       <TaxSummary r={r} />
+      <EReceiptReportPanel range={range} />
       <SalesDaysTable r={r} />
     </div>
   );

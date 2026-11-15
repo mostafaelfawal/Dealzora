@@ -27,6 +27,8 @@ import { useSale } from "../hooks/useSales";
 import { printReceipt, sendWhatsapp } from "../lib/receipt";
 import type { Sale } from "../types/sale";
 import { SaleBadges } from "./saleBadges";
+import { SaleEReceiptInfo } from "@/features/eta/components/eReceiptWidgets";
+
 import { SaleReceiptPreview } from "./saleReceiptPreview";
 
 const DEFAULT_SHOP_NAME = "Dealzora";
@@ -171,6 +173,7 @@ export function SaleDetailSheet({
                 shopName={shopName}
               />
             </div>
+            <SaleEReceiptInfo sale={sale} />
             <SaleInternalInfo sale={sale} />
             <SaleActions
               sale={sale}

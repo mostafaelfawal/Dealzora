@@ -1,8 +1,17 @@
+import { cleanParams } from "@/lib/apiMap";
 import { api } from "@/lib/axios";
 
 import type {
   CodeTableName,
   ConnectionTest,
+  EReceiptReport,
+  EnvironmentPreview,
+  EtaEnvironment,
+  QueueInfo,
+  ReceiptFiltersQuery,
+  ReceiptItem,
+  ReceiptList,
+  ResendResult,
   SendAttempt,
   SendCycle,
   SendStatus,
@@ -80,3 +89,44 @@ export const fetchSendAttempts = async (limit = 20) =>
 
 export const fetchEtaCodes = async (table: CodeTableName) =>
   (await api.get<EtaCode[]>(`/eta/codes/${table}`)).data;
+
+/* ---------- متابعة الإيصالات ---------- */
+
+export const fetchReceipts = async (f: ReceiptFiltersQuery) =>
+  (await api.get<ReceiptList>("/e-receipt/receipts", { params: cleanParams({ ...f }) }))
+    .data;
+
+export const resendReceipts = async (
+  items: { kind: ReceiptItem["kind"]; id: string }[],
+  acceptLate = false,
+) =>
+  (
+    await api.post<ResendResult>("/e-receipt/receipts/resend", {
+      items,
+      accept_late: acceptLate,
+    })
+  ).data;
+
+export const fetchQueue = async () =>
+  (await api.get<QueueInfo>("/e-receipt/queue")).data;
+
+export const fetchEReceiptReport = async (from: string, to: string) =>
+  (
+    await api.get<EReceiptReport>("/e-receipt/report", {
+      params: { date_from: from, date_to: to },
+    })
+  ).data;
+
+export const fetchEnvironmentPreview = async () =>
+  (await api.get<EnvironmentPreview>("/e-receipt/environment")).data;
+
+export const switchEnvironment = async (
+  environment: EtaEnvironment,
+  confirmText: string,
+) =>
+  (
+    await api.post<{ environment: EtaEnvironment; closed: number }>(
+      "/e-receipt/environment",
+      { environment, confirm_text: confirmText },
+    )
+  ).data;

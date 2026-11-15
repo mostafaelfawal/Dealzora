@@ -867,7 +867,7 @@ class SaleService(EntityService):
                 eta_status=r.eta_status,
                 eta_uuid=r.eta_uuid,
                 eta_receipt_number=r.eta_receipt_number,
-                eta_error=r.eta_error,
+                eta_error=r.eta_error if self.is_manager else None,
                 eta_print=self._eta_print(r) if len(rows) == 1 else None,
                 cash_refund=r.cash_refund,
                 credit_refund=r.credit_refund,
@@ -899,10 +899,13 @@ class SaleService(EntityService):
         from dataclasses import asdict
 
         from app.modules.e_receipt.qr import print_data
+        from app.modules.eta.constants import EtaEnvironment
         from app.modules.eta.service import EtaService
 
         try:
-            env = EtaService(self.session, self.actor).config().environment
+            # بيئة الإصدار المحفوظة مع الإيصال: بعد التحويل للفعلية يبقى QR إيصال تجريبي قديم على بوابته
+            env = (EtaEnvironment(row.eta_environment) if row.eta_environment
+                   else EtaService(self.session, self.actor).config().environment)
             return EtaPrintOut(**asdict(print_data(row.eta_document, env)))
         except (ValueError, KeyError):  # مستند تالف: الطباعة لا تتعطل أبداً
             return None

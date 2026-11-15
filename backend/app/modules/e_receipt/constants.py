@@ -19,6 +19,10 @@ RETURN_NUMBER_PREFIX = "R-"  # receiptNumber فريد على مستوى الفر
 # «Maximum allowed days to issue a return receipt is 540 days of the issuance date of the sales receipt.»
 # (receiptissuancefaq، Limitations on receipt submission)
 RETURN_MAX_DAYS = 540
+# «Amendment with reference value is: 96 hours» (receiptissuancefaq، Validation with Reference Old UUID):
+# تصحيح إيصال مرفوض بـ referenceOldUUID. بعدها ترفضه المنظومة إلا بطلب إرسال متأخر.
+AMENDMENT_HOURS = 96
+PROD_CONFIRM_TEXT = "فعلي"  # تأكيد صريح للتحويل للبيئة الفعلية
 
 # ---- الأرقام ----
 DECIMALS = 5  # «decimal number up to 5 decimal precisions» (main-calculations)
@@ -82,6 +86,12 @@ class EReceiptError(StrEnum):
     CHAIN_CONFLICT = "e_receipt_chain_conflict"
     NO_ANCHOR_GAP = "e_receipt_no_anchor_gap"
     DISABLED = "e_receipt_disabled"
+    NOT_REJECTED = "e_receipt_not_rejected"
+    LATE_AMENDMENT = "e_receipt_late_amendment"
+    WRONG_ENVIRONMENT = "e_receipt_wrong_environment"
+    ORIGINAL_MISSING = "e_receipt_original_missing"
+    ENV_CONFIRM = "e_receipt_env_confirm"
+    SENDER_BUSY = "e_receipt_sender_busy"
 
 
 ERROR_MESSAGES: dict[EReceiptError, str] = {
@@ -90,4 +100,10 @@ ERROR_MESSAGES: dict[EReceiptError, str] = {
     EReceiptError.CHAIN_CONFLICT: "تزامن في سلسلة إيصالات الجهاز. أعد المحاولة",
     EReceiptError.NO_ANCHOR_GAP: "لا يوجد تعارض في سلسلة هذا الجهاز",
     EReceiptError.DISABLED: "الإيصال الإلكتروني غير مفعّل",
+    EReceiptError.NOT_REJECTED: "التصحيح وإعادة الإرسال للإيصالات المرفوضة فقط",
+    EReceiptError.LATE_AMENDMENT: "مر أكثر من {hours} ساعة على الإيصال: المنظومة ترفض تصحيحه إلا بطلب إرسال متأخر. أكّد لإرساله على أي حال",
+    EReceiptError.WRONG_ENVIRONMENT: "الإيصال من بيئة أخرى (تجريبية/فعلية) ولا يُعاد إرساله على البيئة الحالية",
+    EReceiptError.ORIGINAL_MISSING: "فاتورة البيع الأصلية ليس لها إيصال صحيح. صحّحها أولاً",
+    EReceiptError.ENV_CONFIRM: "للتحويل للبيئة الفعلية اكتب كلمة «{text}» للتأكيد",
+    EReceiptError.SENDER_BUSY: "دورة إرسال تعمل الآن. أعد المحاولة بعد دقيقة",
 }

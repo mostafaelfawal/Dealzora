@@ -7,6 +7,12 @@ import { useFeature } from "@/lib/plan";
 
 import {
   adoptChainAnchor,
+  fetchEReceiptReport,
+  fetchEnvironmentPreview,
+  fetchQueue,
+  fetchReceipts,
+  resendReceipts,
+  switchEnvironment,
   fetchSendAttempts,
   releaseHeldReturn,
   fetchSendStatus,
@@ -25,6 +31,9 @@ import {
 } from "../api/eta.api";
 import type {
   CodeTableName,
+  EtaEnvironment,
+  ReceiptFiltersQuery,
+  ReceiptItem,
   EtaBranch,
   EtaConfig,
   EtaDeviceInput,
@@ -204,3 +213,107 @@ export const useSaveEtaUnit = () => {
     "تعذّر حفظ كود الوحدة",
   );
 };
+
+/* ---------- متابعة الإيصالات (المرحلة 8) ---------- */
+
+export const receiptKeys = {
+  list: (f: ReceiptFiltersQuery) => ["eta", "receipts", f] as const,
+  queue: ["eta", "queue"] as const,
+  report: (from: string, to: string) => ["eta", "report", from, to] as const,
+  environment: ["eta", "environment"] as const,
+};
+
+export function useReceipts(f: ReceiptFiltersQuery) {
+  const allowed = useFeature("e_receipt");
+  return useQuery({
+    queryKey: receiptKeys.list(f),
+    queryFn: () => fetchReceipts(f),
+    enabled: allowed,
+    placeholderData: (prev) => prev,
+  });
+}
+
+/** أعداد الطابور (الكاشير والداشبورد): متاحة لأي مستخدم، وتتحدث بحدث realtime «e_receipt». */
+export function useReceiptQueue() {
+  const allowed = useFeature("e_receipt");
+  return useQuery({
+    queryKey: receiptKeys.queue,
+    queryFn: fetchQueue,
+    enabled: allowed,
+    refetchInterval: 120_000,
+  });
+}
+
+export function useEReceiptReport(from: string, to: string) {
+  const allowed = useFeature("e_receipt");
+  return useQuery({
+    queryKey: receiptKeys.report(from, to),
+    queryFn: () => fetchEReceiptReport(from, to),
+    enabled: allowed,
+  });
+}
+
+export function useResendReceipts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      items,
+      acceptLate,
+    }: {
+      items: { kind: ReceiptItem["kind"]; id: string }[];
+      acceptLate?: boolean;
+    }) => resendReceipts(items, acceptLate),
+    onSuccess: (r) => {
+      void qc.invalidateQueries({ queryKey: ["eta"] });
+      void qc.invalidateQueries({ queryKey: ["sales"] });
+      const done = r.corrected + r.regenerated + r.queued;
+      if (done)
+        toast.success(
+          `تم: ${[
+            r.corrected && `${r.corrected} تصحيح`,
+            r.regenerated && `${r.regenerated} إعادة توليد`,
+            r.queued && `${r.queued} للإرسال`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}. يتم الإرسال في الخلفية`,
+        );
+      if (r.errors.length)
+        toast.error(
+          r.errors.length === 1
+            ? r.errors[0].message
+            : `${r.errors.length} إيصال لم يُعد إرسالها: ${r.errors[0].message}`,
+        );
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّرت إعادة الإرسال")),
+  });
+}
+
+export function useEnvironmentPreview(enabled: boolean) {
+  return useQuery({
+    queryKey: receiptKeys.environment,
+    queryFn: fetchEnvironmentPreview,
+    enabled,
+  });
+}
+
+export function useSwitchEnvironment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      environment,
+      confirmText,
+    }: {
+      environment: EtaEnvironment;
+      confirmText: string;
+    }) => switchEnvironment(environment, confirmText),
+    onSuccess: (r) => {
+      void qc.invalidateQueries({ queryKey: ["eta"] });
+      toast.success(
+        r.environment === "prod"
+          ? "تم التحويل للبيئة الفعلية. الإيصالات الجديدة تُرسل للمنظومة الفعلية"
+          : "تم التحويل للبيئة التجريبية",
+      );
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر تغيير البيئة")),
+  });
+}

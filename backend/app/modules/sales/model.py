@@ -67,6 +67,9 @@ class Sale(SyncMixin, Base):
     eta_submission_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)  # دفعة الإرسال
     eta_long_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     eta_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    eta_environment: Mapped[str | None] = mapped_column(String(10), nullable=True)  # preprod / prod وقت الإصدار
+    # إيصال رفضته المنظومة ثم صُحّح (طريقة الـ SDK): UUID القديم (referenceOldUUID في المستند الجديد).
+    eta_replaced_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     lines: Mapped[list["SaleLine"]] = relationship(
         back_populates="sale", lazy="selectin", order_by="SaleLine.id"
@@ -146,6 +149,8 @@ class SaleReturn(SyncMixin, Base):
     eta_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # قرار المدير: يُرسل رغم رفض فاتورته الأصلية (وإلا ينتظر قبولها، وتنتظر سلسلة الجهاز خلفه).
     eta_release: Mapped[bool] = mapped_column(Boolean, default=False)
+    eta_environment: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    eta_replaced_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     lines: Mapped[list["SaleReturnLine"]] = relationship(
         back_populates="sale_return", lazy="selectin", order_by="SaleReturnLine.id"

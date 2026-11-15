@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { PosEReceiptBadge } from "@/features/eta/components/eReceiptWidgets";
+
 import { ShiftStatus } from "@/components/layout/header/ShiftStatus";
 import { SyncStatus } from "@/components/layout/header/SyncStatus";
 import { ThemeToggle } from "@/components/layout/header/ThemeToggle";
@@ -84,6 +86,7 @@ export function PosTopBar() {
 
       <ShiftStatus shift={shift} />
       <SyncStatus sync={sync} />
+      <PosEReceiptBadge manager={isManagement(user.role)} />
 
       <div className="ms-auto flex items-center gap-1 sm:gap-2">
         <AppTooltip

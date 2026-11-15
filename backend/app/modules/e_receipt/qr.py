@@ -17,6 +17,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
+from functools import lru_cache
 
 import segno
 
@@ -25,6 +26,9 @@ from app.modules.eta.constants import EtaEnvironment
 from .environments import ENVIRONMENTS
 
 QR_ERROR_LEVEL = "m"
+# قناع ثابت: اختيار القناع التلقائي يقيّم الأقنعة الثمانية (~20ms في كل بيع). جُرّب كل قناع على 30 محتوى
+# × ورق 58 و80مم × 10 لقطات كاميرا محاكاة: القراءة 100% للتلقائي ولكل قناع ثابت (مراجعة ما قبل الإطلاق).
+QR_MASK = 2
 URL_TIME_FORMAT = "%Y-%m-%dT%H:%MZ"  # مثل المثال الرسمي: دقائق بلا ثوانٍ
 TOTAL_FORMAT = Decimal("0.001")  # مثل المثال الرسمي: 1000.000
 
@@ -57,8 +61,13 @@ def qr_content(environment: EtaEnvironment, uuid: str, issued: str, total: Decim
 
 def qr_modules(content: str) -> list[str]:
     """مصفوفة الـ QR بلا الهامش الصامت (الواجهة تضيفه بالحجم المناسب لنقاط الطابعة)."""
-    code = segno.make(content, error=QR_ERROR_LEVEL, micro=False, boost_error=False)
-    return ["".join("1" if cell else "0" for cell in row) for row in code.matrix]
+    return list(_matrix(content))
+
+
+@lru_cache(maxsize=64)  # إعادة الطباعة/المعاينة لنفس الإيصال لا تعيد الحساب
+def _matrix(content: str) -> tuple[str, ...]:
+    code = segno.make(content, error=QR_ERROR_LEVEL, micro=False, boost_error=False, mode="byte", mask=QR_MASK)
+    return tuple("".join("1" if cell else "0" for cell in row) for row in code.matrix)
 
 
 def print_data(document_text: str, environment: EtaEnvironment) -> PrintData:

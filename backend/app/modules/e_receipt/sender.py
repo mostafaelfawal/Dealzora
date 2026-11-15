@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit
@@ -203,8 +203,17 @@ def _rows(session: Session, *statuses: EReceiptStatus) -> dict[str, list[Pending
 def _sale_status(session: Session, uuids: set[str]) -> dict[str, str | None]:
     if not uuids:
         return {}
-    rows = session.execute(select(Sale.eta_uuid, Sale.eta_status).where(Sale.eta_uuid.in_(uuids))).all()
-    return {u: s for u, s in rows}
+    rows = session.execute(
+        select(Sale.eta_uuid, Sale.eta_replaced_uuid, Sale.eta_status).where(
+            or_(Sale.eta_uuid.in_(uuids), Sale.eta_replaced_uuid.in_(uuids))
+        )
+    ).all()
+    out: dict[str, str | None] = {}
+    for uuid, replaced, status in rows:
+        out[uuid] = status
+        if replaced:  # الأصل صُحّح بـ UUID جديد: المرتجع المشير للقديم يتبع حالة المصحَّح
+            out[replaced] = status
+    return out
 
 
 def queue_counts(session: Session, now: datetime | None = None) -> dict[str, int]:

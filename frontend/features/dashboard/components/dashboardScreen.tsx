@@ -9,6 +9,8 @@ import { extractErrorMessage } from "@/lib/errors";
 import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
+import { DashboardEReceiptAlert } from "@/features/eta/components/eReceiptWidgets";
+
 import { useOverview } from "../hooks/useOverview";
 import type { Overview } from "../types/dashboard";
 import {
@@ -72,6 +74,8 @@ function DashboardBody({
       )}
     >
       <PeriodCaption o={o} />
+
+      <DashboardEReceiptAlert />
 
       <DashboardKpiGrid o={o} />
 

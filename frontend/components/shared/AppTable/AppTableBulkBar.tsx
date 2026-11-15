@@ -22,6 +22,7 @@ interface Props<T> {
 
 export function AppTableBulkBar<T>({ rows, actions, onClear }: Props<T>) {
   const {
+    extra = [],
     onDelete,
     onDeactivate,
     confirmDelete = true,
@@ -50,6 +51,21 @@ export function AppTableBulkBar<T>({ rows, actions, onClear }: Props<T>) {
             {count}
           </bdi>
         </span>
+
+        {extra.map(({ key, label, icon: Icon, onClick }) => (
+          <Button
+            key={key}
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={isPending}
+            onClick={() => onClick(rows, onClear)}
+            className="gap-1.5 font-normal"
+          >
+            {Icon && <Icon className="size-4" />}
+            {label}
+          </Button>
+        ))}
 
         {onDeactivate && (
           <Button
