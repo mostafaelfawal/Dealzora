@@ -557,3 +557,354 @@ class MobileSummaryOut(BaseModel):
     compare: MobileCompareSet
     branches_total: int
     generated_at: datetime
+
+
+# ================= تحويلات من الهاتف (موافقة ينفّذها الفرع، ورفض مباشر) =================
+class MobileApproveLineIn(Strict):
+    line_id: str = Field(min_length=1, max_length=36)
+    qty: int = Field(ge=0, le=1_000_000_000)  # × 1000، و0 = غير متوفر
+
+
+class MobileApproveIn(Strict):
+    # النسخة التي رآها المستخدم: تغيّرت من جهاز آخر = تعارض، لا تنفيذ.
+    version: int = Field(ge=1)
+    # الأسطر غير المذكورة = الكمية المطلوبة كاملة.
+    lines: list[MobileApproveLineIn] = Field(default_factory=list, max_length=500)
+    note: str | None = Field(None, max_length=300)
+
+
+class MobileRejectIn(Strict):
+    version: int = Field(ge=1)
+    reason: str = Field(min_length=2, max_length=300)
+
+
+class TransferCommandOut(BaseModel):
+    id: str
+    action: str
+    status: Literal["pending", "executing", "done", "failed", "superseded", "expired", "cancelled"]
+    requested_by: str
+    device_name: str
+    created_at: datetime
+    claimed_at: datetime | None
+    resolved_at: datetime | None
+    error_message: str | None
+
+
+class MobileTransferOut(TransferOut):
+    # آخر موافقة طُلبت من الهاتف لهذا التحويل (إن وجدت).
+    approval: TransferCommandOut | None = None
+    can_approve: bool = False
+    can_reject: bool = False
+
+
+class MobileTransferListOut(BaseModel):
+    items: list[MobileTransferOut]
+    total: int
+
+
+class BranchCommandLine(BaseModel):
+    line_id: str
+    qty: int
+
+
+class BranchCommandOut(BaseModel):
+    """أمر ينفّذه جهاز الفرع بنفس مسار الموافقة في البرنامج (خصم المخزون والتكلفة ثم الموافقة)."""
+
+    id: str
+    transfer_id: str
+    action: str
+    lines: list[BranchCommandLine]
+    note: str | None
+    requested_by: str
+    device_name: str
+    created_at: datetime
+
+
+class CommandFailIn(Strict):
+    code: str = Field(min_length=1, max_length=40)
+    message: str = Field(min_length=1, max_length=300)
+
+
+# ================= تنبيهات الهاتف =================
+NotificationKind = Literal[
+    "branch_offline", "eta_rejected", "transfer_request", "low_sales", "sensitive_op", "cash_diff"
+]
+_HHMM = r"^([01]\d|2[0-3]):[0-5]\d$"
+
+
+class PushTokenIn(Strict):
+    token: str = Field(max_length=200, pattern=r"^(ExponentPushToken|ExpoPushToken)\[[A-Za-z0-9_\-]+\]$")
+    # فرق توقيت الهاتف عن UTC بالدقائق (لساعات الهدوء و«أمس» بتوقيت المحل).
+    utc_offset_minutes: int = Field(ge=-14 * 60, le=14 * 60)
+
+
+class KindToggle(Strict):
+    enabled: bool = True
+
+
+class OfflinePref(Strict):
+    enabled: bool = True
+    # تنبيه لو الفرع غير متصل أكثر من هذه المدة.
+    minutes: int = Field(60, ge=15, le=24 * 60)
+
+
+class QuietHours(Strict):
+    enabled: bool = True
+    start: str = Field("23:00", pattern=_HHMM)
+    end: str = Field("08:00", pattern=_HHMM)
+
+
+class NotificationPrefsBody(Strict):
+    branch_offline: OfflinePref = Field(default_factory=OfflinePref)
+    eta_rejected: KindToggle = Field(default_factory=KindToggle)
+    transfer_request: KindToggle = Field(default_factory=KindToggle)
+    low_sales: KindToggle = Field(default_factory=KindToggle)
+    sensitive_op: KindToggle = Field(default_factory=KindToggle)
+    cash_diff: KindToggle = Field(default_factory=KindToggle)
+    quiet: QuietHours = Field(default_factory=QuietHours)
+
+
+class NotificationPrefsIn(NotificationPrefsBody):
+    utc_offset_minutes: int = Field(ge=-14 * 60, le=14 * 60)
+
+
+class NotificationPrefsOut(NotificationPrefsBody):
+    utc_offset_minutes: int
+    # هل يوجد هاتف مسجّل لاستقبال push لهذا الحساب (هذا الهاتف تحديداً في push_on_this_device).
+    push_on_this_device: bool
+
+
+class NotificationOut(BaseModel):
+    id: str
+    kind: NotificationKind
+    title: str
+    body: str
+    route: str
+    status: Literal["pending", "sent", "dropped"]
+    created_at: datetime
+    read_at: datetime | None
+
+
+class NotificationListOut(BaseModel):
+    items: list[NotificationOut]
+    unread: int
+
+
+class NotificationReadIn(Strict):
+    # فارغ = تعليم الكل كمقروء.
+    ids: list[str] | None = Field(None, max_length=200)
+
+
+# ================= أمان المحل من الهاتف (المالك فقط) =================
+class BranchRef(BaseModel):
+    id: str
+    name: str
+
+
+class MobileStaffOut(BaseModel):
+    """الموظفون (مديرون وكاشيرية) بدون أي تجزئة كلمة مرور."""
+
+    id: str
+    username: str
+    role: str
+    is_active: bool
+    branches: list[BranchRef]
+    updated_at: datetime | None
+
+
+class MobileDeviceOut(BaseModel):
+    """جهاز الفرع (فرع = جهاز مربوط واحد). paired=False = لا جهاز مربوط حالياً (يحتاج كود ربط)."""
+
+    id: str
+    name: str
+    code: str
+    is_active: bool
+    is_admin: bool
+    paired: bool
+    status: Literal["online", "late", "offline", "never", "disabled"]
+    last_seen_at: datetime | None
+    seconds_since_seen: int | None
+
+
+class MobileShopSessionOut(BaseModel):
+    """جلسات تطبيق الهاتف لكل مستخدمي المحل."""
+
+    id: str
+    username: str
+    device_name: str
+    platform: str
+    created_at: datetime
+    last_used_at: datetime | None
+    is_current: bool
+
+
+# ================= ملخصات الفروع الجديدة (المرحلة 7) =================
+# صارمة (لا حقول زائدة): فرع مخترق لا يقدر يرفع أي بيانات غير ما تحتاجه الشاشات (لا عملاء ولا مخزون كامل).
+_RKey = Annotated[str, Field(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9:_\-\.]+$")]
+_Qty = Annotated[int, Field(ge=-(10**12), le=10**12)]
+_Amount = Annotated[int, Field(ge=0, le=10**13)]
+
+
+class ReportItemIn(Strict):
+    """صنف (×1000 للكميات). key = المعرّف العام للكتالوج أو الباركود: نفس الصنف في كل الفروع."""
+
+    key: _RKey
+    product_id: str = Field(min_length=1, max_length=36)
+    barcode: str | None = Field(None, max_length=32)
+    name: str = Field(min_length=1, max_length=200)
+    unit: str = Field(min_length=1, max_length=30)
+    qty: _Qty
+    min: _Qty = 0
+
+
+class ExpiringItemIn(Strict):
+    key: _RKey
+    product_id: str = Field(min_length=1, max_length=36)
+    name: str = Field(min_length=1, max_length=200)
+    unit: str = Field(min_length=1, max_length=30)
+    batch_no: str | None = Field(None, max_length=40)
+    expiry: date
+    qty: _Qty
+
+
+class WantedStockIn(Strict):
+    """مخزون هذا الفرع من أصناف ناقصة في فروع أخرى فقط (لاقتراح التحويل)."""
+
+    key: _RKey
+    qty: _Qty
+    min: _Qty = 0
+
+
+class ShiftRecordData(Strict):
+    cashier: str = Field(min_length=1, max_length=50)
+    opened_at: datetime
+    closed_at: datetime
+    expected: Annotated[int, Field(ge=-(10**13), le=10**13)]
+    counted: Annotated[int, Field(ge=-(10**13), le=10**13)]
+    difference: Annotated[int, Field(ge=-(10**13), le=10**13)]
+
+
+class SensitiveRecordData(Strict):
+    # discount = خصم الكاشير فوق الحد · return = مرتجع فوق الحد · full_return = مرتجع فاتورة كاملة (بدل «إلغاء»)
+    type: Literal["discount", "return", "full_return"]
+    number: int = Field(ge=0, le=10**12)  # رقم الفاتورة أو المرتجع
+    amount: _Amount
+    total: _Amount
+    cashier: str = Field(min_length=1, max_length=50)
+
+
+class TopItemIn(Strict):
+    key: _RKey
+    name: str = Field(min_length=1, max_length=200)
+    unit: str = Field(min_length=1, max_length=30)
+    qty: _Qty
+    revenue: Annotated[int, Field(ge=-(10**13), le=10**13)]
+
+
+class TopRecordData(Strict):
+    items: list[TopItemIn] = Field(max_length=30)
+
+
+class RecordIn(Strict):
+    key: str = Field(min_length=3, max_length=100, pattern=r"^(shift|sens|top):[A-Za-z0-9:_\-\.]+$")
+    kind: Literal["shift", "sensitive", "top"]
+    day: date
+    at: datetime | None = None
+    data: dict[str, Any]
+
+
+class ReportsPushIn(Strict):
+    """None = لم يتغير (لا تُلمس اللقطة الحالية). قائمة فارغة = لا شيء الآن."""
+
+    shortages: list[ReportItemIn] | None = Field(None, max_length=500)
+    expiring: list[ExpiringItemIn] | None = Field(None, max_length=500)
+    wanted_stock: list[WantedStockIn] | None = Field(None, max_length=500)
+    records: list[RecordIn] = Field(default_factory=list, max_length=500)
+
+
+class ReportConfigBody(Strict):
+    """حدود المالك. المبالغ بالقروش."""
+
+    discount_min: int = Field(5_000, ge=0, le=10**10)  # خصم كاشير على فاتورة ≥ هذا = عملية حساسة
+    return_min: int = Field(20_000, ge=0, le=10**10)  # مرتجع ≥ هذا = عملية حساسة
+    cash_diff_min: int = Field(5_000, ge=0, le=10**10)  # فرق نقدية الوردية (بالقيمة المطلقة) ≥ هذا = تنبيه
+    expiry_days: int = Field(30, ge=1, le=365)  # «قريب من الانتهاء» خلال هذه الأيام
+
+
+class ReportsConfigOut(ReportConfigBody):
+    # أصناف ناقصة في فروع أخرى: الفرع يرفع مخزونه منها فقط.
+    wanted: list[str]
+
+
+class SuggestionOut(BaseModel):
+    branch_id: str
+    branch_name: str
+    surplus: int  # × 1000 فوق حد الطلب عنده
+
+
+class ShortageOut(BaseModel):
+    key: str
+    product_id: str
+    barcode: str | None
+    name: str
+    unit: str
+    qty: int
+    min: int
+    need: int  # حتى يصل لحد الطلب (×1000)
+    suggestions: list[SuggestionOut]
+
+
+class BranchShortagesOut(BaseModel):
+    branch_id: str
+    branch_name: str
+    updated_at: datetime | None  # «آخر تحديث من الفرع» (None = لم يرسل بعد)
+    items: list[ShortageOut]
+
+
+class ExpiringOut(BaseModel):
+    key: str
+    name: str
+    unit: str
+    batch_no: str | None
+    expiry: date
+    qty: int
+
+
+class BranchExpiringOut(BaseModel):
+    branch_id: str
+    branch_name: str
+    updated_at: datetime | None
+    items: list[ExpiringOut]
+
+
+class RecordOut(BaseModel):
+    id: str
+    branch_id: str
+    branch_name: str
+    day: date
+    at: datetime | None
+    data: dict[str, Any]
+    received_at: datetime
+
+
+class TopSellerOut(BaseModel):
+    key: str
+    name: str
+    unit: str
+    qty: int
+    revenue: int
+    branches: int
+
+
+class MobileRequestLineIn(Strict):
+    key: _RKey
+    qty: int = Field(gt=0, le=1_000_000_000)
+
+
+class MobileTransferRequestIn(Strict):
+    """طلب تحويل من الهاتف باسم الفرع الناقص (to) من فرع فيه فائض (from)."""
+
+    to_branch_id: str = Field(pattern=UUID_RE)
+    from_branch_id: str = Field(pattern=UUID_RE)
+    lines: list[MobileRequestLineIn] = Field(min_length=1, max_length=100)
+    note: str | None = Field(None, max_length=300)

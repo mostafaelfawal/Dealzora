@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router/js-tabs";
 import type { ComponentProps } from "react";
 
+import { useUnreadCount } from "@/features/alerts/hooks/useAlerts";
 import { fontFamily } from "@/theme/fonts";
 import { useTheme } from "@/theme/ThemeProvider";
 
@@ -18,6 +19,7 @@ const TABS: { name: string; title: string; icon: IconName; active: IconName }[] 
 
 export default function TabsLayout() {
   const { colors } = useTheme();
+  const unread = useUnreadCount();
   return (
     <Tabs
       screenOptions={{
@@ -37,6 +39,9 @@ export default function TabsLayout() {
           name={tab.name}
           options={{
             title: tab.title,
+            // عدد التنبيهات غير المقروءة على تبويب التنبيهات
+            tabBarBadge: tab.name === "alerts" && unread > 0 ? (unread > 99 ? "99+" : unread) : undefined,
+            tabBarBadgeStyle: { fontFamily: fontFamily.medium, fontSize: 10 },
             tabBarIcon: ({ color, size, focused }) => (
               <Ionicons name={focused ? tab.active : tab.icon} size={size} color={String(color)} />
             ),

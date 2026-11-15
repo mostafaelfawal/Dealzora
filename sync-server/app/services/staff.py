@@ -63,7 +63,9 @@ def _check_manager_slot(session: Session, shop_id: str, data: dict[str, Any], ex
             raise Conflict("manager_exists", f"فرع «{branch}» له مدير بالفعل ({r.data['username']}). أوقفه أو انقله أولاً")
 
 
-def _save(session: Session, caller: Caller, row: CatalogItem, data: dict[str, Any], action: str) -> StaffOut:
+def _save(
+    session: Session, caller: Caller, row: CatalogItem, data: dict[str, Any], action: str, via: dict | None = None
+) -> StaffOut:
     shop = lock_shop(session, caller.shop_id)
     shop.last_catalog_seq += 1
     row.data = data
@@ -73,8 +75,9 @@ def _save(session: Session, caller: Caller, row: CatalogItem, data: dict[str, An
     row.updated_by_branch_id = caller.branch_id
     details = {"username": data["username"], "role": data["role"], "branches": len(data["branches"]),
                "is_active": data.get("is_active", True)}  # fmt: skip
-    record(session, action, actor="owner", shop_id=caller.shop_id, branch_id=caller.branch_id, ip=caller.ip,
-           details=details)  # fmt: skip
+    # via = من تطبيق الهاتف (المالك): actor=mobile مع اسم المستخدم والجهاز.
+    record(session, action, actor="mobile" if via else "owner", shop_id=caller.shop_id, branch_id=caller.branch_id,
+           ip=caller.ip, details={**details, **(via or {})})  # fmt: skip
     session.commit()
     return _out(row)
 
@@ -111,7 +114,9 @@ def create(session: Session, caller: Caller, data: StaffIn) -> StaffOut:
     return _save(session, caller, row, payload, "staff_created")
 
 
-def update(session: Session, caller: Caller, staff_id: str, patch: StaffPatch) -> StaffOut:
+def update(
+    session: Session, caller: Caller, staff_id: str, patch: StaffPatch, *, via: dict | None = None
+) -> StaffOut:
     _admin(session, caller)
     row = _staff(session, caller.shop_id, staff_id)
     payload = _valid({**row.data, **patch.model_dump(exclude_none=True)})
@@ -123,7 +128,7 @@ def update(session: Session, caller: Caller, staff_id: str, patch: StaffPatch) -
     if payload == row.data:
         return _out(row)
     row.version += 1
-    return _save(session, caller, row, payload, "staff_updated")
+    return _save(session, caller, row, payload, "staff_updated", via)
 
 
 def delete(session: Session, caller: Caller, staff_id: str) -> None:

@@ -37,7 +37,28 @@ export default function MoreRoute() {
     <Screen>
       <Card>
         <ListRow icon="person-circle-outline" title="حسابي" subtitle={user?.username} onPress={() => router.push("/account")} />
+        <ListRow icon="receipt-outline" title="الإيصالات الإلكترونية" subtitle="المنتظر والمقبول والمرفوض لكل فرع" onPress={() => router.push("/receipts")} />
+        <ListRow icon="notifications-outline" title="إعدادات التنبيهات" onPress={() => router.push("/alerts-settings")} />
       </Card>
+
+      <Card>
+        <AppText weight="semibold">تقارير الفروع</AppText>
+        <ListRow icon="cube-outline" title="المخزون والنواقص" subtitle="تحت حد الطلب، واقتراح التحويل، وقرب الانتهاء" onPress={() => router.push("/stock")} />
+        <ListRow icon="time-outline" title="الورديات" subtitle="فروق النقدية لكل كاشير" onPress={() => router.push("/shifts")} />
+        <ListRow icon="shield-outline" title="العمليات الحساسة" onPress={() => router.push("/sensitive")} />
+        <ListRow icon="podium-outline" title="الأكثر مبيعاً" onPress={() => router.push("/top-sellers")} />
+      </Card>
+
+      {/* أمان المحل: للمالك فقط (مدير الفرع لا يرى هذه الشاشات أصلاً، والخادم يرفضها له) */}
+      {user?.role === "owner" && (
+        <Card>
+          <AppText weight="semibold">أمان المحل</AppText>
+          <ListRow icon="people-outline" title="الموظفون" subtitle="إيقاف حساب موظف فوراً" onPress={() => router.push("/security/staff")} />
+          <ListRow icon="desktop-outline" title="أجهزة الفروع" subtitle="إلغاء ربط جهاز مفقود، وكود ربط جديد" onPress={() => router.push("/security/devices")} />
+          <ListRow icon="phone-portrait-outline" title="جلسات الهاتف" subtitle="هواتف كل المستخدمين المسجّلة" onPress={() => router.push("/security/sessions")} />
+          <ListRow icon="options-outline" title="حدود العمليات الحساسة" subtitle="الخصم والمرتجع وفرق النقدية وأيام الصلاحية" onPress={() => router.push("/report-settings")} />
+        </Card>
+      )}
 
       <Card>
         <ListRow

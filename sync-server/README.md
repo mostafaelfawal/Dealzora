@@ -226,6 +226,56 @@ GET  /v1/catalog/pull?after=<seq>&limit=500
 | `GET /mobile/v1/me` · `GET /mobile/v1/sessions` | الحساب وفروعه المسموحة · هواتف الحساب |
 | `GET /mobile/v1/branches` · `GET /mobile/v1/branches/{id}` | الفروع المسموحة: `status` (`online` ضمن `SYNC_ONLINE_WINDOW_SECONDS` · `late` حتى `SYNC_MOBILE_LATE_MINUTES` · `offline` · `never` · `disabled`)، `last_seen_at`، `pending_events` (تأخر المزامنة)، `stats_updated_at` (فرع غير مسند ← `404`) |
 | `GET /mobile/v1/summary?date_from=&date_to=[&branch_id=]` | ملخص الفترة (حتى سنة) للفروع المسموحة أو فرع واحد: `totals`، `branches` (الأعلى صافياً أولاً، مع `last_update` و`reported_days`/`expected_days`: الناقص = لم يرسل، لا صفر)، `days`، و`compare.previous` (الفترة السابقة بنفس الطول) و`compare.week_ago` (لليوم الواحد). **نفس أرقام تقرير الفروع في البرنامج**: `tests/fixtures/branch_report_golden.json` يُختبر هنا وفي backend |
+| `GET /mobile/v1/transfers?needs_action=&status=&branch_id=` · `GET /mobile/v1/transfers/{id}` | تحويلات الفروع المسموحة (المرسل أو المستلم منها) مع `approval` و`can_approve`/`can_reject`. تحويل لا يخص فروعك ← `404` |
+| `POST /mobile/v1/transfers/{id}/approve` `{version, lines?, note?}` | **موافقة ينفّذها جهاز الفرع المطلوب منه**: تُحفظ أمراً، والفرع يأخذه مع مزامنته وينفّذه بنفس مسار البرنامج (خصم الدفعات والتكلفة ثم `approve`)، فيُحسم `done` تلقائياً. الطلب تغيّر ← `409 transfer_changed` مع الحالة الحالية؛ موافقة منتظرة ← `409 approval_pending` |
+| `POST /mobile/v1/transfers/{id}/reject` `{version, reason}` | رفض مباشر (لا يحرّك مخزوناً)، نفس حدث رفض البرنامج. أثناء تنفيذ الفرع لموافقة ← `409 approval_in_progress` |
+| `POST /mobile/v1/transfers/{id}/approval/cancel` | إلغاء موافقة لم يأخذها الفرع (صاحبها أو المالك) |
+
+**أوامر الفرع** (توكن فرع): `GET /v1/transfers/commands` ← `POST /v1/transfers/commands/{id}/claim` (مرة واحدة) ← الموافقة العادية،
+أو `POST /v1/transfers/commands/{id}/fail {code, message}`. أمر لم يأخذه الفرع خلال `SYNC_MOBILE_COMMAND_TTL_HOURS` (24) ينتهي
+(فرع منقطع أو بإصدار أقدم لا يعرف الأوامر، ولا يتأثر بشيء). الصلاحيات = البرنامج: الفرع المطلوب منه فقط ← المالك أو مديره.
+كل إجراء في السجل الأمني بـ `actor=mobile` و`from_phone` واسم المستخدم والجهاز.
+
+**التنبيهات (push عبر Expo):**
+
+| الطلب | الوصف |
+|---|---|
+| `PUT /mobile/v1/push-token` `{token, utc_offset_minutes}` · `DELETE …` | Expo push token لهذه الجلسة. يُمسح تلقائياً مع الخروج والخروج من كل الأجهزة وأي إلغاء للجلسة |
+| `GET /mobile/v1/notifications` · `POST /mobile/v1/notifications/read {ids?}` | سجل تنبيهات الحساب وغير المقروء |
+| `GET/PUT /mobile/v1/notification-prefs` | الأنواع المفعّلة، مدة انقطاع الفرع، ساعات الهدوء (لكل الحساب) |
+
+خدمة منفصلة **عملية واحدة**: `python -m app.cli notifier` (خدمة `notifier` في `docker-compose.yml`، وعلى PostgreSQL قفل
+يمنع نسختين معاً). كل `SYNC_NOTIFY_INTERVAL_SECONDS`: تكتشف (فرع منقطع أكثر من مدة المستخدم · إيصالات مرفوضة جديدة ·
+طلب تحويل ينتظر موافقة هذا الحساب · صافي أمس أقل من `SYNC_LOW_SALES_RATIO` من متوسط نفس اليوم في 4 أسابيع) وتنشئ
+**تنبيهاً واحداً لكل حدث لكل حساب** (قيد فريد)، ثم ترسل **مجمّعاً** (لا أكثر من إشعار كل `SYNC_NOTIFY_MIN_GAP_MINUTES`)،
+ولا شيء في ساعات الهدوء، وتُسقط ما لم يعد صحيحاً (الفرع رجع، الطلب اتحسم). النص بلا مبالغ ولا تفاصيل (يظهر على شاشة القفل).
+تحتاج اتصالاً خارجياً بـ `exp.host`. اختياري: `SYNC_EXPO_ACCESS_TOKEN` لو فعّلت الحماية الإضافية في expo.dev.
+
+**أمان المحل من الهاتف — المالك فقط** (غيره ← `403 owner_only`):
+
+| الطلب | الوصف |
+|---|---|
+| `GET /mobile/v1/admin/staff` · `POST …/staff/{id}/deactivate` · `…/activate` | نفس إدارة الموظفين المركزية (باسم الفرع الرئيسي): الإيقاف يصل للفروع مع المزامنة فتُقفل جلسات الموظف ولا يدخل، وجلسات هاتف المدير الموقوف تتوقف فوراً. محل بلا جهاز رئيسي ← `400 no_main_branch` |
+| `GET /mobile/v1/admin/devices` · `POST …/devices/{id}/revoke` · `…/pairing-code` | إلغاء ربط جهاز (يتوقف فوراً: `token_revoked`)، **حتى الجهاز الرئيسي لو اتسرق** (يُسترجع بمفتاح الترخيص). كود ربط لأي فرع عدا الرئيسي |
+| `GET /mobile/v1/admin/sessions` · `POST …/sessions/{id}/revoke` | جلسات تطبيق الهاتف لكل المستخدمين، وإلغاء أي منها |
+
+كل إجراء في السجل الأمني بـ `actor=mobile` و`from_phone` واسم المالك وجهازه.
+
+**ملخصات الفروع (المخزون والورديات والعمليات الحساسة):**
+
+| الطلب | الوصف |
+|---|---|
+| `GET /v1/reports/config` (فرع) | حدود المالك + `wanted`: الأصناف الناقصة في الفروع الأخرى (الفرع يرفع مخزونه منها فقط) |
+| `POST /v1/reports/push` (فرع) | لقطات `shortages`/`expiring`/`wanted_stock` (None = لم تتغير) + `records` (`shift`/`sensitive`/`top`) بمفتاح ثابت. صارم: لا حقول زائدة |
+| `GET /mobile/v1/stock/shortages` · `…/stock/expiring` | لكل فرع مسموح: الأصناف و`updated_at` («آخر تحديث من الفرع»، null = لم يرسل)، ولكل ناقص اقتراحات من فروع فيها فائض |
+| `POST /mobile/v1/stock/request-transfer` `{to_branch_id, from_branch_id, lines:[{key, qty}]}` | طلب تحويل باسم الفرع الناقص (المالك أو مديره) بنفس مسار طلب البرنامج |
+| `GET /mobile/v1/shifts` · `…/sensitive` · `…/top-sellers` `?date_from&date_to[&branch_id]` | الورديات بفروقها، العمليات الحساسة، الأكثر مبيعاً |
+| `GET/PUT /mobile/v1/admin/report-config` (المالك) | `discount_min`، `return_min`، `cash_diff_min` (قروش)، `expiry_days` |
+
+العمليات الحساسة = ما يحدث فعلاً في البرنامج: خصم كاشير أو مرتجع فوق الحد، ومرتجع فاتورة كاملة (البرنامج لا يلغي
+الفواتير ولا يغيّر السعر عند البيع). تنبيهات `sensitive_op` و`cash_diff` (فرق ≥ `cash_diff_min`) بلا مبالغ في النص.
+الفرع يحسبها في الخلفية كل 5 دقائق من جداوله (قراءة فقط) ويرفع ما تغيّر، وسيرفر أقدم بلا `/reports` (404) يتجاهله
+الفرع 6 ساعات. قياس زمن البيع: `backend/tools/bench_sale_reports.py`.
 
 - توكن الوصول `SYNC_MOBILE_ACCESS_TTL_MINUTES` دقيقة، والـ refresh يتجدد مع كل استخدام لمدة `SYNC_MOBILE_REFRESH_DAYS` يوم.
 - كل طلب يعيد فحص الحساب والمحل والخطة: محل بخطة أقل ← `403 plan_upgrade_required` مع

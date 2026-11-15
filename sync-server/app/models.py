@@ -262,5 +262,130 @@ class MobileSession(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # logout / logout_all / replaced / refresh_reuse / expired / account_changed
     revoke_reason: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    # Expo push token لهذا الهاتف (يُمسح مع الخروج أو إلغاء الجلسة).
+    push_token: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     __table_args__ = (Index("ix_mobile_sessions_account", "account_id", "revoked_at"),)
+
+
+class TransferCommand(Base):
+    """إجراء طلبه الهاتف وينفّذه جهاز الفرع نفسه (الموافقة تحتاج مخزون الفرع وتكلفته ودفعاته).
+
+    pending ← ينتظر الفرع · executing ← الفرع استلمه ويخصم المخزون · done ← وصلت موافقة الفرع للسيرفر
+    failed ← الفرع لم يقدر (مخزون، صنف غير معروف…) · superseded ← الطلب تغيّر قبل التنفيذ (رفض/سحب/موافقة مباشرة)
+    expired ← لم يأخذه الفرع خلال المهلة (منقطع أو إصدار قديم) · cancelled ← ألغاه صاحبه من الهاتف
+    """
+
+    __tablename__ = "transfer_commands"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"))
+    transfer_id: Mapped[str] = mapped_column(ForeignKey("transfers.id"), index=True)
+    # الفرع المنفّذ (المطلوب منه).
+    branch_id: Mapped[str] = mapped_column(ForeignKey("branches.id"))
+    action: Mapped[str] = mapped_column(String(16))
+    body: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    transfer_version: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16))
+    requested_by: Mapped[str] = mapped_column(String(50))
+    account_id: Mapped[str] = mapped_column(String(36))
+    session_id: Mapped[str] = mapped_column(String(36))
+    device_name: Mapped[str] = mapped_column(String(80))
+    error_code: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (Index("ix_transfer_commands_branch", "branch_id", "status"),)
+
+
+class NotificationPrefs(Base):
+    """إعدادات تنبيهات حساب (لكل الهواتف): الأنواع المفعّلة، مدة الانقطاع، ساعات الهدوء، وفرق توقيت الهاتف."""
+
+    __tablename__ = "notification_prefs"
+
+    account_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), index=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    utc_offset_minutes: Mapped[int] = mapped_column(Integer, default=120, server_default="120")
+    # آخر إشعار push أُرسل للحساب (للتجميع: لا أكثر من واحد كل بضع دقائق).
+    last_push_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Notification(Base):
+    """تنبيه لحساب واحد. dedup_key فريد لكل حساب: نفس الحدث لا يُنشأ مرتين أبداً.
+
+    pending ← ينتظر الإرسال (تجميع/ساعات هدوء) · sent ← أُرسل (أو سُجّل في التطبيق بلا هاتف مسجّل)
+    dropped ← لم يعد صحيحاً قبل الإرسال (الفرع رجع، الطلب اتحسم…) ويبقى في السجل غير مرسل.
+    """
+
+    __tablename__ = "notifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"))
+    account_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"))
+    kind: Mapped[str] = mapped_column(String(24))
+    dedup_key: Mapped[str] = mapped_column(String(160))
+    title: Mapped[str] = mapped_column(String(80))
+    body: Mapped[str] = mapped_column(String(200))
+    # شاشة التطبيق عند الضغط (مسار expo-router).
+    route: Mapped[str] = mapped_column(String(120))
+    # مرجع للتحقق قبل الإرسال (فرع/تحويل) — بلا أي بيانات حساسة.
+    ref_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    status: Mapped[str] = mapped_column(String(12), default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("account_id", "dedup_key", name="uq_notifications_account_key"),
+        Index("ix_notifications_account_created", "account_id", "created_at"),
+        Index("ix_notifications_status", "status"),
+    )
+
+
+class BranchReport(Base):
+    """لقطة حالية يرفعها الفرع (تُستبدل كاملة): النواقص، القريب من الانتهاء، ومخزون الأصناف المطلوبة.
+    أرقام وأسماء أصناف فقط — لا مخزون كامل ولا بيانات عملاء."""
+
+    __tablename__ = "branch_reports"
+
+    branch_id: Mapped[str] = mapped_column(ForeignKey("branches.id"), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(16), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), index=True)
+    data: Mapped[list[Any]] = mapped_column(JSONType)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class BranchRecord(Base):
+    """سجل من الفرع (يُحدَّث بنفس المفتاح): إغلاق وردية، عملية حساسة، الأكثر مبيعاً ليوم."""
+
+    __tablename__ = "branch_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"))
+    branch_id: Mapped[str] = mapped_column(ForeignKey("branches.id"))
+    key: Mapped[str] = mapped_column(String(100))
+    kind: Mapped[str] = mapped_column(String(12))
+    day: Mapped[date] = mapped_column(Date)
+    at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("branch_id", "key", name="uq_branch_records_branch_key"),
+        Index("ix_branch_records_shop_kind_day", "shop_id", "kind", "day"),
+    )
+
+
+class ShopReportConfig(Base):
+    """حدود يحددها المالك (العمليات الحساسة، فرق النقدية، أيام الصلاحية) وتصل للفروع مع المزامنة."""
+
+    __tablename__ = "shop_report_config"
+
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), primary_key=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSONType)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

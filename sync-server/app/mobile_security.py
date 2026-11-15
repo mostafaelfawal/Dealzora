@@ -57,6 +57,7 @@ class MobileUser:
     role: str  # owner / manager
     branch_ids: tuple[str, ...]
     ip: str
+    device_name: str = ""
 
     def require_branch(self, branch_id: str) -> None:
         """فرع غير مسند للمستخدم = غير موجود بالنسبة له (لا نكشف وجوده)."""
@@ -113,7 +114,8 @@ def get_mobile_user(
         ms.last_used_at, ms.last_ip = now, ip  # بدون كتابة في كل طلب
         session.commit()
     return MobileUser(session_id=ms.id, shop_id=shop.id, shop_name=shop.name, account_id=account.id,
-                      username=account.username, role=account.role, branch_ids=account.branch_ids, ip=ip)  # fmt: skip
+                      username=account.username, role=account.role, branch_ids=account.branch_ids, ip=ip,
+                      device_name=ms.device_name)  # fmt: skip
 
 
 MobileSessionDep = Annotated[MobileSession, Depends(get_mobile_session)]

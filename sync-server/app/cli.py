@@ -7,6 +7,7 @@
     docker compose exec api python -m app.cli list
     docker compose exec api python -m app.cli rotate-secret <branch_id>
     docker compose exec api python -m app.cli disable-branch <branch_id>
+    python -m app.cli notifier                                            # خدمة تنبيهات الهاتف (خدمة notifier في compose)
 
 السر يظهر مرة واحدة فقط عند إنشاء الفرع أو تغيير سرّه: انسخه لإعدادات البرنامج المحلي للفرع.
 """
@@ -24,6 +25,41 @@ def _print_credentials(creds) -> None:  # noqa: ANN001
     print(f"branch_id: {creds.branch_id}")
     print(f"secret:    {creds.secret}")
     print("⚠ انسخ السر الآن: لن يظهر مرة أخرى.")
+
+
+def _notifier(*, loop: bool) -> int:
+    """تنبيهات الهاتف: اكتشاف الأحداث ثم الإرسال المجمّع. على PostgreSQL قفل استشاري يمنع عمليتين معاً
+    (لا إرسال مزدوج حتى لو شُغّلت الخدمة مرتين بالخطأ)."""
+    import logging
+    import time
+
+    from sqlalchemy import text
+
+    from .config import get_settings
+    from .services import notifications
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    log = logging.getLogger("notify")
+    interval = get_settings().notify_interval_seconds
+    while True:
+        try:
+            with get_sessionmaker()() as session:
+                postgres = session.get_bind().dialect.name == "postgresql"
+                locked = not postgres or session.execute(text("SELECT pg_try_advisory_lock(73314)")).scalar()
+                if locked:
+                    try:
+                        result = notifications.tick(session, notifications.expo_push)
+                        if result["created"] or result["pushed"]:
+                            log.info("notify: %s", result)
+                    finally:
+                        if postgres:
+                            session.execute(text("SELECT pg_advisory_unlock(73314)"))
+                            session.commit()
+        except Exception:  # noqa: BLE001 — الخدمة لا تتوقف بسبب دورة فاشلة
+            log.exception("notify tick failed")
+        if not loop:
+            return 0
+        time.sleep(interval)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -48,7 +84,12 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("disable-branch", "enable-branch"):
         p = sub.add_parser(name)
         p.add_argument("branch_id")
+    sub.add_parser("notifier", help="خدمة تنبيهات الهاتف: دورة كل SYNC_NOTIFY_INTERVAL_SECONDS (عملية واحدة فقط)")
+    sub.add_parser("notify-once", help="دورة تنبيهات واحدة (للتجربة أو cron)")
     args = parser.parse_args(argv)
+
+    if args.cmd in ("notifier", "notify-once"):
+        return _notifier(loop=args.cmd == "notifier")
 
     if args.cmd == "lease-keygen":
         import base64

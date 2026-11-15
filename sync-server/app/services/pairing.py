@@ -40,7 +40,7 @@ def _aware(value: datetime) -> datetime:
 
 
 def create_code(
-    session: Session, branch_id: str, *, ip: str | None = None, actor: str = "admin"
+    session: Session, branch_id: str, *, ip: str | None = None, actor: str = "admin", details: dict | None = None
 ) -> PairingCodeOut:
     branch = session.get(Branch, branch_id)
     if branch is None:
@@ -55,7 +55,7 @@ def create_code(
     session.add(PairingCode(code_hash=_hash(code), branch_id=branch_id, expires_at=expires))
     record(
         session, "pairing_code_created", actor=actor,
-        shop_id=branch.shop_id, branch_id=branch.id, ip=ip,
+        shop_id=branch.shop_id, branch_id=branch.id, ip=ip, details=details,
     )  # fmt: skip
     session.commit()
     return PairingCodeOut(branch_id=branch.id, branch_name=branch.name, code=code, expires_at=expires)

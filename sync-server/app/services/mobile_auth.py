@@ -218,7 +218,7 @@ def login(session: Session, data: MobileLoginIn, *, ip: str) -> MobileTokensOut:
             MobileSession.device_id == data.device_id,
             MobileSession.revoked_at.is_(None),
         )
-        .values(revoked_at=now, revoke_reason="replaced")
+        .values(revoked_at=now, revoke_reason="replaced", push_token=None)
     )
     ms = MobileSession(
         id=str(uuid.uuid4()), shop_id=shop.id, account_id=account.id, username=account.username,
@@ -234,6 +234,8 @@ def login(session: Session, data: MobileLoginIn, *, ip: str) -> MobileTokensOut:
 
 
 def _revoke(ms: MobileSession, reason: str) -> None:
+    # الجلسة الملغاة لا تستقبل إشعارات أبداً: نمسح الـ push token معها.
+    ms.push_token = None
     if ms.revoked_at is None:
         ms.revoked_at = utcnow()
         ms.revoke_reason = reason
@@ -290,7 +292,7 @@ def logout_all(session: Session, ms: MobileSession, *, ip: str) -> int:
     result = session.execute(
         update(MobileSession)
         .where(MobileSession.account_id == ms.account_id, MobileSession.revoked_at.is_(None))
-        .values(revoked_at=now, revoke_reason="logout_all")
+        .values(revoked_at=now, revoke_reason="logout_all", push_token=None)
     )
     count = int(result.rowcount or 0)  # type: ignore[attr-defined]
     record(session, "mobile_logout_all", actor=ACTOR, shop_id=ms.shop_id, ip=ip,

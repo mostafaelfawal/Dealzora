@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { useNotificationRouting } from "@/features/alerts/hooks/useNotificationRouting";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { bootstrapSession } from "@/features/auth/lib/session";
 import { LockGate } from "@/features/lock/components/LockGate";
@@ -64,6 +65,7 @@ export default function RootLayout() {
 function RootStack() {
   const { status } = useAuth();
   const { colors } = useTheme();
+  useNotificationRouting(status === "signedIn");
   return (
     <Stack
       screenOptions={{
@@ -76,6 +78,17 @@ function RootStack() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ title: "حسابي" }} />
         <Stack.Screen name="branch/[id]" options={{ title: "الفرع" }} />
+        <Stack.Screen name="transfer/[id]" options={{ title: "التحويل" }} />
+        <Stack.Screen name="alerts-settings" options={{ title: "إعدادات التنبيهات" }} />
+        <Stack.Screen name="receipts" options={{ title: "الإيصالات الإلكترونية" }} />
+        <Stack.Screen name="security/staff" options={{ title: "الموظفون" }} />
+        <Stack.Screen name="security/devices" options={{ title: "أجهزة الفروع" }} />
+        <Stack.Screen name="security/sessions" options={{ title: "جلسات الهاتف" }} />
+        <Stack.Screen name="stock" options={{ title: "المخزون والنواقص" }} />
+        <Stack.Screen name="shifts" options={{ title: "الورديات" }} />
+        <Stack.Screen name="sensitive" options={{ title: "العمليات الحساسة" }} />
+        <Stack.Screen name="top-sellers" options={{ title: "الأكثر مبيعاً" }} />
+        <Stack.Screen name="report-settings" options={{ title: "حدود العمليات الحساسة" }} />
       </Stack.Protected>
       <Stack.Protected guard={status === "planBlocked"}>
         <Stack.Screen name="upgrade" options={{ headerShown: false }} />

@@ -12,6 +12,7 @@
 """
 
 import json
+import logging
 import threading
 import time
 from collections import defaultdict
@@ -25,7 +26,7 @@ from app.core import branch_lease
 from app.core.audit import record_audit
 from app.core.base import uuid7, utcnow
 from app.core.constants import QTY_SCALE
-from app.core.errors import BadRequestError, ConflictError, NotFoundError
+from app.core.errors import AppError, BadRequestError, ConflictError, NotFoundError
 from app.core.periods import local_today
 from app.core.plan import Feature, ensure_feature
 from app.core.security import Actor
@@ -46,7 +47,7 @@ from .client import (
     is_transient,
     normalize_server_url,
 )
-from . import branch_stats
+from . import branch_reports, branch_stats
 from .catalog_sync import CatalogSync, catalog_status, global_product_id, local_product_id
 from .model import BranchTransfer
 from .schemas import (
@@ -74,6 +75,9 @@ _branches_cache: dict[str, list[dict]] = {}
 _DEVICE_SYNC_MIN_SECONDS = 10.0
 _last_device_sync = 0.0
 _device_sync_lock = threading.Lock()
+
+
+log = logging.getLogger("branch_sync")
 
 
 class NotConnected(ConflictError):
@@ -359,7 +363,12 @@ class BranchSyncService:
         self.session.commit()
         return self._decorate(result)
 
-    def approve(self, transfer_id: str, data: ApproveIn) -> dict:
+    def approve(
+        self, transfer_id: str, data: ApproveIn, *, sent_by: str | None = None, via: dict | None = None
+    ) -> dict:
+        """الموافقة على طلب: خصم المخزون من دفعات هذا الفرع (الأقرب صلاحية أولاً) ثم إرسال الكمية والتكلفة.
+        via = موافقة طلبها المالك/المدير من تطبيق الهاتف (run_phone_commands): نفس المسار حرفياً، مع اسمه في
+        «أرسله» والسجل."""
         ensure_feature(Feature.BRANCHES)
         client, _ = self._client()
         remote = client.call("GET", f"/transfers/{transfer_id}")
@@ -406,7 +415,7 @@ class BranchSyncService:
         body = {
             "lines": [sent.get(l["id"], {"line_id": l["id"], "qty": 0}) for l in remote["lines"]],
             "note": data.note,
-            "sent_by": self._user_name(),
+            "sent_by": sent_by or self._user_name(),
         }
         row = BranchTransfer(
             id=transfer_id, direction="out", number=remote["number"],
@@ -416,9 +425,60 @@ class BranchSyncService:
             mapping={line_id: pid for line_id, pid, _ in picks}, created_by=self.actor.user_id,
         )  # fmt: skip
         self.session.add(row)
-        self._audit(row, "transfer_approve", {"to": remote["to_branch_name"], "lines": len(picks)})
+        self._audit(row, "transfer_approve", {"to": remote["to_branch_name"], "lines": len(picks), **(via or {})})
         self.session.commit()
         return self._flush_one(client, row)
+
+    # ================= موافقات من تطبيق الهاتف =================
+    def run_phone_commands(self, client: SyncClient) -> int:
+        """موافقات طلبها المالك أو مدير الفرع من الهاتف على طلبات من هذا الفرع. الهاتف لا يملك المخزون ولا
+        التكلفة، فالفرع ينفّذها هنا بنفس approve حرفياً (خصم الدفعات، التكلفة، ثم الموافقة على السيرفر)،
+        فيكمل التحويل دورته كما لو وُفق عليه من البرنامج.
+
+        - «استلام» الأمر على السيرفر أولاً (مرة واحدة): لا تنفيذ مزدوج حتى لو تكررت المزامنة.
+        - التنفيذ باسم «النظام» لا المستخدم الجالس على الجهاز، مع اسم صاحب الموافقة في «أرسله» والسجل.
+        - تعذّر التنفيذ (مخزون غير كافٍ، صنف غير معروف…) ← السبب يُرسل للهاتف، والمخزون كما هو.
+        - سيرفر أقدم لا يعرف الأوامر ← لا شيء (المزامنة تكمل عادي).
+        """
+        try:
+            commands = client.call("GET", "/transfers/commands")
+        except RemoteError:
+            return 0
+        if not isinstance(commands, list):
+            return 0
+        from app.core.config import get_settings
+        from app.core.security import Role
+
+        from .schemas import ApproveLineIn
+
+        system = BranchSyncService(self.session, Actor("system", Role.OWNER, get_settings().device_id))
+        done = 0
+        for cmd in commands:
+            if cmd.get("action") != "approve":
+                continue
+            try:
+                client.call("POST", f"/transfers/commands/{cmd['id']}/claim")
+            except RemoteError:
+                continue  # أخذه جهاز آخر، أو تغيّر الطلب قبل التنفيذ
+            data = ApproveIn(
+                lines=[ApproveLineIn(line_id=l["line_id"], qty=l["qty"]) for l in cmd.get("lines") or []],
+                note=cmd.get("note"),
+            )
+            via = {"from_phone": True, "by": cmd.get("requested_by"), "device": cmd.get("device_name"),
+                   "command_id": cmd["id"]}  # fmt: skip
+            try:
+                system.approve(cmd["transfer_id"], data, sent_by=f"{cmd.get('requested_by')} (من الهاتف)", via=via)
+                done += 1
+            except (SyncUnavailable, SyncAuthLost):
+                raise  # لم يُخصم شيء أو سيُعاد إرساله تلقائياً (retry_pending)
+            except AppError as exc:
+                self.session.rollback()
+                try:
+                    client.call("POST", f"/transfers/commands/{cmd['id']}/fail",
+                                {"code": exc.code[:40], "message": exc.message[:300]})  # fmt: skip
+                except (SyncUnavailable, SyncAuthLost, RemoteError):
+                    pass
+        return done
 
     def reject(self, transfer_id: str, data: RejectIn) -> dict:
         client, _ = self._client()
@@ -609,13 +669,18 @@ class BranchSyncService:
         result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run()
         if result.get("ok"):
             self._push_stats(client)
-        sent = 0
+        sent = phone = 0
         if result.get("ok"):
+            self._push_reports(client)  # النواقص والورديات والعمليات الحساسة… (فشلها لا يوقف المزامنة)
             try:
                 sent = self.retry_pending()
             except (SyncUnavailable, SyncAuthLost, RemoteError):
                 pass
-        return {"result": {**result, "transfers_sent": sent}, **self.catalog()}
+            try:
+                phone = self.run_phone_commands(client)  # موافقات من تطبيق الهاتف
+            except (SyncUnavailable, SyncAuthLost, RemoteError):
+                pass
+        return {"result": {**result, "transfers_sent": sent, "phone_approvals": phone}, **self.catalog()}
 
     def device_sync(self) -> dict:
         global _last_device_sync
@@ -677,6 +742,66 @@ class BranchSyncService:
         latest["stats_sent"] = fresh
         self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(latest, ensure_ascii=False))
         self.session.commit()
+
+    # ================= ملخصات المرحلة 7 (النواقص، الورديات، العمليات الحساسة، الأكثر مبيعاً) =================
+    REPORTS_RETRY_SECONDS = 6 * 3600
+    # كل 5 دقائق لا كل مزامنة (كل دقيقة): أقل عبء على جهاز البيع، والهاتف يعرض «آخر تحديث من الفرع».
+    REPORTS_EVERY_SECONDS = 300
+
+    def _push_reports(self, client: SyncClient) -> dict | None:
+        """يرفع ما تغيّر من ملخصات المرحلة 7. خلفية فقط (مع المزامنة)، ولا يلمس مسار البيع.
+        سيرفر أقدم بلا /reports (404): نتوقف عن المحاولة REPORTS_RETRY_SECONDS ثم نجرب (بعد ترقيته).
+        يرجّع {"ms": زمن الحساب, "sent": عدد السجلات} للقياس، أو None لو لم يُرفع شيء."""
+        cfg = self.config()
+        if cfg is None:
+            return None
+        now = time.time()
+        if float(cfg.get("reports_retry_at") or 0) > now:
+            return None
+        if now - float(cfg.get("reports_last_at") or 0) < self.REPORTS_EVERY_SECONDS:
+            return None
+        try:
+            config = client.call("GET", "/reports/config")
+        except RemoteError as exc:
+            if exc.status_code == 404:
+                latest = self.config() or cfg
+                latest["reports_retry_at"] = now + self.REPORTS_RETRY_SECONDS
+                self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(latest, ensure_ascii=False))
+                self.session.commit()
+            return None
+        except (SyncUnavailable, SyncAuthLost):
+            return None
+        started = time.perf_counter()
+        try:
+            payload, fresh = branch_reports.collect(self.session, cfg, config or {})
+        except Exception:  # noqa: BLE001 — ملخص فاشل لا يوقف المزامنة أبداً
+            self.session.rollback()
+            log.warning("branch reports collect failed", exc_info=True)
+            return None
+        ms = round((time.perf_counter() - started) * 1000, 1)
+        self.session.commit()  # لا معاملة مفتوحة أثناء الشبكة
+        if not payload:
+            latest = self.config() or cfg
+            latest["reports_sent"], latest["reports_last_at"] = fresh, now
+            self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(latest, ensure_ascii=False))
+            self.session.commit()
+            return {"ms": ms, "sent": 0}
+        records = payload.pop("records", [])
+        try:
+            first = True
+            for i in range(0, max(len(records), 1), 200):
+                body = {**(payload if first else {}), "records": records[i : i + 200]}
+                client.call("POST", "/reports/push", body)
+                first = False
+        except (SyncUnavailable, SyncAuthLost, RemoteError):
+            return None  # يُعاد كله في الدورة التالية (البصمات لم تُحفظ)
+        latest = self.config() or cfg
+        latest.pop("reports_retry_at", None)
+        latest["reports_sent"] = fresh
+        latest["reports_last_at"] = now
+        self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(latest, ensure_ascii=False))
+        self.session.commit()
+        return {"ms": ms, "sent": len(records)}
 
     def combined_report(self, date_from: date, date_to: date) -> dict:
         """التقرير المجمّع لكل الفروع (للمالك من الجهاز الرئيسي): نرفع ملخصنا أولاً ليكون محدّثاً."""

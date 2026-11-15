@@ -1,0 +1,181 @@
+/**
+ * إعدادات التنبيهات (لكل الحساب على كل هواتفه): كل نوع يُفعّل ويُوقف، مدة انقطاع الفرع، وساعات الهدوء.
+ * إعدادات شخصية للمستخدم (لا تغيّر بيانات المحل)، والخادم يسجّل كل تغيير في سجل التدقيق «من الهاتف».
+ */
+import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
+
+import { errorMessage } from "@/api/errors";
+import type { NotificationPrefs } from "@/api/types";
+import { AppText } from "@/components/shared/AppText";
+import { Button } from "@/components/shared/Button";
+import { Card } from "@/components/shared/Card";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ListRow } from "@/components/shared/ListRow";
+import { Screen } from "@/components/shared/Screen";
+import { usePrefs, useSavePrefs } from "@/features/alerts/hooks/useAlerts";
+import { PUSH_STATE_TEXT } from "@/features/alerts/lib/push";
+import { syncPush, usePushState } from "@/features/alerts/lib/pushStore";
+import { formatArabicCount } from "@/lib/format";
+import { space } from "@/theme/colors";
+import { useTheme } from "@/theme/ThemeProvider";
+
+const OFFLINE_MINUTES = [15, 30, 60, 120, 240];
+const QUIET_START = ["21:00", "22:00", "23:00", "00:00"];
+const QUIET_END = ["06:00", "07:00", "08:00", "09:00"];
+
+function minutesLabel(m: number): string {
+  if (m < 60) return `${m} دقيقة`;
+  return formatArabicCount(m / 60, { one: "ساعة", two: "ساعتين", few: "ساعات", many: "ساعة" });
+}
+
+function timeLabel(hhmm: string): string {
+  const [h = 0, m = 0] = hhmm.split(":").map(Number);
+  const suffix = h < 12 ? "ص" : "م";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
+}
+
+export default function AlertsSettingsRoute() {
+  const { colors } = useTheme();
+  const q = usePrefs();
+  const save = useSavePrefs();
+  const push = usePushState();
+  const p = q.data;
+
+  const update = (patch: Partial<NotificationPrefs>) => {
+    if (p) save.mutate({ ...p, ...patch });
+  };
+
+  const toggle = (value: boolean, onChange: (v: boolean) => void, label: string) => (
+    <Switch
+      value={value}
+      onValueChange={onChange}
+      disabled={save.isPending}
+      trackColor={{ true: colors.primary, false: colors.muted }}
+      accessibilityLabel={label}
+    />
+  );
+
+  const chips = <T,>(options: T[], current: T, render: (v: T) => string, onPick: (v: T) => void) => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+      {options.map((o) => {
+        const active = o === current;
+        return (
+          <Pressable
+            key={String(o)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            onPress={() => onPick(o)}
+            style={[
+              styles.chip,
+              { backgroundColor: active ? colors.primary : colors.secondary, borderColor: active ? colors.primary : colors.border },
+            ]}
+          >
+            <AppText size="sm" style={{ color: active ? colors.primaryForeground : colors.foreground }}>
+              {render(o)}
+            </AppText>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+
+  return (
+    <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching}>
+      <Card>
+        <AppText weight="semibold">هذا الهاتف</AppText>
+        <AppText size="sm" tone={push === "enabled" ? "success" : "muted"}>
+          {push ? PUSH_STATE_TEXT[push] : "جارٍ التحقق من الإشعارات…"}
+        </AppText>
+        {push && push !== "enabled" && <Button title="إعادة المحاولة" variant="secondary" onPress={() => void syncPush()} />}
+      </Card>
+
+      {!p && q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {!p && q.isError && <EmptyState icon="alert-circle-outline" title="تعذّر تحميل الإعدادات" description={errorMessage(q.error)} />}
+      {p && (
+        <>
+          <Card>
+            <ListRow
+              icon="swap-horizontal-outline"
+              title="طلب تحويل ينتظر موافقتك"
+              trailing={toggle(p.transfer_request.enabled, (v) => update({ transfer_request: { enabled: v } }), "طلبات التحويل")}
+            />
+            <ListRow
+              icon="receipt-outline"
+              title="إيصالات إلكترونية مرفوضة"
+              trailing={toggle(p.eta_rejected.enabled, (v) => update({ eta_rejected: { enabled: v } }), "الإيصالات المرفوضة")}
+            />
+            <ListRow
+              icon="trending-down-outline"
+              title="مبيعات أقل كثيراً من المعتاد"
+              subtitle="لأمس مقارنة بنفس اليوم في الأسابيع السابقة"
+              trailing={toggle(p.low_sales.enabled, (v) => update({ low_sales: { enabled: v } }), "المبيعات الأقل من المعتاد")}
+            />
+            <ListRow
+              icon="shield-outline"
+              title="عمليات حساسة"
+              subtitle="خصم أو مرتجع فوق الحد، ومرتجع فاتورة كاملة"
+              trailing={toggle(p.sensitive_op.enabled, (v) => update({ sensitive_op: { enabled: v } }), "العمليات الحساسة")}
+            />
+            <ListRow
+              icon="cash-outline"
+              title="فرق نقدية كبير في وردية"
+              trailing={toggle(p.cash_diff.enabled, (v) => update({ cash_diff: { enabled: v } }), "فروق النقدية")}
+            />
+            <ListRow
+              icon="cloud-offline-outline"
+              title="فرع غير متصل"
+              trailing={toggle(
+                p.branch_offline.enabled,
+                (v) => update({ branch_offline: { ...p.branch_offline, enabled: v } }),
+                "الفرع غير المتصل",
+              )}
+            />
+            {p.branch_offline.enabled && (
+              <View style={styles.sub}>
+                <AppText size="xs" tone="muted">
+                  نبّهني لو انقطع الفرع أكثر من:
+                </AppText>
+                {chips(OFFLINE_MINUTES, p.branch_offline.minutes, minutesLabel, (m) =>
+                  update({ branch_offline: { ...p.branch_offline, minutes: m } }),
+                )}
+              </View>
+            )}
+          </Card>
+
+          <Card>
+            <ListRow
+              icon="moon-outline"
+              title="ساعات الهدوء"
+              subtitle="لا إشعارات على الهاتف خلالها، وتصلك مجمّعة بعدها"
+              trailing={toggle(p.quiet.enabled, (v) => update({ quiet: { ...p.quiet, enabled: v } }), "ساعات الهدوء")}
+            />
+            {p.quiet.enabled && (
+              <View style={styles.sub}>
+                <AppText size="xs" tone="muted">
+                  من
+                </AppText>
+                {chips(QUIET_START, p.quiet.start, timeLabel, (v) => update({ quiet: { ...p.quiet, start: v } }))}
+                <AppText size="xs" tone="muted">
+                  إلى
+                </AppText>
+                {chips(QUIET_END, p.quiet.end, timeLabel, (v) => update({ quiet: { ...p.quiet, end: v } }))}
+              </View>
+            )}
+          </Card>
+
+          <AppText size="xs" tone="muted">
+            الإعدادات لحسابك على كل هواتفك. الإشعار يظهر على شاشة القفل، لذلك لا يحوي مبالغ أو تفاصيل: افتح التطبيق
+            لرؤيتها.
+          </AppText>
+        </>
+      )}
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  sub: { gap: space.xs, paddingBottom: space.sm },
+  chips: { gap: space.sm, paddingVertical: 2 },
+  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: space.md, minHeight: 34, justifyContent: "center" },
+});

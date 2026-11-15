@@ -27,6 +27,20 @@ services:
     expose:
       - "8000"
 
+  # تنبيهات تطبيق الهاتف (push): عملية واحدة فقط. تبدأ بعد api (اللي يحدّث قاعدة البيانات).
+  notifier:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SYNC_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-dealzora}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-dealzora_sync}
+    entrypoint: ["python", "-m", "app.cli", "notifier"]
+    healthcheck:
+      disable: true
+    depends_on:
+      api:
+        condition: service_started
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped

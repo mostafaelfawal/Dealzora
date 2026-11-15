@@ -131,9 +131,12 @@ def _require_active(session: Session, branch_id: str, role: str) -> None:
 
 
 def _emit(
-    session: Session, shop: Shop, caller: Caller, transfer: Transfer, op: str
+    session: Session, shop: Shop, caller: Caller, transfer: Transfer, op: str, via: dict | None = None
 ) -> None:
-    """حدث للطرف الآخر فقط + سطر في السجل الأمني."""
+    """حدث للطرف الآخر فقط + سطر في السجل الأمني (via = إجراء من الهاتف: actor=mobile باسم المستخدم والجهاز)."""
+    from .transfer_commands import resolve_for_transfer  # متأخر: لا دوران
+
+    resolve_for_transfer(session, transfer, op)
     other = transfer.to_branch_id if caller.branch_id == transfer.from_branch_id else transfer.from_branch_id
     payload = to_out(session, [transfer])[0].model_dump(mode="json")
     append_system_event(
@@ -148,9 +151,9 @@ def _emit(
         target_branch_id=other,
     )
     record(
-        session, f"transfer_{op}", actor="branch", shop_id=caller.shop_id,
+        session, f"transfer_{op}", actor="mobile" if via else "branch", shop_id=caller.shop_id,
         branch_id=caller.branch_id, ip=caller.ip,
-        details={"transfer_id": transfer.id, "number": transfer.number, "to": other},
+        details={"transfer_id": transfer.id, "number": transfer.number, "to": other, **(via or {})},
     )  # fmt: skip
 
 
@@ -213,7 +216,9 @@ def create(session: Session, caller: Caller, data: TransferIn) -> TransferOut:
 
 
 # ================= طلب تحويل =================
-def request(session: Session, caller: Caller, data: TransferRequestIn) -> TransferOut:
+def request(
+    session: Session, caller: Caller, data: TransferRequestIn, *, via: dict | None = None
+) -> TransferOut:
     if (existing := _replay(session, caller, data.id, as_sender=False)) is not None:
         return to_out(session, [existing])[0]
     _other_branch(session, caller, data.from_branch_id, role="المطلوب منه")
@@ -247,7 +252,7 @@ def request(session: Session, caller: Caller, data: TransferRequestIn) -> Transf
         )
     session.add(transfer)
     session.flush()
-    _emit(session, shop, caller, transfer, "requested")
+    _emit(session, shop, caller, transfer, "requested", via)
     session.commit()
     return to_out(session, [transfer])[0]
 
@@ -294,7 +299,9 @@ def approve(session: Session, caller: Caller, transfer_id: str, data: ApproveIn)
     return to_out(session, [transfer])[0]
 
 
-def reject(session: Session, caller: Caller, transfer_id: str, data: RejectIn) -> TransferOut:
+def reject(
+    session: Session, caller: Caller, transfer_id: str, data: RejectIn, *, via: dict | None = None
+) -> TransferOut:
     shop = lock_shop(session, caller.shop_id)
     transfer = _get(session, caller, transfer_id, lock=True)
     if transfer.from_branch_id != caller.branch_id:
@@ -308,7 +315,7 @@ def reject(session: Session, caller: Caller, transfer_id: str, data: RejectIn) -
     transfer.reject_reason = data.reason
     transfer.version += 1
     session.flush()
-    _emit(session, shop, caller, transfer, "rejected")
+    _emit(session, shop, caller, transfer, "rejected", via)
     session.commit()
     return to_out(session, [transfer])[0]
 

@@ -86,6 +86,39 @@ npx expo start                                                        # ثم ا�
 ثبّت Android Studio وأنشئ جهازاً افتراضياً، ثم `npx expo start` واضغط `a`.
 عنوان الخادم من داخل المحاكي: `http://10.0.2.2:8000` (هو الكمبيوتر نفسه).
 
+## الإشعارات (push) — تحتاج نسخة تطوير لا Expo Go
+
+Expo Go على أندرويد لا يستقبل push منذ SDK 53. كل شيء آخر (سجل التنبيهات داخل التطبيق، الإعدادات،
+الإيصالات) يعمل في Expo Go، لكن وصول الإشعار للهاتف يحتاج **development build** مرة واحدة:
+
+1. **حساب Expo** (مجاني) ثم من مجلد `mobile`:
+   ```bash
+   npx eas-cli@latest login
+   npx eas-cli@latest init          # يضيف extra.eas.projectId إلى app.json (التطبيق يحتاجه للـ token)
+   npx expo install expo-dev-client
+   ```
+2. **Firebase** (لأن أندرويد يوصل الإشعارات عبر FCM):
+   - [console.firebase.google.com](https://console.firebase.google.com) ← مشروع جديد ← أضف تطبيق Android
+     باسم الحزمة `com.dealzora.chain` ← نزّل `google-services.json` وضعه في مجلد `mobile/`.
+   - في `app.json` داخل `"android"` أضف: `"googleServicesFile": "./google-services.json"`.
+   - Firebase ← Project settings ← Service accounts ← **Generate new private key** (ملف JSON سري: لا ترفعه على git).
+   - ارفعه لـ EAS: `npx eas-cli@latest credentials` ← Android ← development ← Google Service Account
+     ← Push Notifications (FCM V1) ← Upload.
+3. **البناء والتثبيت**:
+   ```bash
+   npx eas-cli@latest build --profile development --platform android
+   ```
+   افتح الرابط الناتج على الهاتف وثبّت الـ APK، ثم `npx expo start` (أو `npx expo start --go` للرجوع لـ Expo Go).
+4. **خدمة التنبيهات على الخادم** في نافذة منفصلة (والكمبيوتر متصل بالإنترنت ليصل لخدمة Expo):
+   ```bash
+   cd ../sync-server
+   .venv/Scripts/python -m app.cli notifier        # أو notify-once لدورة واحدة
+   ```
+5. في التطبيق: المزيد ← إعدادات التنبيهات ← «هذا الهاتف» لازم يقول «الإشعارات مفعّلة».
+
+**تجربة سريعة:** اطلب تحويلاً من فرع لفرع آخر من البرنامج المكتبي، فيصل خلال دقيقة إشعار «طلب تحويل جديد»
+للمالك ومدير الفرع المطلوب منه، والضغط عليه يفتح الطلب.
+
 ## مشاكل شائعة
 
 | العرض | الحل |
@@ -94,3 +127,6 @@ npx expo start                                                        # ثم ا�
 | «كود ربط الهاتف غير صحيح» | الكود صالح 15 دقيقة ومرة واحدة، ويُبطَل بعد 5 كلمات مرور خاطئة. اطلب كوداً جديداً |
 | «اسم المستخدم أو كلمة المرور غير صحيحة» | الحساب لازم يكون قد وصل للخادم مع مزامنة البرنامج (المالك أو مدير، لا كاشير) |
 | شاشة «التطبيق متاح في خطة سلسلة فقط» | رقِّ خطة المحل من البرنامج، ثم «تحقّق مرة أخرى» |
+| «هذه النسخة (Expo Go) لا تستقبل الإشعارات» | طبيعي في Expo Go. ابنِ نسخة التطوير (قسم الإشعارات) |
+| «النسخة غير مجهزة للإشعارات بعد» | لم يُنفّذ `eas init` (لا يوجد projectId في app.json) |
+| التنبيهات تظهر في التطبيق ولا تصل للهاتف | `notifier` غير شغّال، أو ساعات الهدوء، أو إذن الإشعارات مرفوض من إعدادات الهاتف |

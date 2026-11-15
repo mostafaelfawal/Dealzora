@@ -66,6 +66,21 @@ class Settings(BaseSettings):
     mobile_code_max_attempts: int = Field(5, ge=1, le=20)
     # حالة الفرع في التطبيق: «متصل» ضمن online_window_seconds، «متأخر» حتى هذه المدة، ثم «منقطع».
     mobile_late_minutes: int = Field(15, ge=1, le=24 * 60)
+    # موافقة تحويل من الهاتف ينفّذها جهاز الفرع: لو لم يأخذها خلال هذه المدة تنتهي (فرع منقطع/إصدار قديم).
+    mobile_command_ttl_hours: int = Field(24, ge=1, le=24 * 14)
+    # خدمة التنبيهات (python -m app.cli notifier): كل كم ثانية تفحص الأحداث وترسل.
+    notify_interval_seconds: int = Field(60, ge=10, le=3600)
+    # تجميع: لا أكثر من إشعار push واحد لكل حساب خلال هذه المدة (الأحداث المتقاربة تُرسل معاً).
+    notify_min_gap_minutes: int = Field(3, ge=0, le=120)
+    # أحداث أقدم من هذا لا تُنشئ تنبيهاً (أول تشغيل لا يغرق الهاتف بالقديم).
+    notify_lookback_hours: int = Field(24, ge=1, le=24 * 7)
+    # «مبيعات أقل كثيراً من المعتاد»: صافي أمس أقل من هذه النسبة من متوسط نفس اليوم في 4 أسابيع سابقة،
+    # ويُفحص بعد هذه الساعة بتوقيت المستخدم (حتى تكتمل ملخصات أمس).
+    low_sales_ratio: float = Field(0.5, gt=0, lt=1)
+    low_sales_after_hour: int = Field(10, ge=0, le=23)
+    expo_push_url: str = "https://exp.host/--/api/v2/push/send"
+    # اختياري: لو فعّلت «Enhanced security for push notifications» في expo.dev.
+    expo_access_token: str = ""
     # الخطط المسموح لها بتطبيق الهاتف («سلسلة» فقط).
     mobile_plans: Annotated[list[str], NoDecode] = ["enterprise"]
 

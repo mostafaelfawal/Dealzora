@@ -43,7 +43,7 @@ export interface ApiClientOptions {
 }
 
 export interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   /** false = طلب بدون توكن (الدخول). */
   auth?: boolean;

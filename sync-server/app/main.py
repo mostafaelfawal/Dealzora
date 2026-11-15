@@ -22,9 +22,11 @@ from .routers import (
     branches,
     catalog,
     mobile,
+    reports,
     shop,
     stats,
     sync,
+    transfer_commands,
     transfers,
 )
 
@@ -88,7 +90,8 @@ def create_app() -> FastAPI:
         return response
 
     routers = (
-        auth.router, shop.router, branches.router, sync.router, catalog.router, transfers.router, stats.router,
+        auth.router, shop.router, branches.router, sync.router, catalog.router, transfer_commands.router,
+        transfers.router, stats.router, reports.router,
         admin.router,
     )  # fmt: skip
     for router in routers:
