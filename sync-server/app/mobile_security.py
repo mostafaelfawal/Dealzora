@@ -120,3 +120,15 @@ def get_mobile_user(
 
 MobileSessionDep = Annotated[MobileSession, Depends(get_mobile_session)]
 MobileUserDep = Annotated[MobileUser, Depends(get_mobile_user)]
+
+
+def get_mobile_owner(user: Annotated[MobileUser, Depends(get_mobile_user)]) -> MobileUser:
+    """شاشات المالك فقط (/admin): الرفض قبل قراءة الطلب نفسه، فالمدير يأخذ 403 دائماً (لا 422)."""
+    if user.role != "owner":
+        from .errors import Forbidden
+
+        raise Forbidden("owner_only", "هذه الشاشة لمالك المحل فقط")
+    return user
+
+
+MobileOwnerDep = Annotated[MobileUser, Depends(get_mobile_owner)]

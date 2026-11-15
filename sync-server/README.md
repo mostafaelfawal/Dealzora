@@ -258,6 +258,10 @@ GET  /v1/catalog/pull?after=<seq>&limit=500
 | `GET /mobile/v1/admin/staff` · `POST …/staff/{id}/deactivate` · `…/activate` | نفس إدارة الموظفين المركزية (باسم الفرع الرئيسي): الإيقاف يصل للفروع مع المزامنة فتُقفل جلسات الموظف ولا يدخل، وجلسات هاتف المدير الموقوف تتوقف فوراً. محل بلا جهاز رئيسي ← `400 no_main_branch` |
 | `GET /mobile/v1/admin/devices` · `POST …/devices/{id}/revoke` · `…/pairing-code` | إلغاء ربط جهاز (يتوقف فوراً: `token_revoked`)، **حتى الجهاز الرئيسي لو اتسرق** (يُسترجع بمفتاح الترخيص). كود ربط لأي فرع عدا الرئيسي |
 | `GET /mobile/v1/admin/sessions` · `POST …/sessions/{id}/revoke` | جلسات تطبيق الهاتف لكل المستخدمين، وإلغاء أي منها |
+| `GET /mobile/v1/admin/catalog/search?q=` · `POST …/catalog/{gid}/price {version, sale_price, wholesale_price}` | بحث الكتالوج المشترك بالاسم/الباركود، وتعديل سعر البيع/الجملة لكل الفروع (نفس قواعد البرنامج). نسخة قديمة ← `409 catalog_changed` بالسعر الحالي. يصل للفروع بـ seq كتالوج جديد، والفواتير السابقة لا تتأثر |
+
+مسارات `/admin` كلها تتحقق من المالك **قبل** قراءة الطلب (`MobileOwnerDep`)، و`tests/test_mobile_route_matrix.py` يمر على
+كل مسار `/mobile/v1` تلقائياً (بلا توكن، توكن فرع، مدير، خطة أقل).
 
 كل إجراء في السجل الأمني بـ `actor=mobile` و`from_phone` واسم المالك وجهازه.
 

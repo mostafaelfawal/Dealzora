@@ -7,8 +7,9 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { errorMessage } from "@/api/errors";
-import type { BranchShortages, Shortage, Suggestion } from "@/api/types";
+import type { BranchExpiring, BranchShortages, Shortage, Suggestion } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
+import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Screen } from "@/components/shared/Screen";
@@ -22,6 +23,14 @@ import { radius, space } from "@/theme/colors";
 import { useTheme } from "@/theme/ThemeProvider";
 
 type Tab = "shortages" | "expiring";
+
+/** أول عدد يُعرض لكل فرع (الأجهزة الضعيفة): الباقي بزر، فلا تُرسم مئات الأسطر مرة واحدة. */
+const FIRST = 40;
+
+function MoreButton({ total, shown, onPress }: { total: number; shown: number; onPress: () => void }) {
+  if (shown >= total) return null;
+  return <Button title={`عرض الباقي (${total - shown})`} variant="ghost" onPress={onPress} />;
+}
 
 function Updated({ at }: { at: string | null }) {
   const now = useNow();
@@ -59,13 +68,19 @@ export default function StockRoute() {
       {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
       {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       {tab === "shortages" && shortages.data?.map((b) => <ShortageBranch key={b.branch_id} b={b} />)}
-      {tab === "expiring" &&
-        expiring.data?.map((b) => (
+      {tab === "expiring" && expiring.data?.map((b) => <ExpiringBranch key={b.branch_id} b={b} />)}
+    </Screen>
+  );
+}
+
+function ExpiringBranch({ b }: { b: BranchExpiring }) {
+  const [shown, setShown] = useState(FIRST);
+  return (
           <Card key={b.branch_id}>
             <AppText weight="semibold">{b.branch_name}</AppText>
             <Updated at={b.updated_at} />
             {b.updated_at && b.items.length === 0 && <AppText size="sm" tone="muted">لا أصناف قريبة من الانتهاء</AppText>}
-            {b.items.map((it) => (
+            {b.items.slice(0, shown).map((it) => (
               <View key={`${it.key}-${it.batch_no}-${it.expiry}`} style={styles.line}>
                 <AppText weight="medium">{it.name}</AppText>
                 <AppText size="xs" tone={expiryText(it.expiry).startsWith("منتهي") ? "destructive" : "warning"}>
@@ -74,21 +89,22 @@ export default function StockRoute() {
                 </AppText>
               </View>
             ))}
+            <MoreButton total={b.items.length} shown={shown} onPress={() => setShown(b.items.length)} />
           </Card>
-        ))}
-    </Screen>
   );
 }
 
 function ShortageBranch({ b }: { b: BranchShortages }) {
+  const [shown, setShown] = useState(FIRST);
   return (
     <Card>
       <AppText weight="semibold">{b.branch_name}</AppText>
       <Updated at={b.updated_at} />
       {b.updated_at && b.items.length === 0 && <AppText size="sm" tone="muted">لا نواقص تحت حد الطلب</AppText>}
-      {b.items.map((it) => (
+      {b.items.slice(0, shown).map((it) => (
         <ShortageLine key={it.key} b={b} it={it} />
       ))}
+      <MoreButton total={b.items.length} shown={shown} onPress={() => setShown(b.items.length)} />
     </Card>
   );
 }

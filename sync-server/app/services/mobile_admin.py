@@ -13,24 +13,29 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
+from pydantic import ValidationError
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..audit import record
 from ..db import utcnow
-from ..errors import BadRequest, Forbidden, NotFound
+from ..errors import BadRequest, Conflict, Forbidden, NotFound
 from ..mobile_security import MobileUser
-from ..models import Branch, MobileSession
+from ..models import Branch, CatalogItem, MobileSession
 from ..schemas import (
     BranchRef,
+    CatalogProductOut,
     MobileDeviceOut,
     MobileShopSessionOut,
     MobileStaffOut,
     PairingCodeOut,
+    PriceUpdateIn,
     StaffPatch,
 )
 from ..security import Caller
 from . import pairing, staff
+from .catalog import _validate
+from .events import lock_shop
 from .mobile_auth import _revoke
 from .mobile_reports import branch_status
 from .self_service import _admin_branch
@@ -166,3 +171,76 @@ def revoke_session(session: Session, user: MobileUser, session_id: str) -> None:
            details={**_via(user), "target_session": ms.id, "target_user": ms.username,
                     "target_device": ms.device_name})  # fmt: skip
     session.commit()
+
+
+# ================= أسعار الأصناف المشتركة =================
+def _product_out(session: Session, row: CatalogItem) -> CatalogProductOut:
+    d = row.data or {}
+    by = None
+    if row.updated_by_branch_id:
+        b = session.get(Branch, row.updated_by_branch_id)
+        by = b.name if b else None
+    elif row.version > 1:
+        by = "الهاتف"
+    return CatalogProductOut(
+        gid=row.id, name=d.get("name", ""), barcode=d.get("barcode"), unit=d.get("unit", ""),
+        sale_price=int(d.get("sale_price") or 0), wholesale_price=d.get("wholesale_price"),
+        wholesale_min_qty=d.get("wholesale_min_qty"), is_active=bool(d.get("is_active", True)),
+        version=row.version, updated_at=_aware(row.updated_at), updated_by=by,
+    )  # fmt: skip
+
+
+def search_products(session: Session, user: MobileUser, q: str, limit: int = 30) -> list[CatalogProductOut]:
+    """بحث في الكتالوج المشترك بالاسم (يحتوي) أو الباركود (يبدأ بـ). صنف غير مربوط بالكتالوج لا يظهر."""
+    require_owner(user)
+    text = " ".join(q.split())
+    if len(text) < 2:
+        return []
+    name = CatalogItem.data["name"].as_string()
+    barcode = CatalogItem.data["barcode"].as_string()
+    rows = session.scalars(
+        select(CatalogItem).where(
+            CatalogItem.shop_id == user.shop_id, CatalogItem.kind == "product", CatalogItem.deleted.is_(False),
+            or_(name.contains(text, autoescape=True), barcode.startswith(text, autoescape=True)),
+        ).order_by(name).limit(limit)
+    ).all()  # fmt: skip
+    return [_product_out(session, r) for r in rows]
+
+
+def update_price(session: Session, user: MobileUser, gid: str, data: PriceUpdateIn) -> CatalogProductOut:
+    """تعديل سعر البيع/الجملة لكل الفروع. نسخة (version) قديمة = تعدّل من فرع آخر ← 409 بلا كتابة فوقه.
+    يأخذ seq كتالوج جديد، فيصل لكل الفروع مع المزامنة الحالية. الفواتير السابقة لا تتأثر (السعر محفوظ في سطرها)."""
+    require_owner(user)
+    shop = lock_shop(session, user.shop_id)
+    row = session.execute(select(CatalogItem).where(CatalogItem.id == gid).with_for_update()).scalar_one_or_none()
+    if row is None or row.shop_id != user.shop_id or row.kind != "product" or row.deleted:
+        raise NotFound("product_not_found", "الصنف غير موجود في الكتالوج المشترك")
+    if row.version != data.version:
+        raise Conflict(
+            "catalog_changed", "تعدّل هذا الصنف من فرع آخر بعد فتحك له. راجع السعر الحالي ثم عدّل من جديد",
+            {"product": _product_out(session, row).model_dump(mode="json")},
+        )
+    if data.wholesale_price is not None and data.wholesale_price >= data.sale_price:
+        raise BadRequest("wholesale_not_lower", "سعر الجملة يجب أن يكون أقل من سعر البيع (القطاعي)")
+    old = row.data or {}
+    merged = {**old, "sale_price": data.sale_price, "wholesale_price": data.wholesale_price}
+    if data.wholesale_price is None:
+        merged["wholesale_min_qty"] = None  # نفس البرنامج: بلا سعر جملة لا حد أدنى له
+    try:
+        merged = _validate("product", merged)
+    except ValidationError as exc:
+        raise BadRequest("product_invalid", str(exc.errors()[0].get("msg", "بيانات غير صالحة"))[:200]) from exc
+    if merged == old:
+        return _product_out(session, row)
+    shop.last_catalog_seq += 1
+    row.data = merged
+    row.version += 1
+    row.seq = shop.last_catalog_seq
+    row.updated_at = utcnow()
+    row.updated_by_branch_id = None  # من الهاتف: كل الفروع تطبّقه (لا فرع «صاحب التعديل»)
+    record(session, "catalog_price_updated", actor="mobile", shop_id=user.shop_id, ip=user.ip,
+           details={**_via(user), "gid": row.id, "name": merged.get("name"),
+                    "sale_price": [old.get("sale_price"), merged["sale_price"]],
+                    "wholesale_price": [old.get("wholesale_price"), merged.get("wholesale_price")]})  # fmt: skip
+    session.commit()
+    return _product_out(session, row)

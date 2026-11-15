@@ -265,7 +265,7 @@ def _branch_records(session: Session, shop: Shop, recipients, names: dict[str, s
     n = 0
     for r in rows:
         if r.kind == "sensitive":
-            kind, title, label, route = "sensitive_op", "عملية حساسة", SENSITIVE_LABEL.get(r.data.get("type"), "عملية حساسة"), "/sensitive"
+            kind, title, label, route = "sensitive_op", "عملية حساسة", SENSITIVE_LABEL.get(str(r.data.get("type")), "عملية حساسة"), "/sensitive"
         else:
             if abs(int(r.data.get("difference") or 0)) < max(cash_min, 1):
                 continue

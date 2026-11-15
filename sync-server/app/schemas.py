@@ -908,3 +908,26 @@ class MobileTransferRequestIn(Strict):
     from_branch_id: str = Field(pattern=UUID_RE)
     lines: list[MobileRequestLineIn] = Field(min_length=1, max_length=100)
     note: str | None = Field(None, max_length=300)
+
+
+# ================= تعديل الأسعار من الهاتف (المالك) =================
+class CatalogProductOut(BaseModel):
+    gid: str
+    name: str
+    barcode: str | None
+    unit: str
+    sale_price: int  # قروش
+    wholesale_price: int | None
+    wholesale_min_qty: int | None
+    is_active: bool
+    # للتعارض: يُرسل مع التعديل، وتغيّره من فرع آخر = 409 catalog_changed.
+    version: int
+    updated_at: datetime | None
+    updated_by: str | None  # اسم الفرع، أو «الهاتف»
+
+
+class PriceUpdateIn(Strict):
+    version: int = Field(ge=1)
+    # نفس قواعد البرنامج: سعر البيع > 0، والجملة (لو موجود) ≥ 0 وأقل من سعر البيع.
+    sale_price: int = Field(gt=0, le=10**12)
+    wholesale_price: int | None = Field(None, ge=0, le=10**12)

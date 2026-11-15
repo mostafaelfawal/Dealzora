@@ -17,7 +17,14 @@ import { useNotificationRouting } from "@/features/alerts/hooks/useNotificationR
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { bootstrapSession } from "@/features/auth/lib/session";
 import { LockGate } from "@/features/lock/components/LockGate";
-import { CACHE_BUSTER, CACHE_MAX_AGE, persister, queryClient, wireQueryManagers } from "@/lib/queryClient";
+import {
+  CACHE_BUSTER,
+  CACHE_MAX_AGE,
+  persister,
+  queryClient,
+  shouldPersistQuery,
+  wireQueryManagers,
+} from "@/lib/queryClient";
 import { fontAssets, fontFamily } from "@/theme/fonts";
 import { ensureRTL } from "@/theme/rtl";
 import { ThemeProvider, useTheme } from "@/theme/ThemeProvider";
@@ -47,7 +54,12 @@ export default function RootLayout() {
         <LocaleProvider direction="rtl">
           <PersistQueryClientProvider
             client={queryClient}
-            persistOptions={{ persister, maxAge: CACHE_MAX_AGE, buster: CACHE_BUSTER }}
+            persistOptions={{
+              persister,
+              maxAge: CACHE_MAX_AGE,
+              buster: CACHE_BUSTER,
+              dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+            }}
           >
             <View style={styles.rtl}>
               <LockGate active={status === "signedIn" || status === "planBlocked"}>
@@ -89,6 +101,7 @@ function RootStack() {
         <Stack.Screen name="sensitive" options={{ title: "العمليات الحساسة" }} />
         <Stack.Screen name="top-sellers" options={{ title: "الأكثر مبيعاً" }} />
         <Stack.Screen name="report-settings" options={{ title: "حدود العمليات الحساسة" }} />
+        <Stack.Screen name="prices" options={{ title: "أسعار الأصناف" }} />
       </Stack.Protected>
       <Stack.Protected guard={status === "planBlocked"}>
         <Stack.Screen name="upgrade" options={{ headerShown: false }} />

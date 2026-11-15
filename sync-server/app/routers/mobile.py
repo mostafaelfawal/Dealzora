@@ -28,12 +28,13 @@ from sqlalchemy import select, update
 from ..audit import record
 from ..db import SessionDep, utcnow
 from ..errors import NotFound
-from ..mobile_security import MobileSessionDep, MobileUserDep
+from ..mobile_security import MobileOwnerDep, MobileSessionDep, MobileUserDep
 from ..models import MobileSession, Notification
 from ..ratelimit import client_ip, limit_auth
 from ..schemas import (
     BranchExpiringOut,
     BranchShortagesOut,
+    CatalogProductOut,
     MobileApproveIn,
     MobileBranchOut,
     MobileDeviceOut,
@@ -55,6 +56,7 @@ from ..schemas import (
     NotificationPrefsOut,
     NotificationReadIn,
     PairingCodeOut,
+    PriceUpdateIn,
     PushTokenIn,
     RecordOut,
     ReportConfigBody,
@@ -245,43 +247,43 @@ def put_prefs(data: NotificationPrefsIn, user: MobileUserDep, session: SessionDe
 
 # ================= أمان المحل (المالك فقط) =================
 @router.get("/admin/staff", response_model=list[MobileStaffOut])
-def admin_staff(user: MobileUserDep, session: SessionDep):
+def admin_staff(user: MobileOwnerDep, session: SessionDep):
     return admin.list_staff(session, user)
 
 
 @router.post("/admin/staff/{staff_id}/deactivate", response_model=MobileStaffOut)
-def admin_staff_deactivate(staff_id: str, user: MobileUserDep, session: SessionDep):
+def admin_staff_deactivate(staff_id: str, user: MobileOwnerDep, session: SessionDep):
     """إيقاف فوري: يصل لأجهزة الفروع مع المزامنة، وجلسات الهاتف للمدير تتوقف فوراً."""
     return admin.set_staff_active(session, user, staff_id, False)
 
 
 @router.post("/admin/staff/{staff_id}/activate", response_model=MobileStaffOut)
-def admin_staff_activate(staff_id: str, user: MobileUserDep, session: SessionDep):
+def admin_staff_activate(staff_id: str, user: MobileOwnerDep, session: SessionDep):
     return admin.set_staff_active(session, user, staff_id, True)
 
 
 @router.get("/admin/devices", response_model=list[MobileDeviceOut])
-def admin_devices(user: MobileUserDep, session: SessionDep):
+def admin_devices(user: MobileOwnerDep, session: SessionDep):
     return admin.list_devices(session, user)
 
 
 @router.post("/admin/devices/{branch_id}/revoke", response_model=MobileDeviceOut)
-def admin_device_revoke(branch_id: str, user: MobileUserDep, session: SessionDep):
+def admin_device_revoke(branch_id: str, user: MobileOwnerDep, session: SessionDep):
     return admin.revoke_device(session, user, branch_id)
 
 
 @router.post("/admin/devices/{branch_id}/pairing-code", response_model=PairingCodeOut)
-def admin_device_pairing(branch_id: str, user: MobileUserDep, session: SessionDep):
+def admin_device_pairing(branch_id: str, user: MobileOwnerDep, session: SessionDep):
     return admin.pairing_code(session, user, branch_id)
 
 
 @router.get("/admin/sessions", response_model=list[MobileShopSessionOut])
-def admin_sessions(user: MobileUserDep, session: SessionDep):
+def admin_sessions(user: MobileOwnerDep, session: SessionDep):
     return admin.list_sessions(session, user)
 
 
 @router.post("/admin/sessions/{session_id}/revoke", status_code=status.HTTP_204_NO_CONTENT)
-def admin_session_revoke(session_id: str, user: MobileUserDep, session: SessionDep):
+def admin_session_revoke(session_id: str, user: MobileOwnerDep, session: SessionDep):
     admin.revoke_session(session, user, session_id)
 
 
@@ -326,12 +328,24 @@ def top_sellers(
 
 
 @router.get("/admin/report-config", response_model=ReportConfigBody)
-def get_report_config(user: MobileUserDep, session: SessionDep):
+def get_report_config(user: MobileOwnerDep, session: SessionDep):
     admin.require_owner(user)
     return reports7.get_config(session, user.shop_id)
 
 
 @router.put("/admin/report-config", response_model=ReportConfigBody)
-def put_report_config(data: ReportConfigBody, user: MobileUserDep, session: SessionDep):
+def put_report_config(data: ReportConfigBody, user: MobileOwnerDep, session: SessionDep):
     """حدود العمليات الحساسة وفرق النقدية وأيام الصلاحية: تصل للفروع مع مزامنتها التالية."""
     return reports7.put_config(session, user, data)
+
+
+# ================= أسعار الأصناف المشتركة (المالك) =================
+@router.get("/admin/catalog/search", response_model=list[CatalogProductOut])
+def catalog_search(user: MobileOwnerDep, session: SessionDep, q: Annotated[str, Query(max_length=60)] = ""):
+    return admin.search_products(session, user, q)
+
+
+@router.post("/admin/catalog/{gid}/price", response_model=CatalogProductOut)
+def catalog_price(gid: str, data: PriceUpdateIn, user: MobileOwnerDep, session: SessionDep):
+    """يصل لكل الفروع مع المزامنة. نسخة قديمة = 409 catalog_changed بالسعر الحالي (لا كتابة فوق تعديل فرع)."""
+    return admin.update_price(session, user, gid, data)

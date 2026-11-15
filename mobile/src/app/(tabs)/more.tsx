@@ -56,6 +56,7 @@ export default function MoreRoute() {
           <ListRow icon="people-outline" title="الموظفون" subtitle="إيقاف حساب موظف فوراً" onPress={() => router.push("/security/staff")} />
           <ListRow icon="desktop-outline" title="أجهزة الفروع" subtitle="إلغاء ربط جهاز مفقود، وكود ربط جديد" onPress={() => router.push("/security/devices")} />
           <ListRow icon="phone-portrait-outline" title="جلسات الهاتف" subtitle="هواتف كل المستخدمين المسجّلة" onPress={() => router.push("/security/sessions")} />
+          <ListRow icon="pricetag-outline" title="أسعار الأصناف" subtitle="تعديل سعر البيع والجملة لكل الفروع" onPress={() => router.push("/prices")} />
           <ListRow icon="options-outline" title="حدود العمليات الحساسة" subtitle="الخصم والمرتجع وفرق النقدية وأيام الصلاحية" onPress={() => router.push("/report-settings")} />
         </Card>
       )}

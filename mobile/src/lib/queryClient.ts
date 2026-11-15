@@ -7,7 +7,7 @@
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { QueryClient, focusManager, onlineManager } from "@tanstack/react-query";
+import { QueryClient, defaultShouldDehydrateQuery, focusManager, onlineManager, type Query } from "@tanstack/react-query";
 import { addNetworkStateListener } from "expo-network";
 import { AppState, type AppStateStatus } from "react-native";
 
@@ -34,6 +34,19 @@ export const persister = createAsyncStoragePersister({
   key: "dz.query-cache",
   throttleTime: 1000,
 });
+
+/**
+ * ما لا يُحفظ على الهاتف أبداً (يُجلب حياً فقط): شاشات أمان المالك والأسعار والحدود. لا حاجة لها بلا إنترنت،
+ * وحفظها في تخزين غير مشفّر يكشفها لمن يملك هاتفاً مسروقاً.
+ */
+const NEVER_PERSIST = new Set(["security", "prices"]);
+
+export function shouldPersistQuery(query: Query): boolean {
+  const [root, sub] = query.queryKey as unknown[];
+  if (NEVER_PERSIST.has(String(root))) return false;
+  if (root === "reports" && sub === "config") return false;
+  return defaultShouldDehydrateQuery(query);
+}
 
 let wired = false;
 

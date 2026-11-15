@@ -373,3 +373,20 @@ export interface ReportConfig {
   cash_diff_min: number;
   expiry_days: number;
 }
+
+// ================= أسعار الأصناف المشتركة (المالك) =================
+export interface CatalogProduct {
+  gid: string;
+  name: string;
+  barcode: string | null;
+  unit: string;
+  /** قروش */
+  sale_price: number;
+  wholesale_price: number | null;
+  wholesale_min_qty: number | null;
+  is_active: boolean;
+  /** للتعارض: يُرسل مع التعديل، وتغيّره من فرع = 409 catalog_changed */
+  version: number;
+  updated_at: string | null;
+  updated_by: string | null;
+}
