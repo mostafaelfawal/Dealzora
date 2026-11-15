@@ -13,6 +13,7 @@ from app.core.plan import Feature, require_feature
 
 from .scale import ScaleBarcodeConfig
 from app.modules.loyalty.config import LoyaltyConfig
+from app.modules.tax.config import TaxConfig
 from .schema import (
     CurrencyIn,
     CurrencyOut,
@@ -38,6 +39,7 @@ def get_settings_public(session: DbSession):
         discount_limit=service.discount_limit(),
         scale_barcode=service.scale_barcode(),
         loyalty=service.loyalty(),
+        tax=service.tax(),
     )
 
 
@@ -78,3 +80,9 @@ def set_scale_barcode(
 )
 def set_loyalty(data: LoyaltyConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
     return SettingsService(session).set_loyalty(actor, data)
+
+
+# ضريبة القيمة المضافة: متاحة لكل الخطط.
+@router.put("/tax", response_model=TaxConfig, dependencies=[Depends(require_manager_write)])
+def set_tax(data: TaxConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
+    return SettingsService(session).set_tax(actor, data)

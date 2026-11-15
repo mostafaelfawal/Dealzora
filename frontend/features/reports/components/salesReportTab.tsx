@@ -13,12 +13,14 @@ import { CHART } from "@/components/shared/charts/chartTheme";
 import { Donut } from "@/components/shared/charts/MiscCharts";
 import { TrendChart } from "@/components/shared/charts/TrendChart";
 import { Money } from "@/components/shared/Money";
+import { Num } from "@/components/shared/Num";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { StatTile } from "@/components/shared/StatTile";
 import type { DateRange } from "@/lib/dates";
 import { formatDayLabel } from "@/lib/dates";
 import { formatNumber } from "@/lib/format";
 import { useFeature } from "@/lib/plan";
+import { useTaxConfig } from "@/lib/tax";
 import { cn } from "@/lib/utils";
 
 import { SALES_METRICS } from "../config/reportOptions";
@@ -288,6 +290,37 @@ function DiscountBreakdown({ r }: { r: SalesReport }) {
   );
 }
 
+/** ضريبة القيمة المضافة في الفترة. تظهر لو المحل فعّل الضريبة أو حُصّلت ضريبة في الفترة. */
+function TaxSummary({ r }: { r: SalesReport }) {
+  const tax = useTaxConfig();
+  if (!tax.enabled && r.taxTotal === 0 && r.taxReturns === 0) return null;
+  const items = [
+    { label: "ضريبة محصّلة في الفواتير", value: r.taxTotal },
+    { label: "ضريبة مردودة بالمرتجعات", value: r.taxReturns },
+    { label: "صافي الضريبة المستحقة", value: r.taxNet },
+  ];
+  return (
+    <ReportPanel title="ضريبة القيمة المضافة">
+      <dl className="grid gap-3 sm:grid-cols-3">
+        {items.map((i) => (
+          <div key={i.label} className="space-y-0.5">
+            <dt className="text-xs text-muted-foreground">{i.label}</dt>
+            <dd>
+              <Money amount={i.value} className="text-base font-semibold" />
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {r.untaxedCount > 0 && (
+        <p className="text-[11px] text-muted-foreground">
+          <Num>{r.untaxedCount}</Num> فاتورة في الفترة قبل تفعيل حساب الضريبة،
+          ولا تدخل في هذه الأرقام.
+        </p>
+      )}
+    </ReportPanel>
+  );
+}
+
 function SalesDaysTable({ r }: { r: SalesReport }) {
   return (
     <ReportPanel title="تفاصيل الأيام">
@@ -359,6 +392,7 @@ export function SalesReportTab({ range }: { range: DateRange }) {
         <PaymentSplitCard r={r} />
       </div>
       <DiscountBreakdown r={r} />
+      <TaxSummary r={r} />
       <SalesDaysTable r={r} />
     </div>
   );

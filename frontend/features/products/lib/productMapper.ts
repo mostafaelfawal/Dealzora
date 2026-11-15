@@ -35,6 +35,8 @@ export function toProduct(dto: ProductDto): Product {
     wholesaleMinQty:
       dto.wholesale_min_qty == null ? null : qty(dto.wholesale_min_qty),
     trackExpiry: dto.track_expiry ?? false,
+    taxType: dto.tax_type ?? "taxable",
+    taxRate: (dto.tax_rate ?? 1400) / 100,
     nearestExpiry: dto.nearest_expiry ?? null,
     expiredQty: qty(dto.expired_qty ?? 0),
     isActive: dto.is_active,

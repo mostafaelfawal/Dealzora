@@ -1,3 +1,5 @@
+import type { TaxType } from "@/lib/tax";
+
 export interface ProductUnitDto {
   id: string;
   name: string;
@@ -22,6 +24,8 @@ export interface ProductDto {
   wholesale_price: number | null;
   wholesale_min_qty: number | null;
   track_expiry?: boolean;
+  tax_type?: TaxType;
+  tax_rate?: number; // نقاط أساس (1400 = 14%)
   nearest_expiry?: string | null;
   expired_qty?: number;
   stock_qty: number;
@@ -75,6 +79,9 @@ interface ProductPayloadBase {
   wholesale_price: number | null;
   wholesale_min_qty: number | null;
   track_expiry: boolean;
+  tax_type?: TaxType;
+  /** نقاط أساس. null/غائب = الافتراضي (جديد) أو الحالي (تعديل). */
+  tax_rate?: number | null;
   is_active: boolean;
   extra_units: ProductUnitPayload[];
 }

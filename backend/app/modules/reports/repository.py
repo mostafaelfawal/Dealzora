@@ -431,3 +431,20 @@ class ReportRepository:
             ).where(live(Sale), Sale.sold_on.between(d1, d2))
         ).one()
         return tuple(int(v) for v in row)  # type: ignore[return-value]
+
+    def tax_totals(self, d1: date, d2: date) -> tuple[int, int, int]:
+        """(ضريبة المبيعات، ضريبة المرتجعات، عدد الفواتير بلا ضريبة محسوبة) في الفترة.
+        الفواتير قبل إضافة الضريبة (tax_total NULL) لا تدخل في المجموع، وتُعد منفصلة للتوضيح.
+        """
+        sales_tax, untaxed = self.session.execute(
+            select(
+                func.coalesce(func.sum(Sale.tax_total), 0),
+                func.count().filter(Sale.tax_total.is_(None)),
+            ).where(live(Sale), Sale.sold_on.between(d1, d2))
+        ).one()
+        returns_tax = self.session.scalar(
+            select(func.coalesce(func.sum(SaleReturn.tax_total), 0)).where(
+                live(SaleReturn), SaleReturn.returned_on.between(d1, d2)
+            )
+        )
+        return int(sales_tax or 0), int(returns_tax or 0), int(untaxed or 0)

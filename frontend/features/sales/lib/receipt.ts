@@ -10,6 +10,7 @@ import { formatNumber, formatQty } from "@/lib/format";
 
 import { RETURN_REASON_LABEL } from "../config/saleOptions";
 import type { Sale, SaleReturn } from "../types/sale";
+import { saleTaxRows } from "./saleTax";
 
 const FOOTER = "شكراً لزيارتكم";
 /** خطة «بَسطة» المجانية: سطر صغير في آخر الإيصال (إعلان يساعد على انتشار البرنامج). */
@@ -54,6 +55,9 @@ export function buildReceiptHtml(
   ${sale.promoDiscount > 0 ? line("العروض", money(sale.promoDiscount)) : ""}
   ${discount > 0 ? line("الخصم", money(discount)) : ""}
   ${sale.loyaltyDiscount > 0 ? line(`خصم ${sale.loyaltyRedeemed} نقطة`, money(sale.loyaltyDiscount)) : ""}
+  ${saleTaxRows(sale)
+    .map((r) => line(esc(r.label), money(r.amount)))
+    .join("")}
   ${line(`الإجمالي (${currencySymbol()})`, money(sale.total), "total")}
   ${line("طريقة الدفع", sale.paymentLabel)}
   ${sale.cashAmount > 0 ? line("المدفوع نقداً", money(sale.received || sale.cashAmount)) : ""}
@@ -91,6 +95,7 @@ export function buildReturnReceiptHtml(ret: SaleReturn, shopName: string): strin
   ${ret.customerName ? `<div class="center muted">العميل: ${esc(ret.customerName)}</div>` : ""}
   <hr><table>${rows}</table><hr>
   ${line(`قيمة المرتجع (${currencySymbol()})`, money(ret.total), "total")}
+  ${ret.taxTotal ? line("منها ضريبة القيمة المضافة", money(ret.taxTotal)) : ""}
   ${ret.cashRefund > 0 ? line("رُد نقداً", money(ret.cashRefund)) : ""}
   ${ret.walletRefund > 0 ? line("حُوّل للمحفظة", money(ret.walletRefund)) : ""}
   ${ret.creditRefund > 0 ? line("خُصم من حساب العميل", money(ret.creditRefund)) : ""}
@@ -191,6 +196,9 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
     sale.loyaltyDiscount > 0
       ? `خصم ${sale.loyaltyRedeemed} نقطة: ${money(sale.loyaltyDiscount)} ${currencySymbol()}`
       : null,
+    ...saleTaxRows(sale).map(
+      (r) => `${r.label}: ${money(r.amount)} ${currencySymbol()}`,
+    ),
     `*الإجمالي: ${money(sale.total)} ${currencySymbol()}*`,
     sale.creditAmount > 0
       ? `آجل على الحساب: ${money(sale.creditAmount)} ${currencySymbol()}`

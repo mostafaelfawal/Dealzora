@@ -6,6 +6,7 @@ import { Money } from "@/components/shared/Money";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
 import { formatQty } from "@/lib/format";
+import { formatRate } from "@/lib/tax";
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
 import { POS_SHORTCUTS } from "../config/posShortcuts";
 import { cartActions } from "../store/cartSlice";
@@ -103,6 +104,20 @@ export function PosTotals() {
             </dd>
           </div>
         )}
+        {/* ضريبة القيمة المضافة: لا تظهر إطلاقاً لو المحل لم يفعّلها. */}
+        {totals.taxMode !== "off" &&
+          totals.taxByRate.map(({ rate, tax }) => (
+            <div key={rate} className="flex items-center justify-between">
+              <dt className="text-muted-foreground">
+                {totals.taxMode === "inclusive" ? "منها ضريبة" : "ضريبة"}{" "}
+                <bdi dir="ltr">{formatRate(rate)}</bdi>
+              </dt>
+              <dd className="flex items-baseline gap-1">
+                {totals.taxMode === "exclusive" && <span aria-hidden>+</span>}
+                <Money amount={tax} />
+              </dd>
+            </div>
+          ))}
       </dl>
 
       <div

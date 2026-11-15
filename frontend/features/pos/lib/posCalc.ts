@@ -6,6 +6,13 @@ import {
 } from "@/lib/loyalty";
 import { parseScaleBarcode, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
 import { normalizeDigits } from "@/lib/format";
+import {
+  computeInvoiceTax,
+  getTaxConfig,
+  taxMode,
+  toBasisPoints,
+  type TaxMode,
+} from "@/lib/tax";
 import type {
   CartLine,
   InvoiceDiscount,
@@ -146,7 +153,30 @@ export interface InvoiceTotals {
   loyaltyDiscount: number;
   /** تقدير النقاط التي سيكسبها العميل (السيرفر هو المرجع). */
   pointsToEarn: number;
+  /** ضريبة القيمة المضافة: الوضع، والصافي قبل الضريبة، والضريبة (مجموع ضرائب السطور). */
+  taxMode: TaxMode;
+  taxableTotal: number;
+  taxTotal: number;
+  /** نسب الضريبة في الفاتورة ← قيمتها (للعرض: «ضريبة 14%: …»). */
+  taxByRate: { rate: number; tax: number }[];
+  /** ما يدفعه العميل (شامل الضريبة دائماً). */
   total: number;
+}
+
+const toCents = (n: number) => Math.round(n * 100);
+
+/** الضريبة على سطور الفاتورة بعد كل الخصومات (نفس حساب السيرفر في tax/calc.py). */
+function invoiceTax(lines: CartLine[], discount: number) {
+  const cfg = getTaxConfig();
+  return computeInvoiceTax(
+    lines.map((line) => ({
+      amount: toCents(lineTotal(line)),
+      taxType: line.taxType ?? "taxable",
+      rate: line.taxRate ?? toBasisPoints(cfg.defaultRate),
+    })),
+    toCents(discount),
+    taxMode(cfg),
+  );
 }
 
 export function calcTotals(invoice: PosInvoice): InvoiceTotals {
@@ -164,7 +194,12 @@ export function calcTotals(invoice: PosInvoice): InvoiceTotals {
   const redeemPoints =
     Math.min(wanted - (wanted % loyalty.redeemPoints), allowed) || 0;
   const loyaltyDiscount = redeemDiscount(loyalty, redeemPoints);
-  const total = round2(base - loyaltyDiscount);
+  const tax = invoiceTax(invoice.lines, discountAmount + loyaltyDiscount);
+  // متوقفة أو شاملة: tax.total = base - loyaltyDiscount بالضبط. غير شاملة: + الضريبة.
+  const total = tax.total / 100;
+  const byRate = new Map<number, number>();
+  for (const l of tax.lines)
+    if (l.tax > 0) byRate.set(l.rate, (byRate.get(l.rate) ?? 0) + l.tax);
   return {
     itemCount: invoice.lines.length,
     promoDiscount: round2(
@@ -179,6 +214,12 @@ export function calcTotals(invoice: PosInvoice): InvoiceTotals {
     redeemPoints,
     loyaltyDiscount,
     pointsToEarn: customer ? earnedPoints(loyalty, total) : 0,
+    taxMode: tax.mode,
+    taxableTotal: tax.taxable / 100,
+    taxTotal: tax.tax / 100,
+    taxByRate: [...byRate]
+      .sort((a, b) => b[0] - a[0])
+      .map(([rate, cents]) => ({ rate: rate / 100, tax: cents / 100 })),
     total,
   };
 }

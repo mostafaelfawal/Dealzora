@@ -35,6 +35,12 @@ function toBase(v: ProductSchemaType) {
       ? scaled(v.wholesalePrice, MONEY_SCALE)
       : null,
     track_expiry: v.trackExpiry,
+    tax_type: v.taxType,
+    // فارغ = الافتراضي (جديد) أو الحالي (تعديل). المعفى/الصفري يصفّرها السيرفر.
+    tax_rate:
+      v.taxType === "taxable" && v.taxRate.trim()
+        ? scaled(v.taxRate, 100)
+        : null,
     wholesale_min_qty:
       v.wholesalePrice.trim() && v.wholesaleMinQty.trim()
         ? scaled(v.wholesaleMinQty, QTY_SCALE) || null

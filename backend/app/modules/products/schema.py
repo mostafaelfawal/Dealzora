@@ -26,6 +26,8 @@ from .schema_validation import (
     validate_extra_units,
     validate_granularity,
 )
+from app.modules.tax.constants import MAX_RATE, TaxType
+
 from .types import AdjustReason, MovementType, SortKey, StockFilter, StockLevel
 
 
@@ -67,6 +69,10 @@ class ProductBase(BaseModel):
     wholesale_price: Money | None = None
     wholesale_min_qty: int | None = Field(None, ge=1, le=MAX_QTY)
     track_expiry: bool = False
+    # ضريبة القيمة المضافة. الغائب = يبقى كما هو (تعديل) أو الافتراضي (جديد: خاضع بنسبة المحل)،
+    # فالعميل الأقدم (استيراد/مزامنة فرع بنسخة سابقة) لا يمسح إعداد الضريبة.
+    tax_type: TaxType | None = None
+    tax_rate: int | None = Field(None, ge=0, le=MAX_RATE)
     extra_units: list[UnitIn] = Field(default_factory=list, max_length=MAX_EXTRA_UNITS)
 
     @model_validator(mode="after")
@@ -78,6 +84,12 @@ class ProductBase(BaseModel):
             raise ValueError("سعر الجملة يجب أن يكون أقل من سعر البيع (القطاعي)")
         if self.wholesale_price is None:
             self.wholesale_min_qty = None
+        if self.tax_type in (TaxType.EXEMPT, TaxType.ZERO):
+            self.tax_rate = 0  # المعفى والصفري بلا نسبة
+        elif self.tax_rate == 0:
+            if self.tax_type is TaxType.TAXABLE:
+                raise ValueError("نسبة الضريبة للصنف الخاضع أكبر من صفر. للنسبة صفر اختر «نسبة صفر»")
+            self.tax_rate = None
         validate_granularity(
             self.allow_decimal,
             min_stock=self.min_stock,
@@ -116,6 +128,8 @@ class ProductOut(BaseModel):
     wholesale_price: int | None
     wholesale_min_qty: int | None
     track_expiry: bool
+    tax_type: str
+    tax_rate: int  # نقاط أساس (1400 = 14%)
     nearest_expiry: date | None  # أقرب صلاحية للكمية الصالحة
     expired_qty: int  # كمية منتهية لم تُعدم (× 1000)
     stock_qty: int

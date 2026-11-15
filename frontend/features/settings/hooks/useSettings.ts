@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { setLoyaltyConfig, type LoyaltyConfig } from "@/lib/loyalty";
+import { setTaxConfig, type TaxConfig } from "@/lib/tax";
 import { setScaleConfig, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
 
 import { setCurrency, type Currency } from "@/lib/currency";
@@ -23,6 +24,7 @@ import {
   saveDiscountLimit,
   saveLoyalty,
   saveScaleBarcode,
+  saveTax,
   savePaymentConfig,
   setBackupLocation,
   type DiscountLimit,
@@ -222,6 +224,21 @@ export function useSaveScaleBarcode() {
 }
 
 /* ---------- نقاط الولاء ---------- */
+
+export function useSaveTax() {
+  return useMutation({
+    mutationFn: (config: TaxConfig) => saveTax(config),
+    onSuccess: (config) => {
+      setTaxConfig(config);
+      toast.success(
+        config.enabled
+          ? "تم حفظ إعداد الضريبة: تُحسب في الفواتير الجديدة من الآن"
+          : "تم إيقاف حساب الضريبة",
+      );
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ إعداد الضريبة")),
+  });
+}
 
 export function useSaveLoyalty() {
   return useMutation({

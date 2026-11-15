@@ -8,7 +8,9 @@ export type ImportFieldKey =
   | "stock"
   | "minStock"
   | "scaleCode"
-  | "wholesalePrice";
+  | "wholesalePrice"
+  | "taxType"
+  | "taxRate";
 
 export interface ImportField {
   key: ImportFieldKey;
@@ -32,6 +34,19 @@ export const IMPORT_FIELDS: ImportField[] = [
     label: "كود الميزان",
     required: false,
     aliases: ["ميزان", "plu", "scale"],
+  },
+  // ضريبة القيمة المضافة: «نوع الضريبة» قبل «نسبة الضريبة» (الثاني يطابق كلمة «ضريبة» فقط).
+  {
+    key: "taxType",
+    label: "نوع الضريبة",
+    required: false,
+    aliases: ["نوع الضريبة", "المعاملة الضريبية", "tax type", "tax_type"],
+  },
+  {
+    key: "taxRate",
+    label: "نسبة الضريبة %",
+    required: false,
+    aliases: ["ضريبة", "الضريبة", "vat", "tax"],
   },
   // قبل «سعر البيع»: عمود «سعر الجملة» فيه كلمة «سعر» أيضاً.
   {

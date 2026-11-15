@@ -70,6 +70,23 @@ _NEW_COLUMNS = (
     ("sales", "loyalty_redeem_restored", "INTEGER NOT NULL DEFAULT 0"),
     ("sale_returns", "loyalty_reversed", "INTEGER NOT NULL DEFAULT 0"),
     ("sale_returns", "loyalty_restored", "INTEGER NOT NULL DEFAULT 0"),
+    # ضريبة القيمة المضافة (المرحلة 1 من الإيصال الإلكتروني).
+    # الأصناف القائمة تأخذ الافتراضي: خاضع بنسبة 14% (لا أثر لها حتى يُفعّل المحل الضريبة).
+    ("products", "tax_type", "VARCHAR(8) NOT NULL DEFAULT 'taxable'"),
+    ("products", "tax_rate", "INTEGER NOT NULL DEFAULT 1400"),
+    # الفواتير والمرتجعات القديمة: أعمدة الضريبة NULL = «لم تُحسب» (لا نخترع ضريبة بأثر رجعي).
+    ("sales", "tax_mode", "VARCHAR(10)"),
+    ("sales", "taxable_total", "INTEGER"),
+    ("sales", "tax_total", "INTEGER"),
+    ("sale_lines", "tax_type", "VARCHAR(8)"),
+    ("sale_lines", "tax_rate", "INTEGER"),
+    ("sale_lines", "taxable_amount", "INTEGER"),
+    ("sale_lines", "tax_amount", "INTEGER"),
+    ("sale_lines", "returned_tax", "INTEGER NOT NULL DEFAULT 0"),
+    ("sale_returns", "taxable_total", "INTEGER"),
+    ("sale_returns", "tax_total", "INTEGER"),
+    ("sale_return_lines", "taxable_amount", "INTEGER"),
+    ("sale_return_lines", "tax_amount", "INTEGER"),
 )
 
 # فهارس على أعمدة أُضيفت بـ _NEW_COLUMNS (تُنشأ بعدها).

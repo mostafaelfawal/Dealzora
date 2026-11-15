@@ -1,4 +1,5 @@
 import type { PaymentMethod } from "@/features/sales/types/sale";
+import type { TaxType } from "@/lib/tax";
 
 export type StockLevel = "ok" | "low" | "out";
 
@@ -41,6 +42,9 @@ export interface PosProduct {
   wholesalePrice?: number | null;
   /** الكمية (بالوحدة الأساسية) التي يبدأ منها سعر الجملة. */
   wholesaleMinQty?: number | null;
+  /** المعاملة الضريبية ونسبتها بنقاط الأساس (1400 = 14%). */
+  taxType?: TaxType;
+  taxRate?: number;
 }
 
 /** عرض تلقائي ساري اليوم (القيم كما في الـ backend: نسبة أو قروش، والكمية × 1000). */
@@ -103,6 +107,9 @@ export interface CartLine {
   /** خصم العرض التلقائي بالجنيه، واسم العرض. */
   promo?: number;
   promoName?: string | null;
+  /** ضريبة الصنف (نقاط أساس). غائب = فاتورة معلّقة قبل إضافة الضريبة: يُعامل بالافتراضي. */
+  taxType?: TaxType;
+  taxRate?: number;
 }
 
 export type DiscountType = "amount" | "percent";
@@ -172,7 +179,10 @@ export interface CompletedInvoice {
   number: number;
   soldAt: number;
   customer: PosCustomer | null;
-  /** نسبة خصم الفاتورة من 0 إلى 1، ليُحسب المرتجع بالسعر الفعلي المدفوع. */
+  /**
+   * نسبة خصم الفاتورة (0 إلى 1) ليُحسب المرتجع بالسعر الفعلي المدفوع. سالبة لفاتورة أسعارها
+   * قبل الضريبة (المدفوع أكبر من الأسعار)، فيشمل تقدير المرتجع الضريبة. السيرفر هو المرجع.
+   */
   discountRate: number;
   lines: SoldLine[];
 }

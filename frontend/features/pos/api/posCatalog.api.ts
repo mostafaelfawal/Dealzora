@@ -9,6 +9,8 @@ import { fetchSales } from "@/features/sales/api/sales.api";
 import type { Sale } from "@/features/sales/types/sale";
 import type { Product } from "@/features/products/types/product";
 
+import { toBasisPoints } from "@/lib/tax";
+
 import { round2 } from "../lib/posCalc";
 import type {
   CompletedInvoice,
@@ -35,6 +37,8 @@ const toPosProduct = (p: Product): PosProduct => ({
   scaleCode: p.scaleCode,
   wholesalePrice: p.wholesalePrice,
   wholesaleMinQty: p.wholesaleMinQty,
+  taxType: p.taxType,
+  taxRate: toBasisPoints(p.taxRate),
   // سعر الوحدة الفارغ = سعر الأساسية × العدد (نفس حساب الـ backend).
   units: p.extraUnits.map((u) => ({
     id: u.id,
@@ -72,8 +76,9 @@ export function toCompletedInvoice(sale: Sale): CompletedInvoice {
           creditLimit: 0,
         }
       : null,
+    // سالبة لو أُضيفت ضريبة على الأسعار (لا تقل عن -1 = ضريبة 100%).
     discountRate:
-      gross > 0 ? Math.min(Math.max(1 - sale.total / gross, 0), 1) : 0,
+      gross > 0 ? Math.min(Math.max(1 - sale.total / gross, -1), 1) : 0,
     lines: sale.lines.map((l) => ({
       lineId: l.id,
       productId: l.productId,

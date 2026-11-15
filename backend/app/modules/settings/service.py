@@ -26,6 +26,7 @@ from .model import AppSetting
 from .payments import PaymentKind
 from .scale import ScaleBarcodeConfig
 from app.modules.loyalty.config import LoyaltyConfig
+from app.modules.tax.config import TaxConfig
 from .schema import (
     CurrencyIn,
     CurrencyOut,
@@ -106,6 +107,26 @@ class SettingsService:
             record_audit(
                 self.session, actor, entity=ENTITY_SETTING, entity_id="loyalty", action="update",
                 changes={"loyalty": {"from": before.model_dump(), "to": data.model_dump()}},
+            )  # fmt: skip
+        self.session.commit()
+        return data
+
+    def tax(self) -> TaxConfig:
+        raw = self.get(SettingKey.TAX)
+        if raw:
+            try:
+                return TaxConfig.model_validate_json(raw)
+            except ValueError:  # قيمة تالفة: متوقفة حتى تُحفظ من جديد
+                pass
+        return TaxConfig()
+
+    def set_tax(self, actor: Actor, data: TaxConfig) -> TaxConfig:
+        before = self.tax()
+        self._set(actor, SettingKey.TAX, data.model_dump_json())
+        if data != before:
+            record_audit(
+                self.session, actor, entity=ENTITY_SETTING, entity_id="tax", action="update",
+                changes={"tax": {"from": before.model_dump(), "to": data.model_dump()}},
             )  # fmt: skip
         self.session.commit()
         return data

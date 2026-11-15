@@ -1,4 +1,5 @@
 import { saveFile, type SavedFile } from "@/lib/saveFile";
+import { getTaxConfig, TAX_TYPE_LABEL } from "@/lib/tax";
 
 import { getProducts, type GetProductsParams } from "../api/products.api";
 import type { Product } from "../types/product";
@@ -21,6 +22,9 @@ const HEADERS = [
   "سعر الجملة",
 ];
 const WIDTHS = [32, 18, 16, 10, 12, 12, 14, 12, 10, 12, 12];
+/** أعمدة الضريبة: تُصدَّر فقط لو المحل فعّل الضريبة (ويقرأها الاستيراد دائماً). */
+const TAX_HEADERS = ["نوع الضريبة", "نسبة الضريبة %"];
+const TAX_WIDTHS = [14, 12];
 
 type Cell = string | number;
 interface SheetSpec {
@@ -77,6 +81,11 @@ export async function fetchAllProducts(
   return items;
 }
 
+const taxCells = (p: Product): Cell[] => [
+  TAX_TYPE_LABEL[p.taxType],
+  p.taxType === "taxable" ? p.taxRate : 0,
+];
+
 const toRow = (p: Product): Cell[] => [
   p.name,
   p.barcode, // نص، فلا تضيع الأصفار ولا يتحول لصيغة علمية
@@ -104,13 +113,19 @@ export async function exportProducts(
 ): Promise<ExportResult> {
   const products = await fetchAllProducts(params, onProgress);
   if (products.length === 0) return { count: 0, file: null };
+  const withTax = getTaxConfig().enabled;
 
   const file = await saveWorkbook(
     [
       {
         name: "الأصناف",
-        rows: [HEADERS, ...products.map(toRow)],
-        widths: WIDTHS,
+        rows: withTax
+          ? [
+              [...HEADERS, ...TAX_HEADERS],
+              ...products.map((p) => [...toRow(p), ...taxCells(p)]),
+            ]
+          : [HEADERS, ...products.map(toRow)],
+        widths: withTax ? [...WIDTHS, ...TAX_WIDTHS] : WIDTHS,
       },
     ],
     `products-${today()}.xlsx`,
@@ -141,6 +156,9 @@ export async function downloadProductsTemplate(): Promise<SavedFile> {
           ["لو الباركود موجود مسبقاً يُحدَّث الصنف أو يُتخطّى حسب اختيارك."],
           ["الرصيد الحالي يُستخدم للأصناف الجديدة فقط (رصيد افتتاحي)."],
           ["القسم يجب أن يطابق اسم قسم موجود، وإلا يُترك بدون قسم."],
+          [
+            "اختياري: «نوع الضريبة» (خاضع / معفى / نسبة صفر) و«نسبة الضريبة %» (مثل 14). الفارغ = النسبة الافتراضية للمحل.",
+          ],
           ["احذف المثالين قبل الرفع."],
         ],
         widths: [70],

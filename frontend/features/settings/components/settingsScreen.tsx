@@ -12,6 +12,7 @@ import {
   IconPalette,
   IconPercentage,
   IconPrinter,
+  IconReceiptTax,
   IconScale,
   IconShieldCheck,
   IconShieldLock,
@@ -45,6 +46,7 @@ import { PrinterSection } from "./printerSection";
 import { ScaleBarcodeSection } from "./scaleBarcodeSection";
 import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
+import { TaxSection } from "./taxSection";
 import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /**
@@ -78,7 +80,7 @@ function buildPages(device: DeviceConfig | null, owner: boolean): Page[] {
     id: "shop",
     icon: <IconBuildingStore />,
     title: "محلي",
-    hint: "اسم المحل والعملة",
+    hint: "اسم المحل والعملة والضريبة",
     sections: [
       {
         id: "shop-info",
@@ -93,6 +95,14 @@ function buildPages(device: DeviceConfig | null, owner: boolean): Page[] {
         title: "العملة",
         description: "تظهر مع كل الأسعار والفواتير والتقارير.",
         content: <CurrencySection />,
+      },
+      {
+        id: "tax",
+        icon: <IconReceiptTax />,
+        title: "ضريبة القيمة المضافة",
+        description:
+          "للمحل المسجل في الضريبة: تُحسب على كل فاتورة وتظهر في الإيصال والتقارير.",
+        content: <TaxSection />,
       },
     ],
   };

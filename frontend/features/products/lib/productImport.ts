@@ -18,6 +18,7 @@ import {
   BARCODE_PATTERN,
 } from "../config/productLimits";
 import type { Product } from "../types/product";
+import { parseTaxType } from "./productTax";
 import { numberOrZero, parseNumber } from "./productCalc";
 import { MONEY_SCALE, QTY_SCALE } from "./productMapper";
 
@@ -120,7 +121,19 @@ export async function importProducts({
       const wholesaleKept =
         keptCents !== null && keptCents < saleCents ? keptCents : null;
 
+      // الضريبة: عمود فارغ/غير مربوط = يبقى الحالي (أو الافتراضي للجديد).
+      const taxType = text("taxType") ? parseTaxType(text("taxType")) : null;
+      if (text("taxType") && !taxType)
+        throw new Error("نوع الضريبة غير معروف (خاضع / معفى / صفر)");
+      const ratePercent = text("taxRate") ? parseNumber(text("taxRate")) : NaN;
+      if (text("taxRate") && !(ratePercent > 0 && ratePercent <= 100))
+        throw new Error("نسبة الضريبة من 0.01 إلى 100");
+
       const base = {
+        ...(taxType ? { tax_type: taxType } : {}),
+        ...(Number.isFinite(ratePercent) && taxType !== "exempt" && taxType !== "zero"
+          ? { tax_rate: Math.round(ratePercent * 100) }
+          : {}),
         name,
         barcode: barcode || null,
         category_id:

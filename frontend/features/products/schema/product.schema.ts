@@ -116,6 +116,15 @@ function factorError(text: string) {
   return null;
 }
 
+/** نسبة ضريبة بالمئة (حتى منزلتين). الفارغ = النسبة الافتراضية للمحل. */
+function taxRateError(text: string) {
+  if (isBlank(text)) return null;
+  const scaled = toScaled(text, 100);
+  if (scaled === null || scaled <= 0 || scaled > 10_000)
+    return "نسبة الضريبة من 0.01 إلى 100 (حتى خانتين عشريتين).";
+  return null;
+}
+
 export const unitSchema = z.object({
   id: z.string(),
   name: check(unitNameError),
@@ -138,6 +147,8 @@ export const productSchema = z
     wholesalePrice: check(costError),
     wholesaleMinQty: check(qtyError),
     trackExpiry: z.boolean(),
+    taxType: z.enum(["taxable", "exempt", "zero"]),
+    taxRate: check(taxRateError),
     openingExpiry: z.string(),
     openingBatchNo: z.string().max(40, "رقم التشغيلة حتى 40 حرفاً"),
     openingStock: check(qtyError),

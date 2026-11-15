@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBuildingStore } from "@tabler/icons-react";
+import { IconBuildingStore, IconReceiptTax } from "@tabler/icons-react";
 import { useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -13,6 +13,12 @@ import {
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  formatRate,
+  TAX_TYPE_LABEL,
+  TAX_TYPES,
+  useTaxConfig,
+} from "@/lib/tax";
 import { cn } from "@/lib/utils";
 
 import { PRODUCT_FIELD_IDS as IDS } from "../config/productFormFields";
@@ -152,6 +158,82 @@ function WholesaleSection({ unit, sale }: { unit: string; sale: number }) {
   );
 }
 
+/** ضريبة القيمة المضافة للصنف: تظهر فقط لو المحل فعّل الضريبة من الإعدادات. */
+function TaxSection() {
+  const { form, setField } = useProductFormFields();
+  const tax = useTaxConfig();
+  const {
+    register,
+    control,
+    formState: { errors },
+  } = form;
+  const [taxType, taxRate] = useWatch({
+    control,
+    name: ["taxType", "taxRate"],
+  });
+  if (!tax.enabled) return null;
+  const taxable = taxType === "taxable";
+  const summary = taxable
+    ? `${TAX_TYPE_LABEL.taxable} ${formatRate(Number(taxRate) || tax.defaultRate)}`
+    : TAX_TYPE_LABEL[taxType];
+
+  return (
+    <CollapsibleSection
+      title="ضريبة القيمة المضافة"
+      summary={summary}
+      icon={<IconReceiptTax />}
+      defaultOpen={false}
+      forceOpen={Boolean(errors.taxRate)}
+    >
+      <div
+        className="flex flex-wrap gap-1.5"
+        role="radiogroup"
+        aria-label="المعاملة الضريبية"
+      >
+        {TAX_TYPES.map((t) => (
+          <Button
+            key={t}
+            type="button"
+            size="sm"
+            role="radio"
+            aria-checked={taxType === t}
+            variant={taxType === t ? "default" : "outline"}
+            onClick={() => setField("taxType", t)}
+            className="font-normal"
+          >
+            {TAX_TYPE_LABEL[t]}
+          </Button>
+        ))}
+      </div>
+      {taxable && (
+        <div className="max-w-48">
+          <FormField
+            id={IDS.taxRate}
+            label="نسبة الضريبة %"
+            error={errors.taxRate?.message}
+            hint={`فارغ = ${formatRate(tax.defaultRate)} (افتراضي المحل)`}
+          >
+            <Input
+              id={IDS.taxRate}
+              {...PRICE_INPUT}
+              {...register("taxRate")}
+              placeholder={String(tax.defaultRate)}
+              aria-invalid={Boolean(errors.taxRate)}
+              aria-describedby={errorId(IDS.taxRate)}
+            />
+          </FormField>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        {tax.pricesIncludeTax
+          ? "سعر البيع شامل الضريبة (حسب إعداد المحل)."
+          : "تُضاف الضريبة على سعر البيع في الفاتورة (حسب إعداد المحل)."}{" "}
+        الوحدات الإضافية (كرتونة/دستة) تأخذ نفس المعاملة.
+      </p>
+    </CollapsibleSection>
+  );
+}
+
 export function ProductFormPricing() {
   const { form, setField } = useProductFormFields();
   const {
@@ -237,6 +319,7 @@ export function ProductFormPricing() {
       </FormSection>
 
       <WholesaleSection unit={unitName} sale={sale} />
+      <TaxSection />
     </>
   );
 }

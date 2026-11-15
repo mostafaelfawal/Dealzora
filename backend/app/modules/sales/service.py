@@ -42,11 +42,14 @@ from .constants import (
     REF_SALE_RETURN,
     SaleError,
 )
-from .helper import allocate, base_qty, exceeds_percent, proportional, qty_amount, round_div
+from .helper import base_qty, exceeds_percent, proportional, round_div
 from .model import Sale, SaleLine, SaleReturn, SaleReturnLine
 from .pricing import LineInput, price_lines
 from app.modules.loyalty.config import earned_points, max_redeemable, redeem_discount
 from app.modules.loyalty.service import LoyaltyKind, load_config as load_loyalty, post as post_points
+from app.modules.tax.calc import TaxLineIn, compute_invoice, return_split
+from app.modules.tax.config import tax_mode
+from app.modules.tax.service import load_config as load_tax
 from .repository import SaleRepository
 from .schema import (
     ExchangeCreate,
@@ -273,7 +276,21 @@ class SaleService(EntityService):
             if data.redeem_points > allowed:
                 raise self._err(ConflictError, SaleError.LOYALTY_TOO_MANY, max=allowed)
             loyalty_discount = redeem_discount(loyalty, data.redeem_points)
-        total = after_lines - data.invoice_discount - loyalty_discount
+        # الضريبة بعد كل الخصومات (الترتيب موثّق في tax/calc.py). متوقفة أو شاملة: الإجمالي
+        # = after_lines - الخصومات كما كان بالضبط، وغير شاملة: + ضريبة السطور.
+        invoice_tax = compute_invoice(
+            [
+                TaxLineIn(
+                    amount=p["gross"] - p["promo"] - p["discount"],
+                    tax_type=p["product"].tax_type,
+                    rate=p["product"].tax_rate,
+                )
+                for p in priced
+            ],
+            data.invoice_discount + loyalty_discount,
+            tax_mode(load_tax(self.session)),
+        )
+        total = invoice_tax.total
         earned = earned_points(loyalty, total) if customer else 0
 
         # بَسطة: بيع كاش فقط بدون عميل (العملاء والآجل والمحافظ من خطة دُكّان).
@@ -304,6 +321,9 @@ class SaleService(EntityService):
             loyalty_redeemed=data.redeem_points,
             loyalty_discount=loyalty_discount,
             loyalty_earned=earned,
+            tax_mode=invoice_tax.mode.value,
+            taxable_total=invoice_tax.taxable,
+            tax_total=invoice_tax.tax,
             total=total,
             cash_amount=cash,
             credit_amount=credit,
@@ -315,12 +335,8 @@ class SaleService(EntityService):
         )
         self.repo.add(sale)
 
-        nets = allocate(
-            data.invoice_discount + loyalty_discount,
-            [p["gross"] - p["promo"] - p["discount"] for p in priced],
-        )
         cost_total = 0
-        for p, net in zip(priced, nets, strict=True):
+        for p, tl in zip(priced, invoice_tax.lines, strict=True):
             product: Product = p["product"]
             line_cost = round_div(p["base"] * product.cost_price, QTY_SCALE)
             cost_total += line_cost
@@ -341,7 +357,11 @@ class SaleService(EntityService):
                     promo_name=p["promo_name"],
                     is_wholesale=p["wholesale"],
                     line_total=p["gross"] - p["promo"] - p["discount"],
-                    net_total=net,
+                    net_total=tl.total,
+                    tax_type=tl.tax_type,
+                    tax_rate=tl.rate,
+                    taxable_amount=tl.taxable,
+                    tax_amount=tl.tax,
                     unit_cost=product.cost_price,
                     cost_total=line_cost,
                 )
@@ -403,6 +423,8 @@ class SaleService(EntityService):
                 "promo_discount": promo_discount,
                 "loyalty_redeemed": data.redeem_points,
                 "loyalty_earned": earned,
+                "tax_mode": sale.tax_mode,
+                "tax_total": sale.tax_total,
                 "customer_id": sale.customer_id,
                 "items": len(priced),
             },
@@ -510,6 +532,7 @@ class SaleService(EntityService):
             total=0,
         )
         total = cost_total = 0
+        tax_total: int | None = 0  # None لو الفاتورة قبل إضافة الضريبة
         moves: list[tuple[Product, int, SaleLine]] = []
         for line_id, qty in requested.items():
             line = by_id.get(line_id)
@@ -524,17 +547,25 @@ class SaleService(EntityService):
             base = base_qty(qty, line.factor)
             if not product.allow_decimal and base % QTY_SCALE:
                 raise self._err(BadRequestError, SaleError.FRACTION_NOT_ALLOWED, product=line.name)
-            # آخر كمية متبقية تأخذ الباقي بالضبط فلا يتراكم خطأ التقريب.
-            amount = (
-                line.net_total - line.returned_amount
-                if qty == available
-                else proportional(qty, line.qty, line.net_total)
+            # القيمة والضريبة بنسبة الكمية من السطر الأصلي (لا النسبة الحالية للصنف)،
+            # وآخر كمية متبقية تأخذ الباقي بالضبط فلا يتراكم خطأ التقريب.
+            split = return_split(
+                qty=qty,
+                line_qty=line.qty,
+                line_total=line.net_total,
+                line_tax=line.tax_amount,
+                returned_qty=line.returned_qty,
+                returned_amount=line.returned_amount,
+                returned_tax=line.returned_tax,
             )
+            amount = split.amount
             cost = proportional(qty, line.qty, line.cost_total)
             line.returned_qty += qty
             line.returned_amount += amount
+            line.returned_tax += split.tax or 0
             total += amount
             cost_total += cost
+            tax_total = None if tax_total is None or split.tax is None else tax_total + split.tax
             ret.lines.append(
                 SaleReturnLine(
                     id=uuid7(),
@@ -546,6 +577,8 @@ class SaleService(EntityService):
                     unit_name=line.unit_name,
                     qty=qty,
                     amount=amount,
+                    taxable_amount=None if split.tax is None else amount - split.tax,
+                    tax_amount=split.tax,
                     cost_total=cost,
                 )
             )
@@ -568,6 +601,8 @@ class SaleService(EntityService):
             self.shifts.require_open()
 
         ret.total = total
+        ret.tax_total = tax_total
+        ret.taxable_total = None if tax_total is None else total - tax_total
         ret.cost_total = cost_total
         ret.cash_refund = cash_refund
         ret.credit_refund = credit_refund
@@ -637,6 +672,7 @@ class SaleService(EntityService):
                 "cash_refund": cash_refund,
                 "credit_refund": credit_refund,
                 "wallet_refund": wallet_refund,
+                "tax_total": tax_total,
                 "reason": data.reason.value,
             },
         )
@@ -662,6 +698,9 @@ class SaleService(EntityService):
             "subtotal": sale.subtotal,
             "lines_discount": sale.lines_discount,
             "invoice_discount": sale.invoice_discount,
+            "tax_mode": sale.tax_mode,
+            "taxable_total": sale.taxable_total,
+            "tax_total": sale.tax_total,
             "total": sale.total,
             "cash_amount": sale.cash_amount,
             "credit_amount": sale.credit_amount,
@@ -677,6 +716,10 @@ class SaleService(EntityService):
                     "unit_price": l.unit_price,
                     "discount": l.discount,
                     "net_total": l.net_total,
+                    "tax_type": l.tax_type,
+                    "tax_rate": l.tax_rate,
+                    "taxable_amount": l.taxable_amount,
+                    "tax_amount": l.tax_amount,
                     "unit_cost": l.unit_cost,
                 }
                 for l in sale.lines
@@ -693,11 +736,19 @@ class SaleService(EntityService):
             "returned_on": ret.returned_on.isoformat(),
             "reason": ret.reason,
             "total": ret.total,
+            "taxable_total": ret.taxable_total,
+            "tax_total": ret.tax_total,
             "cash_refund": ret.cash_refund,
             "credit_refund": ret.credit_refund,
             "wallet_refund": ret.wallet_refund,
             "lines": [
-                {"id": l.id, "sale_line_id": l.sale_line_id, "qty": l.qty, "amount": l.amount}
+                {
+                    "id": l.id,
+                    "sale_line_id": l.sale_line_id,
+                    "qty": l.qty,
+                    "amount": l.amount,
+                    "tax_amount": l.tax_amount,
+                }
                 for l in ret.lines
             ],
         }
@@ -734,6 +785,9 @@ class SaleService(EntityService):
                     loyalty_discount=s.loyalty_discount,
                     loyalty_earned=s.loyalty_earned,
                     customer_points=points.get(s.customer_id) if s.customer_id else None,
+                    tax_mode=s.tax_mode,
+                    taxable_total=s.taxable_total,
+                    tax_total=s.tax_total,
                     total=s.total,
                     cash_amount=s.cash_amount,
                     credit_amount=s.credit_amount,
@@ -761,6 +815,10 @@ class SaleService(EntityService):
                             is_wholesale=l.is_wholesale,
                             line_total=l.line_total,
                             net_total=l.net_total,
+                            tax_type=l.tax_type,
+                            tax_rate=l.tax_rate,
+                            taxable_amount=l.taxable_amount,
+                            tax_amount=l.tax_amount,
                             returned_qty=l.returned_qty,
                             unit_cost=l.unit_cost if mgr else None,
                         )
@@ -788,6 +846,8 @@ class SaleService(EntityService):
                 customer_name=customers.get(r.sale_id),
                 cashier_name=names.get(r.created_by or ""),
                 total=r.total,
+                taxable_total=r.taxable_total,
+                tax_total=r.tax_total,
                 cash_refund=r.cash_refund,
                 credit_refund=r.credit_refund,
                 wallet_refund=r.wallet_refund,
@@ -802,6 +862,7 @@ class SaleService(EntityService):
                         unit_name=l.unit_name,
                         qty=l.qty,
                         amount=l.amount,
+                        tax_amount=l.tax_amount,
                     )
                     for l in r.lines
                 ],

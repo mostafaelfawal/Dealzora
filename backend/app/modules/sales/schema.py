@@ -115,7 +115,12 @@ class SaleLineOut(BaseModel):
     promo_name: str | None
     is_wholesale: bool
     line_total: int
-    net_total: int
+    net_total: int  # المدفوع فعلاً شاملاً الضريبة
+    # ضريبة القيمة المضافة وقت البيع. None = فاتورة قبل إضافة الضريبة.
+    tax_type: str | None = None
+    tax_rate: int | None = None  # نقاط أساس (1400 = 14%)
+    taxable_amount: int | None = None
+    tax_amount: int | None = None
     returned_qty: int
     unit_cost: int | None  # None للكاشير
 
@@ -139,6 +144,10 @@ class SaleOut(BaseModel):
     loyalty_discount: int
     loyalty_earned: int
     customer_points: int | None  # رصيد نقاط العميل الآن
+    # off/inclusive/exclusive. None = فاتورة قبل إضافة الضريبة.
+    tax_mode: str | None = None
+    taxable_total: int | None = None
+    tax_total: int | None = None
     total: int
     cash_amount: int
     credit_amount: int
@@ -199,6 +208,7 @@ class ReturnLineOut(BaseModel):
     unit_name: str
     qty: int
     amount: int
+    tax_amount: int | None = None
 
 
 class ReturnOut(BaseModel):
@@ -213,6 +223,8 @@ class ReturnOut(BaseModel):
     customer_name: str | None
     cashier_name: str | None
     total: int
+    taxable_total: int | None = None
+    tax_total: int | None = None
     cash_refund: int
     credit_refund: int
     wallet_refund: int

@@ -76,6 +76,8 @@ def product_data(p: Product) -> dict[str, Any]:
         "wholesale_price": p.wholesale_price,
         "wholesale_min_qty": p.wholesale_min_qty,
         "track_expiry": p.track_expiry,
+        "tax_type": p.tax_type,
+        "tax_rate": p.tax_rate,
         "is_active": p.is_active,
         "units": units,
     }
@@ -371,6 +373,8 @@ class CatalogSync:
             min_stock=row.min_stock if row is not None else 0, is_active=d.get("is_active", True),
             scale_code=d.get("scale_code"), wholesale_price=d.get("wholesale_price"),
             wholesale_min_qty=d.get("wholesale_min_qty"), track_expiry=bool(d.get("track_expiry")),
+            # فرع بنسخة أقدم لا يرسل الضريبة (None): يبقى إعداد الصنف هنا كما هو.
+            tax_type=d.get("tax_type"), tax_rate=d.get("tax_rate"),
             extra_units=units,
         )  # fmt: skip
         if row is None:

@@ -38,6 +38,11 @@ class Sale(SyncMixin, Base):
     loyalty_earn_reversed: Mapped[int] = mapped_column(Integer, default=0)
     loyalty_redeem_restored: Mapped[int] = mapped_column(Integer, default=0)
     invoice_discount: Mapped[int] = mapped_column(Integer, default=0)
+    # ضريبة القيمة المضافة (tax/calc.py). total = taxable_total + tax_total دائماً.
+    # tax_mode: off/inclusive/exclusive وقت البيع. NULL في الثلاثة = فاتورة قبل إضافة الضريبة.
+    tax_mode: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    taxable_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tax_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
     total: Mapped[int] = mapped_column(Integer)
     cash_amount: Mapped[int] = mapped_column(Integer, default=0)  # الجزء الكاش من الإجمالي
     credit_amount: Mapped[int] = mapped_column(Integer, default=0)  # الجزء الآجل
@@ -76,12 +81,19 @@ class SaleLine(SyncMixin, Base):
     promo_discount: Mapped[int] = mapped_column(Integer, default=0)  # خصم العرض التلقائي
     promo_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
     is_wholesale: Mapped[bool] = mapped_column(Boolean, default=False)  # بيع بسعر الجملة
-    line_total: Mapped[int] = mapped_column(Integer)  # بعد العرض وخصم السطر
-    net_total: Mapped[int] = mapped_column(Integer)  # بعد توزيع خصم الفاتورة (= المدفوع فعلاً)
+    line_total: Mapped[int] = mapped_column(Integer)  # بعد العرض وخصم السطر (بسعر البيع، قبل الضريبة المضافة)
+    # بعد توزيع خصم الفاتورة والولاء، شاملاً الضريبة (= المدفوع فعلاً = taxable_amount + tax_amount).
+    net_total: Mapped[int] = mapped_column(Integer)
+    # لقطة الضريبة وقت البيع (المرتجع يعكسها، لا النسبة الحالية للصنف). NULL = قبل إضافة الضريبة.
+    tax_type: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    tax_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)  # المطبقة فعلاً (نقاط أساس)
+    taxable_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)  # الصافي قبل الضريبة
+    tax_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
     unit_cost: Mapped[int] = mapped_column(Integer, default=0)  # تكلفة الوحدة الأساسية وقت البيع
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
     returned_qty: Mapped[int] = mapped_column(Integer, default=0)
     returned_amount: Mapped[int] = mapped_column(Integer, default=0)
+    returned_tax: Mapped[int] = mapped_column(Integer, default=0)
 
     sale: Mapped[Sale] = relationship(back_populates="lines")
 
@@ -97,6 +109,9 @@ class SaleReturn(SyncMixin, Base):
     reason: Mapped[str] = mapped_column(String(24))
     note: Mapped[str | None] = mapped_column(String(MAX_NOTE_LEN), nullable=True)
     total: Mapped[int] = mapped_column(Integer)
+    # ضريبة المرتجع من ضريبة سطور الفاتورة الأصلية. NULL = الفاتورة قبل إضافة الضريبة.
+    taxable_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tax_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cash_refund: Mapped[int] = mapped_column(Integer, default=0)  # خرج من الدرج
     credit_refund: Mapped[int] = mapped_column(Integer, default=0)  # خُصم من دين العميل
     loyalty_reversed: Mapped[int] = mapped_column(Integer, default=0)  # نقاط مكتسبة خُصمت
@@ -120,7 +135,9 @@ class SaleReturnLine(SyncMixin, Base):
     name: Mapped[str] = mapped_column(String(200))
     unit_name: Mapped[str] = mapped_column(String(30))
     qty: Mapped[int] = mapped_column(Integer)  # بوحدة البيع × 1000
-    amount: Mapped[int] = mapped_column(Integer)
+    amount: Mapped[int] = mapped_column(Integer)  # شاملاً الضريبة
+    taxable_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tax_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
 
     sale_return: Mapped[SaleReturn] = relationship(back_populates="lines")

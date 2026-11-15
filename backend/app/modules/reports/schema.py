@@ -70,6 +70,12 @@ class SalesReportOut(BaseModel):
     lines_discount: int = 0
     invoice_discount: int = 0
     loyalty_discount: int = 0
+    # ضريبة القيمة المضافة: المحصّلة في الفواتير، والمردودة بالمرتجعات، والصافي المستحق.
+    # untaxed_count = فواتير قبل إضافة الضريبة في الفترة (غير داخلة في المجموع).
+    tax_total: int = 0
+    tax_returns: int = 0
+    tax_net: int = 0
+    untaxed_count: int = 0
     cash: int
     credit: int
     wallet: int  # كل الدفع الإلكتروني

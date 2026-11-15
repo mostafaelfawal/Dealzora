@@ -1,3 +1,5 @@
+import type { TaxMode } from "@/lib/tax";
+
 export type BuiltinMethod = "cash" | "credit" | "mixed";
 /** المدمجة أو معرّف طريقة إلكترونية من الإعدادات (vodafone_cash، stc_pay...). */
 export type PaymentMethod = BuiltinMethod | (string & {});
@@ -28,8 +30,11 @@ export interface SaleLine {
   /** بيع بسعر الجملة. */
   isWholesale: boolean;
   lineTotal: number;
-  /** بعد توزيع خصم الفاتورة (= ما دُفع فعلاً في السطر). */
+  /** بعد توزيع خصم الفاتورة، شاملاً الضريبة (= ما دُفع فعلاً في السطر). */
   netTotal: number;
+  /** ضريبة القيمة المضافة وقت البيع (النسبة بالمئة). null = فاتورة قبل إضافة الضريبة. */
+  taxRate: number | null;
+  taxAmount: number | null;
   returnedQty: number;
   /** null للكاشير. */
   unitCost: number | null;
@@ -56,6 +61,10 @@ export interface Sale {
   loyaltyEarned: number;
   customerPoints: number | null;
   invoiceDiscount: number;
+  /** ضريبة القيمة المضافة. null = فاتورة قبل إضافة الضريبة. */
+  taxMode: TaxMode | null;
+  taxableTotal: number | null;
+  taxTotal: number | null;
   total: number;
   cashAmount: number;
   creditAmount: number;
@@ -80,6 +89,7 @@ export interface SaleReturnLine {
   unitName: string;
   qty: number;
   amount: number;
+  taxAmount: number | null;
 }
 
 export interface SaleReturn {
@@ -93,6 +103,8 @@ export interface SaleReturn {
   customerName: string | null;
   cashierName: string | null;
   total: number;
+  /** ضريبة المرتجع من ضريبة الفاتورة الأصلية. null = فاتورة قبل إضافة الضريبة. */
+  taxTotal: number | null;
   cashRefund: number;
   creditRefund: number;
   walletRefund: number;

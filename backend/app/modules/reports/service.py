@@ -109,7 +109,12 @@ class ReportService:
         profit = net - tot["cost"]
         expenses = self.repo.expenses_total(q.date_from, q.date_to)
         promo_d, lines_d, invoice_d, loyalty_d = self.repo.discount_breakdown(q.date_from, q.date_to)
+        sales_tax, returns_tax, untaxed = self.repo.tax_totals(q.date_from, q.date_to)
         return SalesReportOut(
+            tax_total=sales_tax,
+            tax_returns=returns_tax,
+            tax_net=sales_tax - returns_tax,
+            untaxed_count=untaxed,
             promo_discount=promo_d,
             lines_discount=lines_d,
             invoice_discount=invoice_d,

@@ -1,3 +1,5 @@
+import type { TaxType } from "@/lib/tax";
+
 export interface ProductUnit {
   id: string;
   name: string;
@@ -30,6 +32,10 @@ export interface Product {
   wholesaleMinQty: number | null;
   /** تتبع الصلاحية والدفعات (خطة سلسلة). */
   trackExpiry: boolean;
+  /** المعاملة الضريبية للصنف. */
+  taxType: TaxType;
+  /** نسبة ضريبة القيمة المضافة بالمئة (0 للمعفى/الصفري). */
+  taxRate: number;
   /** أقرب صلاحية للكمية الصالحة (YYYY-MM-DD). */
   nearestExpiry: string | null;
   /** كمية منتهية الصلاحية لم تُعدم بعد. */

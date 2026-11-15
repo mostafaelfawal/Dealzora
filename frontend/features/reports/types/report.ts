@@ -37,6 +37,12 @@ export interface SalesReport {
   linesDiscount: number;
   invoiceDiscount: number;
   loyaltyDiscount: number;
+  /** ضريبة القيمة المضافة: المحصّلة، والمردودة بالمرتجعات، والصافي المستحق. */
+  taxTotal: number;
+  taxReturns: number;
+  taxNet: number;
+  /** فواتير قبل إضافة الضريبة في الفترة (غير داخلة في المجموع). */
+  untaxedCount: number;
   cash: number;
   credit: number;
   /** كل الدفع الإلكتروني. */

@@ -14,6 +14,7 @@ from app.core.snapshots import diff_snapshots
 from app.core.text import build_search_text, normalize_digits
 from app.core.plan import FREE_LIMITS, Feature, ensure_feature, is_free, limit_error
 from app.modules.catalog.registry import ensure_units
+from app.modules.tax.constants import TaxType
 
 from .constants import (
     COPY_SUFFIX,
@@ -237,6 +238,8 @@ class ProductService(EntityService):
             min_stock=src.min_stock,
             wholesale_price=src.wholesale_price,
             wholesale_min_qty=src.wholesale_min_qty,
+            tax_type=src.tax_type,
+            tax_rate=src.tax_rate,
             is_active=src.is_active,
             stock_qty=0,
         )
@@ -459,8 +462,7 @@ class ProductService(EntityService):
         ):
             raise self._err(ConflictError, ProductError.SCALE_CODE_TAKEN, scale_code=data.scale_code)
 
-    @staticmethod
-    def _apply_fields(product: Product, data: ProductBase) -> None:
+    def _apply_fields(self, product: Product, data: ProductBase) -> None:
         product.name = data.name
         product.barcode = data.barcode
         product.category_id = data.category_id
@@ -474,6 +476,21 @@ class ProductService(EntityService):
         product.wholesale_price = data.wholesale_price
         product.wholesale_min_qty = data.wholesale_min_qty
         product.track_expiry = data.track_expiry
+        if data.tax_type is not None:
+            product.tax_type = data.tax_type.value
+        elif product.tax_type is None:  # صنف جديد بلا نوع
+            product.tax_type = TaxType.TAXABLE.value
+        if product.tax_type != TaxType.TAXABLE.value:
+            product.tax_rate = 0
+        elif data.tax_rate:
+            product.tax_rate = data.tax_rate
+        elif not product.tax_rate:  # جديد، أو كان معفى وأصبح خاضعاً بلا نسبة
+            product.tax_rate = self._default_tax_rate()
+
+    def _default_tax_rate(self) -> int:
+        from app.modules.tax.service import load_config
+
+        return load_config(self.session).default_rate
 
     def _sync_units(self, product: Product, incoming: list[UnitIn]) -> None:
         existing = {u.id: u for u in product.units}
@@ -593,6 +610,8 @@ class ProductService(EntityService):
             wholesale_price=p.wholesale_price,
             wholesale_min_qty=p.wholesale_min_qty,
             track_expiry=p.track_expiry,
+            tax_type=p.tax_type,
+            tax_rate=p.tax_rate,
             nearest_expiry=nearest,
             expired_qty=expired,
             stock_qty=p.stock_qty,

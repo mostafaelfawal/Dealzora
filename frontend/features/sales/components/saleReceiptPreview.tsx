@@ -15,6 +15,7 @@ import { formatQty } from "@/lib/format";
 import { useMotionPreference } from "@/lib/motionPreference";
 import { cn } from "@/lib/utils";
 
+import { saleTaxRows } from "../lib/saleTax";
 import type { Sale } from "../types/sale";
 
 /** أقصى ميل للإيصال مع حركة الماوس (درجات). */
@@ -209,6 +210,11 @@ export function SaleReceiptPreview({
                     <Money amount={sale.loyaltyDiscount} className="text-xs" />
                   </Row>
                 )}
+                {saleTaxRows(sale).map((r) => (
+                  <Row key={r.label} label={r.label}>
+                    <Money amount={r.amount} className="text-xs" />
+                  </Row>
+                ))}
                 <Row
                   label="الإجمالي"
                   className="pt-1 text-base font-bold"

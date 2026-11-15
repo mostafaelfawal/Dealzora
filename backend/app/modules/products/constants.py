@@ -45,6 +45,8 @@ PRODUCT_SNAPSHOT_FIELDS = (
     "wholesale_price",
     "wholesale_min_qty",
     "track_expiry",
+    "tax_type",
+    "tax_rate",
 )
 
 

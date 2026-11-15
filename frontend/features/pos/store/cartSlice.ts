@@ -116,6 +116,8 @@ function toLine(
     retailPrice: retail,
     wholesalePrice: wholesale,
     wholesaleMinQty: product.wholesaleMinQty ?? null,
+    taxType: product.taxType,
+    taxRate: product.taxRate,
     category: product.category,
     qty: clampQty(qty, allowDecimal),
     allowDecimal,
@@ -445,6 +447,8 @@ const cartSlice = createSlice({
         line.retailPrice = fresh.retailPrice;
         line.wholesalePrice = fresh.wholesalePrice;
         line.wholesaleMinQty = fresh.wholesaleMinQty;
+        line.taxType = fresh.taxType;
+        line.taxRate = fresh.taxRate;
         line.category = fresh.category;
         line.stock = product.stock;
       }

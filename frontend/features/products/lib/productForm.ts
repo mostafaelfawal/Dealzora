@@ -1,3 +1,5 @@
+import { getTaxConfig } from "@/lib/tax";
+
 import type { ProductSchemaType } from "../schema/product.schema";
 import type { Product } from "../types/product";
 
@@ -14,6 +16,8 @@ export const emptyValues = (): ProductSchemaType => ({
   wholesalePrice: "",
   wholesaleMinQty: "",
   trackExpiry: false,
+  taxType: "taxable",
+  taxRate: String(getTaxConfig().defaultRate),
   openingExpiry: "",
   openingBatchNo: "",
   openingStock: "",
@@ -38,6 +42,13 @@ export function toFormValues(product?: Product): ProductSchemaType {
     wholesaleMinQty:
       product.wholesaleMinQty === null ? "" : String(product.wholesaleMinQty),
     trackExpiry: product.trackExpiry,
+    taxType: product.taxType,
+    // المعفى/الصفري نسبته 0 في القاعدة: نعرض الافتراضي لو رجع «خاضع».
+    taxRate: String(
+      product.taxType === "taxable"
+        ? product.taxRate
+        : getTaxConfig().defaultRate,
+    ),
     openingExpiry: "",
     openingBatchNo: "",
     openingStock: "",

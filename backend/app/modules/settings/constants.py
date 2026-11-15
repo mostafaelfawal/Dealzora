@@ -31,6 +31,8 @@ class SettingKey(StrEnum):
     SCALE_BARCODE = "scale.barcode"
     # نقاط الولاء (JSON، انظر loyalty/config.py).
     LOYALTY = "loyalty.config"
+    # ضريبة القيمة المضافة (JSON، انظر tax/config.py).
+    TAX = "tax.config"
     # ربط هذا الجهاز بسيرفر الفروع (JSON فيه سر الفرع): محلي فقط، لا يُرفع أبداً.
     BRANCH_SYNC = "branch_sync.config"
     # مفاتيح قديمة (قبل القوالب): تُقرأ مرة واحدة لترحيلها إلى PAY_METHODS.

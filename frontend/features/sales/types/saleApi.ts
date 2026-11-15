@@ -1,3 +1,5 @@
+import type { TaxMode } from "@/lib/tax";
+
 import type { PaymentMethod, ReturnReason } from "./sale";
 
 /** شكل الـ backend كما هو (قروش، كميات × 1000). */
@@ -16,6 +18,8 @@ export interface SaleLineDto {
   is_wholesale?: boolean;
   line_total: number;
   net_total: number;
+  tax_rate?: number | null; // نقاط أساس
+  tax_amount?: number | null;
   returned_qty: number;
   unit_cost: number | null;
 }
@@ -37,6 +41,9 @@ export interface SaleDto {
   loyalty_redeemed?: number;
   loyalty_discount?: number;
   loyalty_earned?: number;
+  tax_mode?: TaxMode | null;
+  taxable_total?: number | null;
+  tax_total?: number | null;
   customer_points?: number | null;
   invoice_discount: number;
   total: number;
@@ -68,6 +75,7 @@ export interface ReturnLineDto {
   unit_name: string;
   qty: number;
   amount: number;
+  tax_amount?: number | null;
 }
 
 export interface ReturnDto {
@@ -85,6 +93,7 @@ export interface ReturnDto {
   cash_refund: number;
   credit_refund: number;
   wallet_refund: number;
+  tax_total?: number | null;
   lines: ReturnLineDto[];
 }
 

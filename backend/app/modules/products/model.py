@@ -38,6 +38,10 @@ class Product(SyncMixin, Base):
     wholesale_min_qty: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # تتبع الصلاحية والدفعات: كل دخول دفعة بتاريخها، والبيع من الأقرب انتهاءً (خطة سلسلة).
     track_expiry: Mapped[bool] = mapped_column(Boolean, default=False)
+    # ضريبة القيمة المضافة: المعاملة الضريبية (tax/constants.TaxType) والنسبة بنقاط الأساس
+    # (1400 = 14%). المعفى والصفري نسبتهما 0. تُطبق فقط لو الضريبة مفعّلة في إعدادات المحل.
+    tax_type: Mapped[str] = mapped_column(String(8), default="taxable")
+    tax_rate: Mapped[int] = mapped_column(Integer, default=1400)
     # رصيد مخزّن مؤقتاً لسرعة القوائم. المرجع الحقيقي = مجموع StockMovement.qty_delta،
     # ويُحدَّث هنا فقط داخل نفس معاملة تسجيل الحركة.
     stock_qty: Mapped[int] = mapped_column(Integer, default=0)

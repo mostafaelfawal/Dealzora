@@ -18,6 +18,13 @@ import {
   type ScaleBarcodeConfig,
   type ScaleBarcodeDto,
 } from "@/lib/scaleBarcode";
+import {
+  fromTaxDto,
+  setTaxConfig,
+  toTaxDto,
+  type TaxConfig,
+  type TaxDto,
+} from "@/lib/tax";
 import { getLicenseStatus } from "@/features/setup/lib/license";
 import type { LicenseStatus } from "@/features/setup/types/setup";
 
@@ -140,10 +147,12 @@ export const fetchCurrency = async (): Promise<Currency> => {
     payments?: PaymentConfigDto;
     scale_barcode?: ScaleBarcodeDto;
     loyalty?: LoyaltyDto;
+    tax?: TaxDto;
   }>("/settings");
   setPaymentConfig(toConfig(data.payments));
   setScaleConfig(fromScaleDto(data.scale_barcode));
   setLoyaltyConfig(fromLoyaltyDto(data.loyalty));
+  setTaxConfig(fromTaxDto(data.tax));
   return data.currency;
 };
 
@@ -236,6 +245,11 @@ export const logout = async () => {
 /** null خارج تطبيق سطح المكتب (المتصفح أثناء التطوير). */
 export const fetchLicense = async (): Promise<LicenseStatus | null> =>
   isTauri() ? getLicenseStatus() : null;
+
+/* ---------- ضريبة القيمة المضافة ---------- */
+
+export const saveTax = async (config: TaxConfig): Promise<TaxConfig> =>
+  fromTaxDto((await api.put<TaxDto>("/settings/tax", toTaxDto(config))).data);
 
 /* ---------- نقاط الولاء ---------- */
 
