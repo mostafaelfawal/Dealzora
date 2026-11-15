@@ -224,7 +224,8 @@ GET  /v1/catalog/pull?after=<seq>&limit=500
 | `POST /mobile/v1/auth/refresh` `{refresh_token}` | زوج جديد، والـ refresh القديم يتوقف. **رجوع refresh قديم يلغي الجلسة كلها** (`refresh_invalid`) |
 | `POST /mobile/v1/auth/logout` · `POST /mobile/v1/auth/logout-all` | هذا الهاتف · كل هواتف الحساب (يعملان حتى لو نزلت الخطة) |
 | `GET /mobile/v1/me` · `GET /mobile/v1/sessions` | الحساب وفروعه المسموحة · هواتف الحساب |
-| `GET /mobile/v1/branches` · `GET /mobile/v1/branches/{id}` | الفروع المسموحة مع `last_seen_at` و`online` (فرع غير مسند ← `404`) |
+| `GET /mobile/v1/branches` · `GET /mobile/v1/branches/{id}` | الفروع المسموحة: `status` (`online` ضمن `SYNC_ONLINE_WINDOW_SECONDS` · `late` حتى `SYNC_MOBILE_LATE_MINUTES` · `offline` · `never` · `disabled`)، `last_seen_at`، `pending_events` (تأخر المزامنة)، `stats_updated_at` (فرع غير مسند ← `404`) |
+| `GET /mobile/v1/summary?date_from=&date_to=[&branch_id=]` | ملخص الفترة (حتى سنة) للفروع المسموحة أو فرع واحد: `totals`، `branches` (الأعلى صافياً أولاً، مع `last_update` و`reported_days`/`expected_days`: الناقص = لم يرسل، لا صفر)، `days`، و`compare.previous` (الفترة السابقة بنفس الطول) و`compare.week_ago` (لليوم الواحد). **نفس أرقام تقرير الفروع في البرنامج**: `tests/fixtures/branch_report_golden.json` يُختبر هنا وفي backend |
 
 - توكن الوصول `SYNC_MOBILE_ACCESS_TTL_MINUTES` دقيقة، والـ refresh يتجدد مع كل استخدام لمدة `SYNC_MOBILE_REFRESH_DAYS` يوم.
 - كل طلب يعيد فحص الحساب والمحل والخطة: محل بخطة أقل ← `403 plan_upgrade_required` مع

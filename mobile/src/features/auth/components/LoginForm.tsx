@@ -116,6 +116,7 @@ export function LoginForm() {
         ltr
         returnKeyType="next"
         onSubmitEditing={() => passRef.current?.focus()}
+        hint="اسم الدخول نفسه في البرنامج بالكامل، بالحروف الإنجليزية"
       />
       <TextField
         ref={passRef}

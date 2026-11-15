@@ -13,8 +13,14 @@ export default function LoginRoute() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
       <OfflineBanner />
-      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      {/* أندرويد edge-to-edge (إجباري منذ SDK 54): النافذة لا تصغر مع لوحة المفاتيح، فنرفع المحتوى بـ padding
+          على المنصتين، والـ ScrollView يمرّر الحقل المُركَّز عليه لأعلى الكيبورد. */}
+      <KeyboardAvoidingView style={styles.root} behavior="padding">
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        >
           <View style={styles.head}>
             <BrandLogo width={190} />
             <AppText weight="bold" size="xl" center>

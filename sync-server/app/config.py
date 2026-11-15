@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     mobile_code_ttl_minutes: int = Field(15, ge=1, le=24 * 60)
     # محاولات كلمة مرور خاطئة على نفس الكود قبل إبطاله.
     mobile_code_max_attempts: int = Field(5, ge=1, le=20)
+    # حالة الفرع في التطبيق: «متصل» ضمن online_window_seconds، «متأخر» حتى هذه المدة، ثم «منقطع».
+    mobile_late_minutes: int = Field(15, ge=1, le=24 * 60)
     # الخطط المسموح لها بتطبيق الهاتف («سلسلة» فقط).
     mobile_plans: Annotated[list[str], NoDecode] = ["enterprise"]
 

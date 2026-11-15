@@ -1,0 +1,331 @@
+{
+ "date_from": "2026-11-09",
+ "date_to": "2026-11-15",
+ "branches": [
+  {
+   "id": "aaaaaaaa-0000-4000-8000-000000000001",
+   "name": "المعادي",
+   "code": "A"
+  },
+  {
+   "id": "bbbbbbbb-0000-4000-8000-000000000002",
+   "name": "مدينة نصر",
+   "code": "B"
+  },
+  {
+   "id": "cccccccc-0000-4000-8000-000000000003",
+   "name": "الدقي",
+   "code": "C"
+  }
+ ],
+ "stats": [
+  {
+   "branch_id": "aaaaaaaa-0000-4000-8000-000000000001",
+   "day": "2026-11-09",
+   "data": {
+    "count": 41,
+    "revenue": 1250050,
+    "returns": 0,
+    "net": 1250050,
+    "cost": 900000,
+    "profit": 350050,
+    "cash": 800050,
+    "credit": 300000,
+    "wallet": 150000,
+    "expenses": 20000,
+    "discounts": 1500,
+    "eta_waiting": 0,
+    "eta_accepted": 41,
+    "eta_rejected": 0
+   }
+  },
+  {
+   "branch_id": "aaaaaaaa-0000-4000-8000-000000000001",
+   "day": "2026-11-10",
+   "data": {
+    "count": 38,
+    "revenue": 980000,
+    "returns": 45000,
+    "net": 935000,
+    "cost": 670000,
+    "profit": 265000,
+    "cash": 600000,
+    "credit": 200000,
+    "wallet": 135000,
+    "expenses": 0,
+    "discounts": 0,
+    "eta_waiting": 2,
+    "eta_accepted": 35,
+    "eta_rejected": 1
+   }
+  },
+  {
+   "branch_id": "aaaaaaaa-0000-4000-8000-000000000001",
+   "day": "2026-11-12",
+   "data": {
+    "count": 55,
+    "revenue": 1600075,
+    "returns": 12500,
+    "net": 1587575,
+    "cost": 1092000,
+    "profit": 495575,
+    "cash": 1000000,
+    "credit": 400000,
+    "wallet": 187575,
+    "expenses": 75000,
+    "discounts": 3250,
+    "eta_waiting": 0,
+    "eta_accepted": 55,
+    "eta_rejected": 0
+   }
+  },
+  {
+   "branch_id": "aaaaaaaa-0000-4000-8000-000000000001",
+   "day": "2026-11-15",
+   "data": {
+    "count": 12,
+    "revenue": 310000,
+    "returns": 0,
+    "net": 310000,
+    "cost": 220000,
+    "profit": 90000,
+    "cash": 310000,
+    "credit": 0,
+    "wallet": 0,
+    "expenses": 0,
+    "discounts": 0,
+    "eta_waiting": 12,
+    "eta_accepted": 0,
+    "eta_rejected": 0
+   }
+  },
+  {
+   "branch_id": "bbbbbbbb-0000-4000-8000-000000000002",
+   "day": "2026-11-09",
+   "data": {
+    "count": 20,
+    "revenue": 450000,
+    "returns": 0,
+    "net": 450000,
+    "cost": 300000,
+    "profit": 150000,
+    "cash": 0,
+    "credit": 0,
+    "wallet": 0,
+    "expenses": 0
+   }
+  },
+  {
+   "branch_id": "bbbbbbbb-0000-4000-8000-000000000002",
+   "day": "2026-11-11",
+   "data": {
+    "count": 3,
+    "revenue": 20000,
+    "returns": 95000,
+    "net": -75000,
+    "cost": -56000,
+    "profit": -19000,
+    "cash": 20000,
+    "credit": 0,
+    "wallet": 0,
+    "expenses": 0
+   }
+  },
+  {
+   "branch_id": "bbbbbbbb-0000-4000-8000-000000000002",
+   "day": "2026-11-13",
+   "data": {
+    "count": 0,
+    "revenue": 0,
+    "returns": 0,
+    "net": 0,
+    "cost": 0,
+    "profit": 0,
+    "cash": 0,
+    "credit": 0,
+    "wallet": 0,
+    "expenses": 150000
+   }
+  },
+  {
+   "branch_id": "bbbbbbbb-0000-4000-8000-000000000002",
+   "day": "2026-11-15",
+   "data": {
+    "count": 30,
+    "revenue": 760000,
+    "returns": 10000,
+    "net": 750000,
+    "cost": 494000,
+    "profit": 256000,
+    "cash": 500000,
+    "credit": 260000,
+    "wallet": 0,
+    "expenses": 0
+   }
+  },
+  {
+   "branch_id": "aaaaaaaa-0000-4000-8000-000000000001",
+   "day": "2026-11-08",
+   "data": {
+    "count": 99,
+    "revenue": 9999999,
+    "returns": 0,
+    "net": 9999999,
+    "cost": 1,
+    "profit": 9999998,
+    "cash": 0,
+    "credit": 0,
+    "wallet": 0,
+    "expenses": 0,
+    "discounts": 0
+   }
+  }
+ ],
+ "expected": {
+  "totals": {
+   "count": 199,
+   "revenue": 5370125,
+   "returns": 162500,
+   "net": 5207625,
+   "cost": 3620000,
+   "profit": 1587625,
+   "discounts": 4750,
+   "cash": 3230050,
+   "credit": 1160000,
+   "wallet": 472575,
+   "expenses": 245000,
+   "eta_waiting": 14,
+   "eta_accepted": 131,
+   "eta_rejected": 1,
+   "net_profit": 1342625
+  },
+  "branches": [
+   {
+    "id": "aaaaaaaa-0000-4000-8000-000000000001",
+    "net_profit": 1105625,
+    "count": 146,
+    "revenue": 4140125,
+    "returns": 57500,
+    "net": 4082625,
+    "cost": 2882000,
+    "profit": 1200625,
+    "discounts": 4750,
+    "cash": 2710050,
+    "credit": 900000,
+    "wallet": 472575,
+    "expenses": 95000,
+    "eta_waiting": 14,
+    "eta_accepted": 131,
+    "eta_rejected": 1
+   },
+   {
+    "id": "bbbbbbbb-0000-4000-8000-000000000002",
+    "net_profit": 237000,
+    "count": 53,
+    "revenue": 1230000,
+    "returns": 105000,
+    "net": 1125000,
+    "cost": 738000,
+    "profit": 387000,
+    "discounts": 0,
+    "cash": 520000,
+    "credit": 260000,
+    "wallet": 0,
+    "expenses": 150000,
+    "eta_waiting": 0,
+    "eta_accepted": 0,
+    "eta_rejected": 0
+   },
+   {
+    "id": "cccccccc-0000-4000-8000-000000000003",
+    "net_profit": 0,
+    "count": 0,
+    "revenue": 0,
+    "returns": 0,
+    "net": 0,
+    "cost": 0,
+    "profit": 0,
+    "discounts": 0,
+    "cash": 0,
+    "credit": 0,
+    "wallet": 0,
+    "expenses": 0,
+    "eta_waiting": 0,
+    "eta_accepted": 0,
+    "eta_rejected": 0
+   }
+  ],
+  "days": [
+   {
+    "day": "2026-11-09",
+    "count": 61,
+    "net": 1700050,
+    "profit": 500050,
+    "expenses": 20000,
+    "branches": {
+     "aaaaaaaa-0000-4000-8000-000000000001": 1250050,
+     "bbbbbbbb-0000-4000-8000-000000000002": 450000
+    }
+   },
+   {
+    "day": "2026-11-10",
+    "count": 38,
+    "net": 935000,
+    "profit": 265000,
+    "expenses": 0,
+    "branches": {
+     "aaaaaaaa-0000-4000-8000-000000000001": 935000
+    }
+   },
+   {
+    "day": "2026-11-11",
+    "count": 3,
+    "net": -75000,
+    "profit": -19000,
+    "expenses": 0,
+    "branches": {
+     "bbbbbbbb-0000-4000-8000-000000000002": -75000
+    }
+   },
+   {
+    "day": "2026-11-12",
+    "count": 55,
+    "net": 1587575,
+    "profit": 495575,
+    "expenses": 75000,
+    "branches": {
+     "aaaaaaaa-0000-4000-8000-000000000001": 1587575
+    }
+   },
+   {
+    "day": "2026-11-13",
+    "count": 0,
+    "net": 0,
+    "profit": 0,
+    "expenses": 150000,
+    "branches": {
+     "bbbbbbbb-0000-4000-8000-000000000002": 0
+    }
+   },
+   {
+    "day": "2026-11-14",
+    "count": 0,
+    "net": 0,
+    "profit": 0,
+    "expenses": 0,
+    "branches": {}
+   },
+   {
+    "day": "2026-11-15",
+    "count": 42,
+    "net": 1060000,
+    "profit": 346000,
+    "expenses": 0,
+    "branches": {
+     "aaaaaaaa-0000-4000-8000-000000000001": 310000,
+     "bbbbbbbb-0000-4000-8000-000000000002": 750000
+    }
+   }
+  ]
+ }
+}

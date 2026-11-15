@@ -75,6 +75,7 @@ function RootStack() {
       <Stack.Protected guard={status === "signedIn"}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ title: "حسابي" }} />
+        <Stack.Screen name="branch/[id]" options={{ title: "الفرع" }} />
       </Stack.Protected>
       <Stack.Protected guard={status === "planBlocked"}>
         <Stack.Screen name="upgrade" options={{ headerShown: false }} />

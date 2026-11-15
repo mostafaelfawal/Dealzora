@@ -43,14 +43,85 @@ export interface MobileSession {
   is_current: boolean;
 }
 
+/** online متصل · late متأخر · offline منقطع · never لم يتصل أبداً · disabled موقوف */
+export type BranchStatus = "online" | "late" | "offline" | "never" | "disabled";
+
 export interface MobileBranch {
   id: string;
   name: string;
   code: string;
   is_active: boolean;
   online: boolean;
-  /** آخر اتصال للفرع بالخادم: كل رقم يعرض «آخر تحديث من الفرع» منه. */
+  /** آخر اتصال للفرع بالخادم. */
   last_seen_at: string | null;
+  status: BranchStatus;
+  seconds_since_seen: number | null;
+  /** أحداث باقي الفروع التي لم يطبّقها الفرع بعد (تأخر المزامنة). */
+  pending_events: number;
+  /** آخر رفع لملخص المبيعات من الفرع. */
+  stats_updated_at: string | null;
+}
+
+/** أرقام فترة. المال بالقروش (integer)، والتنسيق في العرض فقط. */
+export interface Totals {
+  count: number;
+  revenue: number;
+  returns: number;
+  net: number;
+  cost: number;
+  profit: number;
+  discounts: number;
+  cash: number;
+  credit: number;
+  wallet: number;
+  expenses: number;
+  eta_waiting: number;
+  eta_accepted: number;
+  eta_rejected: number;
+  /** profit - expenses */
+  net_profit: number;
+}
+
+export interface BranchTotals extends Totals {
+  id: string;
+  name: string;
+  code: string;
+  is_active: boolean;
+  /** «آخر تحديث من الفرع» لأرقام هذه الفترة (null = لم يرسل شيئاً فيها). */
+  last_update: string | null;
+  reported_days: number;
+  /** أيام الفترة من يوم إنشاء الفرع: reported_days أقل منها = بيانات ناقصة، لا صفر مبيعات. */
+  expected_days: number;
+}
+
+export interface SummaryDay {
+  /** YYYY-MM-DD */
+  day: string;
+  count: number;
+  net: number;
+  profit: number;
+  expenses: number;
+  branches: Record<string, number>;
+  reported_branches: number;
+}
+
+export interface SummaryCompare {
+  date_from: string;
+  date_to: string;
+  totals: Totals;
+  branches_reported: number;
+}
+
+export interface Summary {
+  date_from: string;
+  date_to: string;
+  totals: Totals;
+  /** الأعلى صافياً أولاً (نفس ترتيب تقرير الفروع في البرنامج). */
+  branches: BranchTotals[];
+  days: SummaryDay[];
+  compare: { previous: SummaryCompare; week_ago: SummaryCompare | null };
+  branches_total: number;
+  generated_at: string;
 }
 
 export interface LoginInput {

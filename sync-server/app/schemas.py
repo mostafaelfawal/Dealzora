@@ -481,3 +481,79 @@ class MobileBranchOut(BaseModel):
     is_active: bool
     online: bool
     last_seen_at: datetime | None
+    # online متصل · late متأخر · offline منقطع · never لم يتصل أبداً · disabled موقوف
+    status: Literal["online", "late", "offline", "never", "disabled"] = "never"
+    seconds_since_seen: int | None = None
+    # أحداث باقي الفروع التي لم يؤكد الفرع تطبيقها بعد (تأخر المزامنة).
+    pending_events: int = 0
+    # آخر رفع لملخص المبيعات من الفرع.
+    stats_updated_at: datetime | None = None
+
+
+class MobileTotals(BaseModel):
+    """أرقام فترة (فرع أو مجمّعة). المال بالقروش. net_profit = profit - expenses."""
+
+    count: int
+    revenue: int
+    returns: int
+    net: int
+    cost: int
+    profit: int
+    discounts: int
+    cash: int
+    credit: int
+    wallet: int
+    expenses: int
+    eta_waiting: int
+    eta_accepted: int
+    eta_rejected: int
+    net_profit: int
+
+
+class MobileBranchTotals(MobileTotals):
+    id: str
+    name: str
+    code: str
+    is_active: bool
+    # آخر رفع لملخصات الفرع داخل الفترة (None = لم يرسل شيئاً فيها).
+    last_update: datetime | None
+    reported_days: int
+    # أيام الفترة من يوم إنشاء الفرع: الناقص منها لم يرسله الفرع بعد (لا يعني صفر مبيعات).
+    expected_days: int
+
+
+class MobileDay(BaseModel):
+    day: date
+    count: int
+    net: int
+    profit: int
+    expenses: int
+    # صافي كل فرع في اليوم (الفروع التي أرسلت فقط).
+    branches: dict[str, int]
+    reported_branches: int
+
+
+class MobileCompare(BaseModel):
+    date_from: date
+    date_to: date
+    totals: MobileTotals
+    branches_reported: int
+
+
+class MobileCompareSet(BaseModel):
+    # الفترة السابقة بنفس الطول (لليوم الواحد = أمس).
+    previous: MobileCompare
+    # لليوم الواحد فقط: نفس اليوم الأسبوع الماضي.
+    week_ago: MobileCompare | None = None
+
+
+class MobileSummaryOut(BaseModel):
+    date_from: date
+    date_to: date
+    totals: MobileTotals
+    # الأعلى صافياً أولاً (نفس ترتيب تقرير الفروع في البرنامج).
+    branches: list[MobileBranchTotals]
+    days: list[MobileDay]
+    compare: MobileCompareSet
+    branches_total: int
+    generated_at: datetime

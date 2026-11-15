@@ -6,32 +6,34 @@
   POST /mobile/v1/auth/logout-all    كل هواتف هذا الحساب
   GET  /mobile/v1/me                 الحساب وفروعه المسموحة
   GET  /mobile/v1/sessions           هواتف هذا الحساب المسجّلة
-  GET  /mobile/v1/branches           الفروع المسموحة مع آخر اتصال لكل فرع
+  GET  /mobile/v1/branches           الفروع المسموحة: الحالة (متصل/متأخر/منقطع)، آخر ظهور، تأخر المزامنة
   GET  /mobile/v1/branches/{id}      فرع مسموح (غير المسند = 404)
+  GET  /mobile/v1/summary?date_from=&date_to=[&branch_id=]
+                                     ملخص الفترة لكل فرع ومجمّع + اتجاه يومي + مقارنة (نفس تقرير الفروع)
 
 كل المسارات (عدا login/refresh/logout) تفرض خطة «سلسلة» على السيرفر: plan_upgrade_required (403).
 """
 
-from datetime import timedelta
+from datetime import date
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Query, Request, status
 
-from ..config import get_settings
-from ..db import SessionDep, utcnow
+from ..db import SessionDep
 from ..errors import NotFound
-from ..mobile_security import MobileSessionDep, MobileUser, MobileUserDep
-from ..models import Branch
+from ..mobile_security import MobileSessionDep, MobileUserDep
 from ..ratelimit import client_ip, limit_auth
 from ..schemas import (
     MobileBranchOut,
     MobileLoginIn,
     MobileRefreshIn,
     MobileSessionOut,
+    MobileSummaryOut,
     MobileTokensOut,
     MobileUserOut,
 )
 from ..services import mobile_auth as svc
+from ..services import mobile_reports as reports
 
 PREFIX = "/mobile/v1"
 
@@ -79,29 +81,31 @@ def sessions(user: MobileUserDep, session: SessionDep):
     ]
 
 
-def _branch_out(b: Branch) -> MobileBranchOut:
-    window = timedelta(seconds=get_settings().online_window_seconds)
-    seen = svc.aware(b.last_seen_at)
-    return MobileBranchOut(id=b.id, name=b.name, code=b.code, is_active=b.is_active, last_seen_at=seen,
-                           online=bool(b.is_active and seen and utcnow() - seen <= window))  # fmt: skip
-
-
-def _branches(session: SessionDep, user: MobileUser) -> list[Branch]:
-    rows = session.scalars(
-        select(Branch).where(Branch.shop_id == user.shop_id, Branch.id.in_(user.branch_ids)).order_by(Branch.created_at)
-    ).all()
-    return list(rows)
-
-
 @router.get("/branches", response_model=list[MobileBranchOut])
 def branches(user: MobileUserDep, session: SessionDep):
-    return [_branch_out(b) for b in _branches(session, user)]
+    return reports.branch_states(session, user.shop_id, list(user.branch_ids))
 
 
 @router.get("/branches/{branch_id}", response_model=MobileBranchOut)
 def branch(branch_id: str, user: MobileUserDep, session: SessionDep):
     user.require_branch(branch_id)
-    row = session.get(Branch, branch_id)
-    if row is None or row.shop_id != user.shop_id:
+    rows = reports.branch_states(session, user.shop_id, [branch_id])
+    if not rows:
         raise NotFound("branch_not_found", "الفرع غير موجود")
-    return _branch_out(row)
+    return rows[0]
+
+
+@router.get("/summary", response_model=MobileSummaryOut)
+def summary(
+    user: MobileUserDep,
+    session: SessionDep,
+    date_from: Annotated[date, Query()],
+    date_to: Annotated[date, Query()],
+    branch_id: Annotated[str | None, Query(max_length=36)] = None,
+):
+    """الفترة بتاريخ الهاتف المحلي (مثل البرنامج). المدير: فروعه فقط، وفرع غير مسند = 404."""
+    ids = list(user.branch_ids)
+    if branch_id is not None:
+        user.require_branch(branch_id)
+        ids = [branch_id]
+    return reports.summary(session, user.shop_id, ids, date_from, date_to)

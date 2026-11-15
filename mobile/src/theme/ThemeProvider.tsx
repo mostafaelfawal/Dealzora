@@ -3,19 +3,20 @@ import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider, type Theme 
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
 import { useColorScheme } from "react-native";
 
-import { dark, light, type Palette } from "./colors";
+import { chartDark, chartLight, dark, light, type Palette } from "./colors";
 import { fontFamily } from "./fonts";
 
 interface ThemeValue {
   colors: Palette;
+  chart: typeof chartLight;
   isDark: boolean;
 }
 
-const ThemeContext = createContext<ThemeValue>({ colors: light, isDark: false });
+const ThemeContext = createContext<ThemeValue>({ colors: light, chart: chartLight, isDark: false });
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const isDark = useColorScheme() === "dark";
-  const value = useMemo<ThemeValue>(() => ({ colors: isDark ? dark : light, isDark }), [isDark]);
+  const value = useMemo<ThemeValue>(() => ({ colors: isDark ? dark : light, chart: isDark ? chartDark : chartLight, isDark }), [isDark]);
 
   const navTheme = useMemo<Theme>(() => {
     const base = isDark ? DarkTheme : DefaultTheme;
