@@ -20,6 +20,7 @@ import {
   MotionArticle,
   ProgressBar,
 } from "@/components/shared/motion";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const BAR_TONE = {
   ok: "bg-primary",
@@ -62,12 +63,14 @@ export function ProductCard({ product, index, ...actions }: ProductCardProps) {
           </Link>
           <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <IconBarcode className="size-3.5 shrink-0" aria-hidden />
-            <span
-              dir="ltr"
-              className="min-w-0 truncate text-start font-mono text-[11px]"
-            >
-              {product.barcode || "بدون باركود"}
-            </span>
+            <AppTooltip message={product.barcode || "بدون باركود"} onlyWhenTruncated>
+              <span
+                dir="ltr"
+                className="min-w-0 truncate text-start font-mono text-[11px]"
+              >
+                {product.barcode || "بدون باركود"}
+              </span>
+            </AppTooltip>
           </span>
         </div>
         <div className="relative z-10 -mt-1 -ms-1 shrink-0">

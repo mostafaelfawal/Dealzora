@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { CHART, formatCompact } from "./chartTheme";
 import { ChartTooltipBox, type TooltipRow } from "./ChartTooltip";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 export interface RankItem {
   key: string;
@@ -71,7 +72,9 @@ export function RankBarChart({
               <span className="w-4 shrink-0 font-mono text-[10px] text-muted-foreground">
                 {i + 1}
               </span>
-              <span className="truncate">{item.label}</span>
+              <AppTooltip message={item.label} onlyWhenTruncated>
+                <span className="truncate">{item.label}</span>
+              </AppTooltip>
             </span>
 
             <span className="flex min-w-0 flex-1 items-center gap-1.5">

@@ -84,10 +84,10 @@ const COLUMNS: AppTableColumn<Shift>[] = [
     id: "note",
     header: "ملاحظة",
     className: "hidden xl:table-cell",
-    cellClassName: "max-w-48 truncate text-xs text-muted-foreground",
+    cellClassName: "text-xs text-muted-foreground",
     cell: (s) => (
-      <AppTooltip message={s.note || "لا يوجد ملاحظات"}>
-        <span>{s.note || "—"}</span>
+      <AppTooltip message={s.note} onlyWhenTruncated>
+        <span className="block max-w-48 truncate">{s.note || "—"}</span>
       </AppTooltip>
     ),
   },

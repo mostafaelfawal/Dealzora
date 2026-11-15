@@ -38,6 +38,7 @@ import {
 import { canPickPath, pickFolder } from "../lib/pickPath";
 import { formatFileSize } from "../lib/settingsFormat";
 import { RestoreDialog, type RestoreSource } from "./restoreDialog";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const DEFAULTS = { autoEveryHours: 24, keep: 14 };
 
@@ -180,11 +181,13 @@ function BackupList({
         >
           <div className="min-w-0">
             <p className="font-medium">{formatWhen(b.createdAt)}</p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {b.name.includes("before-restore")
-                ? "نسخة أمان قبل استعادة"
-                : formatFileSize(b.size)}
-            </p>
+            <AppTooltip message={b.name.includes("before-restore") ? "نسخة أمان قبل استعادة" : formatFileSize(b.size)} onlyWhenTruncated>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {b.name.includes("before-restore")
+                  ? "نسخة أمان قبل استعادة"
+                  : formatFileSize(b.size)}
+              </p>
+            </AppTooltip>
           </div>
           <Button
             type="button"

@@ -16,6 +16,7 @@ import { AUDIT_PAGE_SIZES } from "../config/auditLogOptions";
 import type { AuditLogState } from "../hooks/useAuditLog";
 import type { AuditEntry } from "../types/auditLog";
 import { AuditChanges } from "./auditChanges";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function buildColumns(expanded: string | null): AppTableColumn<AuditEntry>[] {
   return [
@@ -96,9 +97,11 @@ function AuditCard({ entry: e, open }: { entry: AuditEntry; open: boolean }) {
           >
             {e.actionLabel}
           </Badge>
-          <span className="truncate text-[11px] text-muted-foreground">
-            {e.entityLabel}
-          </span>
+          <AppTooltip message={e.entityLabel} onlyWhenTruncated>
+            <span className="truncate text-[11px] text-muted-foreground">
+              {e.entityLabel}
+            </span>
+          </AppTooltip>
         </span>
         {e.details.length > 0 && (
           <IconChevronDown
@@ -120,9 +123,11 @@ function AuditCard({ entry: e, open }: { entry: AuditEntry; open: boolean }) {
       </p>
       {open && <AuditChanges details={e.details} />}
       <CardFoot className="mt-auto border-t border-border/60 pt-2.5">
-        <span className="truncate text-foreground/80">
-          {e.actorName ?? "—"}
-        </span>
+        <AppTooltip message={e.actorName ?? "—"} onlyWhenTruncated>
+          <span className="truncate text-foreground/80">
+            {e.actorName ?? "—"}
+          </span>
+        </AppTooltip>
         <span className="shrink-0">{formatWhen(e.createdAt)}</span>
       </CardFoot>
     </>

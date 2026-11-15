@@ -13,6 +13,7 @@ import {
 } from "./treasuryActionsMenu";
 import { TreasuryAmount } from "./treasuryAmount";
 import { TreasuryEntryBadges } from "./treasuryEntryBadges";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface TreasuryEntryCardProps extends TreasuryActions {
   entry: CashEntry;
@@ -73,9 +74,11 @@ export function TreasuryEntryCard({
           className="text-lg font-semibold"
         />
         {entry.createdByName && (
-          <span className="truncate text-[11px] text-muted-foreground">
-            {entry.createdByName}
-          </span>
+          <AppTooltip message={entry.createdByName} onlyWhenTruncated>
+            <span className="truncate text-[11px] text-muted-foreground">
+              {entry.createdByName}
+            </span>
+          </AppTooltip>
         )}
       </div>
     </MotionArticle>

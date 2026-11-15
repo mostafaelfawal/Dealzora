@@ -23,13 +23,13 @@ import { cn } from "@/lib/utils";
 
 import { tBase } from "../motion";
 import {
-  ANIMATION,
   AXIS_TICK,
   BAR_RADIUS,
   CHART,
   formatCompact,
   formatFull,
 } from "./chartTheme";
+import { useChartAnimation } from "./chartAnimation";
 import { ChartLegend, ChartTooltipBox } from "./ChartTooltip";
 import { currencySymbol } from "@/lib/currency";
 
@@ -163,6 +163,7 @@ export function Donut({
   centerValue: string;
   height?: number;
 }) {
+  const animation = useChartAnimation();
   const total = slices.reduce((s, x) => s + x.value, 0);
   const pct = (v: number) => (total > 0 ? Math.round((v / total) * 100) : 0);
   return (
@@ -193,7 +194,7 @@ export function Donut({
               strokeWidth={2}
               startAngle={90}
               endAngle={-270}
-              {...ANIMATION}
+              {...animation}
             >
               {(total > 0 ? slices : [{ key: "empty", color: CHART.grid }]).map(
                 (s) => (
@@ -275,6 +276,7 @@ export function CashFlowChart({
   data: FlowPoint[];
   height?: number;
 }) {
+  const animation = useChartAnimation();
   const rows = data.map((d) => ({ ...d, out: -d.outflow }));
   return (
     <div className="space-y-2">
@@ -345,7 +347,7 @@ export function CashFlowChart({
               fill={CHART.good}
               radius={BAR_RADIUS}
               maxBarSize={22}
-              {...ANIMATION}
+              {...animation}
             />
             {/*
               نفس BAR_RADIUS عمداً: Recharts يرسم العمود السالب من طرفه (أسفل) نحو الصفر
@@ -357,7 +359,7 @@ export function CashFlowChart({
               fill={CHART.bad}
               radius={BAR_RADIUS}
               maxBarSize={22}
-              {...ANIMATION}
+              {...animation}
             />
           </BarChart>
         </ResponsiveContainer>
@@ -380,6 +382,7 @@ export function ColumnChart({
   height?: number;
   highlightMax?: boolean;
 }) {
+  const animation = useChartAnimation();
   const max = Math.max(...data.map((d) => d.value), 0);
   return (
     <div style={{ height }} dir="ltr">
@@ -439,7 +442,7 @@ export function ColumnChart({
             dataKey="value"
             radius={BAR_RADIUS}
             maxBarSize={18}
-            {...ANIMATION}
+            {...animation}
           >
             {data.map((d) => (
               <Cell

@@ -46,6 +46,7 @@ import {
   type Batch,
   type ExpiryStatus,
 } from "../api/expiry.api";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const STATUS_TABS: { id: ExpiryStatus; label: string }[] = [
   { id: "soon", label: "قاربت على الانتهاء" },
@@ -91,7 +92,9 @@ function BatchRow({ b, onWriteOff }: { b: Batch; onWriteOff: () => void }) {
   return (
     <tr className="border-t">
       <td className="p-2">
-        <span className="block truncate font-medium">{b.productName}</span>
+        <AppTooltip message={b.productName} onlyWhenTruncated>
+          <span className="block truncate font-medium">{b.productName}</span>
+        </AppTooltip>
         <span className="text-[11px] text-muted-foreground">
           {b.batchNo ? `تشغيلة ${b.batchNo} · ` : ""}وصل{" "}
           {formatDate(parseIsoDay(b.receivedOn))}

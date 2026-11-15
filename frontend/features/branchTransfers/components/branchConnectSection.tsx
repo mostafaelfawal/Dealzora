@@ -209,12 +209,14 @@ export function BranchConnectSection() {
             )}{" "}
             في <b>{s.shopName}</b>
           </p>
-          <p
-            dir="ltr"
-            className="truncate text-start font-mono text-xs text-muted-foreground"
-          >
-            {s.serverUrl}
-          </p>
+          <AppTooltip message={s.serverUrl} onlyWhenTruncated>
+            <p
+              dir="ltr"
+              className="truncate text-start font-mono text-xs text-muted-foreground"
+            >
+              {s.serverUrl}
+            </p>
+          </AppTooltip>
           {s.reachable === false && (
             <p className="flex items-center gap-1 text-xs text-destructive">
               <IconCloudOff className="size-3.5" /> السيرفر غير متاح الآن

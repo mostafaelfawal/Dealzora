@@ -15,6 +15,7 @@ import {
 } from "./customerActionsMenu";
 import { CustomerCreditMeter } from "./customerCreditMeter";
 import { CustomerStatusBadges } from "./customerStatusBadges";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface CustomerCardProps extends CustomerActions {
   customer: Customer;
@@ -62,12 +63,14 @@ export function CustomerCard({
           </button>
           <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <IconPhone className="size-3.5 shrink-0" aria-hidden />
-            <span
-              dir="ltr"
-              className="min-w-0 truncate text-start font-mono text-[11px]"
-            >
-              {customer.phone || "بدون رقم"}
-            </span>
+            <AppTooltip message={customer.phone || "بدون رقم"} onlyWhenTruncated>
+              <span
+                dir="ltr"
+                className="min-w-0 truncate text-start font-mono text-[11px]"
+              >
+                {customer.phone || "بدون رقم"}
+              </span>
+            </AppTooltip>
           </span>
         </div>
         <div className="relative z-10 -mt-1 -ms-1 shrink-0">

@@ -7,6 +7,7 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { listItem, MotionLi } from "@/components/shared/motion";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
@@ -114,9 +115,11 @@ export function LedgerSheet({
                       <span className="block text-xs font-medium">
                         {MOVEMENT_LABEL[m.type]}
                       </span>
-                      <span className="block truncate text-[11px] text-muted-foreground">
-                        {m.note || "—"} · {formatWhen(m.createdAt)}
-                      </span>
+                      <AppTooltip message={m.note} onlyWhenTruncated>
+                        <span className="block truncate text-[11px] text-muted-foreground">
+                          {m.note || "—"} · {formatWhen(m.createdAt)}
+                        </span>
+                      </AppTooltip>
                       {m.unitCost !== null && (
                         <span className="text-[10px] text-muted-foreground">
                           تكلفة{" "}

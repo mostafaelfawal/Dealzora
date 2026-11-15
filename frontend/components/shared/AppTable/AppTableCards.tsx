@@ -5,6 +5,7 @@ import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { listItem, MotionArticle } from "@/components/shared/motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const INTERACTIVE =
   "a, button, input, label, [role='switch'], [role='checkbox'], [role='menu'], [role='menuitem']";
@@ -144,9 +145,11 @@ export function CardHead({
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="text-[13px] leading-snug font-medium">{title}</div>
         {subtitle && (
-          <div className="truncate text-[11px] text-muted-foreground">
-            {subtitle}
-          </div>
+          <AppTooltip message={subtitle} onlyWhenTruncated>
+            <div className="truncate text-[11px] text-muted-foreground">
+              {subtitle}
+            </div>
+          </AppTooltip>
         )}
       </div>
       {aside && <div className="shrink-0">{aside}</div>}
@@ -178,7 +181,9 @@ export function CardStats({
       {visible.map((item) => (
         <div key={item.label} className="min-w-0 space-y-0.5">
           <dt className="text-[11px] text-muted-foreground">{item.label}</dt>
-          <dd className="truncate text-xs">{item.value}</dd>
+          <AppTooltip message={item.value} onlyWhenTruncated>
+            <dd className="truncate text-xs">{item.value}</dd>
+          </AppTooltip>
         </div>
       ))}
     </dl>

@@ -10,6 +10,7 @@ import Link from "next/link";
 
 import { ConnectLink } from "@/features/devices/components/connectLink";
 import { isTerminal, useDeviceConfig } from "@/lib/device";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const OTHER_ROLES = [
   {
@@ -66,9 +67,11 @@ export function DeviceRoleNotice() {
               />
               <span className="min-w-0 flex-1">
                 <span className="block text-xs font-medium">{title}</span>
-                <span className="block truncate text-[11px] text-muted-foreground">
-                  {hint}
-                </span>
+                <AppTooltip message={hint} onlyWhenTruncated>
+                  <span className="block truncate text-[11px] text-muted-foreground">
+                    {hint}
+                  </span>
+                </AppTooltip>
               </span>
               <IconChevronLeft
                 className="size-3.5 shrink-0 text-muted-foreground transition-transform group-hover:-translate-x-0.5"

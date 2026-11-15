@@ -22,6 +22,7 @@ import { formatDaysArabic } from "@/lib/format";
 import { useLicense } from "../hooks/useSettings";
 import { isLicenseActive, licenseKindLabel } from "../lib/settingsFormat";
 import { PlansSection } from "./plansSection";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /**
  * الخطط والترخيص في قسم واحد، بترتيب ما يفعله العميل:
@@ -99,9 +100,11 @@ function LicenseStatus() {
       )}
       <div className="flex min-w-0 gap-2 sm:col-span-2">
         <dt className="shrink-0 text-muted-foreground">رقم الجهاز</dt>
-        <dd dir="ltr" className="truncate font-mono select-all">
-          {l.machine_id}
-        </dd>
+        <AppTooltip message={l.machine_id} onlyWhenTruncated>
+          <dd dir="ltr" className="truncate font-mono select-all">
+            {l.machine_id}
+          </dd>
+        </AppTooltip>
       </div>
     </dl>
   );

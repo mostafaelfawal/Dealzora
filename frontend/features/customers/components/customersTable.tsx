@@ -9,6 +9,7 @@ import type {
   AppTableColumn,
   AppTablePaginationProps,
 } from "@/components/shared/AppTable/types";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -59,13 +60,15 @@ export function CustomersTable({
       skeletonClassName: "w-40",
       cell: (c) => (
         <div className={cn("min-w-0", !c.isActive && "opacity-60")}>
-          <button
-            type="button"
-            onClick={() => actions.onStatement(c.id)}
-            className="block max-w-56 truncate text-start text-xs font-medium outline-none hover:underline focus-visible:underline"
-          >
-            {c.name}
-          </button>
+          <AppTooltip message={c.name} onlyWhenTruncated>
+            <button
+              type="button"
+              onClick={() => actions.onStatement(c.id)}
+              className="block max-w-56 truncate text-start text-xs font-medium outline-none hover:underline focus-visible:underline"
+            >
+              {c.name}
+            </button>
+          </AppTooltip>
           <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <IconPhone className="size-3.5" aria-hidden />
             <span dir="ltr" className="font-mono">

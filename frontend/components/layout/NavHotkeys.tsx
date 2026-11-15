@@ -15,6 +15,7 @@ import {
 import { NAV_HOTKEYS } from "@/config/navigation";
 import { SHORTCUTS } from "@/config/shortcuts";
 import { useHotkey } from "@/hooks/useHotkey";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const GENERAL = [
   { keys: SHORTCUTS.newSale.label, label: "بيع جديد (الكاشير)" },
@@ -113,7 +114,9 @@ export function NavHotkeys() {
                 key={item.href}
                 className="flex items-center justify-between gap-2 bg-background px-3 py-2 text-xs"
               >
-                <span className="truncate">{item.title}</span>
+                <AppTooltip message={item.title} onlyWhenTruncated>
+                  <span className="truncate">{item.title}</span>
+                </AppTooltip>
                 <ShortcutBadge>Alt {item.hotkey}</ShortcutBadge>
               </li>
             ))}

@@ -25,6 +25,7 @@ import {
   SupplierActionsMenu,
   type SupplierActions,
 } from "./supplierActionsMenu";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface Props extends SupplierActions {
   suppliers: Supplier[];
@@ -63,9 +64,11 @@ export function SuppliersTable({
       skeletonClassName: "w-40",
       cell: (s) => (
         <div className={cn("min-w-0", !s.isActive && "opacity-60")}>
-          <span className="block max-w-64 truncate text-xs font-medium">
-            {s.name}
-          </span>
+          <AppTooltip message={s.name} onlyWhenTruncated>
+            <span className="block max-w-64 truncate text-xs font-medium">
+              {s.name}
+            </span>
+          </AppTooltip>
           <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <IconPhone className="size-3.5" aria-hidden />
             <span dir="ltr" className="font-mono">
@@ -81,7 +84,9 @@ export function SuppliersTable({
       className: "hidden md:table-cell",
       cellClassName: "text-muted-foreground",
       cell: (s) => (
-        <span className="block max-w-56 truncate">{s.address || "—"}</span>
+        <AppTooltip message={s.address || "—"} onlyWhenTruncated>
+          <span className="block max-w-56 truncate">{s.address || "—"}</span>
+        </AppTooltip>
       ),
     },
     {

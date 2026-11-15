@@ -91,7 +91,9 @@ export function KpiCard({
         />
       )}
       {hint && (
-        <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
+        <AppTooltip message={hint} onlyWhenTruncated>
+          <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
+        </AppTooltip>
       )}
     </MotionDiv>
   );

@@ -17,6 +17,7 @@ import { USER_ROUTES } from "../config/userRoutes";
 import { lastLoginLabel } from "../lib/userFormat";
 import type { User } from "../types/user";
 import { UserActionsMenu, type UserActions } from "./userActionsMenu";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface Props extends UserActions {
   users: User[];
@@ -53,12 +54,14 @@ export function UsersTable({
       skeletonClassName: "w-40",
       cell: (u) => (
         <div className={cn("min-w-0", !u.isActive && "opacity-60")}>
-          <span
-            dir="ltr"
-            className="block max-w-64 truncate text-start font-mono text-xs font-medium"
-          >
-            {u.username}
-          </span>
+          <AppTooltip message={u.username} onlyWhenTruncated>
+            <span
+              dir="ltr"
+              className="block max-w-64 truncate text-start font-mono text-xs font-medium"
+            >
+              {u.username}
+            </span>
+          </AppTooltip>
           {u.id === actions.currentUserId && (
             <span className="text-[11px] text-muted-foreground">حسابك</span>
           )}

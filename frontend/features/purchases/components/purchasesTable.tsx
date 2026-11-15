@@ -20,6 +20,7 @@ import { extractErrorMessage } from "@/lib/errors";
 import { PURCHASE_PAGE_SIZES } from "../config/purchaseOptions";
 import type { usePurchasesFilters } from "../hooks/usePurchasesFilters";
 import type { Purchase } from "../types/purchase";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function PaymentBadge({ purchase: p }: { purchase: Purchase }) {
   if (p.creditAmount > 0) {
@@ -51,7 +52,9 @@ const COLUMNS: AppTableColumn<Purchase>[] = [
       <div className="min-w-0">
         <p className="flex items-center gap-2">
           <span className="font-mono text-sm font-semibold">#{p.number}</span>
-          <span className="truncate text-xs">{p.supplierName}</span>
+          <AppTooltip message={p.supplierName} onlyWhenTruncated>
+            <span className="truncate text-xs">{p.supplierName}</span>
+          </AppTooltip>
         </p>
         <p className="mt-0.5 text-[11px] text-muted-foreground">
           {p.lines.length} صنف · {formatDayLabel(parseIsoDay(p.purchasedOn))}
@@ -136,7 +139,11 @@ function PurchaseCard({ purchase: p }: { purchase: Purchase }) {
       />
       <CardFoot>
         <span>{formatDayLabel(parseIsoDay(p.purchasedOn))}</span>
-        {p.createdByName && <span className="truncate">{p.createdByName}</span>}
+        {p.createdByName && (
+          <AppTooltip message={p.createdByName} onlyWhenTruncated>
+            <span className="truncate">{p.createdByName}</span>
+          </AppTooltip>
+        )}
       </CardFoot>
     </>
   );

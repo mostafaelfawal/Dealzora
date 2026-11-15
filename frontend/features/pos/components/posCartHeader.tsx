@@ -47,9 +47,11 @@ export function PosCartHeader() {
           className="max-w-44 gap-2 font-normal"
         >
           <IconUser className="size-4 shrink-0" />
-          <span className="truncate">
-            {customer ? customer.name : "عميل نقدي"}
-          </span>
+          <AppTooltip message={customer ? customer.name : "عميل نقدي"} onlyWhenTruncated>
+            <span className="truncate">
+              {customer ? customer.name : "عميل نقدي"}
+            </span>
+          </AppTooltip>
           <ShortcutBadge className="hidden rounded-none xl:inline-flex">
             {POS_SHORTCUTS.customer.label}
           </ShortcutBadge>

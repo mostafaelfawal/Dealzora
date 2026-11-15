@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 
@@ -37,9 +38,14 @@ function ProductFormHeader({ isEditing }: { isEditing: boolean }) {
         <IconArrowRight />
       </Button>
       <div className="min-w-0 space-y-0.5">
-        <h1 className="truncate text-lg font-bold">
-          {isEditing ? `تعديل: ${name || "صنف"}` : "صنف جديد"}
-        </h1>
+        <AppTooltip
+          message={isEditing ? `تعديل: ${name || "صنف"}` : "صنف جديد"}
+          onlyWhenTruncated
+        >
+          <h1 className="truncate text-lg font-bold">
+            {isEditing ? `تعديل: ${name || "صنف"}` : "صنف جديد"}
+          </h1>
+        </AppTooltip>
         <p className="text-xs text-muted-foreground">
           {isEditing
             ? dirty

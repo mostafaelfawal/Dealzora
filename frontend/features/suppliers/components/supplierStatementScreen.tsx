@@ -29,6 +29,7 @@ import {
 } from "../lib/supplierCalc";
 import type { SupplierTransaction } from "../types/supplier";
 import { SupplierPaymentDialog } from "./supplierPaymentDialog";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const formatDate = (iso: string) =>
   new Intl.DateTimeFormat("ar-EG", {
@@ -62,9 +63,11 @@ export function SupplierStatementScreen() {
             {TRANSACTION_LABELS[t.type]}
           </span>
           {t.note && (
-            <span className="block max-w-64 truncate text-[11px] text-muted-foreground">
-              {t.note}
-            </span>
+            <AppTooltip message={t.note} onlyWhenTruncated>
+              <span className="block max-w-64 truncate text-[11px] text-muted-foreground">
+                {t.note}
+              </span>
+            </AppTooltip>
           )}
         </div>
       ),
@@ -131,9 +134,14 @@ export function SupplierStatementScreen() {
           <IconArrowRight />
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-bold">
-            كشف حساب {supplier?.name ?? "…"}
-          </h1>
+          <AppTooltip
+            message={`كشف حساب ${supplier?.name ?? "…"}`}
+            onlyWhenTruncated
+          >
+            <h1 className="truncate text-lg font-bold">
+              كشف حساب {supplier?.name ?? "…"}
+            </h1>
+          </AppTooltip>
           <p className="text-xs text-muted-foreground">
             كل ما اشتريناه وسدّدناه لهذا المورد.
           </p>

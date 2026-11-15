@@ -45,6 +45,7 @@ import { PrinterSection } from "./printerSection";
 import { ScaleBarcodeSection } from "./scaleBarcodeSection";
 import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /**
  * الإعدادات لتاجر عادي: 5 صفحات بأسماء من يومه بدل قائمة طويلة من الأقسام.
@@ -350,9 +351,11 @@ export function SettingsScreen() {
                 <span className="block text-sm font-semibold whitespace-nowrap">
                   {p.title}
                 </span>
-                <span className="block truncate text-[11px] text-muted-foreground">
-                  {p.hint}
-                </span>
+                <AppTooltip message={p.hint} onlyWhenTruncated>
+                  <span className="block truncate text-[11px] text-muted-foreground">
+                    {p.hint}
+                  </span>
+                </AppTooltip>
               </span>
             </button>
           );

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 import { usePurchaseProducts } from "../hooks/usePurchases";
 import { searchProducts } from "../lib/purchaseDraft";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function ResultRow({
   product: p,
@@ -42,7 +43,9 @@ function ResultRow({
         active && "bg-muted",
       )}
     >
-      <span className="min-w-0 flex-1 truncate">{p.name}</span>
+      <AppTooltip message={p.name} onlyWhenTruncated>
+        <span className="min-w-0 flex-1 truncate">{p.name}</span>
+      </AppTooltip>
       <span className="text-[11px] text-muted-foreground">
         رصيد {formatQty(p.stock)} {p.unit}
       </span>

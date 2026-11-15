@@ -14,6 +14,7 @@ import { formatQty } from "@/lib/format";
 import { REPORT_LIMITS } from "../config/reportOptions";
 import { topBy } from "../lib/reportSeries";
 import { ReportListEmpty, ReportLoading, ReportPanel } from "./reportPanel";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 type StockReport = NonNullable<ReturnType<typeof useStockReport>["data"]>;
 type StockRow = StockReport["low"][number];
@@ -33,7 +34,9 @@ function StockList({
           key={row.productId}
           className="flex items-center justify-between gap-3 py-2 text-xs"
         >
-          <span className="min-w-0 truncate">{row.name}</span>
+          <AppTooltip message={row.name} onlyWhenTruncated>
+            <span className="min-w-0 truncate">{row.name}</span>
+          </AppTooltip>
           {renderValue(row)}
         </li>
       ))}

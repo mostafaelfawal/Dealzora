@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  IconFileSpreadsheet,
-  IconLoader2,
-  IconPrinter,
-} from "@tabler/icons-react";
+import { IconFileSpreadsheet, IconLoader2 } from "@tabler/icons-react";
 import { useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
 
@@ -28,20 +24,10 @@ import {
 } from "../config/reportOptions";
 import type { ReportTab } from "../types/report";
 import { exportReportTables } from "../lib/reportExcel";
-import { BranchesReportTab } from "./branchesReportTab";
-import { DebtsReportTab } from "./debtsReportTab";
-import {
-  CashiersReportTab,
-  CustomersReportTab,
-  PromotionsReportTab,
-  PurchasesReportTab,
-  ReturnsReportTab,
-} from "./extendedReportTabs";
-import { ProductsReportTab } from "./productsReportTab";
-import { SalesReportTab } from "./salesReportTab";
-import { StockReportTab } from "./stockReportTab";
-import { TreasuryReportTab } from "./treasuryReportTab";
+import { ReportPdfButton } from "./reportPdf";
+import { ReportTabContent } from "./reportTabContent";
 import { PlanLock, UpgradeNotice } from "@/components/shared/PlanGate";
+import { formatDate, parseIsoDay } from "@/lib/dates";
 import { extractErrorMessage } from "@/lib/errors";
 import { toastFileSaved } from "@/lib/fileToast";
 import { usePlan, useFeature } from "@/lib/plan";
@@ -51,20 +37,6 @@ function daysAgoISO(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function PrintButton() {
-  return (
-    <Button
-      variant="outline"
-      size="lg"
-      onClick={() => window.print()}
-      className="h-10 gap-2 font-normal"
-    >
-      <IconPrinter className="size-4" />
-      طباعة
-    </Button>
-  );
 }
 
 /** تصدير جداول التبويب الظاهر إلى Excel (ميزة خطط مدفوعة). */
@@ -124,39 +96,6 @@ function ExportButton({
   );
 }
 
-function ReportTabContent({
-  tab,
-  period,
-}: {
-  tab: ReportTab;
-  period: PeriodValue;
-}) {
-  switch (tab) {
-    case "sales":
-      return <SalesReportTab range={period.range} />;
-    case "products":
-      return <ProductsReportTab range={period.range} />;
-    case "purchases":
-      return <PurchasesReportTab range={period.range} />;
-    case "promotions":
-      return <PromotionsReportTab range={period.range} />;
-    case "returns":
-      return <ReturnsReportTab range={period.range} />;
-    case "customers":
-      return <CustomersReportTab range={period.range} />;
-    case "cashiers":
-      return <CashiersReportTab range={period.range} />;
-    case "stock":
-      return <StockReportTab />;
-    case "debts":
-      return <DebtsReportTab />;
-    case "treasury":
-      return <TreasuryReportTab range={period.range} />;
-    case "branches":
-      return <BranchesReportTab range={period.range} />;
-  }
-}
-
 /** التقارير: فترة واحدة تتحكم في كل التبويبات، وكل رقم له جدول تحته. */
 export function ReportsScreen() {
   const [selected, setTab] = useState<ReportTab>("sales");
@@ -182,11 +121,15 @@ export function ReportsScreen() {
   const cutoff = plan?.limits.reportDays
     ? daysAgoISO(plan.limits.reportDays - 1)
     : null;
-  const outOfPlan =
+  const isOutOfPlan = (t: ReportTab) =>
     !fullReports &&
-    tab !== "branches" &&
-    (tab === "debts" ||
-      (PERIOD_TABS.has(tab) && cutoff !== null && period.range.from < cutoff));
+    t !== "branches" &&
+    (t === "debts" ||
+      (PERIOD_TABS.has(t) && cutoff !== null && period.range.from < cutoff));
+  const outOfPlan = isOutOfPlan(tab);
+  const periodLabel = `الفترة من ${formatDate(parseIsoDay(period.range.from))} إلى ${formatDate(parseIsoDay(period.range.to))}`;
+  // الـ PDF: الأقسام المتاحة في الخطة لهذه الفترة فقط.
+  const pdfTabs = tabs.filter((t) => !isOutOfPlan(t.id));
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
@@ -198,13 +141,14 @@ export function ReportsScreen() {
             <ExportButton
               contentRef={contentRef}
               title={tabLabel}
-              periodLabel={
-                PERIOD_TABS.has(tab)
-                  ? `الفترة ${period.range.from} إلى ${period.range.to}`
-                  : `حتى ${period.range.to}`
-              }
+              periodLabel={periodLabel}
             />
-            <PrintButton />
+            <ReportPdfButton
+              tabs={pdfTabs}
+              currentTab={tab}
+              period={period}
+              periodLabel={periodLabel}
+            />
           </div>
         }
       />

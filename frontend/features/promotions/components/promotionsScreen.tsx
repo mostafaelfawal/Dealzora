@@ -39,6 +39,7 @@ import {
 } from "../lib/promotionText";
 import type { Promotion, PromoStatus } from "../types/promotion";
 import { PromotionFormDialog } from "./promotionFormDialog";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function PromotionCard({
   p,
@@ -63,7 +64,9 @@ function PromotionCard({
           <IconDiscount2 className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{p.name}</p>
+          <AppTooltip message={p.name} onlyWhenTruncated>
+            <p className="truncate font-semibold">{p.name}</p>
+          </AppTooltip>
           <p className="text-sm text-primary">{promoHeadline(p)}</p>
         </div>
         <span
@@ -75,7 +78,9 @@ function PromotionCard({
       <dl className="space-y-1 text-xs text-muted-foreground">
         <div className="flex gap-1">
           <dt>على:</dt>
-          <dd className="truncate text-foreground">{promoScopeText(p)}</dd>
+          <AppTooltip message={promoScopeText(p)} onlyWhenTruncated>
+            <dd className="truncate text-foreground">{promoScopeText(p)}</dd>
+          </AppTooltip>
         </div>
         <div className="flex items-center gap-1">
           {p.endsOn ? (

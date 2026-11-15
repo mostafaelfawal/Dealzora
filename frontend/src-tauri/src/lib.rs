@@ -2,6 +2,7 @@ mod device;
 mod downloads;
 mod hardware;
 mod license;
+mod pdf;
 mod printing;
 
 use std::process::Child;
@@ -376,7 +377,8 @@ pub fn run() {
                 downloads::reveal_download,
                 hardware::get_hardware_info,
                 printing::list_printers,
-                printing::print_raw
+                printing::print_raw,
+                pdf::html_to_pdf
             ]
         )
         .build(tauri::generate_context!())

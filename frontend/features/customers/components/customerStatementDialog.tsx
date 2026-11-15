@@ -2,6 +2,7 @@
 
 import { IconCash, IconPhone } from "@tabler/icons-react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,9 @@ function Statement({
             {initialOf(customer.name)}
           </span>
           <div className="min-w-0 flex-1 space-y-1">
-            <DialogTitle className="truncate">{customer.name}</DialogTitle>
+            <AppTooltip message={customer.name} onlyWhenTruncated>
+              <DialogTitle className="truncate">{customer.name}</DialogTitle>
+            </AppTooltip>
             <DialogDescription className="flex items-center gap-1.5">
               <IconPhone className="size-3.5 shrink-0" aria-hidden />
               <span dir="ltr" className="font-mono">

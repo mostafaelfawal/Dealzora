@@ -40,6 +40,7 @@ import type {
   PromoKind,
   PromoScope,
 } from "../types/promotion";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const KINDS: { id: PromoKind; label: string; icon: ReactNode; hint: string }[] =
   [
@@ -209,7 +210,9 @@ function ProductPicker({
                   checked={value.includes(p.id)}
                   onCheckedChange={() => toggle(p.id)}
                 />
-                <span className="flex-1 truncate">{p.name}</span>
+                <AppTooltip message={p.name} onlyWhenTruncated>
+                  <span className="flex-1 truncate">{p.name}</span>
+                </AppTooltip>
                 <span className="font-mono text-xs text-muted-foreground">
                   {p.salePrice}
                 </span>

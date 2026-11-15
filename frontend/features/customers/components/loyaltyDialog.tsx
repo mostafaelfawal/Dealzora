@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Num } from "@/components/shared/Num";
 import { Button } from "@/components/ui/button";
 import {
@@ -195,9 +196,11 @@ export function LoyaltyDialog({
                   <span className="block font-medium">
                     {KIND_LABEL[e.kind]}
                   </span>
-                  <span className="block truncate text-[11px] text-muted-foreground">
-                    {e.note} · {formatDateTime(toMs(e.created_at))}
-                  </span>
+                  <AppTooltip message={e.note} onlyWhenTruncated>
+                    <span className="block truncate text-[11px] text-muted-foreground">
+                      {e.note} · {formatDateTime(toMs(e.created_at))}
+                    </span>
+                  </AppTooltip>
                 </span>
                 <Num
                   className={cn(

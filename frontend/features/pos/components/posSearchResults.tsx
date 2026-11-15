@@ -14,6 +14,7 @@ import {
 } from "../store/selectors";
 
 import { PosStockBadge } from "./posStockBadge";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 export const posOptionId = (productId: string) => `pos-option-${productId}`;
 
@@ -81,9 +82,11 @@ export function PosSearchResults() {
               className="flex h-12 w-full items-center gap-3 px-3 text-start outline-none"
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">
-                  {product.name}
-                </span>
+                <AppTooltip message={product.name} onlyWhenTruncated>
+                  <span className="block truncate text-sm font-medium">
+                    {product.name}
+                  </span>
+                </AppTooltip>
                 <span
                   dir="ltr"
                   className="block text-start font-mono text-[11px] text-muted-foreground"

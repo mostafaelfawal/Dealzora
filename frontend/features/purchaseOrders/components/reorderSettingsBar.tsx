@@ -10,6 +10,7 @@ import {
   SALES_DAYS_OPTIONS,
 } from "../config/purchaseOrderOptions";
 import type { ReorderSettings } from "../types/purchaseOrder";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const days = (n: number) =>
   n === 0 ? "نفس اليوم" : n === 1 ? "يوم" : n === 2 ? "يومان" : `${n} يوم`;
@@ -30,7 +31,9 @@ function Field({
     <div className="min-w-0 space-y-1">
       <Label className="text-xs">{label}</Label>
       {children}
-      <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
+      <AppTooltip message={hint} onlyWhenTruncated>
+        <p className="truncate text-[11px] text-muted-foreground">{hint}</p>
+      </AppTooltip>
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { categoryLabel, formatDate } from "../lib/expenseCalc";
 import type { Expense } from "../types/expense";
 import { ExpenseActionsMenu, type ExpenseActions } from "./expenseActionsMenu";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface Props extends ExpenseActions {
   expenses: Expense[];
@@ -68,9 +69,11 @@ export function ExpensesTable({
       className: "hidden md:table-cell",
       skeletonClassName: "w-40",
       cell: (e) => (
-        <span className="block max-w-64 truncate text-xs">
-          {e.note || <span className="text-muted-foreground">—</span>}
-        </span>
+        <AppTooltip message={e.note || <span className="text-muted-foreground">—</span>} onlyWhenTruncated>
+          <span className="block max-w-64 truncate text-xs">
+            {e.note || <span className="text-muted-foreground">—</span>}
+          </span>
+        </AppTooltip>
       ),
     },
     {

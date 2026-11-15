@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { ChartCard } from "@/components/shared/charts/ChartCard";
 import { RankBarChart } from "@/components/shared/charts/RankBarChart";
 import { Money } from "@/components/shared/Money";
@@ -38,7 +39,9 @@ function ProductsTable({ rows }: { rows: ProductRow[] }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.productId} className="border-b last:border-0">
-                <td className={cn(td, "max-w-40 truncate")}>{r.name}</td>
+                <AppTooltip message={r.name} onlyWhenTruncated>
+                  <td className={cn(td, "max-w-40 truncate")}>{r.name}</td>
+                </AppTooltip>
                 <td className={cn(td, "font-mono")}>{formatQty(r.qty)}</td>
                 <td className={td}>
                   <Money amount={r.revenue} className="text-xs" />

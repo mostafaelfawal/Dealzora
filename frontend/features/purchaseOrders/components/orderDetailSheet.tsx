@@ -50,6 +50,7 @@ import {
 } from "../hooks/usePurchaseOrders";
 import { printOrder, sendOrderWhatsapp } from "../lib/orderDocument";
 import type { PurchaseOrder } from "../types/purchaseOrder";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const DEFAULT_SHOP_NAME = "Dealzora";
 
@@ -113,9 +114,11 @@ function OrderBody({ o }: { o: PurchaseOrder }) {
           return (
             <li key={l.id} className="flex items-start gap-2 p-2.5">
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">
-                  {l.name}
-                </span>
+                <AppTooltip message={l.name} onlyWhenTruncated>
+                  <span className="block truncate text-sm font-medium">
+                    {l.name}
+                  </span>
+                </AppTooltip>
                 <span className="text-[11px] text-muted-foreground">
                   الرصيد وقت الطلب <Num>{formatQty(l.stockAtOrder)}</Num>
                   {l.currentStock !== null && (

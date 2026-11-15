@@ -35,6 +35,7 @@ import type { ImportFlow } from "../hooks/useImportFlow";
 import type { ParsedSheet } from "../lib/excelSheet";
 import type { MappingCoverage } from "../lib/importMapping";
 import { ImportSteps } from "./importSteps";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function FileSummary({
   fileName,
@@ -51,12 +52,14 @@ function FileSummary({
     <div className="flex flex-wrap items-center gap-3 border bg-muted/30 p-2.5">
       <IconFileSpreadsheet className="size-5 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
-        <p
-          dir="ltr"
-          className="truncate text-start font-mono text-xs font-medium"
-        >
-          {fileName}
-        </p>
+        <AppTooltip message={fileName} onlyWhenTruncated>
+          <p
+            dir="ltr"
+            className="truncate text-start font-mono text-xs font-medium"
+          >
+            {fileName}
+          </p>
+        </AppTooltip>
         <p className="text-[11px] text-muted-foreground">
           <Num>{sheet.rows.length}</Num> صف · <Num>{sheet.columns.length}</Num>{" "}
           أعمدة
@@ -143,10 +146,14 @@ function ColumnRow({
   return (
     <li className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 py-2">
       <div className={cn("min-w-0", ignored && "opacity-60")}>
-        <p className="truncate text-sm font-medium">{column}</p>
-        <p className="truncate text-[11px] text-muted-foreground">
-          مثال: {sample || "—"}
-        </p>
+        <AppTooltip message={column} onlyWhenTruncated>
+          <p className="truncate text-sm font-medium">{column}</p>
+        </AppTooltip>
+        <AppTooltip message={`مثال: ${sample || "—"}`} onlyWhenTruncated>
+          <p className="truncate text-[11px] text-muted-foreground">
+            مثال: {sample || "—"}
+          </p>
+        </AppTooltip>
       </div>
       <IconArrowLeft
         aria-hidden

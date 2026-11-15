@@ -72,9 +72,11 @@ function HeldItems() {
 
             <span className="min-w-0 flex-1 space-y-1">
               <span className="flex items-center gap-2">
-                <span className="truncate text-sm font-medium">
-                  {customerName}
-                </span>
+                <AppTooltip message={customerName} onlyWhenTruncated>
+                  <span className="truncate text-sm font-medium">
+                    {customerName}
+                  </span>
+                </AppTooltip>
                 {index === 0 && (
                   <Badge
                     variant="outline"
@@ -85,17 +87,19 @@ function HeldItems() {
                 )}
               </span>
 
-              <span className="block truncate text-xs text-muted-foreground">
-                {preview}
-                {extra > 0 && (
-                  <>
-                    {" "}
-                    <bdi dir="ltr" className="font-mono">
-                      +{extra}
-                    </bdi>
-                  </>
-                )}
-              </span>
+              <AppTooltip message={preview} onlyWhenTruncated>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {preview}
+                  {extra > 0 && (
+                    <>
+                      {" "}
+                      <bdi dir="ltr" className="font-mono">
+                        +{extra}
+                      </bdi>
+                    </>
+                  )}
+                </span>
+              </AppTooltip>
 
               <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <span>
@@ -112,11 +116,18 @@ function HeldItems() {
                 {(h.deviceName || h.cashierName) && (
                   <>
                     <span aria-hidden>·</span>
-                    <span className="truncate">
-                      {[h.deviceName, h.cashierName]
+                    <AppTooltip
+                      message={[h.deviceName, h.cashierName]
                         .filter(Boolean)
                         .join(" — ")}
-                    </span>
+                      onlyWhenTruncated
+                    >
+                      <span className="truncate">
+                        {[h.deviceName, h.cashierName]
+                          .filter(Boolean)
+                          .join(" — ")}
+                      </span>
+                    </AppTooltip>
                   </>
                 )}
               </span>

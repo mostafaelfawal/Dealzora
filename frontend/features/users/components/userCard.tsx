@@ -12,6 +12,7 @@ import { USER_ROUTES } from "../config/userRoutes";
 import { lastLoginLabel } from "../lib/userFormat";
 import type { User } from "../types/user";
 import { UserActionsMenu, type UserActions } from "./userActionsMenu";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface UserCardProps extends UserActions {
   user: User;
@@ -46,13 +47,15 @@ export function UserCard({ user, index, ...actions }: UserCardProps) {
           <IconUser className="size-4" />
         </span>
         <div className="min-w-0 flex-1 space-y-1">
-          <Link
-            href={USER_ROUTES.edit(user.id)}
-            dir="ltr"
-            className="block truncate text-start font-mono text-[13px] leading-snug font-medium text-foreground outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-primary/40"
-          >
-            {user.username}
-          </Link>
+          <AppTooltip message={user.username} onlyWhenTruncated>
+            <Link
+              href={USER_ROUTES.edit(user.id)}
+              dir="ltr"
+              className="block truncate text-start font-mono text-[13px] leading-snug font-medium text-foreground outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-primary/40"
+            >
+              {user.username}
+            </Link>
+          </AppTooltip>
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge
               variant="outline"
@@ -85,9 +88,11 @@ export function UserCard({ user, index, ...actions }: UserCardProps) {
       >
         <IconClock className="size-3.5 shrink-0" aria-hidden />
         <span>آخر دخول:</span>
-        <span className="min-w-0 truncate text-foreground">
-          {lastLoginLabel(user.lastLoginAt)}
-        </span>
+        <AppTooltip message={lastLoginLabel(user.lastLoginAt)} onlyWhenTruncated>
+          <span className="min-w-0 truncate text-foreground">
+            {lastLoginLabel(user.lastLoginAt)}
+          </span>
+        </AppTooltip>
       </div>
     </MotionArticle>
   );

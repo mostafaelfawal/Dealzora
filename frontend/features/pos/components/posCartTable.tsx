@@ -155,7 +155,9 @@ function CartRow({
           />
         )}
         <span className="flex items-center gap-1.5">
-          <span className="truncate text-xs font-medium">{line.name}</span>
+          <AppTooltip message={line.name} onlyWhenTruncated>
+            <span className="truncate text-xs font-medium">{line.name}</span>
+          </AppTooltip>
           {line.wholesale && (
             <span className="shrink-0 bg-primary/10 px-1 text-[10px] text-primary">
               جملة

@@ -27,6 +27,7 @@ import {
 import { useOrders, useOrdersSummary } from "../hooks/usePurchaseOrders";
 import type { OrderStatusFilter } from "../types/purchaseOrder";
 import { OrderDetailSheet } from "./orderDetailSheet";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /** طلبات الشراء: مسودة ← أُرسل للمورد ← تم الاستلام (فاتورة شراء). */
 export function OrdersList({
@@ -122,9 +123,11 @@ export function OrdersList({
                     <span className="font-mono text-xs text-muted-foreground">
                       #{o.number}
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-semibold">
-                      {o.supplierName}
-                    </span>
+                    <AppTooltip message={o.supplierName} onlyWhenTruncated>
+                      <span className="min-w-0 flex-1 truncate font-semibold">
+                        {o.supplierName}
+                      </span>
+                    </AppTooltip>
                     <span
                       className={cn(
                         "px-1.5 py-0.5 text-[11px]",

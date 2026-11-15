@@ -12,12 +12,12 @@ const ALLOWED_EXTENSIONS: &[&str] = &["xlsx", "xls", "csv", "pdf"];
 const MAX_BYTES: usize = 50 * 1024 * 1024;
 const NAME_HEADER: &str = "x-file-name";
 
-fn downloads_dir(app: &AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn downloads_dir(app: &AppHandle) -> Result<PathBuf, String> {
     app.path().download_dir().map_err(|e| e.to_string())
 }
 
 /// اسم ملف آمن: بدون مسارات أو رموز ممنوعة في ويندوز، وبامتداد من القائمة البيضاء.
-fn sanitize_file_name(raw: &str) -> Result<String, String> {
+pub(crate) fn sanitize_file_name(raw: &str) -> Result<String, String> {
     let name: String = raw
         .chars()
         .filter(|c| !matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|') && !c.is_control())
@@ -35,7 +35,7 @@ fn sanitize_file_name(raw: &str) -> Result<String, String> {
 }
 
 /// لو الاسم موجود: "products (1).xlsx"، "products (2).xlsx"… مثل المتصفح.
-fn unique_path(dir: &Path, name: &str) -> PathBuf {
+pub(crate) fn unique_path(dir: &Path, name: &str) -> PathBuf {
     let first = dir.join(name);
     if !first.exists() {
         return first;

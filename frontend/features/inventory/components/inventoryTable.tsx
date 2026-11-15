@@ -22,6 +22,7 @@ import { INVENTORY_PAGE_SIZES } from "../config/inventoryOptions";
 import type { InventoryList } from "../hooks/useInventoryList";
 import { stockLevel, type StockLevel } from "../lib/inventoryRows";
 import type { StockRow } from "../types/inventory";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const LEVEL_STYLE: Record<
   Exclude<StockLevel, "ok">,
@@ -92,7 +93,9 @@ function buildColumns({
       skeletonClassName: "w-48",
       cell: (row) => (
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium">{row.name}</p>
+          <AppTooltip message={row.name} onlyWhenTruncated>
+            <p className="truncate text-xs font-medium">{row.name}</p>
+          </AppTooltip>
           {showLastSold && (
             <p className="text-[11px] text-muted-foreground">
               {row.lastSoldAt

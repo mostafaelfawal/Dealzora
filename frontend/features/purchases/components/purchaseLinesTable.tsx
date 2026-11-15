@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 import { lineValue } from "../lib/purchaseDraft";
 import type { PurchaseDraftLine } from "../types/purchase";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const COLUMNS = [
   { label: "الصنف", className: "px-3" },
@@ -70,7 +71,9 @@ function LineRow({
       className={cn("h-14 border-t", invalid && "bg-destructive/5")}
     >
       <td className="px-3">
-        <p className="truncate font-medium">{l.name}</p>
+        <AppTooltip message={l.name} onlyWhenTruncated>
+          <p className="truncate font-medium">{l.name}</p>
+        </AppTooltip>
         <p className="text-[11px] text-muted-foreground">
           الشراء الحالي <Money amount={l.currentCost} className="text-[11px]" />{" "}
           · البيع <Money amount={l.currentPrice} className="text-[11px]" /> /{" "}

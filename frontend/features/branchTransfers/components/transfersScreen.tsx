@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
@@ -99,14 +100,19 @@ function TransferCard({ t, onOpen }: { t: Transfer; onOpen: () => void }) {
               />
             )}
           </span>
-          <span className="block truncate text-xs text-muted-foreground">
-            {t.lines.length} صنف ·{" "}
-            {t.lines
-              .slice(0, 3)
-              .map((l) => l.name)
-              .join("، ")}
-            {t.lines.length > 3 && "…"}
-          </span>
+          <AppTooltip
+            message={t.lines.map((l) => l.name).join("، ")}
+            onlyWhenTruncated
+          >
+            <span className="block truncate text-xs text-muted-foreground">
+              {t.lines.length} صنف ·{" "}
+              {t.lines
+                .slice(0, 3)
+                .map((l) => l.name)
+                .join("، ")}
+              {t.lines.length > 3 && "…"}
+            </span>
+          </AppTooltip>
         </span>
         <span className="text-end text-xs text-muted-foreground">
           {t.totalCost > 0 && (

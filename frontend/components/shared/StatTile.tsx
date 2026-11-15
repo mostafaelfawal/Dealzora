@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 import { listRow, MotionButton, MotionDiv } from "./motion";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface StatTileProps {
   icon: ReactNode;
@@ -49,16 +50,20 @@ export function StatTile({
         {icon}
       </span>
       <span className="min-w-0 space-y-0.5">
-        <span className="block truncate text-xs text-muted-foreground">
-          {label}
-        </span>
+        <AppTooltip message={label} onlyWhenTruncated>
+          <span className="block truncate text-xs text-muted-foreground">
+            {label}
+          </span>
+        </AppTooltip>
         <span className="block text-lg leading-none font-semibold">
           {children}
         </span>
         {hint && (
-          <span className="block truncate text-[11px] text-muted-foreground">
-            {hint}
-          </span>
+          <AppTooltip message={hint} onlyWhenTruncated>
+            <span className="block truncate text-[11px] text-muted-foreground">
+              {hint}
+            </span>
+          </AppTooltip>
         )}
       </span>
     </>

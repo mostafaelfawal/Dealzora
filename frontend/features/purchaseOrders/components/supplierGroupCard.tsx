@@ -72,7 +72,9 @@ function SuggestionRow({
       </td>
       <td className="min-w-44 p-2">
         <div className="flex items-center gap-1.5">
-          <span className="truncate font-medium">{s.name}</span>
+          <AppTooltip message={s.name} onlyWhenTruncated>
+            <span className="truncate font-medium">{s.name}</span>
+          </AppTooltip>
           <UrgencyBadge s={s} />
         </div>
         <div className="text-[11px] text-muted-foreground">
@@ -166,7 +168,9 @@ export function SupplierGroupCard({
           <IconTruck className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold">{group.supplierName}</h3>
+          <AppTooltip message={group.supplierName} onlyWhenTruncated>
+            <h3 className="truncate font-semibold">{group.supplierName}</h3>
+          </AppTooltip>
           <p className="text-xs text-muted-foreground">
             {noSupplier
               ? "لم تُشترَ من قبل: اختر مورداً لكل صنف لينتقل لمجموعته"

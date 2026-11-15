@@ -36,6 +36,7 @@ import {
 } from "../lib/saleReturn";
 import { printReturnReceipt } from "../lib/receipt";
 import type { RefundVia, ReturnReason, Sale, SaleLine } from "../types/sale";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const NOTE_MAX = 200;
 const DEFAULT_SHOP_NAME = "Dealzora";
@@ -58,7 +59,9 @@ function ReturnLineStepper({
       className={cn("flex items-center gap-3 p-2.5", max === 0 && "opacity-50")}
     >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{line.name}</span>
+        <AppTooltip message={line.name} onlyWhenTruncated>
+          <span className="block truncate text-sm font-medium">{line.name}</span>
+        </AppTooltip>
         <span className="text-[11px] text-muted-foreground">
           مباع {formatQty(line.qty)} {line.unitName}
           {line.returnedQty > 0 && ` · رجع ${formatQty(line.returnedQty)}`}

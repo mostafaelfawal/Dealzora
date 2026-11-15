@@ -22,6 +22,7 @@ import { PAGE_SIZES, RETURN_REASON_LABEL } from "../config/saleOptions";
 import type { ReturnsFilters } from "../hooks/useReturnsFilters";
 import { printReturnReceipt } from "../lib/receipt";
 import type { SaleReturn } from "../types/sale";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function RefundBadges({ ret: r }: { ret: SaleReturn }) {
   return (
@@ -57,9 +58,16 @@ const COLUMNS: AppTableColumn<SaleReturn>[] = [
           <span className="text-muted-foreground">من فاتورة</span>
           <span className="font-mono">#{r.saleNumber}</span>
         </p>
-        <p className="mt-0.5 max-w-72 truncate text-[11px] text-muted-foreground">
-          {r.lines.map((l) => `${l.name} (${formatQty(l.qty)})`).join("، ")}
-        </p>
+        <AppTooltip
+          message={r.lines
+            .map((l) => `${l.name} (${formatQty(l.qty)})`)
+            .join("، ")}
+          onlyWhenTruncated
+        >
+          <p className="mt-0.5 max-w-72 truncate text-[11px] text-muted-foreground">
+            {r.lines.map((l) => `${l.name} (${formatQty(l.qty)})`).join("، ")}
+          </p>
+        </AppTooltip>
       </div>
     ),
   },
@@ -147,7 +155,9 @@ function ReturnCard({ ret: r }: { ret: SaleReturn }) {
       <ul className="mt-auto space-y-1 border-t border-border/60 pt-2.5 text-xs">
         {r.lines.slice(0, 3).map((l) => (
           <li key={l.id} className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate">{l.name}</span>
+            <AppTooltip message={l.name} onlyWhenTruncated>
+              <span className="min-w-0 truncate">{l.name}</span>
+            </AppTooltip>
             <span className="shrink-0 font-mono text-muted-foreground">
               {formatQty(l.qty)} {l.unitName}
             </span>
@@ -162,7 +172,11 @@ function ReturnCard({ ret: r }: { ret: SaleReturn }) {
       <RefundBadges ret={r} />
       <CardFoot>
         <span>{formatWhen(r.returnedAt)}</span>
-        {r.cashierName && <span className="truncate">{r.cashierName}</span>}
+        {r.cashierName && (
+          <AppTooltip message={r.cashierName} onlyWhenTruncated>
+            <span className="truncate">{r.cashierName}</span>
+          </AppTooltip>
+        )}
       </CardFoot>
     </>
   );

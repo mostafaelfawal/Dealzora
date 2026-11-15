@@ -22,6 +22,7 @@ import {
 } from "./treasuryActionsMenu";
 import { TreasuryAmount } from "./treasuryAmount";
 import { TreasuryEntryBadges } from "./treasuryEntryBadges";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface Props extends TreasuryActions {
   entries: CashEntry[];
@@ -72,9 +73,11 @@ export function TreasuryTable({
               <Icon />
             </span>
             <div className="min-w-0">
-              <p className="max-w-64 truncate text-xs font-medium">
-                {e.note || "بدون ملاحظة"}
-              </p>
+              <AppTooltip message={e.note || "بدون ملاحظة"} onlyWhenTruncated>
+                <p className="max-w-64 truncate text-xs font-medium">
+                  {e.note || "بدون ملاحظة"}
+                </p>
+              </AppTooltip>
               <span className="mt-1 flex flex-wrap gap-1">
                 <TreasuryEntryBadges entry={e} />
               </span>

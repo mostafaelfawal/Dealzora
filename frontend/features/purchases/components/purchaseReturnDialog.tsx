@@ -26,6 +26,7 @@ import {
   type ReturnQtys,
 } from "../lib/purchaseReturn";
 import type { Purchase, PurchaseLine, RefundMethod } from "../types/purchase";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function ReturnLineRow({
   line: l,
@@ -44,7 +45,9 @@ function ReturnLineRow({
       className={cn("flex items-center gap-3 p-2.5", max === 0 && "opacity-50")}
     >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm">{l.name}</span>
+        <AppTooltip message={l.name} onlyWhenTruncated>
+          <span className="block truncate text-sm">{l.name}</span>
+        </AppTooltip>
         <span
           className={cn(
             "text-[11px]",

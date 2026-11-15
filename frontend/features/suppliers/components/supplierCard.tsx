@@ -19,6 +19,7 @@ import {
   SupplierActionsMenu,
   type SupplierActions,
 } from "./supplierActionsMenu";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface SupplierCardProps extends SupplierActions {
   supplier: Supplier;
@@ -59,19 +60,23 @@ export function SupplierCard({
           </Link>
           <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <IconPhone className="size-3.5 shrink-0" aria-hidden />
-            <span
-              dir="ltr"
-              className="min-w-0 truncate text-start font-mono text-[11px]"
-            >
-              {supplier.phone || "بدون هاتف"}
-            </span>
+            <AppTooltip message={supplier.phone || "بدون هاتف"} onlyWhenTruncated>
+              <span
+                dir="ltr"
+                className="min-w-0 truncate text-start font-mono text-[11px]"
+              >
+                {supplier.phone || "بدون هاتف"}
+              </span>
+            </AppTooltip>
           </span>
           {supplier.address && (
             <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
               <IconMapPin className="size-3.5 shrink-0" aria-hidden />
-              <span className="min-w-0 truncate text-[11px]">
-                {supplier.address}
-              </span>
+              <AppTooltip message={supplier.address} onlyWhenTruncated>
+                <span className="min-w-0 truncate text-[11px]">
+                  {supplier.address}
+                </span>
+              </AppTooltip>
             </span>
           )}
         </div>

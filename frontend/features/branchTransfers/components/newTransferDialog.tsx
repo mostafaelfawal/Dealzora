@@ -31,6 +31,7 @@ import {
   useRequestTransfer,
   useSendTransfer,
 } from "../hooks/useBranchTransfers";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 export type TransferMode = "send" | "request";
 
@@ -180,7 +181,9 @@ function Form({ mode, onDone }: { mode: TransferMode; onDone: () => void }) {
                   onClick={() => add(p)}
                   className="flex w-full items-center gap-2 p-2 text-start text-sm hover:bg-muted"
                 >
-                  <span className="flex-1 truncate">{p.name}</span>
+                  <AppTooltip message={p.name} onlyWhenTruncated>
+                    <span className="flex-1 truncate">{p.name}</span>
+                  </AppTooltip>
                   <span className="text-xs text-muted-foreground">
                     رصيدك <Num>{formatQty(p.stock)}</Num> {p.unit}
                   </span>
@@ -195,9 +198,11 @@ function Form({ mode, onDone }: { mode: TransferMode; onDone: () => void }) {
             {lines.map((l, i) => (
               <li key={l.product.id} className="flex items-center gap-2 p-2">
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {l.product.name}
-                  </span>
+                  <AppTooltip message={l.product.name} onlyWhenTruncated>
+                    <span className="block truncate text-sm font-medium">
+                      {l.product.name}
+                    </span>
+                  </AppTooltip>
                   <span className="text-[11px] text-muted-foreground">
                     رصيدك <Num>{formatQty(l.product.stock)}</Num>{" "}
                     {l.product.unit}

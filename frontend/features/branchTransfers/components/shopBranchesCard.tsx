@@ -185,20 +185,22 @@ function BranchRow({
         )}
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">
-          {b.name}{" "}
-          <span className="font-mono text-xs text-muted-foreground">
-            {b.code}
-          </span>
-          {b.isMe && (
-            <span className="ms-1.5 bg-primary/10 px-1.5 text-[11px] text-primary">
-              الفرع الرئيسي
+        <AppTooltip message={`${b.name} ${b.code}`} onlyWhenTruncated>
+          <span className="block truncate text-sm font-medium">
+            {b.name}{" "}
+            <span className="font-mono text-xs text-muted-foreground">
+              {b.code}
             </span>
-          )}
-          {!b.isActive && (
-            <span className="ms-1.5 bg-muted px-1.5 text-[11px]">موقوف</span>
-          )}
-        </span>
+            {b.isMe && (
+              <span className="ms-1.5 bg-primary/10 px-1.5 text-[11px] text-primary">
+                الفرع الرئيسي
+              </span>
+            )}
+            {!b.isActive && (
+              <span className="ms-1.5 bg-muted px-1.5 text-[11px]">موقوف</span>
+            )}
+          </span>
+        </AppTooltip>
         <span className="text-[11px] text-muted-foreground">
           {!b.paired
             ? "لا يوجد جهاز مربوط"

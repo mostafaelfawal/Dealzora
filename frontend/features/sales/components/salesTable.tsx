@@ -20,6 +20,7 @@ import { PAGE_SIZES } from "../config/saleOptions";
 import type { SalesFilters } from "../hooks/useSalesFilters";
 import type { Sale } from "../types/sale";
 import { SaleBadges } from "./saleBadges";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const COLUMNS: AppTableColumn<Sale>[] = [
   {
@@ -32,9 +33,11 @@ const COLUMNS: AppTableColumn<Sale>[] = [
           <span className="font-mono text-sm font-semibold">
             #{sale.number}
           </span>
-          <span className="truncate text-xs">
-            {sale.customerName ?? "عميل نقدي"}
-          </span>
+          <AppTooltip message={sale.customerName ?? "عميل نقدي"} onlyWhenTruncated>
+            <span className="truncate text-xs">
+              {sale.customerName ?? "عميل نقدي"}
+            </span>
+          </AppTooltip>
         </p>
         <p className="mt-0.5 text-[11px] text-muted-foreground">
           {sale.lines.length} صنف · {formatWhen(sale.soldAt)}
@@ -142,7 +145,9 @@ function SaleCard({ sale }: { sale: Sale }) {
       <CardFoot>
         <span>{formatWhen(sale.soldAt)}</span>
         {sale.cashierName && (
-          <span className="truncate">{sale.cashierName}</span>
+          <AppTooltip message={sale.cashierName} onlyWhenTruncated>
+            <span className="truncate">{sale.cashierName}</span>
+          </AppTooltip>
         )}
       </CardFoot>
     </>

@@ -36,6 +36,7 @@ import { useSessionUser } from "@/hooks/useShellData";
 import { api } from "@/lib/axios";
 import { toPounds } from "@/lib/apiMap";
 import { formatQty, normalizeDigits } from "@/lib/format";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 const QUICK_ACTIONS = [
   {
@@ -165,9 +166,11 @@ export function GlobalSearch() {
                 >
                   <IconReceipt className="size-4" />
                   <span className="font-mono">#{s.number}</span>
-                  <span className="truncate text-muted-foreground">
-                    {s.customerName ?? "عميل نقدي"}
-                  </span>
+                  <AppTooltip message={s.customerName ?? "عميل نقدي"} onlyWhenTruncated>
+                    <span className="truncate text-muted-foreground">
+                      {s.customerName ?? "عميل نقدي"}
+                    </span>
+                  </AppTooltip>
                   <Money amount={s.total} className="ms-auto text-xs" />
                 </CommandItem>
               ))}
@@ -184,7 +187,9 @@ export function GlobalSearch() {
                   onSelect={() => go(PRODUCT_ROUTES.edit(p.id))}
                 >
                   <IconPackage className="size-4" />
-                  <span className="truncate">{p.name}</span>
+                  <AppTooltip message={p.name} onlyWhenTruncated>
+                    <span className="truncate">{p.name}</span>
+                  </AppTooltip>
                   <span className="ms-auto flex items-center gap-2 text-[11px] text-muted-foreground">
                     <span>
                       رصيد {formatQty(p.stock)} {p.unit}
@@ -210,7 +215,9 @@ export function GlobalSearch() {
                   }
                 >
                   <IconUser className="size-4" />
-                  <span className="truncate">{c.name}</span>
+                  <AppTooltip message={c.name} onlyWhenTruncated>
+                    <span className="truncate">{c.name}</span>
+                  </AppTooltip>
                   {c.phone && (
                     <span
                       dir="ltr"

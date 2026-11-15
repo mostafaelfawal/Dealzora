@@ -44,6 +44,7 @@ import {
   isWalletMethod,
   paymentLabel,
 } from "@/features/sales/config/saleOptions";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface MethodButton {
   id: PaymentMethod;
@@ -260,7 +261,9 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
                 : "col-span-2",
             )}
           >
-            <span className="truncate">{m.label}</span>
+            <AppTooltip message={m.label} onlyWhenTruncated>
+              <span className="truncate">{m.label}</span>
+            </AppTooltip>
             {m.key && (
               <ShortcutBadge
                 className={cn(
@@ -286,12 +289,14 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
                   <p className="text-xs text-muted-foreground">
                     يحوّل العميل على {walletMethod.name}
                   </p>
-                  <bdi
-                    dir="ltr"
-                    className="block truncate font-mono text-lg font-semibold select-all"
-                  >
-                    {walletMethod.account}
-                  </bdi>
+                  <AppTooltip message={walletMethod.account} onlyWhenTruncated>
+                    <bdi
+                      dir="ltr"
+                      className="block truncate font-mono text-lg font-semibold select-all"
+                    >
+                      {walletMethod.account}
+                    </bdi>
+                  </AppTooltip>
                 </>
               ) : (
                 <p className="text-sm">

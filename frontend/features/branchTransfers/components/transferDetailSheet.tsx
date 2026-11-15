@@ -38,6 +38,7 @@ import {
   useTransferAction,
 } from "../hooks/useBranchTransfers";
 import { STATUS_INFO } from "../lib/transferText";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 type Mode = "receive" | "approve";
 
@@ -113,7 +114,9 @@ function LineView({ l, t }: { l: TransferLine; t: Transfer }) {
   return (
     <li className="flex items-start gap-3 p-2.5 text-sm">
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{l.name}</span>
+        <AppTooltip message={l.name} onlyWhenTruncated>
+          <span className="block truncate font-medium">{l.name}</span>
+        </AppTooltip>
         <span className="text-[11px] text-muted-foreground">
           {l.batchNo && `تشغيلة ${l.batchNo} · `}
           {l.expiryDate && `صلاحية ${formatDate(parseIsoDay(l.expiryDate))} · `}
@@ -217,9 +220,11 @@ function LinesForm({
           <li key={l.id} className="space-y-1.5 p-2.5">
             <div className="flex items-center gap-2">
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">
-                  {l.name}
-                </span>
+                <AppTooltip message={l.name} onlyWhenTruncated>
+                  <span className="block truncate text-sm font-medium">
+                    {l.name}
+                  </span>
+                </AppTooltip>
                 <span className="text-[11px] text-muted-foreground">
                   {mode === "receive" ? (
                     <>

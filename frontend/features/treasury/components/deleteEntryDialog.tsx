@@ -15,6 +15,7 @@ import {
 import { useDeleteCashEntry } from "../hooks/useTreasuryMutations";
 import type { CashEntry } from "../types/treasury";
 import { TreasuryAmount } from "./treasuryAmount";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /** حذف حركة يدوية: يعدّل الرصيد بعكسها. التركيز الافتراضي على "رجوع" (الأكثر أماناً). */
 export function DeleteEntryDialog({
@@ -50,9 +51,11 @@ export function DeleteEntryDialog({
               entry && (
                 <>
                   <span className="flex items-baseline gap-2">
-                    <span className="min-w-0 truncate">
-                      {entry.note || "بدون ملاحظة"}
-                    </span>
+                    <AppTooltip message={entry.note || "بدون ملاحظة"} onlyWhenTruncated>
+                      <span className="min-w-0 truncate">
+                        {entry.note || "بدون ملاحظة"}
+                      </span>
+                    </AppTooltip>
                     <TreasuryAmount
                       direction={entry.direction}
                       amount={entry.amount}

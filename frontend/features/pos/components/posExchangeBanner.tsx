@@ -2,6 +2,7 @@
 
 import { IconReceiptRefund } from "@tabler/icons-react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
 import { formatQty } from "@/lib/format";
@@ -45,12 +46,14 @@ export function PosExchangeBanner() {
             key={l.lineId}
             className="flex items-center justify-between gap-2 text-muted-foreground"
           >
-            <span className="truncate">
-              {l.name}{" "}
-              <bdi dir="ltr" className="font-mono">
-                ×{formatQty(l.qty)}
-              </bdi>
-            </span>
+            <AppTooltip message={l.name} onlyWhenTruncated>
+              <span className="truncate">
+                {l.name}{" "}
+                <bdi dir="ltr" className="font-mono">
+                  ×{formatQty(l.qty)}
+                </bdi>
+              </span>
+            </AppTooltip>
             <Money
               amount={returnLineValue(l, exchange.discountRate)}
               className="text-xs"

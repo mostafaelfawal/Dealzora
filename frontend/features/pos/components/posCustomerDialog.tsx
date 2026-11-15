@@ -36,6 +36,7 @@ import {
 import { UpgradeNotice } from "@/components/shared/PlanGate";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useFeature } from "@/lib/plan";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function Avatar({
   selected,
@@ -200,9 +201,11 @@ export function PosCustomerDialog() {
                   {[...customer.name.trim()][0]}
                 </Avatar>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {customer.name}
-                  </span>
+                  <AppTooltip message={customer.name} onlyWhenTruncated>
+                    <span className="block truncate text-sm font-medium">
+                      {customer.name}
+                    </span>
+                  </AppTooltip>
                   <span
                     dir="ltr"
                     className="flex gap-1 text-start font-mono text-[11px] text-muted-foreground"

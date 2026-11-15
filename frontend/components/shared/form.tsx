@@ -6,6 +6,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /**
  * لبنات النماذج المشتركة: نفس الشكل ونفس سلوك الوصولية في كل شاشات التطبيق.
@@ -178,9 +179,11 @@ export function CollapsibleSection({
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold">{title}</span>
             {summary && (
-              <span className="block truncate text-xs text-muted-foreground">
-                {summary}
-              </span>
+              <AppTooltip message={summary} onlyWhenTruncated>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {summary}
+                </span>
+              </AppTooltip>
             )}
           </span>
           <IconChevronDown

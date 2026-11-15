@@ -22,6 +22,7 @@ import type {
   PromotionsBrief,
   PurchasingBrief,
 } from "../types/dashboard";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /**
  * أقسام اللوحة للميزات الإضافية (العروض، الولاء، العملاء، المشتريات، الصلاحية).
@@ -133,7 +134,9 @@ function Figure({
 }) {
   return (
     <div className="min-w-0 border bg-muted/30 p-2.5">
-      <p className="truncate text-[11px] text-muted-foreground">{label}</p>
+      <AppTooltip message={label} onlyWhenTruncated>
+        <p className="truncate text-[11px] text-muted-foreground">{label}</p>
+      </AppTooltip>
       <div className="mt-0.5 text-base font-semibold">{children}</div>
     </div>
   );

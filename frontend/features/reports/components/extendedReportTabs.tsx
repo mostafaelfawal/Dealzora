@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { ChartCard, ChartEmpty } from "@/components/shared/charts/ChartCard";
 import { RankBarChart } from "@/components/shared/charts/RankBarChart";
 import { Money } from "@/components/shared/Money";
@@ -52,6 +53,13 @@ import {
 } from "./reportPanel";
 
 /* ---------- أدوات مشتركة ---------- */
+
+/** نص مقطوع بعرض أقصى، مع tooltip يظهر النص كاملاً لو اتقطع. */
+const clip = (text: string, className: string) => (
+  <AppTooltip message={text} onlyWhenTruncated>
+    <span className={cn("block truncate", className)}>{text}</span>
+  </AppTooltip>
+);
 
 const money = (amount: number, className?: string) => (
   <Money amount={amount} className={cn("text-xs", className)} />
@@ -95,7 +103,7 @@ function PriceChange({ value }: { value: number }) {
 }
 
 const PURCHASED_COLUMNS: ReportColumn<PurchasedProduct>[] = [
-  { header: "الصنف", cell: (r) => r.name, className: "max-w-44 truncate" },
+  { header: "الصنف", cell: (r) => clip(r.name, "max-w-44") },
   {
     header: "الكمية",
     cell: (r) => `${formatQty(r.qty)} ${r.unit}`,
@@ -107,7 +115,7 @@ const PURCHASED_COLUMNS: ReportColumn<PurchasedProduct>[] = [
 ];
 
 const PRICE_COLUMNS: ReportColumn<PurchasedProduct>[] = [
-  { header: "الصنف", cell: (r) => r.name, className: "max-w-44 truncate" },
+  { header: "الصنف", cell: (r) => clip(r.name, "max-w-44") },
   { header: "أول سعر", cell: (r) => money(r.firstCost) },
   { header: "آخر سعر", cell: (r) => money(r.lastCost) },
   { header: "التغيّر", cell: (r) => <PriceChange value={r.changePct} /> },
@@ -274,7 +282,7 @@ function PromoPeriod({ p }: { p: PromoRow }) {
 }
 
 const PROMO_COLUMNS: ReportColumn<PromoRow>[] = [
-  { header: "العرض", cell: (p) => p.name, className: "max-w-52 truncate font-medium" },
+  { header: "العرض", cell: (p) => clip(p.name, "max-w-52"), className: "font-medium" },
   {
     header: "الحالة",
     cell: (p) =>
@@ -458,7 +466,7 @@ export function ReturnsReportTab({ range }: { range: DateRange }) {
             title="الأصناف الأكثر رجوعاً"
             rows={r.topProducts}
             columns={[
-              { header: "الصنف", cell: (x) => x.name, className: "max-w-52 truncate font-medium" },
+              { header: "الصنف", cell: (x) => clip(x.name, "max-w-52"), className: "font-medium" },
               { header: "الكمية", cell: (x) => `${formatQty(x.qty)} ${x.unit}`, className: "font-mono" },
               { header: "مرات الرجوع", cell: (x) => x.times, className: "font-mono" },
               { header: "القيمة", cell: (x) => money(x.amount) },
@@ -514,7 +522,9 @@ function LoyaltyPanel({ l }: { l: CustomersReport["loyalty"] }) {
           <ul className="divide-y text-xs">
             {l.topBalances.map((b) => (
               <li key={b.id} className="flex items-center justify-between gap-3 py-1.5">
-                <span className="truncate">{b.name}</span>
+                <AppTooltip message={b.name} onlyWhenTruncated>
+                  <span className="truncate">{b.name}</span>
+                </AppTooltip>
                 <span className="flex items-center gap-2">
                   <span className="font-mono">{formatNumber(b.points)} نقطة</span>
                   {money(b.value, "text-muted-foreground")}
@@ -576,7 +586,7 @@ export function CustomersReportTab({ range }: { range: DateRange }) {
                   title="أفضل العملاء في الفترة"
                   rows={r.top}
                   columns={[
-                    { header: "العميل", cell: (c) => c.name, className: "max-w-44 truncate font-medium" },
+                    { header: "العميل", cell: (c) => clip(c.name, "max-w-44"), className: "font-medium" },
                     { header: "صافي المشتريات", cell: (c) => money(c.net) },
                     { header: "الفواتير", cell: (c) => c.invoices, className: "font-mono" },
                     { header: "متوسط الفاتورة", cell: (c) => money(c.avgTicket) },

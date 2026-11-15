@@ -3,6 +3,7 @@
 import { IconGift, IconMinus, IconPlus, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { Num } from "@/components/shared/Num";
 import { Button } from "@/components/ui/button";
@@ -89,10 +90,12 @@ export function PosLoyaltyRow() {
         <div className="flex items-center justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5">
             <IconGift className="size-3.5 shrink-0 text-success" />
-            <span className="truncate">
-              نقاط {customer.name}:{" "}
-              <Num className="font-semibold text-foreground">{balance}</Num>
-            </span>
+            <AppTooltip message={`نقاط ${customer.name}`} onlyWhenTruncated>
+              <span className="truncate">
+                نقاط {customer.name}:{" "}
+                <Num className="font-semibold text-foreground">{balance}</Num>
+              </span>
+            </AppTooltip>
           </span>
           {redeemed > 0 ? (
             <span className="flex items-center gap-1 text-success">

@@ -25,6 +25,7 @@ import {
   PosPickerHeader,
   pickerItemClass,
 } from "./posPickerChrome";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 function InvoiceItems() {
   const dispatch = useAppDispatch();
@@ -58,9 +59,11 @@ function InvoiceItems() {
 
             <span className="min-w-0 flex-1 space-y-1">
               <span className="flex flex-wrap items-center gap-2">
-                <span className="truncate text-sm font-medium">
-                  {customerName}
-                </span>
+                <AppTooltip message={customerName} onlyWhenTruncated>
+                  <span className="truncate text-sm font-medium">
+                    {customerName}
+                  </span>
+                </AppTooltip>
                 {fullyReturned && (
                   <Badge variant="outline" className="font-normal">
                     مُرجعة بالكامل
@@ -83,9 +86,11 @@ function InvoiceItems() {
                   </Badge>
                 )}
               </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {inv.lines.map((l) => l.name).join("، ")}
-              </span>
+              <AppTooltip message={inv.lines.map((l) => l.name).join("، ")} onlyWhenTruncated>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {inv.lines.map((l) => l.name).join("، ")}
+                </span>
+              </AppTooltip>
               <span className="text-[11px] text-muted-foreground">
                 {formatItemCount(inv.lines.length)} ·{" "}
                 {now === null ? "" : formatTimeAgo(inv.soldAt, now)}

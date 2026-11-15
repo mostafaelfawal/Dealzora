@@ -11,7 +11,8 @@ import {
   YAxis,
 } from "recharts";
 
-import { ANIMATION, AXIS_TICK, CHART, formatCompact } from "./chartTheme";
+import { AXIS_TICK, CHART, formatCompact } from "./chartTheme";
+import { useChartAnimation } from "./chartAnimation";
 import { ChartLegend, ChartTooltipBox } from "./ChartTooltip";
 
 export interface TrendPoint {
@@ -41,6 +42,7 @@ export function TrendChart({
   kind?: "money" | "count";
   height?: number;
 }) {
+  const animation = useChartAnimation();
   const withPrev =
     previousLabel !== undefined && data.some((d) => (d.previous ?? 0) !== 0);
   return (
@@ -140,7 +142,7 @@ export function TrendChart({
                   strokeWidth: 2,
                   fill: CHART.muted,
                 }}
-                {...ANIMATION}
+                {...animation}
               />
             )}
             <Area
@@ -165,7 +167,7 @@ export function TrendChart({
                 stroke: CHART.surface,
                 strokeWidth: 2,
               }}
-              {...ANIMATION}
+              {...animation}
             />
           </ComposedChart>
         </ResponsiveContainer>

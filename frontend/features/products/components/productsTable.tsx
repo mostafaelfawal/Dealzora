@@ -19,6 +19,7 @@ import { PRODUCT_ROUTES } from "../config/productRoutes";
 import type { Product } from "../types/product";
 import { ProductActionsMenu, type ProductActions } from "./productActionsMenu";
 import { ProductMarginBadge } from "./productMarginBadge";
+import { AppTooltip } from "@/components/shared/AppTooltip";
 
 interface Props extends ProductActions {
   products: Product[];
@@ -57,9 +58,11 @@ export function ProductsTable({
       skeletonClassName: "w-40",
       cell: (p) => (
         <div className={cn("min-w-0", !p.isActive && "opacity-60")}>
-          <span className="block max-w-64 truncate text-xs font-medium">
-            {p.name}
-          </span>
+          <AppTooltip message={p.name} onlyWhenTruncated>
+            <span className="block max-w-64 truncate text-xs font-medium">
+              {p.name}
+            </span>
+          </AppTooltip>
           <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <IconBarcode className="size-3.5" aria-hidden />
             <span dir="ltr" className="font-mono">
