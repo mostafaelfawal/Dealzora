@@ -63,6 +63,12 @@ class ProductData(_Strict):
     track_expiry: bool = False
     is_active: bool = True
     units: list[UnitData] = Field(default_factory=list, max_length=10)
+    # الضريبة وكود المنظومة (البرنامج منذ دعم ضريبة القيمة المضافة والإيصال الإلكتروني). اختيارية: فرع بنسخة أقدم
+    # لا يرسلها، ولا تُكتب فوق قيمة أرسلها فرع آخر (OPTIONAL_PRODUCT_KEYS).
+    tax_type: Literal["taxable", "exempt", "zero"] | None = None
+    tax_rate: Annotated[int, Field(ge=0, le=10_000)] | None = None  # نقاط أساس (1400 = 14%)
+    eta_item_type: Literal["EGS", "GS1"] | None = None
+    eta_item_code: Annotated[str, StringConstraints(max_length=100)] | None = None
 
     @model_validator(mode="after")
     def _rules(self):
@@ -160,8 +166,17 @@ def match_key(kind: str, data: dict[str, Any]) -> str | None:
     return "p:" + phone if phone else None
 
 
+# حقول الصنف الاختيارية: لا تُضاف بقيمة افتراضية لو لم يرسلها الفرع (فرع أقدم لا يمسح كود منظومة أرسله غيره).
+OPTIONAL_PRODUCT_KEYS = ("tax_type", "tax_rate", "eta_item_type", "eta_item_code")
+
+
 def _validate(kind: str, data: dict[str, Any]) -> dict[str, Any]:
-    return MODELS[kind].model_validate(data).model_dump(mode="json")
+    out = MODELS[kind].model_validate(data).model_dump(mode="json")
+    if kind == "product":
+        for key in OPTIONAL_PRODUCT_KEYS:
+            if key not in data:
+                out.pop(key, None)
+    return out
 
 
 def _key_owner(session: Session, shop_id: str, kind: str, key: str | None, gid: str) -> CatalogItem | None:
@@ -285,7 +300,7 @@ def push(session: Session, *, shop_id: str, branch_id: str, items: list[PushItem
         wanted = item.fields if item.fields is not None else list(allowed)
         if item.kind == "staff":  # فروع الموظف تُغيَّر من الإدارة المركزية فقط
             wanted = [f for f in wanted if f != "branches"]
-        merged = {**row.data, **{f: data[f] for f in wanted if f in allowed}}
+        merged = {**row.data, **{f: data[f] for f in wanted if f in allowed and f in data}}
         try:
             merged = _validate(item.kind, merged)  # الدمج نفسه لازم يطلع سجل صالح
         except ValidationError as exc:

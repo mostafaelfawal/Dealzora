@@ -97,10 +97,6 @@ export function TrendBars({ days, branchCount }: { days: SummaryDay[]; branchCou
                     top: d.net >= 0 ? zeroFromTop - h : zeroFromTop,
                     backgroundColor: d.net < 0 ? colors.destructive : chart.series1,
                     opacity: selected === null || active ? 1 : 0.45,
-                    borderTopLeftRadius: d.net >= 0 ? 4 : 0,
-                    borderTopRightRadius: d.net >= 0 ? 4 : 0,
-                    borderBottomLeftRadius: d.net < 0 ? 4 : 0,
-                    borderBottomRightRadius: d.net < 0 ? 4 : 0,
                   },
                 ]}
               />

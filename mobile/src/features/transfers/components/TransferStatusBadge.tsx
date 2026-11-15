@@ -27,5 +27,5 @@ export function TransferStatusBadge({ status }: { status: TransferStatus }) {
 }
 
 const styles = StyleSheet.create({
-  badge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1 },
+  badge: { borderWidth: 1, paddingHorizontal: 8, paddingVertical: 1 },
 });

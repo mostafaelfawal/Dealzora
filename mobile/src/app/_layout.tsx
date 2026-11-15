@@ -28,21 +28,29 @@ import {
 import { fontAssets, fontFamily } from "@/theme/fonts";
 import { ensureRTL } from "@/theme/rtl";
 import { ThemeProvider, useTheme } from "@/theme/ThemeProvider";
+import { useThemePrefLoaded } from "@/theme/themePref";
 
 void SplashScreen.preventAutoHideAsync();
 ensureRTL();
 wireQueryManagers();
 
+/** شريط الحالة يتبع مظهر التطبيق (لا مظهر الهاتف) لو اختار المستخدم فاتحاً أو داكناً. */
+function ThemedStatusBar() {
+  const { isDark } = useTheme();
+  return <StatusBar style={isDark ? "light" : "dark"} />;
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontAssets);
   const { status } = useAuth();
+  const themeLoaded = useThemePrefLoaded();
 
   useEffect(() => {
     void bootstrapSession();
   }, []);
 
   // لو فشل تحميل الخط نكمل بخط النظام بدل شاشة بيضاء.
-  const ready = (fontsLoaded || !!fontError) && status !== "loading";
+  const ready = (fontsLoaded || !!fontError) && status !== "loading" && themeLoaded;
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
@@ -66,7 +74,7 @@ export default function RootLayout() {
                 <RootStack />
               </LockGate>
             </View>
-            <StatusBar style="auto" />
+            <ThemedStatusBar />
           </PersistQueryClientProvider>
         </LocaleProvider>
       </ThemeProvider>

@@ -44,6 +44,10 @@ def ctx(client, chain):  # noqa: F811
     mgr = bearer(login(client, new_code(br["B"]), "b.mgr", MGR_PW, device="mgr-phone").json())
     assert register(client, owner, OWNER_TOKEN).status_code == 204
     assert register(client, mgr, MGR_TOKEN).status_code == 204
+    # النتيجة لا تعتمد على ساعة تشغيل الاختبار: ساعات الهدوء الافتراضية (11م–8ص) موقوفة هنا،
+    # واختبار ساعات الهدوء يضبط نافذته بنفسه.
+    for h in (owner, mgr):
+        set_prefs(client, h, quiet={"enabled": False})
     return br, owner, mgr, FakeExpo()
 
 
@@ -349,6 +353,21 @@ def test_notifications_list_and_read(client, ctx):
     assert out["unread"] == 0
     # لا يرى تنبيهات غيره
     assert client.get("/mobile/v1/notifications", headers=ctx[2]).json()["unread"] == 1
+
+
+def test_send_test_reaches_every_phone_immediately(client, ctx):
+    """test-notify: يصل لكل هاتف فوراً (بلا انتظار التجميع)، ويظهر في السجل، ولا token في الناتج."""
+    from app.services import notifications
+
+    _, owner, mgr, push = ctx
+    with db() as s:
+        lines = notifications.send_test(s, push)
+        lines += notifications.send_test(s, push)  # مرتين متتاليتين: لا تجميع ولا منع تكرار
+    assert len(lines) == 4 and not any("ExponentPushToken" in x for x in lines)
+    assert len(push.to(OWNER_TOKEN)) == 2 and len(push.to(MGR_TOKEN)) == 2
+    out = client.get("/mobile/v1/notifications", headers=owner).json()
+    assert [i["kind"] for i in out["items"]] == ["test", "test"] and out["unread"] == 2
+    assert tick(push)["pushed"] == 0  # أُرسلت بالفعل: الـ notifier لا يعيدها
 
 
 def test_migration_0009_reversible(client):

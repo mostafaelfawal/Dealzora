@@ -169,5 +169,5 @@ const styles = StyleSheet.create({
   segBtn: { flex: 1, minHeight: 40, alignItems: "center", justifyContent: "center" },
   line: { gap: 2, paddingVertical: space.xs },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: space.xs, marginTop: 2 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: space.sm, paddingVertical: 4 },
+  chip: { borderWidth: 1, paddingHorizontal: space.sm, paddingVertical: 4 },
 });

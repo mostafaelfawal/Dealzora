@@ -3,13 +3,14 @@
  * والخادم يسجّل التغيير في سجل التدقيق «من الهاتف».
  */
 import { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet } from "react-native";
+import { Alert } from "react-native";
 
 import { errorMessage } from "@/api/errors";
 import type { ReportConfig } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
+import { Chips } from "@/components/shared/Chips";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Screen } from "@/components/shared/Screen";
 import { TextField } from "@/components/shared/TextField";
@@ -17,8 +18,6 @@ import { useReportConfig, useSaveReportConfig } from "@/features/reports/hooks/u
 import { parseMoneyInput } from "@/features/reports/lib/reportText";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
 import { useIsOwner } from "@/features/security/hooks/useSecurity";
-import { space } from "@/theme/colors";
-import { useTheme } from "@/theme/ThemeProvider";
 
 const MONEY_FIELDS: { key: keyof ReportConfig; label: string; hint: string }[] = [
   { key: "discount_min", label: "خصم الكاشير على فاتورة (ج.م)", hint: "خصم أسطر + فاتورة بهذا المبلغ أو أكثر = عملية حساسة" },
@@ -50,7 +49,6 @@ function ReportSettings() {
 }
 
 function ReportForm({ initial }: { initial: ReportConfig }) {
-  const { colors } = useTheme();
   const save = useSaveReportConfig();
   const [text, setText] = useState<Record<string, string>>(() =>
     Object.fromEntries(MONEY_FIELDS.map((f) => [f.key, String(initial[f.key] / 100)])),
@@ -88,28 +86,9 @@ function ReportForm({ initial }: { initial: ReportConfig }) {
         <AppText weight="medium" size="sm">
           «قريب من الانتهاء» خلال
         </AppText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          {EXPIRY_DAYS.map((d) => (
-            <Pressable
-              key={d}
-              accessibilityRole="button"
-              accessibilityState={{ selected: d === days }}
-              onPress={() => setDays(d)}
-              style={[styles.chip, { backgroundColor: d === days ? colors.primary : colors.secondary, borderColor: d === days ? colors.primary : colors.border }]}
-            >
-              <AppText size="sm" style={{ color: d === days ? colors.primaryForeground : colors.foreground }}>
-                {d} يوم
-              </AppText>
-            </Pressable>
-          ))}
-        </ScrollView>
+        <Chips options={EXPIRY_DAYS} value={days} label={(d) => `${d} يوم`} onChange={setDays} />
       </Card>
       <Button title="حفظ الحدود" icon="save-outline" onPress={submit} loading={save.isPending} disabled={invalid} />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  chips: { gap: space.sm, paddingVertical: 2 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: space.md, minHeight: 34, justifyContent: "center" },
-});

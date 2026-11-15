@@ -110,6 +110,6 @@ export function LockGate({ active, children }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   cover: { alignItems: "center", justifyContent: "center", gap: space.md, padding: space.xl, zIndex: 100 },
-  badge: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center" },
+  badge: { width: 72, height: 72, alignItems: "center", justifyContent: "center" },
   actions: { alignSelf: "stretch", gap: space.sm, marginTop: space.md },
 });

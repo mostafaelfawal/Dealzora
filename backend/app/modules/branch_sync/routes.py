@@ -198,10 +198,11 @@ def catalog(svc: Svc):
     "/catalog/sync",
     dependencies=[Depends(require_authenticated_write), Depends(require_main_device)],
 )
-def sync_now(svc: Svc):
+def sync_now(svc: Svc, retry_failed: bool = False):
     """دورة مزامنة (الواجهة تستدعيها كل دقيقة على الجهاز الأساسي، وزر «مزامنة الآن»).
-    أي مستخدم مسجّل (كاشير أو مدير) لأنها تعمل في الخلفية، لكن بتصريح الكتابة (الترخيص)."""
-    return svc.sync_now()
+    أي مستخدم مسجّل (كاشير أو مدير) لأنها تعمل في الخلفية، لكن بتصريح الكتابة (الترخيص).
+    retry_failed=true من زر «مزامنة الآن»: يعيد رفع السجلات المرفوضة فوراً."""
+    return svc.sync_now(retry_failed=retry_failed)
 
 
 @router.get("/branches", dependencies=Read)

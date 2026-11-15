@@ -36,5 +36,5 @@ export function EmptyState({ icon, title, description, action }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { alignItems: "center", gap: space.sm, paddingVertical: space.xl * 2, paddingHorizontal: space.lg },
-  icon: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", marginBottom: space.sm },
+  icon: { width: 64, height: 64, alignItems: "center", justifyContent: "center", marginBottom: space.sm },
 });

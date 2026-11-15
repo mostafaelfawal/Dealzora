@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "center", gap: space.sm },
   rank: { width: 18, textAlign: "center" },
   name: { flex: 1 },
-  // شريط ≤ 24px يبدأ من خط أساس واحد (يمين الشاشة في RTL)، طرف البيانات مدوّر 4px
-  track: { height: 10, borderRadius: 4, overflow: "hidden", flexDirection: "row" },
-  bar: { height: "100%", borderTopLeftRadius: 4, borderBottomLeftRadius: 4 },
+  // شريط ≤ 24px يبدأ من خط أساس واحد (يمين الشاشة في RTL)، بحواف حادة مثل هوية البرنامج
+  track: { height: 10, overflow: "hidden", flexDirection: "row" },
+  bar: { height: "100%" },
 });

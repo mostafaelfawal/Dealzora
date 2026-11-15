@@ -8,6 +8,7 @@
     docker compose exec api python -m app.cli rotate-secret <branch_id>
     docker compose exec api python -m app.cli disable-branch <branch_id>
     python -m app.cli notifier                                            # خدمة تنبيهات الهاتف (خدمة notifier في compose)
+    python -m app.cli test-notify [shop_id]                               # إشعار تجريبي لهواتف المحل (أو كل المحلات)
 
 السر يظهر مرة واحدة فقط عند إنشاء الفرع أو تغيير سرّه: انسخه لإعدادات البرنامج المحلي للفرع.
 """
@@ -63,6 +64,8 @@ def _notifier(*, loop: bool) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")  # طرفية ويندوز: العربي يظهر صحيحاً
     parser = argparse.ArgumentParser(prog="python -m app.cli", description="إدارة Dealzora Sync Hub")
     sub = parser.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("create-shop", help="محل جديد")
@@ -86,6 +89,8 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("branch_id")
     sub.add_parser("notifier", help="خدمة تنبيهات الهاتف: دورة كل SYNC_NOTIFY_INTERVAL_SECONDS (عملية واحدة فقط)")
     sub.add_parser("notify-once", help="دورة تنبيهات واحدة (للتجربة أو cron)")
+    p = sub.add_parser("test-notify", help="إشعار تجريبي لكل هاتف مسجّل في المحل (أو كل المحلات)")
+    p.add_argument("shop_id", nargs="?")
     args = parser.parse_args(argv)
 
     if args.cmd in ("notifier", "notify-once"):
@@ -104,6 +109,14 @@ def main(argv: list[str] | None = None) -> int:
         print("SYNC_LEASE_KEY=" + enc(key.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())))
         print("DEALZORA_SYNC_LEASE_PUBKEY=" + enc(key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)))
         print("⚠ الأول في .env السيرفر فقط (سري). الثاني متغير بيئة وقت بناء البرنامج (build-backend.ps1).")
+        return 0
+
+    if args.cmd == "test-notify":
+        from .services import notifications
+
+        with get_sessionmaker()() as session:
+            lines = notifications.send_test(session, notifications.expo_push, args.shop_id)
+        print("\n".join(lines) if lines else "لا هاتف مسجّل الدخول (سجّل الدخول من التطبيق أولاً).")
         return 0
 
     with get_sessionmaker()() as session:

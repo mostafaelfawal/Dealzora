@@ -213,7 +213,8 @@ export type NotificationKind =
   | "transfer_request"
   | "low_sales"
   | "sensitive_op"
-  | "cash_diff";
+  | "cash_diff"
+  | "test"; // إشعار تجريبي (python -m app.cli test-notify)
 
 export interface AppNotification {
   id: string;

@@ -1,6 +1,7 @@
 /** دورة الجلسة: الفتح، الدخول، الخروج. الحالة في authStore، والتوكنات يديرها عميل الـ API. */
 import { api, applyUser, clearLocalAccountData } from "@/api/instance";
 import { ApiError } from "@/api/errors";
+import { resetLocalAlerts } from "@/features/alerts/lib/localNotify";
 import { resetPushState } from "@/features/alerts/lib/pushStore";
 import { formatArabicCount } from "@/lib/format";
 
@@ -39,6 +40,7 @@ export async function signIn(form: authApi.LoginForm): Promise<void> {
   // بيانات حساب سابق على نفس الهاتف لا تظهر للحساب الجديد.
   await clearLocalAccountData();
   resetPushState(); // الحساب الجديد يسجّل هاتفه من جديد
+  await resetLocalAlerts(); // ولا يُشعَر بتنبيهات قديمة
   const out = await authApi.login(form);
   setAuthState({ status: "signedIn", user: out.user, notice: null, currentPlan: null });
 }

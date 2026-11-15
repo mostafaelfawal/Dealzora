@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "center", gap: space.sm },
   rank: { width: 18, textAlign: "center" },
   flex: { flex: 1 },
-  track: { height: 8, borderRadius: 4, overflow: "hidden", flexDirection: "row" },
-  bar: { height: "100%", borderTopLeftRadius: 4, borderBottomLeftRadius: 4 },
+  track: { height: 8, overflow: "hidden", flexDirection: "row" },
+  bar: { height: "100%" },
   stale: { opacity: 0.55 },
 });

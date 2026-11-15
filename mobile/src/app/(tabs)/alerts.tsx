@@ -11,6 +11,7 @@ import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Screen } from "@/components/shared/Screen";
+import { PushPermissionCard } from "@/features/alerts/components/PushPermissionCard";
 import { useMarkRead, useNotifications } from "@/features/alerts/hooks/useAlerts";
 import { safeRoute } from "@/features/alerts/lib/routes";
 import { useNow } from "@/hooks/useNow";
@@ -25,6 +26,7 @@ const ICON: Record<NotificationKind, ComponentProps<typeof Ionicons>["name"]> = 
   low_sales: "trending-down-outline",
   sensitive_op: "shield-outline",
   cash_diff: "cash-outline",
+  test: "flask-outline",
 };
 
 export default function AlertsRoute() {
@@ -58,6 +60,7 @@ export default function AlertsRoute() {
         }}
       />
       <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching}>
+        <PushPermissionCard compact />
         {(q.data?.unread ?? 0) > 0 && (
           <Button title="تعليم الكل كمقروء" variant="secondary" icon="checkmark-done-outline" onPress={() => read.mutate(undefined)} loading={read.isPending} />
         )}

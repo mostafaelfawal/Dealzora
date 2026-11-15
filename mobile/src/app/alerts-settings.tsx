@@ -2,22 +2,21 @@
  * إعدادات التنبيهات (لكل الحساب على كل هواتفه): كل نوع يُفعّل ويُوقف، مدة انقطاع الفرع، وساعات الهدوء.
  * إعدادات شخصية للمستخدم (لا تغيّر بيانات المحل)، والخادم يسجّل كل تغيير في سجل التدقيق «من الهاتف».
  */
-import { Pressable, ScrollView, StyleSheet, Switch, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { errorMessage } from "@/api/errors";
 import type { NotificationPrefs } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
-import { Button } from "@/components/shared/Button";
+import { AppSwitch } from "@/components/shared/AppSwitch";
 import { Card } from "@/components/shared/Card";
+import { Chips } from "@/components/shared/Chips";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ListRow } from "@/components/shared/ListRow";
 import { Screen } from "@/components/shared/Screen";
 import { usePrefs, useSavePrefs } from "@/features/alerts/hooks/useAlerts";
-import { PUSH_STATE_TEXT } from "@/features/alerts/lib/push";
-import { syncPush, usePushState } from "@/features/alerts/lib/pushStore";
+import { PushPermissionCard } from "@/features/alerts/components/PushPermissionCard";
 import { formatArabicCount } from "@/lib/format";
 import { space } from "@/theme/colors";
-import { useTheme } from "@/theme/ThemeProvider";
 
 const OFFLINE_MINUTES = [15, 30, 60, 120, 240];
 const QUIET_START = ["21:00", "22:00", "23:00", "00:00"];
@@ -36,10 +35,8 @@ function timeLabel(hhmm: string): string {
 }
 
 export default function AlertsSettingsRoute() {
-  const { colors } = useTheme();
   const q = usePrefs();
   const save = useSavePrefs();
-  const push = usePushState();
   const p = q.data;
 
   const update = (patch: Partial<NotificationPrefs>) => {
@@ -47,48 +44,16 @@ export default function AlertsSettingsRoute() {
   };
 
   const toggle = (value: boolean, onChange: (v: boolean) => void, label: string) => (
-    <Switch
-      value={value}
-      onValueChange={onChange}
-      disabled={save.isPending}
-      trackColor={{ true: colors.primary, false: colors.muted }}
-      accessibilityLabel={label}
-    />
+    <AppSwitch value={value} onValueChange={onChange} disabled={save.isPending} accessibilityLabel={label} />
   );
 
-  const chips = <T,>(options: T[], current: T, render: (v: T) => string, onPick: (v: T) => void) => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-      {options.map((o) => {
-        const active = o === current;
-        return (
-          <Pressable
-            key={String(o)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            onPress={() => onPick(o)}
-            style={[
-              styles.chip,
-              { backgroundColor: active ? colors.primary : colors.secondary, borderColor: active ? colors.primary : colors.border },
-            ]}
-          >
-            <AppText size="sm" style={{ color: active ? colors.primaryForeground : colors.foreground }}>
-              {render(o)}
-            </AppText>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+  const chips = <T extends string | number>(options: T[], current: T, render: (v: T) => string, onPick: (v: T) => void) => (
+    <Chips options={options} value={current} label={render} onChange={onPick} disabled={save.isPending} />
   );
 
   return (
     <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching}>
-      <Card>
-        <AppText weight="semibold">هذا الهاتف</AppText>
-        <AppText size="sm" tone={push === "enabled" ? "success" : "muted"}>
-          {push ? PUSH_STATE_TEXT[push] : "جارٍ التحقق من الإشعارات…"}
-        </AppText>
-        {push && push !== "enabled" && <Button title="إعادة المحاولة" variant="secondary" onPress={() => void syncPush()} />}
-      </Card>
+      <PushPermissionCard />
 
       {!p && q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
       {!p && q.isError && <EmptyState icon="alert-circle-outline" title="تعذّر تحميل الإعدادات" description={errorMessage(q.error)} />}
@@ -176,6 +141,4 @@ export default function AlertsSettingsRoute() {
 
 const styles = StyleSheet.create({
   sub: { gap: space.xs, paddingBottom: space.sm },
-  chips: { gap: space.sm, paddingVertical: 2 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: space.md, minHeight: 34, justifyContent: "center" },
 });

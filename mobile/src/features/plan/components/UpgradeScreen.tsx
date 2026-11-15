@@ -82,5 +82,5 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { flexGrow: 1, justifyContent: "center", padding: space.lg, gap: space.lg },
   card: { alignItems: "center", gap: space.md, paddingVertical: space.xl },
-  badge: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center" },
+  badge: { width: 64, height: 64, alignItems: "center", justifyContent: "center" },
 });

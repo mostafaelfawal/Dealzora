@@ -1,18 +1,17 @@
 /** التحويلات: ما ينتظر ردك أولاً، ثم الكل بالحالة والفرع والتاريخ. */
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { View } from "react-native";
 
 import { errorMessage } from "@/api/errors";
 import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
+import { Chips } from "@/components/shared/Chips";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Screen } from "@/components/shared/Screen";
 import type { TransferFilter } from "@/features/transfers/api/transfers.api";
 import { TransferRow } from "@/features/transfers/components/TransferRow";
 import { useTransfers } from "@/features/transfers/hooks/useTransfers";
-import { space } from "@/theme/colors";
-import { useTheme } from "@/theme/ThemeProvider";
 
 const FILTERS: { id: TransferFilter; label: string }[] = [
   { id: "needs_action", label: "ينتظر ردك" },
@@ -23,34 +22,18 @@ const FILTERS: { id: TransferFilter; label: string }[] = [
 ];
 
 export default function TransfersRoute() {
-  const { colors } = useTheme();
   const [filter, setFilter] = useState<TransferFilter>("needs_action");
   const q = useTransfers(filter);
   const items = q.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
     <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching && !q.isFetchingNextPage}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {FILTERS.map((f) => {
-          const active = f.id === filter;
-          return (
-            <Pressable
-              key={f.id}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              onPress={() => setFilter(f.id)}
-              style={[
-                styles.chip,
-                { backgroundColor: active ? colors.primary : colors.secondary, borderColor: active ? colors.primary : colors.border },
-              ]}
-            >
-              <AppText size="sm" weight="medium" style={{ color: active ? colors.primaryForeground : colors.foreground }}>
-                {f.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <Chips
+        options={FILTERS.map((f) => f.id)}
+        value={filter}
+        label={(id) => FILTERS.find((f) => f.id === id)?.label ?? ""}
+        onChange={setFilter}
+      />
       <LastUpdated at={q.dataUpdatedAt} />
 
       {items.map((t) => (
@@ -76,8 +59,3 @@ export default function TransfersRoute() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  chips: { gap: space.sm, paddingVertical: 2 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: space.md, minHeight: 36, justifyContent: "center" },
-});

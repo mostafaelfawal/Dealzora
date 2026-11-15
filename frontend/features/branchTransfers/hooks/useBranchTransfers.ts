@@ -268,12 +268,15 @@ export const useCatalogStatus = (enabled: boolean) =>
 export function useSyncCatalogNow() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: syncCatalogNow,
+    mutationFn: () => syncCatalogNow(true),
     onSuccess: (s) => {
       qc.setQueryData(branchKeys.catalog(), s);
       const r = s.result;
       if (!r) return;
       if (!r.ok) toast.error(r.error ?? "تعذّرت المزامنة");
+      // لا نقول «كل البيانات متزامنة» وفيه سجلات رفضها السيرفر.
+      else if (s.errorCount > 0)
+        toast.warning(`${s.errorCount} سجل لم يُرفع للسيرفر. التفاصيل في إعدادات المزامنة`);
       else if (r.applied || r.pushed)
         toast.success(`تمت المزامنة: وصل ${r.applied} تحديث، ورُفع ${r.pushed}`);
       else toast.success("كل البيانات متزامنة");

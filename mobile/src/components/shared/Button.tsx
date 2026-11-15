@@ -45,7 +45,7 @@ export function Button({ title, variant = "primary", loading, icon, disabled, st
         ) : (
           <>
             {icon && <Ionicons name={icon} size={18} color={palette.fg} />}
-            <AppText weight="semibold" style={{ color: palette.fg }}>
+            <AppText weight="semibold" center style={[styles.label, { color: palette.fg }]}>
               {title}
             </AppText>
           </>
@@ -64,4 +64,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: space.sm },
+  // النص يأخذ المساحة المتاحة ويلتف لو ضاقت (لا يُقص في منتصف الكلمة)
+  label: { flexShrink: 1 },
 });

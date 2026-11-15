@@ -28,7 +28,7 @@ from datetime import timedelta
 from typing import Any
 
 from pydantic import ValidationError
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit
@@ -167,6 +167,12 @@ def global_product_id(session: Session, local_id: str) -> str:
 
 
 # ================= المحرك =================
+# إعادة رفع ما رفضه السيرفر بعد هذه المدة (حتى لو لم يتغير السجل).
+PUSH_RETRY_AFTER = timedelta(hours=1)
+# أول مزامنة بعد تشغيل البرنامج تعيد رفع كل المرفوض (بعد تحديث البرنامج أو السيرفر غالباً).
+_retried_since_start = False
+
+
 class CatalogSync:
     def __init__(self, session: Session, actor: Actor, client: SyncClient, branch_id: str) -> None:
         self.session = session
@@ -178,13 +184,16 @@ class CatalogSync:
         self.stats = {"pulled": 0, "applied": 0, "pushed": 0, "errors": 0}
 
     # ---------- الدورة ----------
-    def run(self) -> dict[str, Any]:
+    def run(self, *, retry_rejected: bool = False) -> dict[str, Any]:
+        """retry_rejected: «مزامنة الآن» من المستخدم = إعادة رفع كل ما رفضه السيرفر فوراً (لا انتظار الساعة)."""
+        global _retried_since_start
         if not _run_lock.acquire(blocking=False):
             return {"ok": True, "running": True, **self.stats}
         try:
             state = self._state()
             try:
-                self._retry_failed()
+                self._retry_failed(force=retry_rejected or not _retried_since_start)
+                _retried_since_start = True
                 self._pull(state)
                 self._push(state)
             except (SyncUnavailable, SyncAuthLost, RemoteError) as exc:
@@ -235,10 +244,17 @@ class CatalogSync:
             if not page.get("has_more"):
                 return
 
-    def _retry_failed(self) -> None:
+    def _retry_failed(self, *, force: bool = False) -> None:
         links = self.session.scalars(select(CatalogLink).where(CatalogLink.remote.is_not(None))).all()
         for link in links:
             self._apply_remote(dict(link.remote or {}))
+        # رفع رفضه السيرفر: نعيد المحاولة كل PUSH_RETRY_AFTER حتى بلا تعديل جديد (رفضٌ أصلحه تحديث السيرفر،
+        # مثل حقول الضريبة وكود المنظومة، يُرفع وحده بدل أن يبقى معلّقاً للأبد).
+        stale = utcnow() - PUSH_RETRY_AFTER
+        retry = update(CatalogLink).where(CatalogLink.error_hash.is_not(None), CatalogLink.remote.is_(None))
+        if not force:
+            retry = retry.where(CatalogLink.updated_at < stale)
+        self.session.execute(retry.values(error_hash=None))
         self.session.commit()
 
     def _apply_remote(self, item: dict[str, Any]) -> None:

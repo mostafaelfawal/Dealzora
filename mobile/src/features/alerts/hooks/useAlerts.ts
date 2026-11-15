@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Alert } from "react-native";
 
 import { errorMessage } from "@/api/errors";
@@ -6,7 +7,9 @@ import type { NotificationPrefs } from "@/api/types";
 import { useLiveRefresh } from "@/hooks/useLiveRefresh";
 
 import { fetchNotifications, fetchPrefs, markRead, savePrefs } from "../api/alerts.api";
+import { notifyNewAlerts } from "../lib/localNotify";
 import { utcOffsetMinutes } from "../lib/push";
+import { usePushState } from "../lib/pushStore";
 
 export const alertKeys = {
   list: ["alerts", "list"] as const,
@@ -18,9 +21,16 @@ export function useNotifications() {
   return useQuery({ queryKey: alertKeys.list, queryFn: ({ signal }) => fetchNotifications(signal), ...live });
 }
 
-/** عدد غير المقروء لشارة التبويب (يتحدث مع شاشة التنبيهات وكل دقيقتين في الخلفية القريبة). */
+/**
+ * عدد غير المقروء لشارة التبويب (كل دقيقة والتطبيق مفتوح). وبدون push من الخادم (Expo Go): كل تنبيه جديد
+ * يظهر كإشعار حقيقي في شريط الهاتف (localNotify).
+ */
 export function useUnreadCount(): number {
-  const q = useQuery({ queryKey: alertKeys.list, queryFn: ({ signal }) => fetchNotifications(signal), refetchInterval: 120_000 });
+  const q = useQuery({ queryKey: alertKeys.list, queryFn: ({ signal }) => fetchNotifications(signal), refetchInterval: 60_000 });
+  const push = usePushState();
+  useEffect(() => {
+    if (push === "local" && q.data) void notifyNewAlerts(q.data.items);
+  }, [push, q.data]);
   return q.data?.unread ?? 0;
 }
 

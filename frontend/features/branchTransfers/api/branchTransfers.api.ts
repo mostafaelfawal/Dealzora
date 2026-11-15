@@ -400,8 +400,11 @@ const toCatalog = (d: any): CatalogStatus => ({
 export const fetchCatalogStatus = async () =>
   toCatalog((await api.get(`${BASE}/catalog`)).data);
 
-export const syncCatalogNow = async () =>
-  toCatalog((await api.post(`${BASE}/catalog/sync`)).data);
+/** manual = زر «مزامنة الآن»: يعيد رفع السجلات التي رفضها السيرفر من قبل فوراً (الدورية لا تفعل كل دقيقة). */
+export const syncCatalogNow = async (manual = false) =>
+  toCatalog(
+    (await api.post(`${BASE}/catalog/sync`, null, { params: manual ? { retry_failed: true } : undefined })).data,
+  );
 
 /* ---------- إدارة فروع المحل (المالك من الفرع الرئيسي) ---------- */
 

@@ -78,10 +78,10 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
 const styles = StyleSheet.create({
   bar: { flexDirection: "row", height: 28, marginVertical: space.xs },
   // الفاصل 2px بلون السطح = حد بلون البطاقة بين الأجزاء (لا إطار حول الشكل)
-  part: { borderRadius: 4, justifyContent: "center", paddingHorizontal: 6, borderLeftWidth: 1, borderRightWidth: 1 },
+  part: { justifyContent: "center", paddingHorizontal: 6, borderLeftWidth: 1, borderRightWidth: 1 },
   legend: { gap: space.xs },
   legendRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  swatch: { width: 10, height: 10, borderRadius: 2 },
+  swatch: { width: 10, height: 10 },
   legendName: { flex: 1 },
   legendPct: { minWidth: 36, textAlign: "center" },
 });

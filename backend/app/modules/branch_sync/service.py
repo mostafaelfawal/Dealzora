@@ -658,15 +658,16 @@ class BranchSyncService:
     def catalog(self) -> dict:
         return {"connected": self.config() is not None, **catalog_status(self.session)}
 
-    def sync_now(self) -> dict:
-        """دورة مزامنة: الكتالوج (سحب ثم رفع) + إعادة التحويلات المعلّقة. تستدعيها الواجهة دورياً."""
+    def sync_now(self, *, retry_failed: bool = False) -> dict:
+        """دورة مزامنة: الكتالوج (سحب ثم رفع) + إعادة التحويلات المعلّقة. تستدعيها الواجهة دورياً.
+        retry_failed: زر «مزامنة الآن» = إعادة رفع كل ما رفضه السيرفر قبل كده فوراً."""
         cfg = self.config()
         if cfg is None:
             return {"connected": False}
         client = SyncClient(cfg["server_url"], cfg["branch_id"], cfg["secret"])
         self._refresh_lease(client, cfg)  # قبل فحص الخطة: الفرع يرث خطة المحل من هنا
         ensure_feature(Feature.BRANCHES)
-        result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run()
+        result = CatalogSync(self.session, self.actor, client, cfg["branch_id"]).run(retry_rejected=retry_failed)
         if result.get("ok"):
             self._push_stats(client)
         sent = phone = 0

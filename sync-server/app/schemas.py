@@ -627,8 +627,8 @@ class CommandFailIn(Strict):
 
 # ================= تنبيهات الهاتف =================
 NotificationKind = Literal[
-    "branch_offline", "eta_rejected", "transfer_request", "low_sales", "sensitive_op", "cash_diff"
-]
+    "branch_offline", "eta_rejected", "transfer_request", "low_sales", "sensitive_op", "cash_diff", "test"
+]  # test: إشعار تجريبي من سطر الأوامر (python -m app.cli test-notify)
 _HHMM = r"^([01]\d|2[0-3]):[0-5]\d$"
 
 

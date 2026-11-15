@@ -1,22 +1,25 @@
-/** المزيد: حسابي، القفل بالبصمة، الخادم، الإصدار. */
+/** المزيد: حسابي، المظهر، القفل بالبصمة، الخادم، الإصدار. */
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Switch } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
+import { AppSwitch } from "@/components/shared/AppSwitch";
 import { AppText } from "@/components/shared/AppText";
+import { BrandLogo } from "@/components/shared/BrandLogo";
 import { Card } from "@/components/shared/Card";
+import { Chips } from "@/components/shared/Chips";
 import { ListRow } from "@/components/shared/ListRow";
 import { Screen } from "@/components/shared/Screen";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLockSettings } from "@/features/lock/hooks/useLockSettings";
 import { getServerUrl } from "@/lib/serverUrl";
-import { useTheme } from "@/theme/ThemeProvider";
+import { THEME_LABEL, THEME_PREFS, setThemePref, useThemePref } from "@/theme/themePref";
 
 export default function MoreRoute() {
-  const { colors } = useTheme();
   const { user } = useAuth();
   const lock = useLockSettings();
+  const theme = useThemePref();
   const [server, setServer] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
 
@@ -62,6 +65,11 @@ export default function MoreRoute() {
       )}
 
       <Card>
+        <ListRow icon="contrast-outline" title="المظهر" subtitle="تلقائي يتبع إعداد الهاتف" />
+        <Chips options={THEME_PREFS} value={theme} label={(t) => THEME_LABEL[t]} onChange={setThemePref} />
+      </Card>
+
+      <Card>
         <ListRow
           icon="finger-print-outline"
           title={`القفل بـ${lock.label}`}
@@ -71,11 +79,10 @@ export default function MoreRoute() {
               : "سجّل بصمة أو وجهاً في إعدادات الهاتف لتفعيله"
           }
           trailing={
-            <Switch
+            <AppSwitch
               value={lock.enabled}
               onValueChange={onToggle}
               disabled={!lock.available || lock.loading || toggling}
-              trackColor={{ true: colors.primary, false: colors.muted }}
               accessibilityLabel="القفل بالبصمة"
             />
           }
@@ -84,10 +91,19 @@ export default function MoreRoute() {
 
       <Card>
         <ListRow icon="server-outline" title="خادم المزامنة" subtitle={server?.replace(/^https?:\/\//, "") ?? "—"} />
-        <AppText size="xs" tone="muted">
-          الإصدار {Constants.expoConfig?.version ?? "—"}
-        </AppText>
+        <View style={styles.about}>
+          <BrandLogo width={96} style={styles.logo} />
+          <AppText size="xs" tone="muted">
+            الإصدار {Constants.expoConfig?.version ?? "—"}
+          </AppText>
+        </View>
       </Card>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  // الشعار بجانب رقم الإصدار أسفل الشاشة
+  about: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 },
+  logo: { alignSelf: "auto" },
+});

@@ -4,10 +4,11 @@
  */
 import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useState } from "react";
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
+import { Chips } from "@/components/shared/Chips";
 import {
   PERIOD_LABELS,
   clampCustom,
@@ -29,35 +30,16 @@ interface Props {
 }
 
 export function PeriodPicker({ preset, range }: Props) {
-  const { colors } = useTheme();
   const [customOpen, setCustomOpen] = useState(false);
 
   return (
     <View style={styles.wrap}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {PRESETS.map((p) => {
-          const active = p === preset;
-          return (
-            <Pressable
-              key={p}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              onPress={() => (p === "custom" ? setCustomOpen(true) : setPreset(p))}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: active ? colors.primary : colors.secondary,
-                  borderColor: active ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <AppText size="sm" weight="medium" style={{ color: active ? colors.primaryForeground : colors.foreground }}>
-                {PERIOD_LABELS[p]}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <Chips
+        options={PRESETS}
+        value={preset}
+        label={(p) => PERIOD_LABELS[p]}
+        onChange={(p) => (p === "custom" ? setCustomOpen(true) : setPreset(p))}
+      />
       <AppText size="xs" tone="muted">
         {formatRange(range)}
       </AppText>
@@ -144,8 +126,6 @@ function CustomRangeModal({
 
 const styles = StyleSheet.create({
   wrap: { gap: space.xs },
-  chips: { gap: space.sm, paddingVertical: 2 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: space.md, minHeight: 36, justifyContent: "center" },
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: space.lg },
   sheet: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg, gap: space.md },
   field: { borderWidth: 1, borderRadius: radius.md, padding: space.md, flexDirection: "row", justifyContent: "space-between" },

@@ -26,6 +26,7 @@ export function AppText({ weight = "regular", size = "md", tone = "default", cen
   }[tone];
   return (
     <Text
+      textBreakStrategy="simple"
       {...rest}
       style={[
         rtlText,

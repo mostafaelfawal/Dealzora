@@ -51,6 +51,6 @@ const styles = StyleSheet.create({
     paddingTop: space.sm,
     gap: space.md,
   },
-  handle: { alignSelf: "center", width: 40, height: 4, borderRadius: 2 },
+  handle: { alignSelf: "center", width: 40, height: 4 },
   body: { gap: space.md, paddingBottom: space.sm },
 });

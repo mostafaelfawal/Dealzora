@@ -399,6 +399,47 @@ def send_pending(session: Session, push: PushFn, now: datetime | None = None) ->
     return pushed
 
 
+def send_test(session: Session, push: PushFn, shop_id: str | None = None, now: datetime | None = None) -> list[str]:
+    """إشعار تجريبي لكل هاتف مسجّل (للتأكد من وصول الإشعارات): يظهر في سجل التنبيهات، ويُرسل push فوراً
+    للهواتف التي لها token (بلا انتظار التجميع أو ساعات الهدوء). بلا token (Expo Go): التطبيق يلتقطه
+    خلال دقيقة ويعرضه إشعاراً محلياً. يرجع وصفاً لكل حساب وصله (بلا أي token في الناتج)."""
+    now = now or utcnow()
+    q = select(MobileSession.shop_id).where(MobileSession.revoked_at.is_(None), MobileSession.refresh_expires_at > now)
+    if shop_id:
+        q = q.where(MobileSession.shop_id == shop_id)
+    out: list[str] = []
+    for sid in session.scalars(q.distinct()).all():
+        shop = session.get(Shop, sid)
+        if shop is None:
+            continue
+        stamp = now.astimezone(UTC).strftime("%H:%M:%S")
+        for account, _prefs, _row in _recipients(session, shop, now):
+            key = f"test:{uuid.uuid4()}"
+            _add(session, shop_id=shop.id, account_id=account.id, kind="test", key=key, title="إشعار تجريبي",
+                 body=f"الإشعارات تصل من الخادم ({stamp} UTC)", route="/alerts", ref_id=None, now=now)  # fmt: skip
+            n = session.scalar(select(Notification).where(Notification.account_id == account.id, Notification.dedup_key == key))
+            tokens = session.scalars(
+                select(MobileSession.push_token).where(
+                    MobileSession.account_id == account.id, MobileSession.revoked_at.is_(None),
+                    MobileSession.refresh_expires_at > now, MobileSession.push_token.is_not(None),
+                )
+            ).all()  # fmt: skip
+            how = "سيظهر في التطبيق خلال دقيقة (لا push token: Expo Go)"
+            if tokens:
+                try:
+                    push([{"to": t, "title": n.title, "body": n.body, "data": {"url": "/alerts"},
+                           "channelId": "alerts", "priority": "high", "sound": "default"} for t in tokens])  # fmt: skip
+                    how = f"push أُرسل لـ {len(tokens)} هاتف"
+                except Exception:  # noqa: BLE001
+                    log.warning("test push failed", exc_info=True)
+                    how = "فشل push (انظر السجل)، وسيظهر في التطبيق خلال دقيقة"
+            if n is not None:
+                n.status, n.sent_at = "sent", now
+            out.append(f"{shop.name} / {account.username}: {how}")
+    session.commit()
+    return out
+
+
 def tick(session: Session, push: PushFn, now: datetime | None = None) -> dict[str, int]:
     return {"created": produce(session, now), "pushed": send_pending(session, push, now)}
 

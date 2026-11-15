@@ -1,5 +1,6 @@
-/** حالة تسجيل push على هذا الهاتف (لشاشة الإعدادات). null = لم تُحسم بعد. */
+/** حالة إشعارات هذا الهاتف (للتنبيهات والإعدادات). null = لم تُحسم بعد. */
 import { useSyncExternalStore } from "react";
+import { Linking } from "react-native";
 
 import { registerForPush, type PushState } from "./push";
 
@@ -13,10 +14,11 @@ const subscribe = (fn: () => void) => {
   return () => listeners.delete(fn);
 };
 
-/** تسجيل واحد في نفس الوقت (فتح التطبيق + زر «إعادة المحاولة» معاً). */
-export function syncPush(): Promise<PushState> {
+function run(ask: boolean): Promise<PushState> {
+  // الضغط على «تفعيل» أثناء فحص الإقلاع: ننتظره ثم نسأل (لا ننضم له، فهو لا يسأل).
+  if (running && ask) return running.catch(() => null).then(() => run(true));
   if (!running) {
-    running = registerForPush()
+    running = registerForPush({ ask })
       .then((s) => {
         state = s;
         listeners.forEach((fn) => fn());
@@ -28,6 +30,15 @@ export function syncPush(): Promise<PushState> {
   }
   return running;
 }
+
+/** عند فتح التطبيق: يحدد الحالة ويسجّل push لو الإذن موجود، بلا نافذة إذن مفاجئة. */
+export const syncPush = () => run(false);
+
+/** زر «تفعيل الإشعارات»: يطلب الإذن من النظام. */
+export const enablePush = () => run(true);
+
+/** رُفض نهائياً: التفعيل من صفحة التطبيق في إعدادات الهاتف. */
+export const openPhoneSettings = () => Linking.openSettings();
 
 export function resetPushState(): void {
   state = null;
