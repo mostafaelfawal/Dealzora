@@ -26,6 +26,7 @@ from app.core.audit import record_audit
 from app.core.base import uuid7, utcnow
 from app.core.constants import QTY_SCALE
 from app.core.errors import BadRequestError, ConflictError, NotFoundError
+from app.core.periods import local_today
 from app.core.plan import Feature, ensure_feature
 from app.core.security import Actor
 from app.modules.batches.engine import BatchIn
@@ -639,16 +640,38 @@ class BranchSyncService:
         cfg = self.config()
         if cfg is None:
             return
+        # سيرفر فروع أقدم يرفض حقول الإيصال الإلكتروني: نرفع بدونها، ونجرب الكامل مرة يومياً بعد ترقيته.
+        legacy_day = cfg.get("stats_legacy_day")
+        if legacy_day and legacy_day != local_today().isoformat():
+            cfg.pop("stats_sent", None)  # إعادة رفع النافذة كاملة بالحقول الجديدة
+            legacy_day = None
         rows, fresh = branch_stats.pending_upload(self.session, cfg)
         self.session.commit()  # لا معاملة مفتوحة أثناء الشبكة
         if not rows:
             return
+
+        def push(days: list[dict]) -> None:
+            for i in range(0, len(days), 100):
+                client.call("POST", "/stats/batch", {"days": days[i : i + 100]})
+
         try:
-            for i in range(0, len(rows), 100):
-                client.call("POST", "/stats/batch", {"days": rows[i : i + 100]})
+            if legacy_day:
+                push(branch_stats.strip_eta(rows))
+            else:
+                try:
+                    push(rows)
+                except RemoteError as exc:
+                    if exc.status_code not in (400, 422):
+                        raise
+                    push(branch_stats.strip_eta(rows))
+                    legacy_day = local_today().isoformat()
         except (SyncUnavailable, SyncAuthLost, RemoteError):
             return
         latest = self.config() or cfg
+        if legacy_day:
+            latest["stats_legacy_day"] = legacy_day
+        else:
+            latest.pop("stats_legacy_day", None)
         latest.pop("stats_digest", None)
         latest.pop("stats_through", None)
         latest["stats_sent"] = fresh

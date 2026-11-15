@@ -17,7 +17,43 @@ from app.core.periods import iter_days, local_today
 from app.modules.reports.repository import ReportRepository
 
 WINDOW_DAYS = 90
-FIELDS = ("count", "revenue", "returns", "net", "cost", "profit", "discounts", "cash", "credit", "wallet", "expenses")
+# حالة الإيصال الإلكتروني (للتقارير عند المالك فقط؛ الإرسال نفسه من كل فرع لإيصالاته):
+# لم يصل بعد / مقبول / مرفوض (يشمل خطأ التحقق)، بعدد الإيصالات (بيع + مرتجع) حسب يوم الإصدار.
+ETA_FIELDS = ("eta_waiting", "eta_accepted", "eta_rejected")
+FIELDS = (
+    "count", "revenue", "returns", "net", "cost", "profit", "discounts", "cash", "credit", "wallet", "expenses",
+    *ETA_FIELDS,
+)  # fmt: skip
+_ETA_GROUPS = {
+    "eta_waiting": ("not_sent", "pending"),
+    "eta_accepted": ("accepted",),
+    "eta_rejected": ("rejected", "invalid"),
+}
+
+
+def _eta_by_day(session: Session, d1: date, d2: date) -> dict[date, dict[str, int]]:
+    from sqlalchemy import func, select
+
+    from app.modules.sales.model import Sale, SaleReturn
+
+    out: dict[date, dict[str, int]] = {}
+    for model, day_col in ((Sale, Sale.sold_on), (SaleReturn, SaleReturn.returned_on)):
+        rows = session.execute(
+            select(day_col, model.eta_status, func.count())
+            .where(model.deleted_at.is_(None), model.eta_status.is_not(None), day_col.between(d1, d2))
+            .group_by(day_col, model.eta_status)
+        ).all()
+        for day, status, count in rows:
+            bucket = out.setdefault(day, dict.fromkeys(ETA_FIELDS, 0))
+            for key, statuses in _ETA_GROUPS.items():
+                if status in statuses:
+                    bucket[key] += int(count)
+    return out
+
+
+def strip_eta(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """للسيرفر القديم الذي يرفض أي حقل زائد: نفس الأيام بدون حقول الإيصال الإلكتروني."""
+    return [{"day": r["day"], "data": {k: v for k, v in r["data"].items() if k not in ETA_FIELDS}} for r in rows]
 
 
 def _expenses_by_day(session: Session, d1: date, d2: date) -> dict[date, int]:
@@ -44,6 +80,7 @@ def day_rows(session: Session, d1: date, d2: date) -> dict[str, dict[str, int]]:
     sales = repo.sales_by_day(d1, d2)
     returns = repo.returns_by_day(d1, d2)
     expenses = _expenses_by_day(session, d1, d2)
+    eta = _eta_by_day(session, d1, d2)
     out = {}
     for day in iter_days(d1, d2):
         count, revenue, cost, discounts, cash, credit, wallet = sales.get(day, (0, 0, 0, 0, 0, 0, 0))
@@ -53,6 +90,7 @@ def day_rows(session: Session, d1: date, d2: date) -> dict[str, dict[str, int]]:
             "count": int(count), "revenue": int(revenue), "returns": int(r_total), "net": int(net),
             "cost": int(net_cost), "profit": int(net - net_cost), "discounts": int(discounts),
             "cash": int(cash), "credit": int(credit), "wallet": int(wallet), "expenses": int(expenses.get(day, 0)),
+            **eta.get(day, dict.fromkeys(ETA_FIELDS, 0)),
         }  # fmt: skip
     return out
 

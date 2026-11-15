@@ -1,6 +1,6 @@
 import type { TaxMode } from "@/lib/tax";
 
-import type { PaymentMethod, ReturnReason } from "./sale";
+import type { EReceiptStatus, PaymentMethod, ReturnReason } from "./sale";
 
 /** شكل الـ backend كما هو (قروش، كميات × 1000). */
 export interface SaleLineDto {
@@ -44,6 +44,10 @@ export interface SaleDto {
   tax_mode?: TaxMode | null;
   taxable_total?: number | null;
   tax_total?: number | null;
+  eta_status?: EReceiptStatus | null;
+  eta_uuid?: string | null;
+  eta_receipt_number?: string | null;
+  eta_error?: string | null;
   customer_points?: number | null;
   invoice_discount: number;
   total: number;

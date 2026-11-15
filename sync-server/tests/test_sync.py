@@ -120,3 +120,14 @@ def test_daily_stats(shop):
     rows = b["A"].get("/v1/stats", params=q).json()
     totals = {(r["branch_id"], r["day"]): r["data"]["net"] for r in rows}
     assert totals == {(b["A"].id, "2026-11-10"): 1700, (b["B"].id, "2026-11-10"): 900, (b["B"].id, "2026-11-11"): 400}
+
+
+def test_daily_stats_e_receipt_fields(shop):
+    """حالة الإيصال الإلكتروني اختيارية: الفرع الأحدث يرسلها، والأقدم بدونها يبقى مقبولاً (افتراضي 0)."""
+    _, b = shop
+    with_eta = {**_day(500, 4), "eta_waiting": 2, "eta_accepted": 5, "eta_rejected": 1}
+    assert b["B"].put("/v1/stats/2026-11-14", json={"data": with_eta}).status_code == 200
+    assert b["B"].put("/v1/stats/2026-11-15", json={"data": _day(300, 2)}).status_code == 200
+    assert b["B"].put("/v1/stats/2026-11-16", json={"data": {**_day(1, 1), "eta_waiting": -1}}).status_code == 422
+    rows = {r["day"]: r["data"] for r in b["B"].get("/v1/stats", params={"date_from": "2026-11-14", "date_to": "2026-11-15"}).json()}
+    assert (rows["2026-11-14"]["eta_accepted"], rows["2026-11-15"]["eta_waiting"]) == (5, 0)

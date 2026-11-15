@@ -23,7 +23,8 @@ export type RealtimeTopic =
   | "users"
   | "settings"
   | "devices"
-  | "transfers";
+  | "transfers"
+  | "e_receipt";
 
 /** يُطلق على window مع detail: المواضيع. "*" = اتصال رجع بعد انقطاع (قد تكون فاتتنا تغييرات). */
 export const REALTIME_EVENT = "dz:realtime";

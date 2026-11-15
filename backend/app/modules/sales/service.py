@@ -47,6 +47,7 @@ from .model import Sale, SaleLine, SaleReturn, SaleReturnLine
 from .pricing import LineInput, price_lines
 from app.modules.loyalty.config import earned_points, max_redeemable, redeem_discount
 from app.modules.loyalty.service import LoyaltyKind, load_config as load_loyalty, post as post_points
+from app.modules.e_receipt.service import issue_return_receipt, issue_sale_receipt
 from app.modules.tax.calc import TaxLineIn, compute_invoice, return_split
 from app.modules.tax.config import tax_mode
 from app.modules.tax.service import load_config as load_tax
@@ -376,6 +377,8 @@ class SaleService(EntityService):
             )
         sale.cost_total = cost_total
         self.repo.flush()
+        # الإيصال الإلكتروني في نفس المعاملة (لا شيء لو الميزة متوقفة، وخطأ التحقق لا يوقف البيع).
+        issue_sale_receipt(self.session, self.actor, sale)
 
         if customer:
             self.customers.record_purchase(customer, total)
@@ -621,6 +624,7 @@ class SaleService(EntityService):
             ret.loyalty_reversed = reverse
         self.repo.add_any(ret)
         self.repo.flush()
+        issue_return_receipt(self.session, self.actor, ret, sale)
 
         for product, base, line in moves:
             self.products.move_stock(
@@ -788,6 +792,10 @@ class SaleService(EntityService):
                     tax_mode=s.tax_mode,
                     taxable_total=s.taxable_total,
                     tax_total=s.tax_total,
+                    eta_status=s.eta_status,
+                    eta_uuid=s.eta_uuid,
+                    eta_receipt_number=s.eta_receipt_number,
+                    eta_error=s.eta_error if mgr else None,
                     total=s.total,
                     cash_amount=s.cash_amount,
                     credit_amount=s.credit_amount,
@@ -848,6 +856,10 @@ class SaleService(EntityService):
                 total=r.total,
                 taxable_total=r.taxable_total,
                 tax_total=r.tax_total,
+                eta_status=r.eta_status,
+                eta_uuid=r.eta_uuid,
+                eta_receipt_number=r.eta_receipt_number,
+                eta_error=r.eta_error,
                 cash_refund=r.cash_refund,
                 credit_refund=r.credit_refund,
                 wallet_refund=r.wallet_refund,

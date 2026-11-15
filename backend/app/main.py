@@ -60,6 +60,10 @@ async def lifespan(_: FastAPI):
         raise
     # نسخة احتياطية تلقائية في الخلفية (لا تؤخر الإقلاع).
     threading.Thread(target=auto_backup_if_due, name="auto-backup", daemon=True).start()
+    # إرسال الإيصالات الإلكترونية ومتابعتها في الخلفية (لا يفعل شيئاً والميزة متوقفة).
+    from app.modules.e_receipt.sender import start_worker
+
+    start_worker()
     yield
 
 

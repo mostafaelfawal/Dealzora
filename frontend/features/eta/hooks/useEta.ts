@@ -6,6 +6,12 @@ import { extractErrorMessage } from "@/lib/errors";
 import { useFeature } from "@/lib/plan";
 
 import {
+  adoptChainAnchor,
+  fetchSendAttempts,
+  releaseHeldReturn,
+  fetchSendStatus,
+  sendReceiptsNow,
+  testEtaConnection,
   fetchEtaBranch,
   fetchEtaCodes,
   fetchEtaConfig,
@@ -108,6 +114,78 @@ export const useSaveEtaDevice = () =>
     etaKeys.devices,
     "تم حفظ بيانات الجهاز",
     "تعذّر حفظ بيانات الجهاز",
+  );
+
+export const sendKeys = {
+  status: ["eta", "send-status"] as const,
+  attempts: ["eta", "attempts"] as const,
+};
+
+/** حالة الإرسال تتغير في الخلفية (كل دقيقة): نقرأها دورياً والشاشة مفتوحة. */
+export function useSendStatus() {
+  const allowed = useFeature("e_receipt");
+  return useQuery({
+    queryKey: sendKeys.status,
+    queryFn: fetchSendStatus,
+    enabled: allowed,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useSendAttempts() {
+  const allowed = useFeature("e_receipt");
+  return useQuery({
+    queryKey: sendKeys.attempts,
+    queryFn: () => fetchSendAttempts(),
+    enabled: allowed,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useSendNow() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: sendReceiptsNow,
+    onSuccess: (r) => {
+      void qc.invalidateQueries({ queryKey: ["eta"] });
+      if (r.errors.length) toast.warning(r.errors[0]);
+      else
+        toast.success(
+          `أُرسل ${r.submitted} إيصال · مقبول ${r.accepted} · مرفوض ${r.rejected}`,
+        );
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر الإرسال")),
+  });
+}
+
+export function useReleaseReturn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: releaseHeldReturn,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["eta"] });
+      toast.success("سيُرسل المرتجع في الدورة التالية وتكمل السلسلة");
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر تنفيذ القرار")),
+  });
+}
+
+/** مصادقة فقط ببيانات الجهاز، والنتيجة تُعرض بجانب الجهاز. */
+export function useTestConnection() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: testEtaConnection,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: sendKeys.attempts }),
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر اختبار الاتصال")),
+  });
+}
+
+export const useAdoptChainAnchor = () =>
+  useEtaMutation(
+    (deviceId: string) => adoptChainAnchor(deviceId),
+    etaKeys.devices,
+    "تم: السلسلة تكمل من آخر إيصال صدر. أعد توليد الإيصالات التي بها خطأ",
+    "تعذّر اعتماد السلسلة",
   );
 
 export const useSaveEtaUnit = () => {

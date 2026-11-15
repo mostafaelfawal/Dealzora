@@ -31,6 +31,7 @@ import app.modules.loyalty.model  # noqa: F401
 import app.modules.batches.model  # noqa: F401
 import app.modules.branch_sync.model  # noqa: F401
 import app.modules.devtools.model  # noqa: F401
+import app.modules.e_receipt.model  # noqa: F401
 
 # تعديلات على جداول موجودة (create_all لا يعدّل جدولاً قائماً). كل خطوة آمنة للتكرار.
 _UPGRADES = (
@@ -91,10 +92,43 @@ _NEW_COLUMNS = (
     ("products", "eta_item_type", "VARCHAR(3)"),
     ("products", "eta_item_code", "VARCHAR(100)"),
     ("measure_units", "eta_unit_type", "VARCHAR(30)"),
+    # الإيصال الإلكتروني (المرحلة 3): الـ UUID والسلسلة والحالة على الفاتورة والمرتجع. NULL = لم يتولد.
+    ("sales", "eta_status", "VARCHAR(12)"),
+    ("sales", "eta_uuid", "VARCHAR(64)"),
+    ("sales", "eta_previous_uuid", "VARCHAR(64)"),
+    ("sales", "eta_receipt_number", "VARCHAR(50)"),
+    ("sales", "eta_device_id", "VARCHAR(36)"),
+    ("sales", "eta_seq", "INTEGER"),
+    ("sales", "eta_document", "TEXT"),
+    ("sales", "eta_error", "TEXT"),
+    ("sale_returns", "eta_status", "VARCHAR(12)"),
+    ("sale_returns", "eta_uuid", "VARCHAR(64)"),
+    ("sale_returns", "eta_previous_uuid", "VARCHAR(64)"),
+    ("sale_returns", "eta_reference_uuid", "VARCHAR(64)"),
+    ("sale_returns", "eta_receipt_number", "VARCHAR(50)"),
+    ("sale_returns", "eta_device_id", "VARCHAR(36)"),
+    ("sale_returns", "eta_seq", "INTEGER"),
+    ("sale_returns", "eta_document", "TEXT"),
+    ("sale_returns", "eta_error", "TEXT"),
+    # الإيصال الإلكتروني (المرحلة 4): رقم دفعة الإرسال و longId المنظومة ووقت الإرسال.
+    ("sales", "eta_submission_uuid", "VARCHAR(64)"),
+    ("sales", "eta_long_id", "VARCHAR(100)"),
+    ("sales", "eta_sent_at", "DATETIME"),
+    ("sale_returns", "eta_submission_uuid", "VARCHAR(64)"),
+    ("sale_returns", "eta_long_id", "VARCHAR(100)"),
+    ("sale_returns", "eta_sent_at", "DATETIME"),
+    # المرحلة 5: قرار المدير بإرسال مرتجع رغم رفض فاتورته الأصلية (يفك إيقاف سلسلة الجهاز).
+    ("sale_returns", "eta_release", "BOOLEAN NOT NULL DEFAULT 0"),
 )
 
 # فهارس على أعمدة أُضيفت بـ _NEW_COLUMNS (تُنشأ بعدها).
 _POST_COLUMN_UPGRADES = (
+    # الـ UUID فريد، وموضع كل إيصال في سلسلة جهازه فريد (بيعاً أو مرتجعاً): حماية إضافية من كسر السلسلة.
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_sales_eta_uuid ON sales (eta_uuid) WHERE eta_uuid IS NOT NULL",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_sale_returns_eta_uuid ON sale_returns (eta_uuid) WHERE eta_uuid IS NOT NULL",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_sales_eta_seq ON sales (eta_device_id, eta_seq) WHERE eta_seq IS NOT NULL",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_sale_returns_eta_seq "
+    "ON sale_returns (eta_device_id, eta_seq) WHERE eta_seq IS NOT NULL",
     "CREATE UNIQUE INDEX IF NOT EXISTS uq_products_scale_code_live "
     "ON products (scale_code) WHERE deleted_at IS NULL AND scale_code IS NOT NULL",
     # دور المالك: النسخ القديمة بلا مالك ← أقدم مدير (نشط أولاً) يصبح المالك. مرة واحدة فقط.

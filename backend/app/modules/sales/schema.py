@@ -148,6 +148,11 @@ class SaleOut(BaseModel):
     tax_mode: str | None = None
     taxable_total: int | None = None
     tax_total: int | None = None
+    # الإيصال الإلكتروني: None = لم يتولد (الميزة متوقفة وقت البيع).
+    eta_status: str | None = None
+    eta_uuid: str | None = None
+    eta_receipt_number: str | None = None
+    eta_error: str | None = None
     total: int
     cash_amount: int
     credit_amount: int
@@ -225,6 +230,10 @@ class ReturnOut(BaseModel):
     total: int
     taxable_total: int | None = None
     tax_total: int | None = None
+    eta_status: str | None = None
+    eta_uuid: str | None = None
+    eta_receipt_number: str | None = None
+    eta_error: str | None = None
     cash_refund: int
     credit_refund: int
     wallet_refund: int

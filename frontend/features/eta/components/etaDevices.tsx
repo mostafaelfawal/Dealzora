@@ -1,6 +1,11 @@
 "use client";
 
-import { IconDeviceDesktop, IconPencil } from "@tabler/icons-react";
+import {
+  IconDeviceDesktop,
+  IconLoader2,
+  IconPencil,
+  IconPlugConnected,
+} from "@tabler/icons-react";
 import { useState, type FormEvent } from "react";
 
 import { FormField } from "@/components/shared/form";
@@ -17,7 +22,11 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-import { useEtaDevices, useSaveEtaDevice } from "../hooks/useEta";
+import {
+  useEtaDevices,
+  useSaveEtaDevice,
+  useTestConnection,
+} from "../hooks/useEta";
 import type {
   EtaDevice,
   EtaDeviceInput,
@@ -233,6 +242,49 @@ function DeviceDialog({
   );
 }
 
+/** «اختبار الاتصال»: مصادقة فقط ببيانات الجهاز، والنتيجة تحته مباشرة. */
+function TestConnection({ deviceId }: { deviceId: string }) {
+  const test = useTestConnection();
+  const result = test.data;
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="gap-1.5"
+        disabled={test.isPending}
+        onClick={() => test.mutate(deviceId)}
+      >
+        {test.isPending ? (
+          <IconLoader2 className="size-4 animate-spin" />
+        ) : (
+          <IconPlugConnected className="size-4" />
+        )}
+        اختبار الاتصال
+      </Button>
+      {result && (
+        <p
+          role="status"
+          className={cn(
+            "max-w-64 text-end text-xs wrap-break-word",
+            result.ok ? "text-success" : "text-destructive",
+          )}
+        >
+          {result.ok
+            ? `${result.message} (${result.environment === "prod" ? "الفعلية" : "التجريبية"})`
+            : result.message}
+          {result.correlation_id && (
+            <span className="block font-mono text-[10px] text-muted-foreground" dir="ltr">
+              {result.correlation_id}
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** كل جهاز يصدر إيصالات (الأساسي وأجهزة الكاشير المقترنة) يحتاج بياناته في المنظومة. */
 export function EtaDevices() {
   const { data } = useEtaDevices();
@@ -257,6 +309,7 @@ export function EtaDevices() {
                 <SecretBadge state={d.client_secret} />
               </p>
             </div>
+            <TestConnection deviceId={d.device_id} />
             <Button
               type="button"
               variant="outline"

@@ -26,6 +26,7 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
   customers: [["customers"], ["pos", "catalog"], ["reports"], ["dashboard"]],
   sales: [
     ["sales"],
+    ["eta", "send-status"], // بيع جديد = إيصال جديد في الطابور
     ["purchase-orders", "suggestions"],
     ["expiry"],
     ["pos", "catalog"],
@@ -65,6 +66,8 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
     ["inventory"],
     ["pos", "catalog"],
   ],
+  // عامل الإيصالات غيّر أعداد الطابور (لم يصل/مرفوض/متأخر): الشاشة والحالة في الفواتير.
+  e_receipt: [["eta"], ["sales"]],
 };
 
 /** تغييرات متتالية (بيع واحد = عدة معاملات) تُجمع في إعادة جلب واحدة. */

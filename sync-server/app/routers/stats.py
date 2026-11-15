@@ -38,6 +38,10 @@ class DayData(BaseModel):
     credit: _Money = 0
     wallet: _Money = 0
     expenses: _Money = 0
+    # حالة الإيصال الإلكتروني (عدد إيصالات اليوم): لم يصل بعد / مقبول / مرفوض. اختيارية (فروع أقدم لا ترسلها).
+    eta_waiting: int = Field(0, ge=0, le=10**7)
+    eta_accepted: int = Field(0, ge=0, le=10**7)
+    eta_rejected: int = Field(0, ge=0, le=10**7)
 
 
 class DayIn(BaseModel):

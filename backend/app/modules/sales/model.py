@@ -4,9 +4,9 @@
 كل سطر يحمل لقطة (الاسم/السعر/التكلفة وقت البيع) فلا تتأثر التقارير بتعديل الصنف لاحقاً.
 """
 
-from datetime import date
+from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, ForeignKey, Index, Integer, String
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.base import Base, SyncMixin
@@ -54,6 +54,19 @@ class Sale(SyncMixin, Base):
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
     returned_total: Mapped[int] = mapped_column(Integer, default=0)
     note: Mapped[str | None] = mapped_column(String(MAX_NOTE_LEN), nullable=True)
+    # الإيصال الإلكتروني (e_receipt). كلها NULL = الميزة لم تكن مفعّلة وقت البيع (لا شيء تولّد).
+    # eta_document = نص المستند الذي حُسب منه الـ UUID حرفياً (يُرسل بنفس البايتات).
+    eta_status: Mapped[str | None] = mapped_column(String(12), nullable=True)  # e_receipt.EReceiptStatus
+    eta_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    eta_previous_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    eta_receipt_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    eta_device_id: Mapped[str | None] = mapped_column(String(36), nullable=True)  # الجهاز صاحب السلسلة
+    eta_seq: Mapped[int | None] = mapped_column(Integer, nullable=True)  # ترتيبه في سلسلة الجهاز
+    eta_document: Mapped[str | None] = mapped_column(Text, nullable=True)
+    eta_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    eta_submission_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)  # دفعة الإرسال
+    eta_long_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    eta_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     lines: Mapped[list["SaleLine"]] = relationship(
         back_populates="sale", lazy="selectin", order_by="SaleLine.id"
@@ -118,6 +131,21 @@ class SaleReturn(SyncMixin, Base):
     loyalty_restored: Mapped[int] = mapped_column(Integer, default=0)  # نقاط مستبدلة رجعت
     wallet_refund: Mapped[int] = mapped_column(Integer, default=0)  # رُدّ لمحفظة العميل
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
+    # الإيصال الإلكتروني للمرتجع (نفس معنى حقول Sale)، و eta_reference_uuid = UUID فاتورة البيع الأصلية.
+    eta_status: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    eta_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    eta_previous_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    eta_reference_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    eta_receipt_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    eta_device_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    eta_seq: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    eta_document: Mapped[str | None] = mapped_column(Text, nullable=True)
+    eta_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    eta_submission_uuid: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    eta_long_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    eta_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # قرار المدير: يُرسل رغم رفض فاتورته الأصلية (وإلا ينتظر قبولها، وتنتظر سلسلة الجهاز خلفه).
+    eta_release: Mapped[bool] = mapped_column(Boolean, default=False)
 
     lines: Mapped[list["SaleReturnLine"]] = relationship(
         back_populates="sale_return", lazy="selectin", order_by="SaleReturnLine.id"

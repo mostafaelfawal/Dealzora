@@ -89,6 +89,58 @@ export interface ReadinessItem {
   ref_id: string | null;
 }
 
+export interface ConnectionTest {
+  ok: boolean;
+  environment: EtaEnvironment;
+  message: string;
+  kind: string | null;
+  expires_in: number | null;
+  correlation_id: string | null;
+}
+
+export interface SendCycle {
+  submitted: number;
+  accepted: number;
+  rejected: number;
+  resolved: number;
+  errors: string[];
+}
+
+export interface SendStatus {
+  /** الحالة ← العدد (not_sent/pending/accepted/rejected/invalid/not_required). */
+  counts: Record<string, number>;
+  /** الطابور: لم يصل بعد، مرفوض، قارب مهلة الـ 24 ساعة، تجاوزها. */
+  queue: { waiting: number; rejected: number; late: number; overdue: number };
+  devices: Record<
+    string,
+    {
+      wait_seconds: number;
+      auth_error: string | null;
+      /** رقم مرتجع يوقف سلسلة الجهاز (فاتورته الأصلية مرفوضة) حتى قرار المدير. */
+      held_by: string | null;
+      held_return_id: string | null;
+    }
+  >;
+}
+
+export interface SendAttempt {
+  id: string;
+  created_at: string;
+  pos_device_id: string;
+  environment: EtaEnvironment;
+  operation: "test" | "submit" | "poll";
+  outcome: string;
+  http_status: number | null;
+  submission_uuid: string | null;
+  receipts_count: number;
+  accepted_count: number;
+  rejected_count: number;
+  retry_after: number | null;
+  correlation_id: string | null;
+  message: string | null;
+  duration_ms: number;
+}
+
 export interface Readiness {
   ready: boolean;
   blockers: number;

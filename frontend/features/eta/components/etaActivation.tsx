@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 import {
+  useAdoptChainAnchor,
   useEtaConfig,
   useEtaReadiness,
   useSaveEtaConfig,
@@ -34,6 +35,9 @@ const FIX_LINK: Record<ReadinessSection, { href: string; label: string }> = {
 function Item({ item }: { item: ReadinessItem }) {
   const blocker = item.severity === "blocker";
   const link = FIX_LINK[item.section];
+  const adopt = useAdoptChainAnchor();
+  // فجوة سلسلة بعد استعادة نسخة قديمة: قرار صريح من المدير بدل رابط.
+  const chainGap = item.key.startsWith("chain.") && item.ref_id;
   return (
     <li className="flex items-start gap-2.5 py-2">
       {blocker ? (
@@ -60,12 +64,25 @@ function Item({ item }: { item: ReadinessItem }) {
           </p>
         )}
       </div>
-      <a
-        href={link.href}
-        className="shrink-0 text-xs text-primary underline-offset-4 hover:underline"
-      >
-        {link.label}
-      </a>
+      {chainGap ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="shrink-0"
+          disabled={adopt.isPending}
+          onClick={() => adopt.mutate(item.ref_id!)}
+        >
+          متابعة السلسلة من آخر إيصال صادر
+        </Button>
+      ) : (
+        <a
+          href={link.href}
+          className="shrink-0 text-xs text-primary underline-offset-4 hover:underline"
+        >
+          {link.label}
+        </a>
+      )}
     </li>
   );
 }
@@ -151,7 +168,7 @@ export function EtaActivation() {
         </ul>
       )}
       <p className="text-xs text-muted-foreground">
-        هذه المرحلة تحفظ البيانات فقط. لا يُرسل أي شيء للمنظومة بعد.
+        الإيصالات تتولد وتُحفظ مع كل بيع، ولا يُرسل أي شيء للمنظومة بعد.
       </p>
     </div>
   );

@@ -360,6 +360,17 @@ class EtaService(EntityService):
                     detail="الـ SDK لا يوضح هل هو إلزامي", ref_id=device_id)  # fmt: skip
             if p and p.pos_serial:
                 serials.setdefault(p.pos_serial, []).append(name)
+        # سلسلة الإيصالات أقدم من آخر إيصال صدر (استعادة نسخة احتياطية قديمة): يُوقف التوليد حتى القرار.
+        from app.modules.e_receipt.service import chain_gap  # متأخر: e_receipt يعتمد على eta
+
+        for device_id, name, _main in self._devices():
+            link = chain_gap(self.session, device_id)
+            if link is not None:
+                add(f"chain.{device_id}", ReadinessSection.DEVICES,
+                    f"سلسلة إيصالات «{name}» أقدم من آخر إيصال صدر (استعادة نسخة احتياطية قديمة؟)",
+                    detail=f"آخر إيصال صدر فعلاً رقمه {link.seq} في سلسلة الجهاز. "
+                           "اعتمد «متابعة السلسلة من آخر إيصال صادر» ثم أعد توليد الإيصالات المعلّقة.",
+                    ref_id=device_id)  # fmt: skip
         for serial, names in serials.items():
             if len(names) > 1:
                 add(f"device.serial.{serial}", ReadinessSection.DEVICES, "نفس الرقم التسلسلي لأكثر من جهاز",

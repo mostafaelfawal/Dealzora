@@ -1,5 +1,13 @@
 import type { TaxMode } from "@/lib/tax";
 
+export type EReceiptStatus =
+  | "not_sent"
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "not_required"
+  | "invalid";
+
 export type BuiltinMethod = "cash" | "credit" | "mixed";
 /** المدمجة أو معرّف طريقة إلكترونية من الإعدادات (vodafone_cash، stc_pay...). */
 export type PaymentMethod = BuiltinMethod | (string & {});
@@ -65,6 +73,11 @@ export interface Sale {
   taxMode: TaxMode | null;
   taxableTotal: number | null;
   taxTotal: number | null;
+  /** الإيصال الإلكتروني. null = لم يتولد (الميزة متوقفة وقت البيع). */
+  etaStatus: EReceiptStatus | null;
+  etaUuid: string | null;
+  etaReceiptNumber: string | null;
+  etaError: string | null;
   total: number;
   cashAmount: number;
   creditAmount: number;

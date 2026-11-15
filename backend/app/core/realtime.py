@@ -119,6 +119,12 @@ def _do_orm_execute(state: Any) -> None:
         _mark(state.session, table)
 
 
+def replace_topics(session: Session, topics: set[str]) -> None:
+    """للمهام الخلفية: يستبدل ما سيُعلن بعد commit بدل المستنتج من الجداول (يُستدعى بعد flush).
+    مثال: عامل الإيصالات يحدّث حالة الفواتير دون أن تعيد كل الأجهزة جلب المبيعات."""
+    session.info[_PENDING] = set(topics)
+
+
 def _after_commit(session: Session) -> None:
     topics = session.info.pop(_PENDING, None)
     if topics:

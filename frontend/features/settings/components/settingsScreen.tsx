@@ -17,6 +17,7 @@ import {
   IconPrinter,
   IconReceiptTax,
   IconScale,
+  IconSend,
   IconShieldCheck,
   IconShieldLock,
   IconUserCircle,
@@ -33,6 +34,7 @@ import {
 } from "@/features/devices/components/devicesSection";
 import { EtaActivation } from "@/features/eta/components/etaActivation";
 import { EtaDevices } from "@/features/eta/components/etaDevices";
+import { EtaSending } from "@/features/eta/components/etaSending";
 import {
   EtaBranchForm,
   EtaShopForm,
@@ -96,6 +98,14 @@ function eReceiptPage(allowed: boolean): Page {
           description:
             "ما ينقص قبل التفعيل. لا يُفعَّل والقائمة فيها بند مطلوب.",
           content: <EtaActivation />,
+        },
+        {
+          id: "eta-sending",
+          icon: <IconSend />,
+          title: "الإرسال للمنظومة",
+          description:
+            "حالة الإيصالات، والإرسال الآن، وآخر محاولات الاتصال بالمنظومة.",
+          content: <EtaSending />,
         },
         {
           id: "eta-shop",

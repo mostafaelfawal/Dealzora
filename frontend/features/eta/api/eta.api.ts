@@ -2,6 +2,10 @@ import { api } from "@/lib/axios";
 
 import type {
   CodeTableName,
+  ConnectionTest,
+  SendAttempt,
+  SendCycle,
+  SendStatus,
   EtaBranch,
   EtaCode,
   EtaConfig,
@@ -44,6 +48,35 @@ export const saveEtaUnit = async (id: string, code: string | null) =>
 
 export const fetchEtaReadiness = async () =>
   (await api.get<Readiness>("/eta/readiness")).data;
+
+/** بعد استعادة نسخة قديمة: السلسلة تكمل من آخر إيصال صدر فعلاً (المرساة). */
+export const adoptChainAnchor = async (deviceId: string) => {
+  await api.post(`/e-receipt/chains/${encodeURIComponent(deviceId)}/adopt-anchor`);
+};
+
+/* ---------- الاتصال بالمنظومة ---------- */
+
+export const testEtaConnection = async (deviceId: string) =>
+  (
+    await api.post<ConnectionTest>(
+      `/e-receipt/devices/${encodeURIComponent(deviceId)}/test-connection`,
+    )
+  ).data;
+
+/** إرسال مرتجع رغم رفض فاتورته الأصلية (يفك إيقاف سلسلة الجهاز). */
+export const releaseHeldReturn = async (returnId: string) => {
+  await api.post(`/e-receipt/returns/${encodeURIComponent(returnId)}/release`);
+};
+
+export const sendReceiptsNow = async () =>
+  (await api.post<SendCycle>("/e-receipt/send-now")).data;
+
+export const fetchSendStatus = async () =>
+  (await api.get<SendStatus>("/e-receipt/send-status")).data;
+
+export const fetchSendAttempts = async (limit = 20) =>
+  (await api.get<SendAttempt[]>("/e-receipt/attempts", { params: { limit } }))
+    .data;
 
 export const fetchEtaCodes = async (table: CodeTableName) =>
   (await api.get<EtaCode[]>(`/eta/codes/${table}`)).data;
