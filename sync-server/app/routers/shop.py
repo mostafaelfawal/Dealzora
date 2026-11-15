@@ -10,6 +10,7 @@
   POST  /v1/shop/branches/{id}/revoke         إلغاء ربط جهاز الفرع (يتوقف فوراً)
   GET   /v1/shop/lease                        شهادة الفرع الموقّعة (يرث خطة المحل)
   GET/POST /v1/shop/staff, PATCH/DELETE /v1/shop/staff/{id}   موظفو كل الفروع (المالك)
+  POST  /v1/shop/mobile-code                  كود ربط هاتف المالك أو المدير بالمحل («سلسلة» فقط)
 """
 
 from datetime import UTC, datetime
@@ -24,6 +25,7 @@ from ..schemas import (
     BranchPatch,
     LeaseOut,
     LicenseIn,
+    MobileCodeOut,
     NewBranchOut,
     PairingCodeOut,
     PairOut,
@@ -36,6 +38,7 @@ from ..schemas import (
 from ..security import CallerDep, RenewalCallerDep
 from ..models import Branch, Shop
 from ..services import lease as lease_svc
+from ..services import mobile_auth
 from ..services import self_service as svc
 from ..services import staff as staff_svc
 
@@ -114,3 +117,10 @@ def update_staff(staff_id: str, data: StaffPatch, caller: CallerDep, session: Se
 @router.delete("/shop/staff/{staff_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_staff(staff_id: str, caller: CallerDep, session: SessionDep):
     staff_svc.delete(session, caller, staff_id)
+
+
+@router.post("/shop/mobile-code", response_model=MobileCodeOut, status_code=status.HTTP_201_CREATED)
+def mobile_code(caller: CallerDep, session: SessionDep):
+    """أي فرع في المحل يطلع كود لهاتف (المالك أو مدير الفرع). الكود يحدد المحل فقط،
+    والدخول نفسه باسم المستخدم وكلمة المرور، والكاشير لا يدخل التطبيق."""
+    return mobile_auth.create_code(session, caller.shop_id, by_branch_id=caller.branch_id, actor="branch", ip=caller.ip)

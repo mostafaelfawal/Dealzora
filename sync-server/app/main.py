@@ -16,7 +16,17 @@ from sqlalchemy import text
 from .config import get_settings
 from .db import get_engine
 from .errors import register_error_handlers
-from .routers import admin, auth, branches, catalog, shop, stats, sync, transfers
+from .routers import (
+    admin,
+    auth,
+    branches,
+    catalog,
+    mobile,
+    shop,
+    stats,
+    sync,
+    transfers,
+)
 
 API_PREFIX = "/v1"
 
@@ -83,6 +93,8 @@ def create_app() -> FastAPI:
     )  # fmt: skip
     for router in routers:
         app.include_router(router, prefix=API_PREFIX)
+    # تطبيق الهاتف: مسارات وتوكنات منفصلة عن الفروع.
+    app.include_router(mobile.router, prefix=mobile.PREFIX)
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:

@@ -213,6 +213,24 @@ GET  /v1/catalog/pull?after=<seq>&limit=500
 | `PUT /v1/stats/{YYYY-MM-DD}` `{data: {...}}` | ملخص يوم فرعك (مبيعات، عدد فواتير، ربح…). يُستبدل لو أُرسل ثانية |
 | `GET /v1/stats?date_from=&date_to=` | ملخصات كل فروع المحل (تقارير مجمعة / تطبيق المالك) |
 
+### تطبيق الهاتف (`/mobile/v1`) — المالك ومديرو الفروع، خطة «سلسلة» فقط
+الحسابات هي حسابات البرنامج نفسها (owner يرى كل الفروع، و manager فروعه فقط، والكاشير مرفوض).
+أسماء المستخدمين فريدة داخل المحل فقط، فالهاتف يُربط بالمحل بكود مرة واحدة ثم اسم المستخدم وكلمة المرور.
+
+| الطلب | الوصف |
+|---|---|
+| `POST /v1/shop/mobile-code` (توكن فرع) | كود ربط هاتف (XXXX-XXXX-XXXX)، `SYNC_MOBILE_CODE_TTL_MINUTES`، مرة واحدة، ويُبطَل بعد `SYNC_MOBILE_CODE_MAX_ATTEMPTS` كلمة مرور خاطئة. للدعم: `POST /v1/admin/shops/{id}/mobile-code` |
+| `POST /mobile/v1/auth/login` `{code, username, password, device_id, device_name, platform}` | ← `{access_token, expires_at, refresh_token, refresh_expires_at, session_id, user}`. دخول جديد من نفس `device_id` يلغي جلسته القديمة |
+| `POST /mobile/v1/auth/refresh` `{refresh_token}` | زوج جديد، والـ refresh القديم يتوقف. **رجوع refresh قديم يلغي الجلسة كلها** (`refresh_invalid`) |
+| `POST /mobile/v1/auth/logout` · `POST /mobile/v1/auth/logout-all` | هذا الهاتف · كل هواتف الحساب (يعملان حتى لو نزلت الخطة) |
+| `GET /mobile/v1/me` · `GET /mobile/v1/sessions` | الحساب وفروعه المسموحة · هواتف الحساب |
+| `GET /mobile/v1/branches` · `GET /mobile/v1/branches/{id}` | الفروع المسموحة مع `last_seen_at` و`online` (فرع غير مسند ← `404`) |
+
+- توكن الوصول `SYNC_MOBILE_ACCESS_TTL_MINUTES` دقيقة، والـ refresh يتجدد مع كل استخدام لمدة `SYNC_MOBILE_REFRESH_DAYS` يوم.
+- كل طلب يعيد فحص الحساب والمحل والخطة: محل بخطة أقل ← `403 plan_upgrade_required` مع
+  `details: {current_plan, required_plan}` (شاشة الترقية). تغيير كلمة مرور الحساب أو دوره أو إيقافه ← `401 session_revoked`.
+- توكن الهاتف (`typ=mobile`، `aud`، ومفتاح توقيع مشتق) لا يصلح لمسارات `/v1`، وتوكن الفرع لا يصلح لـ `/mobile/v1`.
+
 ---
 
 ## 5) الأمان
@@ -229,6 +247,7 @@ GET  /v1/catalog/pull?after=<seq>&limit=500
 | تعارض متزامن | قفل صف المحل ثم صف التحويل بنفس الترتيب دائماً، وترقيم بلا فجوات |
 | إيقاف محل (اشتراك انتهى) | `is_active=false` يوقف **كل فروعه فوراً** |
 | لوحة الإدارة | `SYNC_ADMIN_TOKEN` + **قائمة IPs** اختيارية (`SYNC_ADMIN_ALLOWED_IPS`)، وكل عملية إدارة مُسجَّلة |
+| هاتف ضاع أو refresh اتسرق | «الخروج من كل الأجهزة»، والـ refresh يتغير مع كل تجديد ومُخزَّن **مُجزّأ**، ورجوع قديم يلغي الجلسة. دخول الهاتف وخروجه في السجل الأمني باسم المستخدم والجهاز |
 | تتبع الاختراق | **سجل أمني** (`GET /v1/admin/audit`): دخول فاشل، ربط، تغيير أسرار، عمليات الإدارة، التحويلات، مع الـ IP و**بدون أي سر** |
 | طلبات ضخمة | حد حجم الطلب (`SYNC_MAX_BODY_BYTES` في التطبيق + Caddy) وحد عدد الأحداث وحجم كل حدث |
 | تسريب تفاصيل داخلية | الأخطاء غير المتوقعة ترجع `500 server_error` فقط، والتفاصيل في اللوج |

@@ -57,6 +57,16 @@ class Settings(BaseSettings):
     # خطة المحلات اللي أنشأتها يدوياً بلا ترخيص.
     legacy_shop_plan: str = "enterprise"
 
+    # تطبيق الهاتف (المالك ومديرو الفروع): توكن وصول قصير + refresh يُلغى، وكود ربط الهاتف بالمحل.
+    mobile_access_ttl_minutes: int = Field(10, ge=1, le=60)
+    # الـ refresh يتجدد مع كل استخدام: هاتف لم يُفتح هذه المدة يحتاج كود ربط جديد.
+    mobile_refresh_days: int = Field(30, ge=1, le=180)
+    mobile_code_ttl_minutes: int = Field(15, ge=1, le=24 * 60)
+    # محاولات كلمة مرور خاطئة على نفس الكود قبل إبطاله.
+    mobile_code_max_attempts: int = Field(5, ge=1, le=20)
+    # الخطط المسموح لها بتطبيق الهاتف («سلسلة» فقط).
+    mobile_plans: Annotated[list[str], NoDecode] = ["enterprise"]
+
     @field_validator("jwt_secret", "admin_token")
     @classmethod
     def _strong(cls, value: str) -> str:
@@ -64,7 +74,7 @@ class Settings(BaseSettings):
             raise ValueError("يجب أن يكون 32 حرفاً على الأقل (openssl rand -hex 32)")
         return value
 
-    @field_validator("admin_allowed_ips", "register_plans", mode="before")
+    @field_validator("admin_allowed_ips", "register_plans", "mobile_plans", mode="before")
     @classmethod
     def _ips(cls, value: object) -> object:
         if isinstance(value, str):

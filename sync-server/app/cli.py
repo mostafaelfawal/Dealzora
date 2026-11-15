@@ -3,6 +3,7 @@
     docker compose exec api python -m app.cli create-shop "سوبر ماركت النور"
     docker compose exec api python -m app.cli create-branch <shop_id> "فرع المعادي" MA
     docker compose exec api python -m app.cli pair-code <branch_id>      # كود ربط قصير للمالك
+    docker compose exec api python -m app.cli mobile-code <shop_id>      # كود ربط هاتف (تطبيق «سلسلة»)
     docker compose exec api python -m app.cli list
     docker compose exec api python -m app.cli rotate-secret <branch_id>
     docker compose exec api python -m app.cli disable-branch <branch_id>
@@ -37,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("list", help="كل المحلات وفروعها")
     p = sub.add_parser("pair-code", help="كود ربط قصير (مرة واحدة) يكتبه المالك في برنامج الفرع")
     p.add_argument("branch_id")
+    p = sub.add_parser("mobile-code", help="كود ربط هاتف المالك أو المدير بالمحل (مرة واحدة)")
+    p.add_argument("shop_id")
     p = sub.add_parser("rotate-secret", help="سر جديد لفرع (القديم يتوقف فوراً)")
     p.add_argument("branch_id")
     sub.add_parser("lease-keygen", help="مفتاح توقيع شهادات الفروع (الخاص للسيرفر، والعام لبناء البرنامج)")
@@ -84,6 +87,13 @@ def main(argv: list[str] | None = None) -> int:
             out = pairing.create_code(session, args.branch_id, ip="cli")
             print(f"الفرع: {out.branch_name}")
             print(f"كود الربط: {out.code}")
+            print(f"صالح حتى: {out.expires_at.isoformat(timespec='minutes')} (مرة واحدة فقط)")
+        elif args.cmd == "mobile-code":
+            from .services import mobile_auth
+
+            out = mobile_auth.create_code(session, args.shop_id, by_branch_id=None, actor="admin", ip="cli")
+            print(f"المحل: {out.shop_name}")
+            print(f"كود ربط الهاتف: {out.code}")
             print(f"صالح حتى: {out.expires_at.isoformat(timespec='minutes')} (مرة واحدة فقط)")
         elif args.cmd == "rotate-secret":
             _print_credentials(shops.rotate_secret(session, args.branch_id))

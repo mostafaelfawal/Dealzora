@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Dealzora سلسلة",
+    "slug": "dealzora-mobile",
+    "scheme": "dealzora",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/brand/logo.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dealzora.chain"
+    },
+    "android": {
+      "package": "com.dealzora.chain",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/brand/logo.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "forcesRTL": true,
+          "supportedLocales": [
+            "ar"
+          ]
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": "يستخدم Dealzora بصمة الوجه لفتح التطبيق"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "يستخدم Dealzora بصمة الوجه لفتح التطبيق"
+        }
+      ],
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/brand/logo.png",
+          "imageWidth": 120
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

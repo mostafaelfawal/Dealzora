@@ -415,3 +415,69 @@ class StaffOut(BaseModel):
     branches: list[str]
     updated_at: datetime | None
     updated_by_branch_id: str | None
+
+
+# ================= تطبيق الهاتف (/mobile/v1) =================
+class MobileCodeOut(BaseModel):
+    """كود ربط الهاتف بالمحل: يظهر مرة واحدة، ويُكتب في الهاتف مع اسم المستخدم وكلمة المرور."""
+
+    code: str
+    shop_name: str
+    expires_at: datetime
+
+
+class MobileLoginIn(Strict):
+    code: str = Field(min_length=12, max_length=20)
+    # اسم المستخدم يُطبَّع (حروف صغيرة) قبل البحث، مثل البرنامج.
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=1, max_length=128)
+    # معرّف ثابت يولّده التطبيق مرة واحدة ويحفظه (جلسة واحدة لكل هاتف).
+    device_id: str = Field(min_length=8, max_length=64, pattern=r"^[0-9A-Za-z._\-]+$")
+    device_name: str = Field(min_length=1, max_length=80)
+    platform: Literal["android", "ios", "other"] = "other"
+
+
+class MobileRefreshIn(Strict):
+    refresh_token: str = Field(min_length=40, max_length=200)
+
+
+class MobileUserOut(BaseModel):
+    account_id: str
+    username: str
+    role: Literal["owner", "manager"]
+    shop_id: str
+    shop_name: str
+    # الفروع المسموح للمستخدم برؤيتها (المالك = كل فروع المحل).
+    branch_ids: list[str]
+
+
+class MobileTokensOut(BaseModel):
+    """التوكنات تُحفظ في SecureStore فقط."""
+
+    access_token: str
+    token_type: str = "bearer"
+    expires_at: datetime
+    refresh_token: str
+    refresh_expires_at: datetime
+    session_id: str
+    user: MobileUserOut
+
+
+class MobileSessionOut(BaseModel):
+    id: str
+    device_name: str
+    platform: str
+    created_at: datetime
+    last_used_at: datetime | None
+    is_current: bool
+
+
+class MobileBranchOut(BaseModel):
+    """last_seen_at = آخر اتصال للفرع بالسيرفر: كل رقم في التطبيق يوضح «آخر تحديث من الفرع»."""
+
+    id: str
+    name: str
+    code: str
+    is_active: bool
+    online: bool
+    last_seen_at: datetime | None

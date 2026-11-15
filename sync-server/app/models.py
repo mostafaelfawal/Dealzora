@@ -9,6 +9,7 @@
 - pairing_codes: أكواد ربط جهاز الفرع (مرة واحدة، صلاحية قصيرة، مُجزّأة).
 - catalog_items: الأصناف والعملاء المشتركين بين الفروع (نسخة واحدة لكل سجل، وseq لكل تغيير).
 - audit_log: سجل أمني (دخول فاشل، ربط أجهزة، عمليات الإدارة، التحويلات).
+- mobile_codes / mobile_sessions: ربط هاتف المالك أو المدير بالمحل، وجلسة لكل هاتف (refresh مُجزّأ).
 """
 
 from datetime import date, datetime
@@ -218,3 +219,48 @@ class CatalogItem(Base):
         Index("ix_catalog_items_shop_seq", "shop_id", "seq"),
         Index("ix_catalog_items_shop_key", "shop_id", "kind", "match_key"),
     )
+
+
+class MobileCode(Base):
+    """كود ربط الهاتف بالمحل: يحدد المحل فقط (أسماء المستخدمين فريدة داخل المحل وحده).
+    مرة واحدة، صلاحية قصيرة، مُجزّأ، ويُبطَل بعد محاولات كلمة مرور خاطئة كثيرة."""
+
+    __tablename__ = "mobile_codes"
+
+    code_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), index=True)
+    # الفرع اللي طلب الكود (None = الإدارة).
+    created_by_branch_id: Mapped[str | None] = mapped_column(ForeignKey("branches.id"), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class MobileSession(Base):
+    """جلسة هاتف واحد لحساب واحد (مالك أو مدير). الحساب نفسه سجل في الكتالوج (owner / staff).
+
+    refresh_hash: تجزئة توكن التجديد الحالي فقط (يتغير مع كل تجديد، والقديم لو رجع = سرقة ← إلغاء الجلسة).
+    cred_fp: بصمة تجزئة كلمة المرور وقت الدخول: تغيير كلمة المرور من البرنامج يُلغي جلسات الهاتف.
+    """
+
+    __tablename__ = "mobile_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), index=True)
+    account_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"))
+    username: Mapped[str] = mapped_column(String(50))
+    device_id: Mapped[str] = mapped_column(String(64))
+    device_name: Mapped[str] = mapped_column(String(80))
+    platform: Mapped[str] = mapped_column(String(16))
+    refresh_hash: Mapped[str] = mapped_column(String(64))
+    refresh_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    cred_fp: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # logout / logout_all / replaced / refresh_reuse / expired / account_changed
+    revoke_reason: Mapped[str | None] = mapped_column(String(24), nullable=True)
+
+    __table_args__ = (Index("ix_mobile_sessions_account", "account_id", "revoked_at"),)

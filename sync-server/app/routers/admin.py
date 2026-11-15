@@ -15,13 +15,14 @@ from ..schemas import (
     BranchIn,
     BranchOut,
     BranchPatch,
+    MobileCodeOut,
     PairingCodeOut,
     ShopIn,
     ShopOut,
     ShopPatch,
 )
 from ..security import require_admin
-from ..services import pairing, shops
+from ..services import mobile_auth, pairing, shops
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -68,6 +69,12 @@ def pairing_code(branch_id: str, request: Request, session: SessionDep):
     """كود قصير (XXXX-XXXX-XXXX) يكتبه المالك في برنامج الفرع. مرة واحدة وصالح دقائق.
     الربط يوقف أي جهاز قديم لنفس الفرع."""
     return pairing.create_code(session, branch_id, ip=client_ip(request))
+
+
+@router.post("/shops/{shop_id}/mobile-code", response_model=MobileCodeOut, status_code=status.HTTP_201_CREATED)
+def mobile_code(shop_id: str, request: Request, session: SessionDep):
+    """كود ربط هاتف (للدعم الفني): يحدد المحل فقط، والدخول باسم المستخدم وكلمة المرور."""
+    return mobile_auth.create_code(session, shop_id, by_branch_id=None, actor="admin", ip=client_ip(request))
 
 
 @router.get("/audit", response_model=list[AuditOut])
