@@ -9,7 +9,9 @@ import { currencySymbol } from "@/lib/currency";
 import { formatNumber, formatQty } from "@/lib/format";
 
 import { RETURN_REASON_LABEL } from "../config/saleOptions";
+import { fetchReturn, fetchSale } from "../api/sales.api";
 import type { Sale, SaleReturn } from "../types/sale";
+import { E_RECEIPT_CSS, eReceiptBlockHtml } from "./eReceiptPrint";
 import { saleTaxRows } from "./saleTax";
 
 const FOOTER = "شكراً لزيارتكم";
@@ -67,7 +69,8 @@ export function buildReceiptHtml(
   ${sale.walletAmount > 0 && sale.paymentRef ? line("رقم العملية", esc(sale.paymentRef)) : ""}
   ${sale.returnedTotal > 0 ? line("مرتجع من الفاتورة", money(sale.returnedTotal)) : ""}
   ${sale.customerPoints !== null && (sale.loyaltyEarned > 0 || sale.loyaltyRedeemed > 0) ? `<hr><div class="center muted">كسبت ${sale.loyaltyEarned} نقطة · رصيدك ${sale.customerPoints} نقطة</div>` : ""}
-  ${footer()}`,
+  ${sale.etaPrint ? eReceiptBlockHtml(sale.etaPrint, getPrinterPrefs().paperMm, "sale") : ""}${footer()}`,
+    sale.etaPrint ? E_RECEIPT_CSS : "",
   );
 }
 
@@ -101,7 +104,8 @@ export function buildReturnReceiptHtml(ret: SaleReturn, shopName: string): strin
   ${ret.creditRefund > 0 ? line("خُصم من حساب العميل", money(ret.creditRefund)) : ""}
   ${line("السبب", esc(RETURN_REASON_LABEL[ret.reason]))}
   ${ret.note ? `<div class="muted">ملاحظة: ${esc(ret.note)}</div>` : ""}
-  ${footer()}`,
+  ${ret.etaPrint ? eReceiptBlockHtml(ret.etaPrint, getPrinterPrefs().paperMm, "return") : ""}${footer()}`,
+    ret.etaPrint ? E_RECEIPT_CSS : "",
   );
 }
 
@@ -113,7 +117,7 @@ const footer = () =>
   ${getCachedPlan()?.isFree ? `<div class="center muted" style="margin-top:4px">${FREE_FOOTER}</div>` : ""}`;
 
 /** هيكل الإيصال المشترك (بيع/مرتجع) بعرض ورق الطابعة المختار على هذا الجهاز. */
-function receiptDocument(title: string, body: string): string {
+function receiptDocument(title: string, body: string, extraCss = ""): string {
   const paper = getPrinterPrefs().paperMm;
   return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
 <title>${esc(title)}</title>
@@ -133,7 +137,7 @@ function receiptDocument(title: string, body: string): string {
   .sub td { font-size: 11px; }
   .num { text-align: left; direction: ltr; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .row { display: flex; justify-content: space-between; gap: 8px; }
-  .total { font-size: 16px; font-weight: bold; margin: 3px 0; }
+  .total { font-size: 16px; font-weight: bold; margin: 3px 0; }${extraCss}
 </style></head><body>${body}
 </body></html>`;
 }
@@ -142,22 +146,25 @@ function receiptDocument(title: string, body: string): string {
  * يطبع إيصال البيع: مباشرة على الطابعة الحرارية لو مختارة، وإلا بنافذة الطباعة.
  * openDrawer: بعد البيع فقط (ليس عند إعادة الطباعة)، ويفتح الدرج لو فيه نقدية.
  */
-export function printReceipt(
+export async function printReceipt(
   sale: Sale,
   shopName: string,
   opts: { reprint?: boolean; openDrawer?: boolean } = {},
 ) {
+  // من قائمة (بلا بيانات الطباعة) لفاتورة لها إيصال إلكتروني: نجلبها كاملة حتى يُطبع الـ QR.
+  if (sale.etaUuid && !sale.etaPrint) sale = await fetchSale(sale.id).catch(() => sale);
   return printReceiptHtml(buildReceiptHtml(sale, shopName, opts.reprint), {
     jobName: `فاتورة ${sale.number}`,
     openDrawer: Boolean(opts.openDrawer) && sale.cashAmount > 0,
   });
 }
 
-export function printReturnReceipt(
+export async function printReturnReceipt(
   ret: SaleReturn,
   shopName: string,
   opts: { openDrawer?: boolean } = {},
 ) {
+  if (ret.etaUuid && !ret.etaPrint) ret = await fetchReturn(ret.id).catch(() => ret);
   return printReceiptHtml(buildReturnReceiptHtml(ret, shopName), {
     jobName: `مرتجع ${ret.number}`,
     openDrawer: Boolean(opts.openDrawer) && ret.cashRefund > 0,
@@ -205,6 +212,9 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
       : null,
     sale.walletAmount > 0
       ? `مدفوع ${sale.paymentLabel}: ${money(sale.walletAmount)} ${currencySymbol()}`
+      : null,
+    sale.etaPrint
+      ? `الإيصال الإلكتروني (${sale.etaPrint.uuid.slice(0, 12)}…): ${sale.etaPrint.qrUrl}`
       : null,
     "",
     FOOTER,

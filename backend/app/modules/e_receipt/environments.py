@@ -3,6 +3,7 @@
 المصدر: https://sdk.invoicing.eta.gov.eg/faq/ (How to set up environment to access test APIs and test portals?)
   Identity Service: PreProd https://id.preprod.eta.gov.eg          | Prod https://id.eta.gov.eg
   System API:       PreProd https://api.preprod.invoicing.eta.gov.eg | Prod https://api.invoicing.eta.gov.eg
+  Invoicing Portal: PreProd https://preprod.invoicing.eta.gov.eg     | Prod https://invoicing.eta.gov.eg  (رابط الـ QR)
 المسارات من صفحات ereceiptapi: POST /connect/token (01)، POST /api/v1/receiptsubmissions (02)،
 GET /api/v1/receiptsubmissions/{uuid}/details (06)، GET /api/v1/receipts/{uuid}/details (03).
 
@@ -33,14 +34,17 @@ class Environment:
     identity_url: str
     api_url: str
     extra_ca: Path | None  # شهادة جذرية إضافية للثقة (التجريبية فقط)
+    portal_url: str  # بوابة المنظومة: رابط التحقق في QR الإيصال
 
 
 ENVIRONMENTS: dict[EtaEnvironment, Environment] = {
     EtaEnvironment.PREPROD: Environment(
-        EtaEnvironment.PREPROD, "https://id.preprod.eta.gov.eg", "https://api.preprod.invoicing.eta.gov.eg", PREPROD_CA_FILE
+        EtaEnvironment.PREPROD, "https://id.preprod.eta.gov.eg", "https://api.preprod.invoicing.eta.gov.eg",
+        PREPROD_CA_FILE, "https://preprod.invoicing.eta.gov.eg",
     ),
     EtaEnvironment.PROD: Environment(
-        EtaEnvironment.PROD, "https://id.eta.gov.eg", "https://api.invoicing.eta.gov.eg", None
+        EtaEnvironment.PROD, "https://id.eta.gov.eg", "https://api.invoicing.eta.gov.eg",
+        None, "https://invoicing.eta.gov.eg",
     ),
 }
 

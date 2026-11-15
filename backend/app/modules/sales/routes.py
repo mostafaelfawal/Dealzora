@@ -46,6 +46,12 @@ def list_returns(service: Service, query: Annotated[ReturnListQuery, Query()]):
     return service.list_returns(query)
 
 
+@router.get("/returns/{return_id}", response_model=ReturnOut, dependencies=[Depends(require_manager)])
+def get_return(return_id: str, service: Service):
+    """مرتجع واحد (مع بيانات الإيصال الإلكتروني للطباعة)."""
+    return service.get_return(return_id)
+
+
 @router.get(
     "/by-number/{number}",
     response_model=SaleOut,

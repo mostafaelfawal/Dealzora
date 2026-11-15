@@ -53,6 +53,7 @@ from app.modules.tax.config import tax_mode
 from app.modules.tax.service import load_config as load_tax
 from .repository import SaleRepository
 from .schema import (
+    EtaPrintOut,
     ExchangeCreate,
     ExchangeOut,
     ReturnCreate,
@@ -121,6 +122,12 @@ class SaleService(EntityService):
         if sale is None:
             raise self._err(NotFoundError, SaleError.NOT_FOUND)
         return self._sales_out([sale])[0]
+
+    def get_return(self, return_id: str) -> ReturnOut:
+        ret = self.session.get(SaleReturn, return_id)
+        if ret is None or ret.deleted_at is not None:
+            raise self._err(NotFoundError, SaleError.RETURN_NOT_FOUND)
+        return self._returns_out([ret])[0]
 
     def summary(self) -> SalesSummaryOut:
         today = local_today()
@@ -796,6 +803,7 @@ class SaleService(EntityService):
                     eta_uuid=s.eta_uuid,
                     eta_receipt_number=s.eta_receipt_number,
                     eta_error=s.eta_error if mgr else None,
+                    eta_print=self._eta_print(s) if len(rows) == 1 else None,
                     total=s.total,
                     cash_amount=s.cash_amount,
                     credit_amount=s.credit_amount,
@@ -860,6 +868,7 @@ class SaleService(EntityService):
                 eta_uuid=r.eta_uuid,
                 eta_receipt_number=r.eta_receipt_number,
                 eta_error=r.eta_error,
+                eta_print=self._eta_print(r) if len(rows) == 1 else None,
                 cash_refund=r.cash_refund,
                 credit_refund=r.credit_refund,
                 wallet_refund=r.wallet_refund,
@@ -881,6 +890,22 @@ class SaleService(EntityService):
             )
             for r in rows
         ]
+
+    def _eta_print(self, row: Sale | SaleReturn) -> EtaPrintOut | None:
+        """QR وبيانات المنظومة للطباعة: لإيصال له UUID فقط (يُطبع فوراً حتى قبل الإرسال).
+        فاتورة بلا UUID (الميزة متوقفة وقت البيع) = لا شيء، فيبقى الإيصال كما كان تماماً."""
+        if not row.eta_uuid or not row.eta_document:
+            return None
+        from dataclasses import asdict
+
+        from app.modules.e_receipt.qr import print_data
+        from app.modules.eta.service import EtaService
+
+        try:
+            env = EtaService(self.session, self.actor).config().environment
+            return EtaPrintOut(**asdict(print_data(row.eta_document, env)))
+        except (ValueError, KeyError):  # مستند تالف: الطباعة لا تتعطل أبداً
+            return None
 
     def _method_names(self) -> dict[str, str]:
         """أسماء الطرق الحالية (للفواتير القديمة التي بلا لقطة اسم)."""

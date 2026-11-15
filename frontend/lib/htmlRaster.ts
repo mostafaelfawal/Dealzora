@@ -18,6 +18,12 @@ const MM_TO_CSS_PX = 96 / 25.4;
 /** أقصى طول للإيصال بالنقاط (حد آمن لحجم الـ canvas). */
 const MAX_HEIGHT_DOTS = 30_000;
 
+/** px (CSS) لكل نقطة طابعة: نفس معامل التحويل في renderHtmlToCanvas (لرسم QR بنقاط صحيحة). */
+export function cssPxPerDot(paperMm: PaperWidth): number {
+  const { dots, printableMm } = PAPER[paperMm];
+  return Math.round(printableMm * MM_TO_CSS_PX) / dots;
+}
+
 const nextFrame = () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 

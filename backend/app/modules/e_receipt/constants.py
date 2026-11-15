@@ -16,6 +16,9 @@ RECEIPT_TYPE_SALE = "SR"  # retail-receipt-v1-2
 RECEIPT_TYPE_RETURN = "r"  # return-receipt-v1-2: «the Value must be ‘r’ for Return Receipt»
 CURRENCY = "EGP"  # exchangeRate إلزامي فقط لغير EGP (core rule 17)
 RETURN_NUMBER_PREFIX = "R-"  # receiptNumber فريد على مستوى الفرع، وترقيم المرتجع مستقل عن البيع
+# «Maximum allowed days to issue a return receipt is 540 days of the issuance date of the sales receipt.»
+# (receiptissuancefaq، Limitations on receipt submission)
+RETURN_MAX_DAYS = 540
 
 # ---- الأرقام ----
 DECIMALS = 5  # «decimal number up to 5 decimal precisions» (main-calculations)

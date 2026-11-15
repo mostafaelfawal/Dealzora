@@ -10,6 +10,7 @@
 """
 
 import logging
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -36,6 +37,7 @@ from .constants import (
     PAYMENT_CODES,
     RECEIPT_TYPE_RETURN,
     RECEIPT_TYPE_SALE,
+    RETURN_MAX_DAYS,
     RETURN_NUMBER_PREFIX,
     EReceiptError,
     EReceiptStatus,
@@ -51,6 +53,10 @@ CHAIN_GAP_MESSAGE = (
     "سلسلة إيصالات هذا الجهاز أقدم من آخر إيصال صدر فعلاً (غالباً استعادة نسخة احتياطية قديمة). "
     "لم يدخل الإيصال السلسلة. من الإعدادات ← الإيصال الإلكتروني: «متابعة السلسلة من آخر إيصال صادر»"
 )
+
+
+def _utc(moment: datetime) -> datetime:
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
 
 
 def is_active(session: Session) -> bool:
@@ -263,6 +269,13 @@ def issue_return_receipt(session: Session, actor: Actor, ret: SaleReturn, sale: 
                    error="فاتورة البيع الأصلية لم يصدر لها إيصال صحيح بعد. صحّحها أولاً ثم أعد توليد المرتجع")  # fmt: skip
         return
     ret.eta_reference_uuid = sale.eta_uuid
+    sold, returned = _utc(sale.created_at), _utc(ret.created_at)
+    if returned - sold > timedelta(days=RETURN_MAX_DAYS):
+        # المرتجع نفسه يتم في المحل (المخزون والنقدية)، لكن المنظومة لا تقبل إيصاله بعد المهلة.
+        _store(ret, status=EReceiptStatus.INVALID, eta_receipt_number=number,
+               error=f"مر أكثر من {RETURN_MAX_DAYS} يوماً على فاتورة البيع الأصلية، وهو أقصى ما تقبله "
+                     "المنظومة لإيصال المرتجع")  # fmt: skip
+        return
     device_id = ret.device_id or actor.device_id
     units = _unit_codes(session)
     by_id = {line.id: line for line in sale.lines}

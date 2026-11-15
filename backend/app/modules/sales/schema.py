@@ -125,6 +125,22 @@ class SaleLineOut(BaseModel):
     unit_cost: int | None  # None للكاشير
 
 
+class EtaPrintOut(BaseModel):
+    """بيانات المنظومة على الإيصال المطبوع (من المستند المخزّن). موجودة فقط لإيصال له UUID."""
+
+    uuid: str
+    receipt_number: str
+    rin: str
+    trade_name: str
+    branch_code: str
+    device_serial: str
+    issued_at: str
+    qr_content: str
+    qr_url: str  # رابط التحقق (بدون #Total...) لواتساب
+    qr_modules: list[str]  # صفوف مصفوفة الـ QR بلا هامش: "1" داكن
+    reference_uuid: str | None = None  # المرتجع: UUID فاتورة البيع الأصلية
+
+
 class SaleOut(BaseModel):
     id: str
     number: int
@@ -153,6 +169,7 @@ class SaleOut(BaseModel):
     eta_uuid: str | None = None
     eta_receipt_number: str | None = None
     eta_error: str | None = None
+    eta_print: EtaPrintOut | None = None  # فقط عند جلب فاتورة واحدة (طباعة/معاينة)
     total: int
     cash_amount: int
     credit_amount: int
@@ -234,6 +251,7 @@ class ReturnOut(BaseModel):
     eta_uuid: str | None = None
     eta_receipt_number: str | None = None
     eta_error: str | None = None
+    eta_print: EtaPrintOut | None = None
     cash_refund: int
     credit_refund: int
     wallet_refund: int

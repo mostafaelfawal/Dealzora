@@ -2,6 +2,20 @@ import type { TaxMode } from "@/lib/tax";
 
 import type { EReceiptStatus, PaymentMethod, ReturnReason } from "./sale";
 
+export interface EtaPrintDto {
+  uuid: string;
+  receipt_number: string;
+  rin: string;
+  trade_name: string;
+  branch_code: string;
+  device_serial: string;
+  issued_at: string;
+  qr_content: string;
+  qr_url: string;
+  qr_modules: string[];
+  reference_uuid?: string | null;
+}
+
 /** شكل الـ backend كما هو (قروش، كميات × 1000). */
 export interface SaleLineDto {
   id: string;
@@ -48,6 +62,7 @@ export interface SaleDto {
   eta_uuid?: string | null;
   eta_receipt_number?: string | null;
   eta_error?: string | null;
+  eta_print?: EtaPrintDto | null;
   customer_points?: number | null;
   invoice_discount: number;
   total: number;
@@ -98,6 +113,8 @@ export interface ReturnDto {
   credit_refund: number;
   wallet_refund: number;
   tax_total?: number | null;
+  eta_uuid?: string | null;
+  eta_print?: EtaPrintDto | null;
   lines: ReturnLineDto[];
 }
 

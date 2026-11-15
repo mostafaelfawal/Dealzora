@@ -12,6 +12,7 @@ import { api } from "@/lib/axios";
 import { paymentLabel } from "../config/saleOptions";
 
 import type {
+  EtaPrint,
   ReturnInput,
   Sale,
   SaleFilters,
@@ -20,6 +21,7 @@ import type {
   SalesSummary,
 } from "../types/sale";
 import type {
+  EtaPrintDto,
   ExchangeDto,
   ReturnDto,
   ReturnListDto,
@@ -29,6 +31,23 @@ import type {
 } from "../types/saleApi";
 
 /* ---------- mappers ---------- */
+
+const toEtaPrint = (d: EtaPrintDto | null | undefined): EtaPrint | null =>
+  d
+    ? {
+        uuid: d.uuid,
+        receiptNumber: d.receipt_number,
+        rin: d.rin,
+        tradeName: d.trade_name,
+        branchCode: d.branch_code,
+        deviceSerial: d.device_serial,
+        issuedAt: d.issued_at,
+        qrContent: d.qr_content,
+        qrUrl: d.qr_url,
+        qrModules: d.qr_modules,
+        referenceUuid: d.reference_uuid ?? null,
+      }
+    : null;
 
 export const toSale = (d: SaleDto): Sale => ({
   id: d.id,
@@ -55,6 +74,7 @@ export const toSale = (d: SaleDto): Sale => ({
   etaUuid: d.eta_uuid ?? null,
   etaReceiptNumber: d.eta_receipt_number ?? null,
   etaError: d.eta_error ?? null,
+  etaPrint: toEtaPrint(d.eta_print),
   total: toPounds(d.total),
   cashAmount: toPounds(d.cash_amount),
   creditAmount: toPounds(d.credit_amount),
@@ -100,6 +120,8 @@ export const toSaleReturn = (d: ReturnDto): SaleReturn => ({
   cashierName: d.cashier_name,
   total: toPounds(d.total),
   taxTotal: toPoundsOrNull(d.tax_total ?? null),
+  etaUuid: d.eta_uuid ?? null,
+  etaPrint: toEtaPrint(d.eta_print),
   cashRefund: toPounds(d.cash_refund),
   creditRefund: toPounds(d.credit_refund),
   walletRefund: toPounds(d.wallet_refund ?? 0),
@@ -166,6 +188,10 @@ export async function fetchSales(f: SaleFilters) {
 
 export const fetchSale = async (id: string): Promise<Sale> =>
   toSale((await api.get<SaleDto>(`/sales/${id}`)).data);
+
+/** مرتجع واحد (مع بيانات الإيصال الإلكتروني للطباعة). */
+export const fetchReturn = async (id: string): Promise<SaleReturn> =>
+  toSaleReturn((await api.get<ReturnDto>(`/sales/returns/${id}`)).data);
 
 export const fetchSalesSummary = async (): Promise<SalesSummary> => {
   const { data } = await api.get<SalesSummaryDto>("/sales/summary");

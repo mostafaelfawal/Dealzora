@@ -7,3 +7,4 @@ sqlcipher3-wheels>=0.5.2
 alembic>=1.13
 argon2-cffi>=23.1
 cryptography>=43  # Branch certificate verification (Ed25519)
+segno>=1.6,<2  # QR الإيصال الإلكتروني (بايثون نقي بلا اعتماديات)

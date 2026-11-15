@@ -15,8 +15,55 @@ import { formatQty } from "@/lib/format";
 import { useMotionPreference } from "@/lib/motionPreference";
 import { cn } from "@/lib/utils";
 
+import { qrSvg } from "../lib/eReceiptPrint";
 import { saleTaxRows } from "../lib/saleTax";
-import type { Sale } from "../types/sale";
+import type { EReceiptStatus, EtaPrint, Sale } from "../types/sale";
+
+const STATUS_LABEL: Record<EReceiptStatus, string> = {
+  not_sent: "لم يُرسل بعد",
+  pending: "قيد التحقق في المنظومة",
+  accepted: "مقبول في المنظومة",
+  rejected: "مرفوض من المنظومة",
+  not_required: "غير مطلوب",
+  invalid: "خطأ تحقق",
+};
+
+/** كتلة الإيصال الإلكتروني كما تُطبع (الـ QR نفس الكود المطبوع) + حالته الآن (للشاشة فقط). */
+function EReceiptPreview({
+  print,
+  status,
+}: {
+  print: EtaPrint;
+  status: EReceiptStatus | null;
+}) {
+  return (
+    <>
+      <Rule />
+      <section className="space-y-0.5 text-center text-[11px]">
+        <p className="text-xs font-semibold">إيصال إلكتروني</p>
+        <p>{print.tradeName}</p>
+        <p>
+          رقم التسجيل الضريبي: <bdi className="font-mono">{print.rin}</bdi>
+        </p>
+        <p>
+          الفرع <bdi className="font-mono">{print.branchCode}</bdi> · الجهاز{" "}
+          <bdi className="font-mono">{print.deviceSerial}</bdi>
+        </p>
+        <div
+          className="flex justify-center py-1 [&_svg]:h-auto [&_svg]:w-36 [&_svg]:max-w-full"
+          // SVG مولّد محلياً من أصفار وآحاد فقط (لا محتوى من المستخدم).
+          dangerouslySetInnerHTML={{ __html: qrSvg(print.qrModules, 80) }}
+        />
+        <p className="font-mono text-[9px] break-all" dir="ltr">
+          {print.uuid}
+        </p>
+        {status && (
+          <p className="text-muted-foreground">الحالة: {STATUS_LABEL[status]}</p>
+        )}
+      </section>
+    </>
+  );
+}
 
 /** أقصى ميل للإيصال مع حركة الماوس (درجات). */
 const MAX_TILT = 7;
@@ -271,6 +318,8 @@ export function SaleReceiptPreview({
                     {sale.customerPoints} نقطة
                   </p>
                 )}
+
+              {sale.etaPrint && <EReceiptPreview print={sale.etaPrint} status={sale.etaStatus} />}
 
               <Rule />
 

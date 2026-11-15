@@ -8,6 +8,24 @@ export type EReceiptStatus =
   | "not_required"
   | "invalid";
 
+/** بيانات المنظومة على الإيصال المطبوع (من المستند المخزّن وقت الإصدار). */
+export interface EtaPrint {
+  uuid: string;
+  receiptNumber: string;
+  rin: string;
+  tradeName: string;
+  branchCode: string;
+  deviceSerial: string;
+  issuedAt: string;
+  qrContent: string;
+  /** رابط التحقق (بدون #Total...) لرسالة واتساب. */
+  qrUrl: string;
+  /** صفوف مصفوفة الـ QR بلا هامش: "1" داكن. */
+  qrModules: string[];
+  /** المرتجع: UUID فاتورة البيع الأصلية. */
+  referenceUuid: string | null;
+}
+
 export type BuiltinMethod = "cash" | "credit" | "mixed";
 /** المدمجة أو معرّف طريقة إلكترونية من الإعدادات (vodafone_cash، stc_pay...). */
 export type PaymentMethod = BuiltinMethod | (string & {});
@@ -78,6 +96,8 @@ export interface Sale {
   etaUuid: string | null;
   etaReceiptNumber: string | null;
   etaError: string | null;
+  /** فقط عند جلب فاتورة واحدة (الطباعة والمعاينة). */
+  etaPrint: EtaPrint | null;
   total: number;
   cashAmount: number;
   creditAmount: number;
@@ -118,6 +138,8 @@ export interface SaleReturn {
   total: number;
   /** ضريبة المرتجع من ضريبة الفاتورة الأصلية. null = فاتورة قبل إضافة الضريبة. */
   taxTotal: number | null;
+  etaUuid: string | null;
+  etaPrint: EtaPrint | null;
   cashRefund: number;
   creditRefund: number;
   walletRefund: number;
