@@ -147,6 +147,8 @@ export const productSchema = z
     wholesalePrice: check(costError),
     wholesaleMinQty: check(qtyError),
     trackExpiry: z.boolean(),
+    etaItemType: z.enum(["EGS", "GS1"]),
+    etaItemCode: z.string().max(100, "كود الصنف في المنظومة حتى 100 حرف"),
     taxType: z.enum(["taxable", "exempt", "zero"]),
     taxRate: check(taxRateError),
     openingExpiry: z.string(),

@@ -44,6 +44,7 @@ if (-not $SkipBackend) {
             --name dealzora-backend `
             --collect-all sqlcipher3 `
             --collect-submodules app `
+            --add-data "app\modules\eta\codes;app\modules\eta\codes" `
             run_server.py
         if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed (exit code $LASTEXITCODE)" }
 

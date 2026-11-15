@@ -78,6 +78,8 @@ def product_data(p: Product) -> dict[str, Any]:
         "track_expiry": p.track_expiry,
         "tax_type": p.tax_type,
         "tax_rate": p.tax_rate,
+        "eta_item_type": p.eta_item_type,
+        "eta_item_code": p.eta_item_code,
         "is_active": p.is_active,
         "units": units,
     }
@@ -377,6 +379,10 @@ class CatalogSync:
             tax_type=d.get("tax_type"), tax_rate=d.get("tax_rate"),
             extra_units=units,
         )  # fmt: skip
+        # كود المنظومة: فرع بنسخة أقدم لا يرسله، فلا نضعه في الطلب أصلاً (يبقى كما هو).
+        for key in ("eta_item_type", "eta_item_code"):
+            if key in d:
+                fields[key] = d.get(key)
         if row is None:
             return ProductCreate(**fields)
         return ProductUpdate(base_version=row.version, **fields)

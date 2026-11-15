@@ -18,6 +18,9 @@ class MeasureUnit(SyncMixin, Base):
     name: Mapped[str] = mapped_column(String(MAX_UNIT_LEN))
     allow_decimal: Mapped[bool] = mapped_column(Boolean, default=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    # كود الوحدة في جدول وحدات منظومة الإيصال الإلكتروني (eta/codes/UnitTypes.json)، مثل EA/KGM/CT.
+    # يُطبق على كل صنف أو وحدة إضافية بهذا الاسم. يُضبط من شاشة الإيصال الإلكتروني (eta).
+    eta_unit_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
     __table_args__ = (
         Index(

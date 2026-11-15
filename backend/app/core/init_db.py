@@ -87,6 +87,10 @@ _NEW_COLUMNS = (
     ("sale_returns", "tax_total", "INTEGER"),
     ("sale_return_lines", "taxable_amount", "INTEGER"),
     ("sale_return_lines", "tax_amount", "INTEGER"),
+    # الإيصال الإلكتروني (المرحلة 2): كود الصنف في المنظومة، وكود وحدة القياس على قائمة الوحدات.
+    ("products", "eta_item_type", "VARCHAR(3)"),
+    ("products", "eta_item_code", "VARCHAR(100)"),
+    ("measure_units", "eta_unit_type", "VARCHAR(30)"),
 )
 
 # فهارس على أعمدة أُضيفت بـ _NEW_COLUMNS (تُنشأ بعدها).

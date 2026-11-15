@@ -1,0 +1,11 @@
+[
+  { "code": "C", "desc_en": "Cash", "desc_ar": "" },
+  { "code": "V", "desc_en": "Visa", "desc_ar": "" },
+  { "code": "CC", "desc_en": "Cash with contractor", "desc_ar": "" },
+  { "code": "VC", "desc_en": "Visa with contractor", "desc_ar": "" },
+  { "code": "VO", "desc_en": "Vouchers", "desc_ar": "" },
+  { "code": "PR", "desc_en": "Promotion", "desc_ar": "" },
+  { "code": "GC", "desc_en": "Gift Card", "desc_ar": "" },
+  { "code": "P", "desc_en": "Points", "desc_ar": "" },
+  { "code": "O", "desc_en": "Others", "desc_ar": "" }
+]

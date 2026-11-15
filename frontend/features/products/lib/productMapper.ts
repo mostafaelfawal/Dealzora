@@ -37,6 +37,8 @@ export function toProduct(dto: ProductDto): Product {
     trackExpiry: dto.track_expiry ?? false,
     taxType: dto.tax_type ?? "taxable",
     taxRate: (dto.tax_rate ?? 1400) / 100,
+    etaItemType: dto.eta_item_type ?? null,
+    etaItemCode: dto.eta_item_code ?? null,
     nearestExpiry: dto.nearest_expiry ?? null,
     expiredQty: qty(dto.expired_qty ?? 0),
     isActive: dto.is_active,

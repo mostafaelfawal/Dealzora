@@ -1,4 +1,5 @@
 import { saveFile, type SavedFile } from "@/lib/saveFile";
+import { getCachedPlan } from "@/lib/plan";
 import { getTaxConfig, TAX_TYPE_LABEL } from "@/lib/tax";
 
 import { getProducts, type GetProductsParams } from "../api/products.api";
@@ -25,6 +26,9 @@ const WIDTHS = [32, 18, 16, 10, 12, 12, 14, 12, 10, 12, 12];
 /** أعمدة الضريبة: تُصدَّر فقط لو المحل فعّل الضريبة (ويقرأها الاستيراد دائماً). */
 const TAX_HEADERS = ["نوع الضريبة", "نسبة الضريبة %"];
 const TAX_WIDTHS = [14, 12];
+/** أعمدة الإيصال الإلكتروني: تُصدَّر لخطة سلسلة فقط (والاستيراد يقرأها). */
+const ETA_HEADERS = ["نوع كود المنظومة", "كود المنظومة"];
+const ETA_WIDTHS = [16, 20];
 
 type Cell = string | number;
 interface SheetSpec {
@@ -114,20 +118,25 @@ export async function exportProducts(
   const products = await fetchAllProducts(params, onProgress);
   if (products.length === 0) return { count: 0, file: null };
   const withTax = getTaxConfig().enabled;
+  const withEta = Boolean(getCachedPlan()?.features.includes("e_receipt"));
+  const headers = [
+    ...HEADERS,
+    ...(withTax ? TAX_HEADERS : []),
+    ...(withEta ? ETA_HEADERS : []),
+  ];
+  const widths = [
+    ...WIDTHS,
+    ...(withTax ? TAX_WIDTHS : []),
+    ...(withEta ? ETA_WIDTHS : []),
+  ];
+  const row = (p: Product): Cell[] => [
+    ...toRow(p),
+    ...(withTax ? taxCells(p) : []),
+    ...(withEta ? [p.etaItemType ?? "", p.etaItemCode ?? ""] : []),
+  ];
 
   const file = await saveWorkbook(
-    [
-      {
-        name: "الأصناف",
-        rows: withTax
-          ? [
-              [...HEADERS, ...TAX_HEADERS],
-              ...products.map((p) => [...toRow(p), ...taxCells(p)]),
-            ]
-          : [HEADERS, ...products.map(toRow)],
-        widths: withTax ? [...WIDTHS, ...TAX_WIDTHS] : WIDTHS,
-      },
-    ],
+    [{ name: "الأصناف", rows: [headers, ...products.map(row)], widths }],
     `products-${today()}.xlsx`,
   );
   return { count: products.length, file };

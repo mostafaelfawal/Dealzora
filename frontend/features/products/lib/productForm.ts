@@ -18,6 +18,8 @@ export const emptyValues = (): ProductSchemaType => ({
   trackExpiry: false,
   taxType: "taxable",
   taxRate: String(getTaxConfig().defaultRate),
+  etaItemType: "EGS",
+  etaItemCode: "",
   openingExpiry: "",
   openingBatchNo: "",
   openingStock: "",
@@ -42,6 +44,8 @@ export function toFormValues(product?: Product): ProductSchemaType {
     wholesaleMinQty:
       product.wholesaleMinQty === null ? "" : String(product.wholesaleMinQty),
     trackExpiry: product.trackExpiry,
+    etaItemType: product.etaItemType ?? "EGS",
+    etaItemCode: product.etaItemCode ?? "",
     taxType: product.taxType,
     // المعفى/الصفري نسبته 0 في القاعدة: نعرض الافتراضي لو رجع «خاضع».
     taxRate: String(

@@ -1,3 +1,4 @@
+import type { EtaItemType } from "@/features/eta/types/eta";
 import type { TaxType } from "@/lib/tax";
 
 export interface ProductUnit {
@@ -36,6 +37,9 @@ export interface Product {
   taxType: TaxType;
   /** نسبة ضريبة القيمة المضافة بالمئة (0 للمعفى/الصفري). */
   taxRate: number;
+  /** كود الصنف في منظومة الإيصال الإلكتروني (سلسلة). null = غير مسجّل. */
+  etaItemType: EtaItemType | null;
+  etaItemCode: string | null;
   /** أقرب صلاحية للكمية الصالحة (YYYY-MM-DD). */
   nearestExpiry: string | null;
   /** كمية منتهية الصلاحية لم تُعدم بعد. */

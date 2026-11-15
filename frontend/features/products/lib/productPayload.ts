@@ -4,6 +4,7 @@ import type {
   ProductUpdatePayload,
 } from "../types/productApi";
 import { normalizeDigits } from "@/lib/format";
+import { getCachedPlan } from "@/lib/plan";
 
 import { parseNumber } from "./productCalc";
 import { MONEY_SCALE, QTY_SCALE } from "./productMapper";
@@ -35,6 +36,12 @@ function toBase(v: ProductSchemaType) {
       ? scaled(v.wholesalePrice, MONEY_SCALE)
       : null,
     track_expiry: v.trackExpiry,
+    // كود المنظومة (سلسلة فقط): النوع والكود معاً أو null. خطة أخرى = لا نرسلهما فيبقيان كما هما.
+    ...(!getCachedPlan()?.features.includes("e_receipt")
+      ? {}
+      : v.etaItemCode.trim()
+        ? { eta_item_type: v.etaItemType, eta_item_code: v.etaItemCode.trim() }
+        : { eta_item_type: null, eta_item_code: null }),
     tax_type: v.taxType,
     // فارغ = الافتراضي (جديد) أو الحالي (تعديل). المعفى/الصفري يصفّرها السيرفر.
     tax_rate:

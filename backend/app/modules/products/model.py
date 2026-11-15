@@ -42,6 +42,10 @@ class Product(SyncMixin, Base):
     # (1400 = 14%). المعفى والصفري نسبتهما 0. تُطبق فقط لو الضريبة مفعّلة في إعدادات المحل.
     tax_type: Mapped[str] = mapped_column(String(8), default="taxable")
     tax_rate: Mapped[int] = mapped_column(Integer, default=1400)
+    # الإيصال الإلكتروني: itemType (EGS/GS1) و itemCode في ItemData (eta/constants.ItemType).
+    # كود وحدة القياس ليس هنا: يُؤخذ من قائمة الوحدات (catalog MeasureUnit.eta_unit_type).
+    eta_item_type: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    eta_item_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     # رصيد مخزّن مؤقتاً لسرعة القوائم. المرجع الحقيقي = مجموع StockMovement.qty_delta،
     # ويُحدَّث هنا فقط داخل نفس معاملة تسجيل الحركة.
     stock_qty: Mapped[int] = mapped_column(Integer, default=0)

@@ -17,6 +17,8 @@ import {
   BACKEND_DECIMAL_UNITS,
   BARCODE_PATTERN,
 } from "../config/productLimits";
+import type { EtaItemType } from "@/features/eta/types/eta";
+
 import type { Product } from "../types/product";
 import { parseTaxType } from "./productTax";
 import { numberOrZero, parseNumber } from "./productCalc";
@@ -129,7 +131,17 @@ export async function importProducts({
       if (text("taxRate") && !(ratePercent > 0 && ratePercent <= 100))
         throw new Error("نسبة الضريبة من 0.01 إلى 100");
 
+      // كود المنظومة: عمود فارغ = يبقى الحالي. النوع من عموده أو من الصنف الحالي.
+      const etaCode = text("etaItemCode");
+      const etaTypeText = text("etaItemType").toUpperCase();
+      if (etaTypeText && etaTypeText !== "EGS" && etaTypeText !== "GS1")
+        throw new Error("نوع كود المنظومة EGS أو GS1");
+      const etaType = etaTypeText || existing?.etaItemType || null;
+      if (etaCode && !etaType)
+        throw new Error("حدد نوع كود المنظومة (EGS أو GS1)");
+
       const base = {
+        ...(etaCode ? { eta_item_type: etaType as EtaItemType, eta_item_code: etaCode } : {}),
         ...(taxType ? { tax_type: taxType } : {}),
         ...(Number.isFinite(ratePercent) && taxType !== "exempt" && taxType !== "zero"
           ? { tax_rate: Math.round(ratePercent * 100) }

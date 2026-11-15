@@ -60,5 +60,6 @@ class MeasureUnitOut(BaseModel):
     id: str
     name: str
     allow_decimal: bool
+    eta_unit_type: str | None = None
     product_count: int
     version: int

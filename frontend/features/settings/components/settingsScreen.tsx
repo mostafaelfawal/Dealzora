@@ -8,7 +8,10 @@ import {
   IconCrown,
   IconDatabaseExport,
   IconDevices,
+  IconFileCertificate,
   IconGift,
+  IconMapPin,
+  IconRuler,
   IconPalette,
   IconPercentage,
   IconPrinter,
@@ -28,6 +31,15 @@ import {
   DevicesSection,
   ThisDeviceSection,
 } from "@/features/devices/components/devicesSection";
+import { EtaActivation } from "@/features/eta/components/etaActivation";
+import { EtaDevices } from "@/features/eta/components/etaDevices";
+import {
+  EtaBranchForm,
+  EtaShopForm,
+} from "@/features/eta/components/etaShopForm";
+import { EtaUnits } from "@/features/eta/components/etaUnits";
+import { UpgradeNotice } from "@/components/shared/PlanGate";
+import { useFeature } from "@/lib/plan";
 import { useSessionUser } from "@/hooks/useShellData";
 import { isTerminal, useDeviceConfig, type DeviceConfig } from "@/lib/device";
 import { cn } from "@/lib/utils";
@@ -73,7 +85,71 @@ interface Page {
   sections: Section[];
 }
 
-function buildPages(device: DeviceConfig | null, owner: boolean): Page[] {
+/** الإيصال الإلكتروني (منظومة الضرائب): كل الأقسام لخطة «سلسلة»، وإلا رسالة الترقية وحدها. */
+function eReceiptPage(allowed: boolean): Page {
+  const lockedOrSections: Section[] = allowed
+    ? [
+        {
+          id: "e-receipt",
+          icon: <IconFileCertificate />,
+          title: "الجاهزية والتفعيل",
+          description:
+            "ما ينقص قبل التفعيل. لا يُفعَّل والقائمة فيها بند مطلوب.",
+          content: <EtaActivation />,
+        },
+        {
+          id: "eta-shop",
+          icon: <IconBuildingStore />,
+          title: "بيانات المحل في المنظومة",
+          description: "رقم التسجيل الضريبي والاسم التجاري وكود النشاط.",
+          content: <EtaShopForm />,
+        },
+        {
+          id: "eta-branch",
+          icon: <IconMapPin />,
+          title: "الفرع",
+          description: "كود هذا الفرع في المنظومة وعنوانه كما يظهر في الإيصال.",
+          content: <EtaBranchForm />,
+        },
+        {
+          id: "eta-devices",
+          icon: <IconDevices />,
+          title: "الأجهزة",
+          description:
+            "الرقم التسلسلي وبيانات الدخول لكل جهاز يصدر إيصالات (الأساسي وأجهزة الكاشير).",
+          content: <EtaDevices />,
+        },
+        {
+          id: "eta-units",
+          icon: <IconRuler />,
+          title: "وحدات القياس",
+          description: "كود كل وحدة بيع في جدول وحدات المنظومة.",
+          content: <EtaUnits />,
+        },
+      ]
+    : [
+        {
+          id: "e-receipt",
+          icon: <IconFileCertificate />,
+          title: "الإيصال الإلكتروني",
+          description: "الربط مع منظومة الإيصال الإلكتروني لمصلحة الضرائب.",
+          content: <UpgradeNotice feature="e_receipt" className="border-0" />,
+        },
+      ];
+  return {
+    id: "e-receipt-page",
+    icon: <IconFileCertificate />,
+    title: "الإيصال الإلكتروني",
+    hint: "منظومة مصلحة الضرائب",
+    sections: lockedOrSections,
+  };
+}
+
+function buildPages(
+  device: DeviceConfig | null,
+  owner: boolean,
+  eReceipt: boolean,
+): Page[] {
   const terminal = isTerminal(device);
 
   const shop: Page = {
@@ -260,7 +336,7 @@ function buildPages(device: DeviceConfig | null, owner: boolean): Page[] {
   // الاشتراك والترخيص من الجهاز الأساسي فقط.
   return terminal
     ? [shop, selling, account, safety]
-    : [shop, selling, safety, account, plan];
+    : [shop, selling, eReceiptPage(eReceipt), safety, account, plan];
 }
 
 const tabId = (id: string) => `settings-tab-${id}`;
@@ -269,7 +345,8 @@ export function SettingsScreen() {
   const device = useDeviceConfig();
   const terminal = isTerminal(device);
   const owner = isOwner(useSessionUser().role);
-  const pages = buildPages(device, owner);
+  const eReceipt = useFeature("e_receipt");
+  const pages = buildPages(device, owner, eReceipt);
 
   // الرابط قد يكون صفحة (#selling) أو قسماً داخلها (#scale).
   const sectionPage = new Map(

@@ -10,7 +10,9 @@ export type ImportFieldKey =
   | "scaleCode"
   | "wholesalePrice"
   | "taxType"
-  | "taxRate";
+  | "taxRate"
+  | "etaItemType"
+  | "etaItemCode";
 
 export interface ImportField {
   key: ImportFieldKey;
@@ -27,6 +29,19 @@ export const IMPORT_FIELDS: ImportField[] = [
     label: "اسم الصنف",
     required: true,
     aliases: ["اسم", "صنف", "name", "product"],
+  },
+  // الإيصال الإلكتروني: قبل «الباركود» (فيها كلمة «كود»)، و«نوع كود المنظومة» قبل «كود المنظومة».
+  {
+    key: "etaItemType",
+    label: "نوع كود المنظومة (EGS/GS1)",
+    required: false,
+    aliases: ["نوع كود المنظومة", "item type", "itemtype"],
+  },
+  {
+    key: "etaItemCode",
+    label: "كود المنظومة",
+    required: false,
+    aliases: ["كود المنظومة", "item code", "itemcode", "egs", "gs1"],
   },
   // قبل «الباركود»: الربط التلقائي بالترتيب، و«كود الميزان» يحتوي كلمة «كود».
   {

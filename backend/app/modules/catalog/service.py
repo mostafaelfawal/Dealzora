@@ -210,6 +210,7 @@ class MeasureUnitService(EntityService):
             id=u.id,
             name=u.name,
             allow_decimal=u.allow_decimal,
+            eta_unit_type=u.eta_unit_type,
             product_count=product_count,
             version=u.version,
         )

@@ -240,6 +240,7 @@ class ProductService(EntityService):
             wholesale_min_qty=src.wholesale_min_qty,
             tax_type=src.tax_type,
             tax_rate=src.tax_rate,
+            # كود الصنف في المنظومة (ونوعه) لا يُنسخ: مرتبط بالصنف بعينه (مثل باركود GS1).
             is_active=src.is_active,
             stock_qty=0,
         )
@@ -486,6 +487,11 @@ class ProductService(EntityService):
             product.tax_rate = data.tax_rate
         elif not product.tax_rate:  # جديد، أو كان معفى وأصبح خاضعاً بلا نسبة
             product.tax_rate = self._default_tax_rate()
+        if {"eta_item_type", "eta_item_code"} & data.model_fields_set:
+            new = (data.eta_item_type.value if data.eta_item_type else None, data.eta_item_code)
+            if new != (product.eta_item_type, product.eta_item_code):
+                ensure_feature(Feature.E_RECEIPT)  # تعديل كود المنظومة لخطة سلسلة فقط
+                product.eta_item_type, product.eta_item_code = new
 
     def _default_tax_rate(self) -> int:
         from app.modules.tax.service import load_config
@@ -612,6 +618,8 @@ class ProductService(EntityService):
             track_expiry=p.track_expiry,
             tax_type=p.tax_type,
             tax_rate=p.tax_rate,
+            eta_item_type=p.eta_item_type,
+            eta_item_code=p.eta_item_code,
             nearest_expiry=nearest,
             expired_qty=expired,
             stock_qty=p.stock_qty,

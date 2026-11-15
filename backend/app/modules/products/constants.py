@@ -47,6 +47,8 @@ PRODUCT_SNAPSHOT_FIELDS = (
     "track_expiry",
     "tax_type",
     "tax_rate",
+    "eta_item_type",
+    "eta_item_code",
 )
 
 

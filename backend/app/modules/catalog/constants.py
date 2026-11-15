@@ -12,7 +12,7 @@ ENTITY_CATEGORY = "category"
 ENTITY_MEASURE_UNIT = "measure_unit"
 
 CATEGORY_SNAPSHOT_FIELDS = ("name", "sort_order")
-UNIT_SNAPSHOT_FIELDS = ("name", "allow_decimal", "sort_order")
+UNIT_SNAPSHOT_FIELDS = ("name", "allow_decimal", "sort_order", "eta_unit_type")
 
 # الوحدات الافتراضية عند أول تشغيل: (الاسم، تقبل كسوراً). طابقها مع الواجهة.
 DEFAULT_UNITS: tuple[tuple[str, bool], ...] = (

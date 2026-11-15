@@ -1,3 +1,4 @@
+import type { EtaItemType } from "@/features/eta/types/eta";
 import type { TaxType } from "@/lib/tax";
 
 export interface ProductUnitDto {
@@ -26,6 +27,8 @@ export interface ProductDto {
   track_expiry?: boolean;
   tax_type?: TaxType;
   tax_rate?: number; // نقاط أساس (1400 = 14%)
+  eta_item_type?: EtaItemType | null;
+  eta_item_code?: string | null;
   nearest_expiry?: string | null;
   expired_qty?: number;
   stock_qty: number;
@@ -82,6 +85,9 @@ interface ProductPayloadBase {
   tax_type?: TaxType;
   /** نقاط أساس. null/غائب = الافتراضي (جديد) أو الحالي (تعديل). */
   tax_rate?: number | null;
+  /** غائب = يبقى كما هو، و null = مسح. النوع والكود معاً. */
+  eta_item_type?: EtaItemType | null;
+  eta_item_code?: string | null;
   is_active: boolean;
   extra_units: ProductUnitPayload[];
 }

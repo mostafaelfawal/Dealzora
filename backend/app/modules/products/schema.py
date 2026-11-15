@@ -26,6 +26,7 @@ from .schema_validation import (
     validate_extra_units,
     validate_granularity,
 )
+from app.modules.eta.constants import MAX_ITEM_CODE, ItemType
 from app.modules.tax.constants import MAX_RATE, TaxType
 
 from .types import AdjustReason, MovementType, SortKey, StockFilter, StockLevel
@@ -73,6 +74,10 @@ class ProductBase(BaseModel):
     # فالعميل الأقدم (استيراد/مزامنة فرع بنسخة سابقة) لا يمسح إعداد الضريبة.
     tax_type: TaxType | None = None
     tax_rate: int | None = Field(None, ge=0, le=MAX_RATE)
+    # الإيصال الإلكتروني (خطة سلسلة). الحقل الغائب من الطلب = يبقى كما هو (model_fields_set)،
+    # و null صريح = مسح. النوع والكود معاً أو لا شيء.
+    eta_item_type: ItemType | None = None
+    eta_item_code: str | None = Field(None, max_length=MAX_ITEM_CODE)
     extra_units: list[UnitIn] = Field(default_factory=list, max_length=MAX_EXTRA_UNITS)
 
     @model_validator(mode="after")
@@ -84,6 +89,11 @@ class ProductBase(BaseModel):
             raise ValueError("سعر الجملة يجب أن يكون أقل من سعر البيع (القطاعي)")
         if self.wholesale_price is None:
             self.wholesale_min_qty = None
+        if self.eta_item_code is not None:
+            self.eta_item_code = self.eta_item_code.strip() or None
+        eta_fields = {"eta_item_type", "eta_item_code"} & self.model_fields_set
+        if eta_fields and (self.eta_item_type is None) != (self.eta_item_code is None):
+            raise ValueError("نوع كود المنظومة (EGS/GS1) وكود الصنف يُكتبان معاً")
         if self.tax_type in (TaxType.EXEMPT, TaxType.ZERO):
             self.tax_rate = 0  # المعفى والصفري بلا نسبة
         elif self.tax_rate == 0:
@@ -130,6 +140,8 @@ class ProductOut(BaseModel):
     track_expiry: bool
     tax_type: str
     tax_rate: int  # نقاط أساس (1400 = 14%)
+    eta_item_type: str | None = None
+    eta_item_code: str | None = None
     nearest_expiry: date | None  # أقرب صلاحية للكمية الصالحة
     expired_qty: int  # كمية منتهية لم تُعدم (× 1000)
     stock_qty: int

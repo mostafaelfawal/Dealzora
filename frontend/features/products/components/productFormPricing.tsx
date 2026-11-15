@@ -1,6 +1,10 @@
 "use client";
 
-import { IconBuildingStore, IconReceiptTax } from "@tabler/icons-react";
+import {
+  IconBuildingStore,
+  IconFileCertificate,
+  IconReceiptTax,
+} from "@tabler/icons-react";
 import { useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -19,6 +23,7 @@ import {
   TAX_TYPES,
   useTaxConfig,
 } from "@/lib/tax";
+import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 import { PRODUCT_FIELD_IDS as IDS } from "../config/productFormFields";
@@ -234,6 +239,74 @@ function TaxSection() {
   );
 }
 
+/** كود الصنف في منظومة الإيصال الإلكتروني (خطة سلسلة). */
+function EtaSection() {
+  const { form, setField } = useProductFormFields();
+  const allowed = useFeature("e_receipt");
+  const {
+    register,
+    control,
+    formState: { errors },
+  } = form;
+  const [type, code] = useWatch({
+    control,
+    name: ["etaItemType", "etaItemCode"],
+  });
+  if (!allowed) return null;
+  const summary = code.trim() ? `${type} · ${code.trim()}` : "غير مسجّل";
+
+  return (
+    <CollapsibleSection
+      title="الإيصال الإلكتروني"
+      summary={summary}
+      icon={<IconFileCertificate />}
+      defaultOpen={false}
+      forceOpen={Boolean(errors.etaItemCode)}
+    >
+      <div
+        className="flex flex-wrap gap-1.5"
+        role="radiogroup"
+        aria-label="نوع الكود"
+      >
+        {(["EGS", "GS1"] as const).map((t) => (
+          <Button
+            key={t}
+            type="button"
+            size="sm"
+            role="radio"
+            aria-checked={type === t}
+            variant={type === t ? "default" : "outline"}
+            onClick={() => setField("etaItemType", t)}
+            className="font-mono font-normal"
+          >
+            {t}
+          </Button>
+        ))}
+      </div>
+      <FormField
+        id={IDS.etaItemCode}
+        label="كود الصنف في المنظومة"
+        error={errors.etaItemCode?.message}
+        hint="الكود المسجّل للصنف على بوابة المنظومة. فارغ = غير مسجّل بعد."
+      >
+        <Input
+          id={IDS.etaItemCode}
+          {...PRICE_INPUT}
+          {...register("etaItemCode")}
+          inputMode="text"
+          placeholder={type === "GS1" ? "مثال: باركود GS1" : "كود EGS"}
+          aria-invalid={Boolean(errors.etaItemCode)}
+          aria-describedby={errorId(IDS.etaItemCode)}
+        />
+      </FormField>
+      <p className="text-xs text-muted-foreground">
+        وحدة القياس تُربط مرة واحدة لكل الأصناف من الإعدادات ← الإيصال
+        الإلكتروني ← وحدات القياس.
+      </p>
+    </CollapsibleSection>
+  );
+}
+
 export function ProductFormPricing() {
   const { form, setField } = useProductFormFields();
   const {
@@ -320,6 +393,7 @@ export function ProductFormPricing() {
 
       <WholesaleSection unit={unitName} sale={sale} />
       <TaxSection />
+      <EtaSection />
     </>
   );
 }

@@ -33,6 +33,10 @@ class SettingKey(StrEnum):
     LOYALTY = "loyalty.config"
     # ضريبة القيمة المضافة (JSON، انظر tax/config.py).
     TAX = "tax.config"
+    # الإيصال الإلكتروني (JSON، انظر eta/schema.py): إعدادات المحل، وبيانات الفرع (محلية لهذا الجهاز
+    # الأساسي: كل فرع قاعدة مستقلة). أسرار الأجهزة ليست هنا (جدول device_eta_profiles مشفّرة).
+    ETA_CONFIG = "eta.config"
+    ETA_BRANCH = "eta.branch"
     # ربط هذا الجهاز بسيرفر الفروع (JSON فيه سر الفرع): محلي فقط، لا يُرفع أبداً.
     BRANCH_SYNC = "branch_sync.config"
     # مفاتيح قديمة (قبل القوالب): تُقرأ مرة واحدة لترحيلها إلى PAY_METHODS.
