@@ -44,7 +44,7 @@ jobs:
         run: |
           if ($env:VERSION -notmatch '^\d+\.\d+\.\d+$') { throw "الرقم لازم يكون بصيغة 1.2.3" }
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # رقم النسخة يُكتب في ملفات البناء هنا فقط (لا يُرفع commit).
       - name: Set version
@@ -66,7 +66,7 @@ jobs:
           "body<<EOF`n$body`nEOF" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       # ---------- الـ backend (PyInstaller) ----------
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
           cache: pip
@@ -82,7 +82,7 @@ jobs:
         run: ./build-backend.ps1 -BackendOnly
 
       # ---------- الـ frontend + Tauri ----------
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
