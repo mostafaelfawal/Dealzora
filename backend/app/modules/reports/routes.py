@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Query
 
-from app.core.plan import FREE_LIMITS, Feature, ensure_feature, is_free, upgrade_error
+from app.core.plan import Feature, ensure_feature, plan_limit, upgrade_error
 from app.core.periods import local_today
 from app.core.deps import service_dependency
 from app.core.permissions import require_manager
@@ -37,9 +37,10 @@ Service = service_dependency(ReportService)
 
 
 def _check_range(query: RangeQuery) -> None:
-    """بَسطة: تقارير آخر 7 أيام فقط (اليوم + 6 قبله)."""
-    if is_free():
-        oldest = local_today() - timedelta(days=FREE_LIMITS["report_days"] - 1)
+    """مدى التقارير حسب الخطة: بَسطة 7 أيام، دُكّان سنة، سوق وما فوق بلا حد."""
+    days = plan_limit("report_days")
+    if days is not None:
+        oldest = local_today() - timedelta(days=days - 1)
         if query.date_from < oldest:
             raise upgrade_error(Feature.FULL_REPORTS)
 
@@ -92,6 +93,7 @@ def purchases_report(service: Extended, query: Annotated[RangeQuery, Query()]):
 
 @router.get("/promotions", response_model=PromotionsReportOut)
 def promotions_report(service: Extended, query: Annotated[RangeQuery, Query()]):
+    ensure_feature(Feature.PROMOTIONS)
     _check_range(query)
     return service.promotions(query)
 

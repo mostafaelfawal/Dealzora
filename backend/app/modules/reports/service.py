@@ -384,7 +384,7 @@ class ReportService:
                 for r, t, n in self.repo.return_reasons(q.date_from, q.date_to)
             ],
             promotions=self._promotions(q, prev_from, prev_to),
-            loyalty=self._loyalty(q) if has_feature(Feature.CUSTOMERS) else None,
+            loyalty=self._loyalty(q) if has_feature(Feature.LOYALTY) else None,
             customers=self._customers(q) if has_feature(Feature.CUSTOMERS) else None,
             purchasing=(
                 self._purchasing(q, prev_from, prev_to) if has_feature(Feature.SUPPLIERS) else None

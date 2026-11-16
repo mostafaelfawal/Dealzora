@@ -4,6 +4,9 @@ import type { PlanInfo } from "@/lib/plan";
  * خطط Dealzora كما تُعرض للعميل في الإعدادات.
  * الأسعار بالجنيه المصري (سعر بيع البرنامج، لا علاقة لها بعملة المحل).
  * الاشتراك السنوي = 10 أشهر (شهرين مجاناً).
+ *
+ * كل ميزة هنا محمية فعلاً بنفس الخطة في backend/app/core/plan.py (_UNLOCKED_IN و PLAN_LIMITS)
+ * وفي الواجهة lib/plan.ts (FEATURE_INFO). أي نقل لميزة بين الخطط = تعديل الثلاثة معاً.
  */
 export type PlanId = PlanInfo["plan"];
 export type Billing = "monthly" | "yearly";
@@ -20,7 +23,18 @@ export interface PlanCard {
   /** الخطة السابقة: أول سطر «كل ما في خطة …». */
   includes?: string;
   features: string[];
+  /** ميزات معلنة لم تُبنَ بعد: تظهر بعلامة «قريباً» (لا نبيع ما ليس موجوداً). */
+  soon?: string[];
   popular?: boolean;
+  /** ملخص سريع للمقارنة بين الكروت بنظرة واحدة (نفس ترتيب الصفوف في كل خطة). */
+  stats: PlanStats;
+}
+
+export interface PlanStats {
+  devices: string;
+  users: string;
+  products: string;
+  branches: string;
 }
 
 export { SUPPORT_WHATSAPP as SALES_WHATSAPP } from "@/config/support";
@@ -29,6 +43,12 @@ export const PLAN_CURRENCY = "ج.م";
 export const PLANS: PlanCard[] = [
   {
     id: "free",
+    stats: {
+      devices: "جهاز واحد",
+      users: "المالك فقط",
+      products: "حتى 300",
+      branches: "فرع واحد",
+    },
     name: "بَسطة",
     tagline: "للمحل الصغير في بدايته",
     monthly: null,
@@ -45,8 +65,14 @@ export const PLANS: PlanCard[] = [
   },
   {
     id: "basic",
+    stats: {
+      devices: "جهاز واحد",
+      users: "3 مستخدمين",
+      products: "بلا حد",
+      branches: "فرع واحد",
+    },
     name: "دُكّان",
-    tagline: "للبقالة والصيدلية والمحل العادي",
+    tagline: "للبقالة والمحل العادي",
     monthly: 349,
     yearly: 3490,
     includes: "بَسطة",
@@ -67,8 +93,14 @@ export const PLANS: PlanCard[] = [
   },
   {
     id: "pro",
+    stats: {
+      devices: "3 أجهزة",
+      users: "بلا حد",
+      products: "بلا حد",
+      branches: "فرع واحد",
+    },
     name: "سوق",
-    tagline: "للسوبر ماركت وأكثر من كاشير",
+    tagline: "للسوبر ماركت والصيدلية وأكثر من كاشير",
     monthly: 699,
     yearly: 6990,
     includes: "دُكّان",
@@ -77,18 +109,29 @@ export const PLANS: PlanCard[] = [
       "جهازا كاشير متصلان بالجهاز الأساسي (+99 ج.م/شهر لكل جهاز إضافي)",
       "عدد غير محدود من المستخدمين",
       "سجل العمليات: من فعل ماذا ومتى",
-      "تقارير الربح لكل صنف والراكد بلا حد زمني",
-      "ملخص يومي للمالك على واتساب كل ليلة",
-      "باركود الميزان للأصناف الموزونة",
-      "تذكير تلقائي بالديون وكشف حساب PDF للعميل",
+      "الإيصال الإلكتروني (منظومة الضرائب ETA)",
+      "تتبع الصلاحية والدفعات (للصيدلية والأغذية)",
       "العروض التلقائية (اشترِ 2 واحصل على 1)",
-      "أسعار جملة وقطاعي",
+      "أسعار جملة وقطاعي وعملاء جملة",
+      "نقاط ولاء للعملاء",
+      "باركود الميزان للأصناف الموزونة",
       "طلبات شراء ذكية من النواقص",
+      "التقارير بلا حد زمني",
       "دعم فني أولوية",
+    ],
+    soon: [
+      "ملخص يومي للمالك على واتساب كل ليلة",
+      "تذكير تلقائي بالديون وكشف حساب PDF للعميل",
     ],
   },
   {
     id: "enterprise",
+    stats: {
+      devices: "حتى 10",
+      users: "بلا حد",
+      products: "بلا حد",
+      branches: "فروع متعددة",
+    },
     name: "سلسلة",
     tagline: "للمحلات الكبيرة والفروع",
     monthly: 1999,
@@ -98,15 +141,21 @@ export const PLANS: PlanCard[] = [
     features: [
       "حتى 10 أجهزة كاشير",
       "تعدد الفروع وتحويل المخزون بينها",
-      "الإيصال الإلكتروني (منظومة الضرائب ETA)",
-      "نقاط ولاء للعملاء",
-      "تتبع الصلاحية والدفعات",
-      "تطبيق موبايل للمالك بتقارير لحظية",
+      "كتالوج أصناف وأسعار موحّد لكل الفروع",
+      "تطبيق موبايل للمالك بتقارير لحظية وموافقة التحويلات",
       "تركيب وتدريب في المحل",
       "رقم دعم مباشر وتخصيصات حسب احتياجك",
     ],
   },
 ];
+
+/** طرق دفع الاشتراك المتاحة (تُعرض في خطوات الاشتراك). */
+export const PAYMENT_METHODS = [
+  "فودافون كاش",
+  "إنستاباي",
+  "Binance",
+  "كاش",
+] as const;
 
 export const BILLING_LABEL: Record<Billing, string> = {
   monthly: "شهري",

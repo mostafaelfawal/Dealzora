@@ -82,8 +82,13 @@ def promo_amount(promo: Promotion, *, is_base_unit: bool, base: int, price: int,
 
 
 def price_lines(
-    lines: list[LineInput], *, wholesale_customer: bool, promos: list[Promotion]
+    lines: list[LineInput],
+    *,
+    wholesale_customer: bool,
+    promos: list[Promotion],
+    allow_wholesale: bool = True,
 ) -> list[LinePrice]:
+    """allow_wholesale = خطة «سوق» فأعلى: تحتها السعر قطاعي دائماً (نفس frontend/features/pos/lib/pricing.ts)."""
     infos = [unit_prices(line.product, line.unit) for line in lines]
     bases = [base_qty(line.qty, info[0]) for line, info in zip(lines, infos, strict=True)]
     demand: dict[str, int] = defaultdict(int)
@@ -94,7 +99,9 @@ def price_lines(
     for line, (factor, retail, unit_name, wholesale), base in zip(lines, infos, bases, strict=True):
         p = line.product
         reached = bool(p.wholesale_min_qty) and demand[p.id] >= (p.wholesale_min_qty or 0)
-        use_wholesale = wholesale is not None and wholesale < retail and (wholesale_customer or reached)
+        use_wholesale = (
+            allow_wholesale and wholesale is not None and wholesale < retail and (wholesale_customer or reached)
+        )
         price = wholesale if use_wholesale and wholesale is not None else retail
         gross = qty_amount(line.qty, price)
 

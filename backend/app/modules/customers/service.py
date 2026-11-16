@@ -262,6 +262,11 @@ class CustomerService(EntityService):
         customer.notes = data.notes
         customer.credit_limit = data.credit_limit
         customer.is_active = data.is_active
+        # عميل جملة من «سوق»: تفعيله جديد يحتاج الخطة، والمحفوظ قبل النزول يبقى (ولا يُطبّق في البيع).
+        if data.is_wholesale and not customer.is_wholesale:
+            from app.core.plan import Feature, ensure_feature
+
+            ensure_feature(Feature.WHOLESALE)
         customer.is_wholesale = data.is_wholesale
 
     @staticmethod

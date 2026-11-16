@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "طلبات الشراء" };
 
 export default function PurchaseOrdersPage() {
   return (
-    <PlanGate feature="suppliers">
+    <PlanGate feature="purchase_orders">
       <PurchaseOrdersScreen />
     </PlanGate>
   );

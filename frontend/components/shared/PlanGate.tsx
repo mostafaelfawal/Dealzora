@@ -8,8 +8,10 @@ import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Button } from "@/components/ui/button";
 import {
   FEATURE_INFO,
+  currentPlanLabel,
   upgradeMessage,
   useFeature,
+  usePlan,
   type PlanFeature,
 } from "@/lib/plan";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ export function UpgradeNotice({
   className?: string;
 }) {
   const info = FEATURE_INFO[feature];
+  const { data: plan } = usePlan();
   return (
     <div
       className={cn(
@@ -38,7 +41,10 @@ export function UpgradeNotice({
       <h2 className="text-lg font-semibold">{info.name}</h2>
       <p className="text-sm text-muted-foreground">
         متاحة من خطة <b className="text-foreground">«{info.plan}»</b>. خطتك
-        الحالية «بَسطة» المجانية للمحل الصغير: جهاز واحد، 300 صنف، والبيع النقدي.
+        الحالية {currentPlanLabel(plan ?? null)}
+        {!plan || plan.isFree
+          ? " للمحل الصغير: جهاز واحد، 300 صنف، والبيع النقدي."
+          : "."}
       </p>
       <Button
         nativeButton={false}
@@ -56,14 +62,17 @@ export function UpgradeNotice({
 export function PlanGate({
   feature,
   children,
+  className = "mt-8",
 }: {
   feature: PlanFeature;
   children: ReactNode;
+  /** مكان رسالة الترقية: صفحة كاملة (الافتراضي) أو داخل قسم إعدادات ("border-0"). */
+  className?: string;
 }) {
   return useFeature(feature) ? (
     <>{children}</>
   ) : (
-    <UpgradeNotice feature={feature} className="mt-8" />
+    <UpgradeNotice feature={feature} className={className} />
   );
 }
 

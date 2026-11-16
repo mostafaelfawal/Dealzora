@@ -1,4 +1,5 @@
-"""طبقة HTTP فقط. الإدارة للمدير، والعروض السارية لكل من يبيع (الكاشير يحسبها فوراً)."""
+"""طبقة HTTP فقط. الإدارة للمدير (خطة «سوق»)، والعروض السارية لكل من يبيع (الكاشير يحسبها فوراً).
+تحت «سوق» القائمة السارية فارغة (service.active_promotions)، فلا تُطبّق العروض لا في الكاشير ولا في السيرفر."""
 
 from typing import Annotated
 
@@ -6,13 +7,15 @@ from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.core.deps import BaseVersionQuery, service_dependency
 from app.core.permissions import require_authenticated, require_manager, require_manager_write
+from app.core.plan import Feature, require_feature
 
 from .schema import PromotionIn, PromotionOut, PromotionsSummaryOut, PromotionUpdate
 from .service import PromotionService
 
 router = APIRouter(prefix="/promotions", tags=["promotions"])
 Service = service_dependency(PromotionService)
-Write = [Depends(require_manager_write)]
+Write = [Depends(require_manager_write), require_feature(Feature.PROMOTIONS)]
+Manage = [Depends(require_manager), require_feature(Feature.PROMOTIONS)]
 
 
 @router.get("/active", response_model=list[PromotionOut], dependencies=[Depends(require_authenticated)])
@@ -20,12 +23,12 @@ def list_active(service: Service):
     return service.list_active()
 
 
-@router.get("/summary", response_model=PromotionsSummaryOut, dependencies=[Depends(require_manager)])
+@router.get("/summary", response_model=PromotionsSummaryOut, dependencies=Manage)
 def summary(service: Service):
     return service.summary()
 
 
-@router.get("", response_model=list[PromotionOut], dependencies=[Depends(require_manager)])
+@router.get("", response_model=list[PromotionOut], dependencies=Manage)
 def list_all(service: Service):
     return service.list_all()
 

@@ -66,7 +66,11 @@ def set_discount_limit(
     return SettingsService(session).set_discount_limit(actor, data)
 
 
-@router.put("/scale-barcode", response_model=ScaleBarcodeConfig, dependencies=[Depends(require_manager_write)])
+@router.put(
+    "/scale-barcode",
+    response_model=ScaleBarcodeConfig,
+    dependencies=[Depends(require_manager_write), require_feature(Feature.SCALE_BARCODE)],
+)
 def set_scale_barcode(
     data: ScaleBarcodeConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]
 ):
@@ -76,7 +80,7 @@ def set_scale_barcode(
 @router.put(
     "/loyalty",
     response_model=LoyaltyConfig,
-    dependencies=[Depends(require_manager_write), require_feature(Feature.CUSTOMERS)],
+    dependencies=[Depends(require_manager_write), require_feature(Feature.LOYALTY)],
 )
 def set_loyalty(data: LoyaltyConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
     return SettingsService(session).set_loyalty(actor, data)

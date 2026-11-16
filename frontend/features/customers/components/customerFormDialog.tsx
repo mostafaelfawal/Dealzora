@@ -34,6 +34,7 @@ import {
 } from "../schema/customer.schema";
 import type { Customer } from "../types/customer";
 import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
+import { upgradeMessage, useFeature } from "@/lib/plan";
 
 const IDS = {
   name: "cf-name",
@@ -94,6 +95,7 @@ function CustomerForm({
     formState: { errors },
   } = form;
   const isWholesale = useWatch({ control, name: "isWholesale" });
+  const wholesaleAllowed = useFeature("wholesale");
   const [creditLimit, isActive] = useWatch({
     control,
     name: ["creditLimit", "isActive"],
@@ -307,13 +309,16 @@ function CustomerForm({
         <div className="space-y-0.5">
           <Label htmlFor="cf-wholesale">عميل جملة (تاجر)</Label>
           <p className="text-xs text-muted-foreground">
-            يأخذ سعر الجملة تلقائياً على كل صنف له سعر جملة، أياً كانت الكمية.
+            {wholesaleAllowed
+              ? "يأخذ سعر الجملة تلقائياً على كل صنف له سعر جملة، أياً كانت الكمية."
+              : upgradeMessage("wholesale")}
           </p>
         </div>
         <Switch
           id="cf-wholesale"
           checked={isWholesale}
-          disabled={saving}
+          // من «سوق»: تحتها يمكن إلغاؤه فقط (العميل المحفوظ من خطة أعلى)
+          disabled={saving || (!wholesaleAllowed && !isWholesale)}
           onCheckedChange={(checked) =>
             setValue("isWholesale", checked, { shouldDirty: true })
           }

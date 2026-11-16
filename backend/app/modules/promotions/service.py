@@ -41,7 +41,12 @@ def promo_status(p: Promotion, today: date) -> PromoStatus:
 
 
 def active_promotions(session: Session, today: date | None = None) -> list[Promotion]:
-    """العروض السارية اليوم (بترتيب ثابت: الأقدم أولاً، فالتعادل يحسمه نفس الترتيب في الكاشير)."""
+    """العروض السارية اليوم (بترتيب ثابت: الأقدم أولاً، فالتعادل يحسمه نفس الترتيب في الكاشير).
+    تحت خطة «سوق» لا عروض سارية: الكاشير (GET /promotions/active) والسيرفر يحسبان نفس السعر."""
+    from app.core.plan import Feature, has_feature  # متأخر: لا دوران
+
+    if not has_feature(Feature.PROMOTIONS):
+        return []
     today = today or local_today()
     rows = session.scalars(
         select(Promotion)

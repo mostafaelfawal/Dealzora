@@ -391,7 +391,7 @@ class SenderTests(EtaDbCase):
 
     def test_feature_disabled_sends_nothing(self):
         self._sales(1)
-        get_settings().plan = "pro"
+        get_settings().plan = "basic"  # الإيصال الإلكتروني من «سوق»
         try:
             self.sender.run_cycle()
         finally:

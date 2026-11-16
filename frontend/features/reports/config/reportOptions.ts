@@ -16,12 +16,12 @@ export const REPORT_TABS: {
   { id: "sales", label: "المبيعات والأرباح" },
   { id: "products", label: "الأصناف والأقسام" },
   { id: "purchases", label: "المشتريات", feature: "suppliers" },
-  { id: "promotions", label: "العروض" },
+  { id: "promotions", label: "العروض", feature: "promotions" },
   { id: "returns", label: "المرتجعات" },
   { id: "customers", label: "العملاء والنقاط", feature: "customers" },
   { id: "cashiers", label: "الكاشيرية والورديات" },
   { id: "stock", label: "النواقص والراكد" },
-  { id: "debts", label: "المديونيات" },
+  { id: "debts", label: "المديونيات", feature: "full_reports" },
   { id: "treasury", label: "الخزنة" },
 ];
 

@@ -426,8 +426,8 @@ export function ExpiryCard({ expiry: e }: { expiry: ExpiryBrief }) {
 
 /** ميزات تضيف أقساماً للوحة، بالترتيب الذي يهم التاجر. */
 const DASHBOARD_FEATURES: { feature: PlanFeature; adds: string }[] = [
-  { feature: "customers", adds: "العملاء والآجل ونقاط الولاء" },
-  { feature: "suppliers", adds: "المشتريات وطلبات الشراء" },
+  { feature: "customers", adds: "العملاء والآجل" },
+  { feature: "suppliers", adds: "المشتريات" },
   { feature: "expenses", adds: "المصروفات وصافي الربح" },
   { feature: "multi_user", adds: "أداء الكاشيرية" },
   { feature: "expiry", adds: "تنبيهات الصلاحية" },

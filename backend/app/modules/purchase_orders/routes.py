@@ -25,7 +25,7 @@ from .service import PurchaseOrderService
 router = APIRouter(
     prefix="/purchase-orders",
     tags=["purchase-orders"],
-    dependencies=[require_feature_for_writes(Feature.SUPPLIERS)],
+    dependencies=[require_feature_for_writes(Feature.PURCHASE_ORDERS)],
 )
 Service = service_dependency(PurchaseOrderService)
 Read = [Depends(require_manager)]

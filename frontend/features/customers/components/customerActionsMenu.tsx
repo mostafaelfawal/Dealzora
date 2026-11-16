@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useFeature } from "@/lib/plan";
 
 import type { Customer } from "../types/customer";
 
@@ -41,6 +42,8 @@ export function CustomerActionsMenu({
   onToggleActive,
   onRemove,
 }: { customer: Customer } & CustomerActions) {
+  // نقاط الولاء من خطة «سوق»
+  const loyalty = useFeature("loyalty");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -68,10 +71,12 @@ export function CustomerActionsMenu({
           <IconCash />
           تحصيل دفعة
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onLoyalty(customer.id)}>
-          <IconGift />
-          نقاط الولاء
-        </DropdownMenuItem>
+        {loyalty && (
+          <DropdownMenuItem onClick={() => onLoyalty(customer.id)}>
+            <IconGift />
+            نقاط الولاء
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => onEdit(customer.id)}>
           <IconPencil />
           تعديل البيانات

@@ -1,3 +1,5 @@
+import { getCachedPlan } from "@/lib/plan";
+
 import type { CartLine, PosInvoice, PosPromotion } from "../types/pos";
 
 /**
@@ -6,8 +8,13 @@ import type { CartLine, PosInvoice, PosPromotion } from "../types/pos";
  * لأن السيرفر يقارن سعر كل سطر وخصم عرضه بما حسبه ويرفض أي اختلاف.
  *
  * - الجملة: للصنف سعر جملة، والعميل «عميل جملة» أو كمية الصنف في الفاتورة وصلت كمية الجملة.
- * - العروض: على سعر القطاعي فقط، ولكل سطر أفضل عرض للعميل.
+ *   من خطة «سوق» فقط (allow_wholesale في الـ backend): تحتها السعر قطاعي دائماً.
+ * - العروض: على سعر القطاعي فقط، ولكل سطر أفضل عرض للعميل. تحت «سوق» السيرفر يرجع قائمة عروض فارغة.
  */
+
+/** الخطة غير محمّلة بعد = مسموح (نفس useFeature)، والسيرفر يرفض أي سعر لا يطابق خطته. */
+const wholesaleAllowed = () =>
+  getCachedPlan()?.features.includes("wholesale") ?? true;
 
 const QTY = 1000;
 
@@ -55,6 +62,7 @@ function promoAmount(
 export function priceInvoice(
   invoice: PosInvoice,
   promotions: PosPromotion[],
+  allowWholesale: boolean = wholesaleAllowed(),
 ): PosInvoice {
   const wholesaleCustomer = Boolean(invoice.customer?.isWholesale);
   const bases = invoice.lines.map((l) =>
@@ -76,6 +84,7 @@ export function priceInvoice(
     const minQty = line.wholesaleMinQty ? scaled(line.wholesaleMinQty) : 0;
     const reached = minQty > 0 && (demand.get(line.productId) ?? 0) >= minQty;
     const useWholesale =
+      allowWholesale &&
       wholesale !== null &&
       wholesale < retail &&
       (wholesaleCustomer || reached);

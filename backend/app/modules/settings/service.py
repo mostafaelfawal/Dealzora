@@ -13,6 +13,7 @@ from app.core.audit import record_audit
 from app.core.base import uuid7
 from app.core.database import get_sessionmaker
 from app.core.outbox import OutboxOp, enqueue_outbox
+from app.core.plan import Feature, has_feature
 from app.core.security import Actor
 
 from .constants import (
@@ -83,6 +84,13 @@ class SettingsService:
         return DiscountLimitOut(enabled=enabled, max_percent=percent)
 
     def scale_barcode(self) -> ScaleBarcodeConfig:
+        """الإعداد الفعّال: تحت خطة «سوق» متوقف (المحفوظ يرجع كما هو عند الترقية)."""
+        cfg = self._stored_scale_barcode()
+        if cfg.enabled and not has_feature(Feature.SCALE_BARCODE):
+            return cfg.model_copy(update={"enabled": False})
+        return cfg
+
+    def _stored_scale_barcode(self) -> ScaleBarcodeConfig:
         raw = self.get(SettingKey.SCALE_BARCODE)
         if raw:
             try:
@@ -92,6 +100,13 @@ class SettingsService:
         return ScaleBarcodeConfig()
 
     def loyalty(self) -> LoyaltyConfig:
+        """الإعداد الفعّال: تحت خطة «سوق» متوقف (لا كسب ولا استبدال)، والمحفوظ يرجع عند الترقية."""
+        cfg = self._stored_loyalty()
+        if cfg.enabled and not has_feature(Feature.LOYALTY):
+            return cfg.model_copy(update={"enabled": False})
+        return cfg
+
+    def _stored_loyalty(self) -> LoyaltyConfig:
         raw = self.get(SettingKey.LOYALTY)
         if raw:
             try:
@@ -101,7 +116,7 @@ class SettingsService:
         return LoyaltyConfig()
 
     def set_loyalty(self, actor: Actor, data: LoyaltyConfig) -> LoyaltyConfig:
-        before = self.loyalty()
+        before = self._stored_loyalty()
         self._set(actor, SettingKey.LOYALTY, data.model_dump_json())
         if data != before:
             record_audit(
@@ -181,7 +196,7 @@ class SettingsService:
         return after
 
     def set_scale_barcode(self, actor: Actor, data: ScaleBarcodeConfig) -> ScaleBarcodeConfig:
-        before = self.scale_barcode()
+        before = self._stored_scale_barcode()
         self._set(actor, SettingKey.SCALE_BARCODE, data.model_dump_json())
         if data != before:
             record_audit(

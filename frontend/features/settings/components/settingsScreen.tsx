@@ -40,7 +40,7 @@ import {
   EtaShopForm,
 } from "@/features/eta/components/etaShopForm";
 import { EtaUnits } from "@/features/eta/components/etaUnits";
-import { UpgradeNotice } from "@/components/shared/PlanGate";
+import { PlanGate, UpgradeNotice } from "@/components/shared/PlanGate";
 import { useFeature } from "@/lib/plan";
 import { useSessionUser } from "@/hooks/useShellData";
 import { isTerminal, useDeviceConfig, type DeviceConfig } from "@/lib/device";
@@ -221,7 +221,11 @@ function buildPages(
         title: "نقاط الولاء",
         description:
           "يكسب العميل المسجّل نقاطاً على كل عملية شراء ويستبدلها خصماً، فيعود للشراء منك مجدداً.",
-        content: <LoyaltySection />,
+        content: (
+          <PlanGate feature="loyalty" className="border-0">
+            <LoyaltySection />
+          </PlanGate>
+        ),
       },
       {
         id: "scale",
@@ -229,7 +233,11 @@ function buildPages(
         title: "ميزان الأصناف الموزونة",
         description:
           "إذا كان لديك ميزان يطبع ملصق باركود: يمسحه الكاشير فيُضاف الصنف بوزنه.",
-        content: <ScaleBarcodeSection />,
+        content: (
+          <PlanGate feature="scale_barcode" className="border-0">
+            <ScaleBarcodeSection />
+          </PlanGate>
+        ),
       },
       {
         id: "printer",

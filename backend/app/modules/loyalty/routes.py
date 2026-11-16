@@ -13,7 +13,7 @@ from .service import AdjustIn, LoyaltyHistoryOut, LoyaltyService
 router = APIRouter(
     prefix="/loyalty",
     tags=["loyalty"],
-    dependencies=[require_feature_for_writes(Feature.CUSTOMERS)],
+    dependencies=[require_feature_for_writes(Feature.LOYALTY)],
 )
 
 

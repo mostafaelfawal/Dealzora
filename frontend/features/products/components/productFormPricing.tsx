@@ -23,7 +23,7 @@ import {
   TAX_TYPES,
   useTaxConfig,
 } from "@/lib/tax";
-import { useFeature } from "@/lib/plan";
+import { upgradeMessage, useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 import { PRODUCT_FIELD_IDS as IDS } from "../config/productFormFields";
@@ -93,8 +93,12 @@ function ProfitLine({
   );
 }
 
-/** سعر الجملة: قسم قابل للطي (مفتوح لو للصنف سعر جملة). */
+/**
+ * سعر الجملة: قسم قابل للطي (مفتوح لو للصنف سعر جملة). من خطة «سوق»: تحتها الحقول للقراءة فقط
+ * (سعر محفوظ من خطة أعلى يبقى كما هو ولا يُطبّق في البيع).
+ */
 function WholesaleSection({ unit, sale }: { unit: string; sale: number }) {
+  const allowed = useFeature("wholesale");
   const { form } = useProductFormFields();
   const {
     register,
@@ -106,9 +110,11 @@ function WholesaleSection({ unit, sale }: { unit: string; sale: number }) {
     name: ["wholesalePrice", "wholesaleMinQty"],
   });
   const wholesale = numberOrZero(parseNumber(wholesalePrice));
-  const summary = wholesale
-    ? `${wholesale} لكل ${unit}${wholesaleMinQty.trim() ? ` من ${wholesaleMinQty} ${unit}` : " لعملاء الجملة"}`
-    : "غير مستخدم · للتجار وعملاء الكميات";
+  const summary = !allowed
+    ? upgradeMessage("wholesale")
+    : wholesale
+      ? `${wholesale} لكل ${unit}${wholesaleMinQty.trim() ? ` من ${wholesaleMinQty} ${unit}` : " لعملاء الجملة"}`
+      : "غير مستخدم · للتجار وعملاء الكميات";
 
   return (
     <CollapsibleSection
@@ -133,6 +139,7 @@ function WholesaleSection({ unit, sale }: { unit: string; sale: number }) {
             id={IDS.wholesalePrice}
             {...PRICE_INPUT}
             {...register("wholesalePrice")}
+            readOnly={!allowed}
             placeholder="اختياري"
             aria-invalid={Boolean(errors.wholesalePrice)}
             aria-describedby={errorId(IDS.wholesalePrice)}
@@ -149,6 +156,7 @@ function WholesaleSection({ unit, sale }: { unit: string; sale: number }) {
             {...PRICE_INPUT}
             {...register("wholesaleMinQty")}
             disabled={!wholesalePrice.trim()}
+            readOnly={!allowed}
             placeholder="مثال: 12"
             aria-invalid={Boolean(errors.wholesaleMinQty)}
             aria-describedby={errorId(IDS.wholesaleMinQty)}

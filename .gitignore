@@ -33,6 +33,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# قوالب بلا أسرار (قيم فارغة): تُرفع ليعرف من ينصّب السيرفر المتغيرات المطلوبة
+!.env.example
 
 # vercel
 .vercel

@@ -4,6 +4,9 @@
 - بلا ترخيص مدفوع ← «بَسطة» المجانية للأبد بحدودها.
 - ترخيص مدفوع ← خطته (التراخيص القديمة بلا خطة = كل الميزات).
 الإنفاذ هنا (لا في الواجهة فقط): أي طلب يتجاوز الخطة يُرفض برسالة ترقية واضحة.
+
+كل ميزة تُفتح من خطة معيّنة وما فوقها (_UNLOCKED_IN)، وكل خطة لها حدودها (PLAN_LIMITS).
+نفس الجدول في الواجهة: frontend/lib/plan.ts (FEATURE_INFO) وصفحة الخطط features/settings/config/plans.ts.
 """
 
 import time
@@ -45,9 +48,14 @@ class Feature(StrEnum):
     FULL_REPORTS = "full_reports"  # التقارير أبعد من 7 أيام + تقرير الديون
     MULTI_USER = "multi_user"
     TERMINALS = "terminals"  # أجهزة كاشير إضافية
-    EXPIRY = "expiry"  # تتبع الصلاحية والدفعات (سلسلة)
+    EXPIRY = "expiry"  # تتبع الصلاحية والدفعات (سوق)
     BRANCHES = "branches"  # تعدد الفروع وتحويل المخزون بينها (سلسلة)
-    E_RECEIPT = "e_receipt"  # الإيصال الإلكتروني - منظومة الضرائب المصرية (سلسلة)
+    E_RECEIPT = "e_receipt"  # الإيصال الإلكتروني - منظومة الضرائب المصرية (سوق)
+    SCALE_BARCODE = "scale_barcode"  # باركود الميزان للأصناف الموزونة (سوق)
+    PROMOTIONS = "promotions"  # العروض التلقائية (سوق)
+    WHOLESALE = "wholesale"  # أسعار الجملة وعملاء الجملة (سوق)
+    PURCHASE_ORDERS = "purchase_orders"  # طلبات الشراء من النواقص (سوق)
+    LOYALTY = "loyalty"  # نقاط ولاء العملاء (سوق)
 
 
 FEATURE_NAMES: dict[Feature, str] = {
@@ -67,22 +75,43 @@ FEATURE_NAMES: dict[Feature, str] = {
     Feature.EXPIRY: "تتبع الصلاحية والدفعات",
     Feature.BRANCHES: "تعدد الفروع وتحويل المخزون",
     Feature.E_RECEIPT: "الإيصال الإلكتروني - منظومة الضرائب",
-}
-
-# بَسطة: المالك يبيع بنفسه على جهاز واحد.
-FREE_LIMITS = {"products": 300, "users": 1, "report_days": 7}
-# أقل خطة مدفوعة تفتح الميزة (لرسالة الترقية). سجل العمليات وأجهزة الكاشير من «سوق».
-_UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
-    Feature.AUDIT_LOG: Plan.PRO,
-    Feature.TERMINALS: Plan.PRO,
-    Feature.EXPIRY: Plan.ENTERPRISE,
-    Feature.BRANCHES: Plan.ENTERPRISE,
-    Feature.E_RECEIPT: Plan.ENTERPRISE,
+    Feature.SCALE_BARCODE: "باركود الميزان",
+    Feature.PROMOTIONS: "العروض التلقائية",
+    Feature.WHOLESALE: "أسعار الجملة",
+    Feature.PURCHASE_ORDERS: "طلبات الشراء من النواقص",
+    Feature.LOYALTY: "نقاط الولاء",
 }
 
 _RANK = {Plan.FREE: 0, Plan.BASIC: 1, Plan.PRO: 2, Plan.ENTERPRISE: 3}
-# ميزات تُفرض بالخطة فعلاً (الباقي: أي خطة مدفوعة تفتحه، كما كان قبل التقسيم).
-_STRICT = frozenset({Feature.EXPIRY, Feature.BRANCHES, Feature.E_RECEIPT})
+
+# أقل خطة تفتح الميزة. الافتراضي «دُكّان»، والباقي حسب صفحة الخطط.
+_UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
+    Feature.AUDIT_LOG: Plan.PRO,
+    Feature.TERMINALS: Plan.PRO,
+    Feature.EXPIRY: Plan.PRO,
+    Feature.E_RECEIPT: Plan.PRO,
+    Feature.SCALE_BARCODE: Plan.PRO,
+    Feature.PROMOTIONS: Plan.PRO,
+    Feature.WHOLESALE: Plan.PRO,
+    Feature.PURCHASE_ORDERS: Plan.PRO,
+    Feature.LOYALTY: Plan.PRO,
+    Feature.BRANCHES: Plan.ENTERPRISE,
+}
+
+# حدود كل خطة (None = بلا حد). المستخدمون يشملون المالك.
+# عدد أجهزة الكاشير يحدده الترخيص الموقّع نفسه (max_terminals)، لا هنا.
+PLAN_LIMITS: dict[Plan, dict[str, int | None]] = {
+    Plan.FREE: {"products": 300, "users": 1, "report_days": 7},  # بَسطة: المالك يبيع بنفسه
+    Plan.BASIC: {"products": None, "users": 4, "report_days": 366},  # دُكّان: المالك + مدير + 2 كاشير، وسنة
+    Plan.PRO: {"products": None, "users": None, "report_days": None},
+    Plan.ENTERPRISE: {"products": None, "users": None, "report_days": None},
+}
+# توافق مع الكود القديم: حدود «بَسطة».
+FREE_LIMITS = PLAN_LIMITS[Plan.FREE]
+
+
+def unlocked_in(feature: Feature) -> Plan:
+    return _UNLOCKED_IN[feature]
 
 
 def current_plan() -> Plan:
@@ -117,12 +146,17 @@ def is_free() -> bool:
     return current_plan() is Plan.FREE
 
 
+def plan_allows(plan: Plan, feature: Feature) -> bool:
+    return _RANK[plan] >= _RANK[_UNLOCKED_IN[feature]]
+
+
 def has_feature(feature: Feature) -> bool:
-    # أي خطة مدفوعة = كل الميزات، ما عدا _STRICT فتحتاج خطتها أو أعلى.
-    plan = current_plan()
-    if feature in _STRICT:
-        return _RANK[plan] >= _RANK[_UNLOCKED_IN[feature]]
-    return plan is not Plan.FREE
+    return plan_allows(current_plan(), feature)
+
+
+def plan_limit(key: str) -> int | None:
+    """حد الخطة الحالية: products / users / report_days (None = بلا حد)."""
+    return PLAN_LIMITS[current_plan()][key]
 
 
 def enabled_features() -> list[Feature]:
@@ -145,10 +179,14 @@ def upgrade_error(feature: Feature) -> ForbiddenError:
 
 
 def limit_error(what: str, limit: int) -> ForbiddenError:
+    current = current_plan()
+    where = (
+        f"خطة «{PLAN_NAMES[Plan.FREE]}» المجانية" if current is Plan.FREE else f"خطة «{PLAN_NAMES[current]}»"
+    )
     return ForbiddenError(
         "plan_limit_reached",
-        f"وصلت لحد خطة «{PLAN_NAMES[Plan.FREE]}» المجانية ({limit} {what}). رقِّ خطتك للمزيد.",
-        {"limit": limit, "plan": current_plan().value},
+        f"وصلت لحد {where} ({limit} {what}). رقِّ خطتك للمزيد.",
+        {"limit": limit, "plan": current.value},
     )
 
 

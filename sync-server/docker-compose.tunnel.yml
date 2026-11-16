@@ -1,0 +1,18 @@
+# تشغيل مجاني مؤقت على أي جهاز عندك (Windows + Docker Desktop / Ubuntu) قبل شراء VPS:
+# نفس الخدمات بالظبط (db + api + notifier + backup)، والوصول من الإنترنت عن طريق Cloudflare Tunnel
+# بدل Caddy: لا IP ثابت، لا فتح بورتات في الراوتر، و HTTPS من Cloudflare.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build db api notifier backup cloudflared
+#
+# النقل للـ VPS بعدين: نفس .env + استرجاع آخر نسخة + تغيير سجل DNS (README، قسم «تشغيل مجاني مؤقت»).
+# الفروع والهاتف لا يتغير عندهم شيء لأن الدومين نفسه.
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    # الإعدادات (الدومين ← http://api:8000) محفوظة في لوحة Cloudflare، والجهاز يحتاج التوكن فقط.
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?ضع CLOUDFLARE_TUNNEL_TOKEN في .env}
+    depends_on:
+      - api

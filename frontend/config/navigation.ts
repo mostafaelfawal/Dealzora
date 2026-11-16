@@ -47,7 +47,12 @@ export const NAVIGATION: NavGroup[] = [
         feature: "e_receipt",
         icon: IconFileCertificate,
       },
-      { title: "العروض", href: "/admin/promotions", icon: IconDiscount2 },
+      {
+        title: "العروض",
+        href: "/admin/promotions",
+        feature: "promotions",
+        icon: IconDiscount2,
+      },
       { title: "الورديات", href: "/admin/shifts", icon: IconClockHour4 },
     ],
   },
@@ -89,7 +94,7 @@ export const NAVIGATION: NavGroup[] = [
       {
         title: "طلبات الشراء",
         href: "/admin/purchase-orders",
-        feature: "suppliers",
+        feature: "purchase_orders",
         icon: IconClipboardList,
       },
     ],

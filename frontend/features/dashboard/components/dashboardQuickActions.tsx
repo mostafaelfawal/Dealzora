@@ -28,7 +28,12 @@ const SECONDARY_ACTIONS: {
     icon: IconTruckDelivery,
     feature: "suppliers",
   },
-  { href: "/admin/promotions", label: "عرض جديد", icon: IconDiscount },
+  {
+    href: "/admin/promotions",
+    label: "عرض جديد",
+    icon: IconDiscount,
+    feature: "promotions",
+  },
   { href: "/admin/products/new", label: "صنف جديد", icon: IconPlus },
   { href: "/admin/inventory", label: "جرد المخزون", icon: IconBox },
 ];

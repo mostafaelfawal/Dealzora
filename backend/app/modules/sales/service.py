@@ -13,7 +13,7 @@ from datetime import timedelta
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.plan import Feature, is_free, upgrade_error
+from app.core.plan import Feature, has_feature, is_free, upgrade_error
 from app.core.base import uuid7
 from app.core.constants import QTY_SCALE, RETURN_WINDOW_DAYS
 from app.core.errors import BadRequestError, ConflictError, ForbiddenError, NotFoundError
@@ -211,6 +211,7 @@ class SaleService(EntityService):
             inputs,
             wholesale_customer=bool(customer and customer.is_wholesale),
             promos=active_promotions(self.session),
+            allow_wholesale=has_feature(Feature.WHOLESALE),
         )
 
         for item, line, lp in zip(data.lines, inputs, prices, strict=True):

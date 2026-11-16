@@ -45,6 +45,56 @@ curl https://sync.yourdomain.com/health   # {"status":"ok"}
 
 ---
 
+## 1-ب) تشغيل مجاني مؤقت (قبل شراء VPS)
+
+نفس الخدمات بالظبط على أي جهاز شغال على طول (Windows + Docker Desktop، أو Ubuntu)، والوصول من الإنترنت
+عن طريق **Cloudflare Tunnel** المجاني بدل Caddy: لا IP ثابت ولا فتح بورتات في الراوتر. لما تشتري VPS تنقل
+البيانات وتغيّر سجل DNS، **والفروع والهاتف مش هيحسّوا بحاجة** (نفس الدومين، نفس الأسرار).
+
+**التكلفة الوحيدة: دومين ملكك.** لازم يكون عندك من الأول: عنوان السيرفر بيتحفظ في كل فرع وفي تطبيق الهاتف
+ويتبني جوه البرنامج (`NEXT_PUBLIC_SYNC_URL`)، فلو بدأت برابط مؤقت مجاني هتضطر تغيّره في كل مكان وقت النقل.
+
+### الإعداد (مرة واحدة)
+1. اشترِ دومين، وأضفه لحساب Cloudflare مجاني (Add a domain ← خطة Free)، وغيّر الـ nameservers عند شركة الدومين
+   للي Cloudflare بيديهولك.
+2. في لوحة Cloudflare: **Zero Trust ← Networks ← Tunnels ← Create a tunnel** (نوع Cloudflared) ← انسخ الـ **token**.
+3. في نفس النفق ← **Public hostname**: الـ subdomain `sync` + دومينك ← Service: `HTTP` و `api:8000`.
+4. الإعدادات: `.env` **كامل زي ما هيبقى على الـ VPS** (`SYNC_DOMAIN` = `sync.yourdomain.com`، و `ACME_EMAIL`،
+   و `POSTGRES_PASSWORD`، وكل الأسرار)، وزوّد عليه:
+   ```
+   CLOUDFLARE_TUNNEL_TOKEN=<التوكن من الخطوة 2>
+   ```
+5. التشغيل (كل حاجة ما عدا caddy):
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build db api notifier backup cloudflared
+   curl https://sync.yourdomain.com/health   # {"status":"ok"}
+   ```
+
+**الجهاز:** لازم يفضل شغال: اقفل السكون (Sleep) من إعدادات الطاقة، وفعّل «Start Docker Desktop when you sign in».
+لو اتقفل، الفروع بتكمل بيع عادي والمزامنة بتكمّل لما يرجع (نفس سلوك انقطاع النت).
+**انسخ مجلد `backups/` لمكان تاني بانتظام** (Google Drive مثلاً): الجهاز المنزلي أضعف من سيرفر.
+
+### النقل للـ VPS (لما تشتري)
+```bash
+# 1) على الجهاز القديم: وقّف الاستقبال، وخد نسخة نهائية
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml stop api notifier
+docker compose exec -T db pg_dump -Fc -U dealzora dealzora_sync > final.dump
+
+# 2) على الـ VPS (بعد خطوات 1 و 2 من قسم «الرفع على سيرفر»): انسخ نفس .env بالظبط و final.dump، ثم
+docker compose up -d db
+docker compose exec -T db pg_restore --clean --if-exists -U dealzora -d dealzora_sync < final.dump
+```
+3. في Cloudflare: احذف الـ Public hostname من النفق، وفي **DNS** اعمل سجل `A` لـ `sync` على IP الـ VPS
+   **بالسحابة الرمادية (DNS only)** عشان Caddy يطلّع شهادة HTTPS بنفسه.
+4. على الـ VPS: `docker compose up -d --build` ← `curl https://sync.yourdomain.com/health`.
+5. على الجهاز القديم: `docker compose -f docker-compose.yml -f docker-compose.tunnel.yml down` (من غير `-v`
+   لحد ما تتأكد إن كل حاجة شغالة على الـ VPS).
+
+> **لازم نفس `.env`:** `SYNC_JWT_SECRET` و `SYNC_LEASE_KEY` وباقي الأسرار لو اتغيرت، كل الفروع والهواتف
+> هتحتاج ربط من جديد.
+
+---
+
 ## 2) إضافة محل وفروعه
 
 ### الطريقة الأساسية: المالك يعمل كل حاجة بنفسه (بدون تدخلك)
