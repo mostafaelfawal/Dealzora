@@ -1,0 +1,115 @@
+# إصدار نسخة جديدة من برنامج سطح المكتب + التحديث التلقائي.
+#
+# التشغيل: GitHub > Actions > "Release desktop" > Run workflow
+#   version: رقم النسخة الجديدة (أكبر من آخر نسخة)، مثلاً 0.2.0
+#   notes  : ما الجديد (يظهر للتاجر في نافذة التحديث). افصل الأسطر بـ " | ".
+#
+# النتيجة: Release باسم v<version> فيه المُثبّت (setup.exe) + توقيعه + latest.json.
+# البرامج المثبّتة تقرأ latest.json من آخر Release وتعرض التحديث.
+#
+# أسرار المستودع (Settings > Secrets and variables > Actions):
+#   TAURI_SIGNING_PRIVATE_KEY          (إجباري) محتوى %USERPROFILE%\.tauri\dealzora-updater.key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD (اختياري) كلمة مرور المفتاح إن وُجدت
+#   DEALZORA_SYNC_LEASE_PUBKEY         (اختياري) نفس متغير build-backend.ps1
+# متغيرات المستودع (Variables):
+#   NEXT_PUBLIC_SYNC_URL               عنوان سيرفر الفروع (نفس قيمة frontend/.env.local)
+
+name: Release desktop
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "رقم النسخة (مثال: 0.2.0)"
+        required: true
+      notes:
+        description: "الجديد في هذه النسخة (افصل الأسطر بـ ' | ')"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-desktop
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Validate version
+        shell: pwsh
+        run: |
+          if ($env:VERSION -notmatch '^\d+\.\d+\.\d+$') { throw "الرقم لازم يكون بصيغة 1.2.3" }
+
+      - uses: actions/checkout@v4
+
+      # رقم النسخة يُكتب في ملفات البناء هنا فقط (لا يُرفع commit).
+      - name: Set version
+        shell: pwsh
+        working-directory: frontend
+        run: |
+          $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          $conf.version = $env:VERSION
+          $conf | ConvertTo-Json -Depth 32 | Set-Content src-tauri/tauri.conf.json -Encoding utf8
+          npm version $env:VERSION --no-git-tag-version --allow-same-version
+
+      - name: Release notes
+        id: notes
+        shell: pwsh
+        env:
+          NOTES: ${{ inputs.notes }}
+        run: |
+          $body = ($env:NOTES -split '\s*\|\s*' | Where-Object { $_ } | ForEach-Object { "• $_" }) -join "`n"
+          "body<<EOF`n$body`nEOF" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      # ---------- الـ backend (PyInstaller) ----------
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend deps
+        run: pip install -r backend/requirements.txt pyinstaller
+
+      - name: Build backend
+        shell: pwsh
+        env:
+          DEALZORA_SYNC_LEASE_PUBKEY: ${{ secrets.DEALZORA_SYNC_LEASE_PUBKEY }}
+        run: ./build-backend.ps1 -BackendOnly
+
+      # ---------- الـ frontend + Tauri ----------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri -> target
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build, sign and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          NEXT_PUBLIC_SYNC_URL: ${{ vars.NEXT_PUBLIC_SYNC_URL }}
+        with:
+          projectPath: frontend
+          tagName: v${{ inputs.version }}
+          releaseName: Dealzora v${{ inputs.version }}
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true

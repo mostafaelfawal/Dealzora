@@ -1,8 +1,12 @@
 # يبني الـ backend بـ PyInstaller، ينقله لـ src-tauri/binaries، ثم يبني تطبيق Tauri.
 # المكان: جذر المشروع (جنب مجلدي backend و frontend). التشغيل من أي مكان.
 # -SkipBackend : يتخطى بناء الـ backend ويبني الـ frontend بس.
+# -BackendOnly : يبني الـ backend بس (يستخدمه GitHub Actions قبل tauri-action).
+#
+# التحديث التلقائي: البناء يوقّع المُثبّت بمفتاح التحديثات. محلياً يُقرأ من
+# %USERPROFILE%\.tauri\dealzora-updater.key لو TAURI_SIGNING_PRIVATE_KEY غير موجود.
 
-param([switch]$SkipBackend)
+param([switch]$SkipBackend, [switch]$BackendOnly)
 
 $ErrorActionPreference = "Stop"
 
@@ -59,7 +63,18 @@ if (-not $SkipBackend) {
     }
 }
 
+if ($BackendOnly) { return }
+
 # ---------------- 2) الـ frontend (Tauri) ----------------
+if (-not $env:TAURI_SIGNING_PRIVATE_KEY) {
+    $updaterKey = Join-Path $env:USERPROFILE ".tauri\dealzora-updater.key"
+    if (-not (Test-Path $updaterKey)) {
+        throw "مفتاح توقيع التحديثات غير موجود: $updaterKey (أو عرّف TAURI_SIGNING_PRIVATE_KEY)"
+    }
+    $env:TAURI_SIGNING_PRIVATE_KEY = Get-Content $updaterKey -Raw
+    if (-not $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD) { $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = "" }
+}
+
 Push-Location $frontend
 try {
     Remove-Item (Join-Path $frontend "out") -Recurse -Force -ErrorAction SilentlyContinue

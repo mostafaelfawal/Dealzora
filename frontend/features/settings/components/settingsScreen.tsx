@@ -16,6 +16,7 @@ import {
   IconPercentage,
   IconPrinter,
   IconReceiptTax,
+  IconRefresh,
   IconScale,
   IconSend,
   IconShieldCheck,
@@ -61,6 +62,7 @@ import { ScaleBarcodeSection } from "./scaleBarcodeSection";
 import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
 import { TaxSection } from "./taxSection";
+import { UpdateSection } from "@/features/updates/components/updateSection";
 import { AppTooltip } from "@/components/shared/AppTooltip";
 
 /**
@@ -95,8 +97,7 @@ function eReceiptPage(allowed: boolean): Page {
           id: "e-receipt",
           icon: <IconFileCertificate />,
           title: "الجاهزية والتفعيل",
-          description:
-            "ما ينقص قبل التفعيل. لا يُفعَّل والقائمة فيها بند مطلوب.",
+          description: "ما ينقص قبل التفعيل. لا يُفعَّل والقائمة فيها بند مطلوب.",
           content: <EtaActivation />,
         },
         {
@@ -308,7 +309,7 @@ function buildPages(
     id: "account",
     icon: <IconUserCircle />,
     title: "حسابي",
-    hint: "كلمة المرور والشكل",
+    hint: "كلمة المرور والشكل والتحديثات",
     sections: [
       {
         id: "password",
@@ -324,6 +325,14 @@ function buildPages(
         description:
           "فاتح أو غامق، وتشغيل الحركة أو إيقافها على الأجهزة الضعيفة.",
         content: <AppearanceSection />,
+      },
+      {
+        id: "updates",
+        icon: <IconRefresh />,
+        title: "تحديث البرنامج",
+        description:
+          "نسخ جديدة بتحسينات وإصلاحات. تختار أنت وقت التحديث، وبياناتك تبقى كما هي.",
+        content: <UpdateSection />,
       },
     ],
   };

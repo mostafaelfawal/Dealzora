@@ -10,6 +10,7 @@ import { MotionProvider } from "@/components/shared/motion";
 import { FileDropGuard } from "./FileDropGuard";
 import { DeviceRuntime } from "@/features/devices/components/deviceRuntime";
 import { CurrencySync } from "./CurrencySync";
+import { UpdateRuntime } from "@/features/updates/components/updateRuntime";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -24,7 +25,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           <CurrencySync />
           <StoreProvider>
             <TooltipProvider delay={200}>
-              <MotionProvider>{children}</MotionProvider>
+              <MotionProvider>
+                {children}
+                {/* تحديث البرنامج من GitHub: تنبيه عند توفر نسخة جديدة. */}
+                <UpdateRuntime />
+              </MotionProvider>
             </TooltipProvider>
           </StoreProvider>
         </QueryProvider>

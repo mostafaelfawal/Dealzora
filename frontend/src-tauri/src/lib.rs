@@ -4,6 +4,7 @@ mod hardware;
 mod license;
 mod pdf;
 mod printing;
+mod updater;
 
 use std::process::Child;
 use std::sync::Mutex;
@@ -81,6 +82,15 @@ fn restart_backend(app: &AppHandle) {
         let _ = child.wait();
     }
     *slot = spawn_backend(&state.session_token, &state.permit_secret);
+}
+
+/// يوقف الـ backend المحلي وينتظر خروجه (قبل تشغيل مُثبّت التحديث: الملف لازم يكون غير مستخدم).
+fn stop_backend(app: &AppHandle) {
+    let state: State<AppState> = app.state();
+    if let Some(mut child) = state.backend.lock().unwrap().take() {
+        let _ = child.kill();
+        let _ = child.wait();
+    }
 }
 
 /// بعد نجاح الاقتران مع الجهاز الأساسي: يتحول هذا الجهاز لكاشير (يتوقف الـ backend المحلي).
@@ -229,7 +239,6 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
 }
 
 /// سطر في %LOCALAPPDATA%\Dealzora\logs\app.log (تشخيص مشاكل التشغيل عند العميل).
-#[cfg_attr(debug_assertions, allow(dead_code))]
 fn app_log(msg: &str) {
     use std::io::Write;
     let Some(dir) = std::env::var("LOCALAPPDATA").ok().map(|p| std::path::PathBuf::from(p).join("Dealzora").join("logs")) else {
@@ -353,6 +362,9 @@ pub fn run() {
         ::default()
         // نافذة اختيار مجلد/ملف (مكان النسخ الاحتياطي والاستعادة).
         .plugin(tauri_plugin_dialog::init())
+        // التحديث التلقائي من GitHub Releases (الإعدادات في tauri.conf.json > plugins.updater).
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(updater::PendingUpdate::default())
         .manage(AppState {
             session_token,
             permit_secret,
@@ -378,7 +390,9 @@ pub fn run() {
                 hardware::get_hardware_info,
                 printing::list_printers,
                 printing::print_raw,
-                pdf::html_to_pdf
+                pdf::html_to_pdf,
+                updater::check_update,
+                updater::install_update
             ]
         )
         .build(tauri::generate_context!())
@@ -386,11 +400,7 @@ pub fn run() {
         .run(|app, event| {
             // قفل عادي: نقتل الـ backend صراحةً (الـ Job هو شبكة الأمان للحالات الأخرى).
             if let RunEvent::Exit = event {
-                let state: State<AppState> = app.state();
-                if let Some(mut child) = state.backend.lock().unwrap().take() {
-                    let _ = child.kill();
-                    let _ = child.wait();
-                }
+                stop_backend(app);
             }
         });
 }
