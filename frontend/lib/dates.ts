@@ -25,7 +25,14 @@ export const addDays = (date: Date, days: number) => {
 /* ---------- الفترات الجاهزة ---------- */
 
 export type PeriodPreset =
-  "today" | "yesterday" | "week" | "month" | "last_month" | "year" | "custom";
+  | "all"
+  | "today"
+  | "yesterday"
+  | "week"
+  | "month"
+  | "last_month"
+  | "year"
+  | "custom";
 
 export interface DateRange {
   /** YYYY-MM-DD */
@@ -34,6 +41,7 @@ export interface DateRange {
 }
 
 export const PERIOD_LABELS: Record<PeriodPreset, string> = {
+  all: "كل الفترات",
   today: "اليوم",
   yesterday: "أمس",
   week: "آخر 7 أيام",

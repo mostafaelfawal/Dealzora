@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Screen } from "@/components/shared/Screen";
 import { Sheet } from "@/components/shared/Sheet";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { BranchStatusBadge } from "@/features/branches/components/BranchStatusBadge";
 import { statusText } from "@/features/dashboard/lib/insights";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
@@ -104,7 +105,7 @@ function DevicesScreen() {
           </View>
         </Card>
       ))}
-      {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {q.isPending && <ListSkeleton count={3} />}
       {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       {code && <CodeSheet code={code} onClose={() => setCode(null)} />}
     </Screen>

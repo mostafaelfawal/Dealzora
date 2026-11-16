@@ -4,12 +4,13 @@
  * بجانب أرقام كل فرع «آخر تحديث من الفرع».
  */
 import { router } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 
 import type { BranchTotals } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
 import { Card } from "@/components/shared/Card";
 import { Money } from "@/components/shared/Money";
+import { useGrow } from "@/components/shared/Motion";
 import { useNow } from "@/hooks/useNow";
 import { formatTimeAgo } from "@/lib/format";
 import { space } from "@/theme/colors";
@@ -24,7 +25,9 @@ interface Props {
 
 export function BranchRanking({ branches, singleDay }: Props) {
   const now = useNow();
-  const { chart } = useTheme();
+  const { chart, colors } = useTheme();
+  // الأشرطة تنمو من بداية السطر حين تتغير الأرقام (لا مع كل تحديث تلقائي بنفس الأرقام) (العرض بالنسبة: بلا native driver، والفروع قليلة)
+  const grow = useGrow(branches.map((b) => b.net).join("|"), { native: false, delay: 250 });
   const max = Math.max(...branches.map((b) => b.net), 0);
 
   return (
@@ -43,7 +46,7 @@ export function BranchRanking({ branches, singleDay }: Props) {
             accessibilityRole="button"
             accessibilityHint="تفاصيل الفرع"
             onPress={() => router.push({ pathname: "/branch/[id]", params: { id: b.id } })}
-            style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }]}
+            style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.muted }]}
           >
             <View style={styles.head}>
               <AppText size="sm" tone="muted" style={styles.rank}>
@@ -53,7 +56,7 @@ export function BranchRanking({ branches, singleDay }: Props) {
                 {b.name}
               </AppText>
               {cov === "none" ? (
-                <AppText size="sm" tone="warning" weight="medium">
+                <AppText label size="sm" tone="warning" weight="medium">
                   لم يرسل بعد
                 </AppText>
               ) : (
@@ -62,7 +65,17 @@ export function BranchRanking({ branches, singleDay }: Props) {
             </View>
             {cov !== "none" && (
               <View style={[styles.track, { backgroundColor: chart.track }]}>
-                {share > 0 && <View style={[styles.bar, { width: `${share * 100}%`, backgroundColor: chart.series1 }]} />}
+                {share > 0 && (
+                  <Animated.View
+                    style={[
+                      styles.bar,
+                      {
+                        width: grow.interpolate({ inputRange: [0, 1], outputRange: ["0%", `${share * 100}%`] }),
+                        backgroundColor: chart.series1,
+                      },
+                    ]}
+                  />
+                )}
               </View>
             )}
             <AppText size="xs" tone="muted">
@@ -82,7 +95,8 @@ export function BranchRanking({ branches, singleDay }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { gap: 4, paddingVertical: space.sm },
+  // الخلفية عند الضغط تمتد لحواف البطاقة تقريباً
+  row: { gap: 4, paddingVertical: space.sm, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
   head: { flexDirection: "row", alignItems: "center", gap: space.sm },
   rank: { width: 18, textAlign: "center" },
   name: { flex: 1 },

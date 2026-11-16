@@ -95,10 +95,10 @@ function CustomRangeModal({
               onPress={() => setEditing(which)}
               style={[styles.field, { borderColor: editing === which ? colors.ring : colors.input }]}
             >
-              <AppText size="sm" tone="muted">
+              <AppText label size="sm" tone="muted">
                 {which === "from" ? "من" : "إلى"}
               </AppText>
-              <AppText weight="medium">{formatRange({ from: range[which], to: range[which] })}</AppText>
+              <AppText label weight="medium">{formatRange({ from: range[which], to: range[which] })}</AppText>
             </Pressable>
           ))}
           {editing && (

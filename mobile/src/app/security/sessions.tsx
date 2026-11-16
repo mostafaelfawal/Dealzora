@@ -9,6 +9,7 @@ import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
 import { useRevokeShopSession, useShopSessions } from "@/features/security/hooks/useSecurity";
 import { useNow } from "@/hooks/useNow";
@@ -68,7 +69,7 @@ function SessionsScreen() {
           />
         </Card>
       ))}
-      {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {q.isPending && <ListSkeleton count={3} />}
       {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
     </Screen>
   );

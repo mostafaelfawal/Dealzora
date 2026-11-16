@@ -5,7 +5,6 @@ import { useFallbackInterval } from "@/lib/realtime";
 
 import { fetchOverview } from "../api/dashboard.api";
 
-/** "dashboard" يُبطَل تلقائياً بعد أي بيع/شراء/مرتجع (انظر useInvalidateAfterSale). */
 export function useOverview(range: DateRange) {
   // مع البث اللحظي: يتحدث فور أي بيع من أي جهاز. الـ polling احتياط عند انقطاعه.
   const interval = useFallbackInterval(60_000);

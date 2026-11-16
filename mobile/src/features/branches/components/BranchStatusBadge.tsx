@@ -28,7 +28,7 @@ export function BranchStatusBadge({ status }: { status: BranchStatus }) {
   return (
     <View style={styles.row} accessibilityLabel={STATUS_LABEL[status]}>
       <Ionicons name={ICON[status]} size={14} color={color} />
-      <AppText size="xs" weight="semibold" style={{ color }}>
+      <AppText label size="xs" weight="semibold" style={{ color }}>
         {STATUS_LABEL[status]}
       </AppText>
     </View>

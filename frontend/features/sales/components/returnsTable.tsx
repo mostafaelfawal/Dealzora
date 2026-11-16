@@ -108,19 +108,19 @@ const COLUMNS: AppTableColumn<SaleReturn>[] = [
 function PrintReturnButton({ ret }: { ret: SaleReturn }) {
   const shopName = useShopName().data ?? "Dealzora";
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      aria-label={`طباعة إيصال المرتجع ${ret.number}`}
-      title="طباعة إيصال المرتجع"
-      onClick={(e) => {
-        e.stopPropagation();
-        void printReturnReceipt(ret, shopName);
-      }}
-    >
-      <IconPrinter className="size-4" />
-    </Button>
+    <AppTooltip message="طباعة إيصال المرتجع">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={(e) => {
+          e.stopPropagation();
+          void printReturnReceipt(ret, shopName);
+        }}
+      >
+        <IconPrinter className="size-4" />
+      </Button>
+    </AppTooltip>
   );
 }
 

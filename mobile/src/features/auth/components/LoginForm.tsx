@@ -2,6 +2,7 @@
  * دخول الهاتف: كود ربط الهاتف (يحدد المحل، مرة واحدة) + اسم المستخدم وكلمة المرور نفسها في البرنامج.
  * عنوان الخادم يُكتب مرة واحدة هنا (أو يأتي افتراضياً مع نسخة التطبيق).
  */
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, type TextInputInstance } from "react-native";
 
@@ -9,6 +10,7 @@ import { errorMessage } from "@/api/errors";
 import { isInsecureRemote, normalizeServerUrl } from "@/api/url";
 import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
+import { FadeIn } from "@/components/shared/Motion";
 import { TextField } from "@/components/shared/TextField";
 import { formatPairingCode } from "@/lib/format";
 import { getServerUrl, setServerUrl } from "@/lib/serverUrl";
@@ -134,14 +136,18 @@ export function LoginForm() {
       />
 
       {error && (
-        <View
-          accessibilityRole="alert"
-          style={[styles.notice, { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive }]}
-        >
-          <AppText size="sm" tone="destructive">
-            {error}
-          </AppText>
-        </View>
+        // مفتاح بالنص: كل خطأ جديد ينزلق للداخل من جديد فيلاحظه المستخدم
+        <FadeIn key={error} offset={-6}>
+          <View
+            accessibilityRole="alert"
+            style={[styles.notice, styles.errorBox, { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive }]}
+          >
+            <Ionicons name="alert-circle" size={18} color={colors.destructive} />
+            <AppText size="sm" tone="destructive" style={styles.flex}>
+              {error}
+            </AppText>
+          </View>
+        </FadeIn>
       )}
 
       <Button title="دخول" icon="log-in-outline" onPress={submit} disabled={!ready} loading={submitting} />
@@ -152,6 +158,7 @@ export function LoginForm() {
 const styles = StyleSheet.create({
   form: { gap: space.lg },
   notice: { borderWidth: 1, borderRadius: radius.md, padding: space.md },
+  errorBox: { flexDirection: "row", alignItems: "center", gap: space.sm },
   serverRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   flex: { flex: 1 },
   smallBtn: { minHeight: 36, paddingHorizontal: space.sm },

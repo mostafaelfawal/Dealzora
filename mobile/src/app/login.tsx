@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/shared/AppText";
 import { BrandLogo } from "@/components/shared/BrandLogo";
+import { FadeIn } from "@/components/shared/Motion";
 import { OfflineBanner } from "@/components/shared/OfflineBanner";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { space } from "@/theme/colors";
@@ -22,15 +23,21 @@ export default function LoginRoute() {
           keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         >
           <View style={styles.head}>
-            <BrandLogo width={190} />
-            <AppText weight="bold" size="xl" center>
-              متابعة فروعك من هاتفك
-            </AppText>
-            <AppText tone="muted" size="sm" center>
-              للمالك ومديري الفروع في خطة «سلسلة»
-            </AppText>
+            <FadeIn offset={-10}>
+              <BrandLogo width={190} />
+            </FadeIn>
+            <FadeIn index={2}>
+              <AppText weight="bold" size="xxl" center>
+                متابعة فروعك من هاتفك
+              </AppText>
+              <AppText tone="muted" size="sm" center>
+                للمالك ومديري الفروع في خطة «سلسلة»
+              </AppText>
+            </FadeIn>
           </View>
-          <LoginForm />
+          <FadeIn index={4} offset={20}>
+            <LoginForm />
+          </FadeIn>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -40,5 +47,5 @@ export default function LoginRoute() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { flexGrow: 1, justifyContent: "center", padding: space.lg, gap: space.xl },
-  head: { gap: space.sm },
+  head: { gap: space.md },
 });

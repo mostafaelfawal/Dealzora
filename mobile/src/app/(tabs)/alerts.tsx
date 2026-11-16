@@ -10,7 +10,9 @@ import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { FadeIn, PressableScale } from "@/components/shared/Motion";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { PushPermissionCard } from "@/features/alerts/components/PushPermissionCard";
 import { useMarkRead, useNotifications } from "@/features/alerts/hooks/useAlerts";
 import { safeRoute } from "@/features/alerts/lib/routes";
@@ -64,29 +66,34 @@ export default function AlertsRoute() {
         {(q.data?.unread ?? 0) > 0 && (
           <Button title="تعليم الكل كمقروء" variant="secondary" icon="checkmark-done-outline" onPress={() => read.mutate(undefined)} loading={read.isPending} />
         )}
-        {items.map((n) => (
-          <Pressable key={n.id} accessibilityRole="button" onPress={() => openItem(n)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
-            <Card style={[styles.row, !n.read_at && { borderColor: colors.ring }]}>
-              <Ionicons name={ICON[n.kind]} size={22} color={colors.foreground} />
-              <View style={styles.flex}>
-                <View style={styles.titleRow}>
-                  <AppText weight={n.read_at ? "medium" : "bold"} style={styles.flex}>
-                    {n.title}
-                  </AppText>
-                  {!n.read_at && <View style={[styles.dot, { backgroundColor: colors.destructive }]} accessibilityLabel="غير مقروء" />}
+        {items.map((n, i) => (
+          <FadeIn key={n.id} index={i}>
+            <PressableScale accessibilityRole="button" scaleTo={0.985} onPress={() => openItem(n)}>
+              {/* غير المقروء: شريط في بداية البطاقة + عنوان عريض + نقطة */}
+              <Card style={[styles.row, { borderStartColor: n.read_at ? colors.border : colors.foreground }]}>
+                <View style={[styles.iconTile, { backgroundColor: colors.muted }]}>
+                  <Ionicons name={ICON[n.kind]} size={20} color={n.read_at ? colors.mutedForeground : colors.foreground} />
                 </View>
-                <AppText size="sm" tone="muted">
-                  {n.body}
-                </AppText>
-                <AppText size="xs" tone="muted">
-                  {formatTimeAgo(n.created_at, now)}
-                  {n.status === "pending" ? " · سيُرسل للهاتف بعد ساعات الهدوء" : ""}
-                </AppText>
-              </View>
-            </Card>
-          </Pressable>
+                <View style={styles.flex}>
+                  <View style={styles.titleRow}>
+                    <AppText weight={n.read_at ? "medium" : "bold"} style={styles.flex}>
+                      {n.title}
+                    </AppText>
+                    {!n.read_at && <View style={[styles.dot, { backgroundColor: colors.destructive }]} accessibilityLabel="غير مقروء" />}
+                  </View>
+                  <AppText size="sm" tone="muted">
+                    {n.body}
+                  </AppText>
+                  <AppText size="xs" tone="muted">
+                    {formatTimeAgo(n.created_at, now)}
+                    {n.status === "pending" ? " · سيُرسل للهاتف بعد ساعات الهدوء" : ""}
+                  </AppText>
+                </View>
+              </Card>
+            </PressableScale>
+          </FadeIn>
         ))}
-        {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+        {q.isPending && <ListSkeleton />}
         {q.isError && !q.data && (
           <EmptyState icon="alert-circle-outline" title="تعذّر تحميل التنبيهات" description={errorMessage(q.error)} />
         )}
@@ -103,7 +110,8 @@ export default function AlertsRoute() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: space.md, alignItems: "flex-start", paddingVertical: space.md },
+  row: { flexDirection: "row", gap: space.md, alignItems: "flex-start", paddingVertical: space.md, borderStartWidth: 3 },
+  iconTile: { width: 38, height: 38, alignItems: "center", justifyContent: "center" },
   flex: { flex: 1 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   dot: { width: 8, height: 8, borderRadius: 4 },

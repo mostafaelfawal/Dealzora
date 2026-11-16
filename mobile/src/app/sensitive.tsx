@@ -13,6 +13,7 @@ import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Money } from "@/components/shared/Money";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { PeriodPicker } from "@/features/dashboard/components/PeriodPicker";
 import { usePeriod } from "@/features/dashboard/lib/periodStore";
 import { useSensitive } from "@/features/reports/hooks/useReports";
@@ -39,7 +40,7 @@ export default function SensitiveRoute() {
       <AppText size="xs" tone="muted">
         الحدود يحددها المالك (المزيد ← حدود العمليات الحساسة)، وتصل للفروع مع مزامنتها.
       </AppText>
-      {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {q.isPending && <ListSkeleton count={4} />}
       {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       {rows.map((r) => (
         <Card key={r.id} style={[styles.row, q.isPlaceholderData && styles.stale]}>

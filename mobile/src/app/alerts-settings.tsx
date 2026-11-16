@@ -13,6 +13,7 @@ import { Chips } from "@/components/shared/Chips";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ListRow } from "@/components/shared/ListRow";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { usePrefs, useSavePrefs } from "@/features/alerts/hooks/useAlerts";
 import { PushPermissionCard } from "@/features/alerts/components/PushPermissionCard";
 import { formatArabicCount } from "@/lib/format";
@@ -55,7 +56,7 @@ export default function AlertsSettingsRoute() {
     <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching}>
       <PushPermissionCard />
 
-      {!p && q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {!p && q.isPending && <ListSkeleton count={3} />}
       {!p && q.isError && <EmptyState icon="alert-circle-outline" title="تعذّر تحميل الإعدادات" description={errorMessage(q.error)} />}
       {p && (
         <>

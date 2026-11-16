@@ -13,6 +13,7 @@ import { Button } from "@/components/shared/Button";
 import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { useExpiring, useRequestTransfer, useShortages } from "@/features/reports/hooks/useReports";
 import { expiryText } from "@/features/reports/lib/reportText";
 import { formatQty } from "@/features/transfers/lib/transferText";
@@ -65,7 +66,7 @@ export default function StockRoute() {
           </Pressable>
         ))}
       </View>
-      {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {q.isPending && <ListSkeleton count={4} />}
       {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       {tab === "shortages" && shortages.data?.map((b) => <ShortageBranch key={b.branch_id} b={b} />)}
       {tab === "expiring" && expiring.data?.map((b) => <ExpiringBranch key={b.branch_id} b={b} />)}

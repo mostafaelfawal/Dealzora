@@ -14,6 +14,7 @@ import { Chips } from "@/components/shared/Chips";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Screen } from "@/components/shared/Screen";
 import { TextField } from "@/components/shared/TextField";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { useReportConfig, useSaveReportConfig } from "@/features/reports/hooks/useReports";
 import { parseMoneyInput } from "@/features/reports/lib/reportText";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
@@ -40,7 +41,7 @@ function ReportSettings() {
   if (!q.data) {
     return (
       <Screen>
-        {q.isPending ? <AppText tone="muted">جارٍ التحميل…</AppText> : <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
+        {q.isPending ? <ListSkeleton count={2} /> : <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       </Screen>
     );
   }

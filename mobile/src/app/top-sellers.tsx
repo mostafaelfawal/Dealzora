@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Money } from "@/components/shared/Money";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { PeriodPicker } from "@/features/dashboard/components/PeriodPicker";
 import { usePeriod } from "@/features/dashboard/lib/periodStore";
 import { useTopSellers } from "@/features/reports/hooks/useReports";
@@ -26,7 +27,7 @@ export default function TopSellersRoute() {
     <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching && !q.isPlaceholderData}>
       <PeriodPicker preset={preset} range={range} />
       <LastUpdated at={q.dataUpdatedAt} label="آخر تحديث من الخادم" />
-      {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {q.isPending && <ListSkeleton count={5} />}
       {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       {rows.length > 0 && (
         <Card style={q.isPlaceholderData && styles.stale}>

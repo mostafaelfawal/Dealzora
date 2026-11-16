@@ -2,12 +2,13 @@
  * توزيع الدفع (نقدي / آجل / محفظة): شريط مقسّم (كل واحد مقسوم لأجزاء) بارتفاع 28 وفواصل 2px بلون السطح،
  * والنسبة داخل الجزء لو اتسع لها. المفتاح يكتب كل اسم ومبلغه ونسبته (اللون لا يحمل المعنى وحده).
  */
-import { StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 
 import type { Totals } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
 import { Card } from "@/components/shared/Card";
 import { Money } from "@/components/shared/Money";
+import { useGrow } from "@/components/shared/Motion";
 import { formatPiastres } from "@/lib/format";
 import { space } from "@/theme/colors";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -23,6 +24,8 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
     { key: "wallet", label: "محفظة", value: Math.max(totals.wallet, 0), color: chart.series3 },
   ];
   const sum = parts.reduce((a, p) => a + p.value, 0);
+  // الشريط يمتد من بداية السطر مع كل فترة جديدة
+  const grow = useGrow(`${totals.cash}|${totals.credit}|${totals.wallet}`, { native: false, delay: 200 });
   const pct = (v: number) => (sum ? Math.round((v / sum) * 100) : 0);
   const a11y = parts.map((p) => `${p.label} ${formatPiastres(p.value)} (${pct(p.value)}%)`).join("، ");
 
@@ -34,7 +37,11 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
           لا مدفوعات في هذه الفترة
         </AppText>
       ) : (
-        <View style={styles.bar} accessible accessibilityLabel={`توزيع الدفع: ${a11y}`}>
+        <Animated.View
+          style={[styles.bar, { width: grow.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }) }]}
+          accessible
+          accessibilityLabel={`توزيع الدفع: ${a11y}`}
+        >
           {parts
             .filter((p) => p.value > 0)
             .map((p) => (
@@ -55,7 +62,7 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
                 )}
               </View>
             ))}
-        </View>
+        </Animated.View>
       )}
       <View style={styles.legend}>
         {parts.map((p) => (

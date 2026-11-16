@@ -18,6 +18,7 @@ export interface Palette {
   destructive: string;
   destructiveSoft: string;
   success: string;
+  successSoft: string;
   warning: string;
   warningSoft: string;
 }
@@ -37,6 +38,7 @@ export const light: Palette = {
   destructive: "#e7000b", // oklch(0.577 0.245 27.325)
   destructiveSoft: "#fef2f2",
   success: "#00a63e", // oklch(0.627 0.17 149)
+  successSoft: "#f0fdf4",
   warning: "#d97f00", // oklch(0.72 0.16 70) على خلفية فاتحة
   warningSoft: "#fffbeb",
 };
@@ -56,6 +58,7 @@ export const dark: Palette = {
   destructive: "#ff6467", // oklch(0.704 0.191 22.216)
   destructiveSoft: "rgba(255,100,103,0.12)",
   success: "#05df72",
+  successSoft: "rgba(5,223,114,0.12)",
   warning: "#ffb020",
   warningSoft: "rgba(255,176,32,0.12)",
 };

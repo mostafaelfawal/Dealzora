@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import type { Transfer } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
 import { Card } from "@/components/shared/Card";
+import { PressableScale } from "@/components/shared/Motion";
 import { formatDateTime } from "@/lib/format";
 import { space } from "@/theme/colors";
 import { useTheme } from "@/theme/ThemeProvider";
@@ -18,21 +19,24 @@ export function TransferRow({ t }: { t: Transfer }) {
   const when = t.received_at ?? t.sent_at ?? t.rejected_at ?? t.requested_at;
   const approval = approvalText(t.approval, t.status);
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityHint="تفاصيل التحويل"
+      scaleTo={0.985}
       onPress={() => router.push({ pathname: "/transfer/[id]", params: { id: t.id } })}
-      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
-      <Card style={styles.card}>
+      {/* ما ينتظر ردك: شريط تحذير في بداية البطاقة */}
+      <Card style={[styles.card, { borderStartColor: t.can_approve ? colors.warning : colors.border }]}>
         <View style={styles.head}>
-          <AppText weight="semibold">#{t.number}</AppText>
+          <AppText label weight="semibold">#{t.number}</AppText>
           <TransferStatusBadge status={t.status} />
           <View style={styles.flex} />
           {t.can_approve && (
-            <AppText size="xs" weight="semibold" tone="warning">
-              ينتظر ردك
-            </AppText>
+            <View style={[styles.waiting, { backgroundColor: colors.warningSoft }]}>
+              <AppText label size="xs" weight="semibold" tone="warning">
+                ينتظر ردك
+              </AppText>
+            </View>
           )}
           <Ionicons name="chevron-back" size={16} color={colors.mutedForeground} />
         </View>
@@ -46,12 +50,13 @@ export function TransferRow({ t }: { t: Transfer }) {
           </AppText>
         )}
       </Card>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 2, paddingVertical: space.md },
+  card: { gap: 2, paddingVertical: space.md, borderStartWidth: 3 },
+  waiting: { paddingHorizontal: 8, paddingVertical: 1 },
   head: { flexDirection: "row", alignItems: "center", gap: space.sm },
   flex: { flex: 1 },
 });

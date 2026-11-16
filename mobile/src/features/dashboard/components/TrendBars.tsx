@@ -6,11 +6,12 @@
  * - يوم لم ترسل فيه كل الفروع يُعلَّم بنقطة (الرقم ناقص لا صفر).
  */
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 
 import type { SummaryDay } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
 import { Card } from "@/components/shared/Card";
+import { useGrow } from "@/components/shared/Motion";
 import { formatPiastres } from "@/lib/format";
 import { formatShortDay, formatWeekday } from "@/lib/period";
 import { space } from "@/theme/colors";
@@ -55,6 +56,8 @@ export function TrendBars({ days, branchCount }: { days: SummaryDay[]; branchCou
   const { colors, chart } = useTheme();
   const data = useMemo(() => buckets(days, branchCount), [days, branchCount]);
   const [selected, setSelected] = useState<number | null>(null);
+  // الأعمدة تنمو من خط الصفر (لأعلى للموجب ولأسفل للسالب) حين تتغير الأرقام
+  const grow = useGrow(data.map((d) => d.net).join("|"), { delay: 250 });
 
   const maxV = Math.max(...data.map((d) => d.net), 0);
   const minV = Math.min(...data.map((d) => d.net), 0);
@@ -89,14 +92,16 @@ export function TrendBars({ days, branchCount }: { days: SummaryDay[]; branchCou
               accessibilityLabel={`${d.title}: ${formatPiastres(d.net)}${d.incomplete ? "، بيانات ناقصة" : ""}`}
               hitSlop={{ top: 8, bottom: 8 }}
             >
-              <View
+              <Animated.View
                 style={[
                   styles.bar,
                   {
                     height: h,
                     top: d.net >= 0 ? zeroFromTop - h : zeroFromTop,
                     backgroundColor: d.net < 0 ? colors.destructive : chart.series1,
-                    opacity: selected === null || active ? 1 : 0.45,
+                    opacity: selected === null || active ? 1 : 0.4,
+                    transformOrigin: d.net >= 0 ? "bottom" : "top",
+                    transform: [{ scaleY: grow }],
                   },
                 ]}
               />

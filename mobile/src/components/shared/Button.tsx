@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, View, type PressableProps } from "react-native";
+import { ActivityIndicator, StyleSheet, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 
@@ -6,17 +6,19 @@ import { radius, space } from "@/theme/colors";
 import { useTheme } from "@/theme/ThemeProvider";
 
 import { AppText } from "./AppText";
+import { PressableScale } from "./Motion";
 
 type Variant = "primary" | "secondary" | "destructive" | "ghost";
 
-interface Props extends Omit<PressableProps, "children"> {
+interface Props extends Omit<PressableProps, "children" | "style"> {
   title: string;
   variant?: Variant;
   loading?: boolean;
   icon?: ComponentProps<typeof Ionicons>["name"];
+  style?: StyleProp<ViewStyle>;
 }
 
-/** زر بارتفاع 48 (هدف لمس مريح على الشاشات الصغيرة). */
+/** زر بارتفاع 48 (هدف لمس مريح على الشاشات الصغيرة)، يصغر قليلاً تحت الإصبع. */
 export function Button({ title, variant = "primary", loading, icon, disabled, style, ...rest }: Props) {
   const { colors } = useTheme();
   const palette = {
@@ -28,14 +30,14 @@ export function Button({ title, variant = "primary", loading, icon, disabled, st
   const off = disabled || loading;
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityState={{ disabled: !!off, busy: !!loading }}
       disabled={off}
-      style={(state) => [
+      style={[
         styles.base,
-        { backgroundColor: palette.bg, borderColor: palette.border, opacity: off ? 0.55 : state.pressed ? 0.8 : 1 },
-        typeof style === "function" ? style(state) : style,
+        { backgroundColor: palette.bg, borderColor: palette.border, opacity: disabled && !loading ? 0.45 : 1 },
+        style,
       ]}
       {...rest}
     >
@@ -45,13 +47,13 @@ export function Button({ title, variant = "primary", loading, icon, disabled, st
         ) : (
           <>
             {icon && <Ionicons name={icon} size={18} color={palette.fg} />}
-            <AppText weight="semibold" center style={[styles.label, { color: palette.fg }]}>
+            <AppText label weight="semibold" center style={[styles.label, { color: palette.fg }]}>
               {title}
             </AppText>
           </>
         )}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

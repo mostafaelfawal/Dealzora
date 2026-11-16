@@ -12,6 +12,7 @@ import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { useOnline } from "@/hooks/useOnline";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
 import { useSetStaffActive, useStaff } from "@/features/security/hooks/useSecurity";
@@ -79,7 +80,7 @@ function StaffScreen() {
           />
         </Card>
       ))}
-      {q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {q.isPending && <ListSkeleton count={4} />}
       {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       {q.data && rows.length === 0 && (
         <EmptyState icon="people-outline" title="لا يوجد موظفون" description="المديرون والكاشيرية تضيفهم من البرنامج على الجهاز الرئيسي" />

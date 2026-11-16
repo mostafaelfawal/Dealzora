@@ -12,6 +12,7 @@ import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { PeriodPicker } from "@/features/dashboard/components/PeriodPicker";
 import { useSummary } from "@/features/dashboard/hooks/useSummary";
 import { branchCoverage, coverageLabel } from "@/features/dashboard/lib/insights";
@@ -65,7 +66,7 @@ export default function ReceiptsRoute() {
         </AppText>
       </View>
       <PeriodPicker preset={preset} range={range} />
-      {!s && q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+      {!s && q.isPending && <ListSkeleton count={3} />}
       {!s && q.isError && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
       {s && (
         <View style={[styles.body, q.isPlaceholderData && styles.stale]}>

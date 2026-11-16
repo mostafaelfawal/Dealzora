@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Money } from "@/components/shared/Money";
 import { Screen } from "@/components/shared/Screen";
+import { ListSkeleton } from "@/components/shared/Skeletons";
 import { ApproveSheet } from "@/features/transfers/components/ApproveSheet";
 import { RejectSheet } from "@/features/transfers/components/RejectSheet";
 import { TransferStatusBadge } from "@/features/transfers/components/TransferStatusBadge";
@@ -38,7 +39,7 @@ export default function TransferRoute() {
     <>
       <Stack.Screen options={{ title: t ? `تحويل #${t.number}` : "التحويل" }} />
       <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching}>
-        {!t && q.isPending && <AppText tone="muted">جارٍ التحميل…</AppText>}
+        {!t && q.isPending && <ListSkeleton count={2} />}
         {!t && q.isError && (
           <EmptyState icon="alert-circle-outline" title="تعذّر فتح التحويل" description={errorMessage(q.error)} />
         )}

@@ -19,7 +19,7 @@ export function TransferStatusBadge({ status }: { status: TransferStatus }) {
   }[tone];
   return (
     <View style={[styles.badge, { borderColor: fg }]}>
-      <AppText size="xs" weight="semibold" style={{ color: fg }}>
+      <AppText label size="xs" weight="semibold" style={{ color: fg }}>
         {STATUS_LABEL[status]}
       </AppText>
     </View>

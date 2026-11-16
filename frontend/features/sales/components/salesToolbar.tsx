@@ -45,7 +45,20 @@ export function SalesToolbar({
             aria-label="بحث في الفواتير"
           />
         </InputGroup>
-        <PeriodPicker value={f.period} onChange={f.setPeriod} />
+        <PeriodPicker
+          value={f.period}
+          onChange={f.setPeriod}
+          presets={[
+            "all",
+            "today",
+            "yesterday",
+            "week",
+            "month",
+            "last_month",
+            "year",
+            "custom",
+          ]}
+        />
         <OptionSelect
           label="طريقة الدفع"
           items={methodOptions(methods)}

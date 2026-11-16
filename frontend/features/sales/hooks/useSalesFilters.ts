@@ -24,14 +24,15 @@ export function useSalesFilters() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
 
-  const byNumber = isInvoiceNumber(q);
+  /** رقم الفاتورة أو "كل الفترات" → بدون فلتر تاريخ. */
+  const noDates = isInvoiceNumber(q) || period.preset === "all";
   const list = useSalesList({
     q,
     method,
     status,
     sort,
-    dateFrom: byNumber ? undefined : period.range.from,
-    dateTo: byNumber ? undefined : period.range.to,
+    dateFrom: noDates ? undefined : period.range.from,
+    dateTo: noDates ? undefined : period.range.to,
     page,
     pageSize,
   });
