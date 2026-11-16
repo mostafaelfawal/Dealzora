@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { setLoyaltyConfig, type LoyaltyConfig } from "@/lib/loyalty";
 import { setTaxConfig, type TaxConfig } from "@/lib/tax";
 import { setReceiptConfig, type ReceiptConfig } from "@/lib/receiptConfig";
+import { setExchange, type ExchangeConfig } from "@/lib/exchange";
 import { setScaleConfig, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
 
 import { setCurrency, type Currency } from "@/lib/currency";
@@ -25,6 +26,8 @@ import {
   saveDiscountLimit,
   saveLoyalty,
   saveReceiptConfig,
+  saveExchangeConfig,
+  refreshExchangeRate,
   saveScaleBarcode,
   saveTax,
   savePaymentConfig,
@@ -271,5 +274,38 @@ export function useSaveReceiptConfig() {
     },
     onError: (e) =>
       toast.error(extractErrorMessage(e, "تعذّر حفظ شكل الفاتورة")),
+  });
+}
+
+/* ---------- العملة الثانية وسعر الصرف ---------- */
+
+export function useSaveExchangeConfig() {
+  return useMutation({
+    mutationFn: (config: ExchangeConfig) => saveExchangeConfig(config),
+    onSuccess: (state) => {
+      setExchange(state);
+      if (!state.config.enabled) toast.success("تم إيقاف العملة الثانية");
+      else if (!state.rate)
+        toast.warning("تم الحفظ، لكن تعذّر جلب سعر الصرف الآن", {
+          description: "تأكد من الإنترنت ثم اضغط «تحديث السعر».",
+        });
+      else toast.success("تم حفظ العملة الثانية وسعر الصرف");
+    },
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّر حفظ إعداد العملة الثانية")),
+  });
+}
+
+/** silent: تحديث تلقائي في الخلفية (اللوحة) بلا رسائل. */
+export function useRefreshExchangeRate({ silent = false } = {}) {
+  return useMutation({
+    mutationFn: refreshExchangeRate,
+    onSuccess: (state) => {
+      setExchange(state);
+      if (!silent) toast.success("تم تحديث سعر الصرف");
+    },
+    onError: (e) => {
+      if (!silent) toast.error(extractErrorMessage(e, "تعذّر تحديث سعر الصرف"));
+    },
   });
 }

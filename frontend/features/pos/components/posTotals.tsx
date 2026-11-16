@@ -23,6 +23,7 @@ import {
   selectTotals,
 } from "../store/selectors";
 import { PosLoyaltyRow } from "./posLoyaltyRow";
+import { PosGrandAmount, PosSecondCurrencyRow } from "./posSecondCurrency";
 
 /** الإجمالي كبير وثابت أسفل الجدول، ومعه أزرار الإجراءات. */
 export function PosTotals() {
@@ -134,11 +135,13 @@ export function PosTotals() {
                 ? "يُرد للعميل"
                 : "لا فرق"}
         </span>
-        <Money
+        <PosGrandAmount
           amount={exchange ? Math.abs(net) : totals.total}
           className="text-4xl leading-none sm:text-5xl"
         />
       </div>
+      {/* العملة الثانية (لو مفعّلة): المقابل وسعر الصرف وزر تبديل العملة الكبيرة. */}
+      <PosSecondCurrencyRow amount={exchange ? Math.abs(net) : totals.total} />
 
       <div className="grid grid-cols-[auto_auto_1fr] gap-2 border-t p-3">
         <Button

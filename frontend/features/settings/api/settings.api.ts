@@ -32,6 +32,14 @@ import {
   type ReceiptConfig,
   type ReceiptDto,
 } from "@/lib/receiptConfig";
+import {
+  fromExchangeDto,
+  setExchange,
+  toExchangeConfigDto,
+  type ExchangeConfig,
+  type ExchangeDto,
+  type ExchangeState,
+} from "@/lib/exchange";
 import { getLicenseStatus } from "@/features/setup/lib/license";
 import type { LicenseStatus } from "@/features/setup/types/setup";
 
@@ -156,14 +164,36 @@ export const fetchCurrency = async (): Promise<Currency> => {
     loyalty?: LoyaltyDto;
     tax?: TaxDto;
     receipt?: ReceiptDto;
+    exchange?: ExchangeDto;
   }>("/settings");
   setPaymentConfig(toConfig(data.payments));
   setScaleConfig(fromScaleDto(data.scale_barcode));
   setLoyaltyConfig(fromLoyaltyDto(data.loyalty));
   setTaxConfig(fromTaxDto(data.tax));
   setReceiptConfig(fromReceiptDto(data.receipt));
+  setExchange(fromExchangeDto(data.exchange));
   return data.currency;
 };
+
+/* ---------- العملة الثانية وسعر الصرف ---------- */
+
+export const saveExchangeConfig = async (
+  config: ExchangeConfig,
+): Promise<ExchangeState> =>
+  fromExchangeDto(
+    (
+      await api.put<ExchangeDto>(
+        "/settings/exchange",
+        toExchangeConfigDto(config),
+      )
+    ).data,
+  );
+
+/** يجلب السعر من الإنترنت الآن (الـ backend يحفظه للجميع). */
+export const refreshExchangeRate = async (): Promise<ExchangeState> =>
+  fromExchangeDto(
+    (await api.post<ExchangeDto>("/settings/exchange/refresh")).data,
+  );
 
 /* ---------- شكل الفاتورة ---------- */
 

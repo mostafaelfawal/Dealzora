@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit
+from app.core.errors import AppError
 from app.core.base import uuid7
 from app.core.database import get_sessionmaker
 from app.core.outbox import OutboxOp, enqueue_outbox
@@ -25,6 +26,14 @@ from .constants import (
 )
 from .model import AppSetting
 from .payments import PaymentKind
+from .exchange import (
+    ExchangeConfig,
+    ExchangeOut,
+    ExchangeRate,
+    RateFetchError,
+    fetch_rate,
+    is_stale,
+)
 from .receipt import ReceiptConfig
 from .scale import ScaleBarcodeConfig
 from app.modules.loyalty.config import LoyaltyConfig
@@ -168,6 +177,81 @@ class SettingsService:
             )  # fmt: skip
         self.session.commit()
         return data
+
+    # ---------- العملة الثانية وسعر الصرف ----------
+    def exchange_config(self) -> ExchangeConfig:
+        raw = self.get(SettingKey.EXCHANGE)
+        if raw:
+            try:
+                return ExchangeConfig.model_validate_json(raw)
+            except ValueError:  # قيمة تالفة: متوقفة حتى تُحفظ من جديد
+                pass
+        return ExchangeConfig()
+
+    def _cached_rate(self) -> ExchangeRate | None:
+        raw = self.get(SettingKey.EXCHANGE_RATE)
+        if raw:
+            try:
+                return ExchangeRate.model_validate_json(raw)
+            except ValueError:
+                pass
+        return None
+
+    def exchange(self) -> ExchangeOut:
+        """الإعداد + السعر الفعّال الآن (يدوي، أو آخر سعر جُلب لنفس العملتين)."""
+        cfg = self.exchange_config()
+        main = self.currency().code
+        if not cfg.enabled or cfg.code == main:
+            return ExchangeOut(config=cfg, rate=None, stale=False)
+        if cfg.mode == "manual":
+            per = cfg.manual_second_per_main()
+            rate = (
+                ExchangeRate(
+                    main=main, second=cfg.code, second_per_main=per,
+                    source="manual", rate_updated_at=0, fetched_at=0,
+                )
+                if per
+                else None
+            )  # fmt: skip
+            return ExchangeOut(config=cfg, rate=rate, stale=False)
+        cached = self._cached_rate()
+        if cached and (cached.main != main or cached.second != cfg.code):
+            cached = None
+        return ExchangeOut(config=cfg, rate=cached, stale=is_stale(cached))
+
+    def refresh_exchange_rate(self, actor: Actor) -> ExchangeOut:
+        """يجلب السعر من الإنترنت الآن ويحفظه. يرمي AppError برسالة عربية لو فشل."""
+        cfg = self.exchange_config()
+        main = self.currency().code
+        if not cfg.enabled:
+            raise AppError("exchange_disabled", "فعّل العملة الثانية من الإعدادات أولاً.")
+        if cfg.code == main:
+            raise AppError("exchange_same_currency", "العملة الثانية هي نفسها عملة المحل.")
+        try:
+            rate = fetch_rate(main, cfg.code)
+        except RateFetchError as e:
+            raise AppError("exchange_fetch_failed", str(e)) from e
+        self._set(actor, SettingKey.EXCHANGE_RATE, rate.model_dump_json())
+        self.session.commit()
+        return self.exchange()
+
+    def set_exchange(self, actor: Actor, data: ExchangeConfig) -> ExchangeOut:
+        before = self.exchange_config()
+        self._set(actor, SettingKey.EXCHANGE, data.model_dump_json())
+        if data != before:
+            record_audit(
+                self.session, actor, entity=ENTITY_SETTING, entity_id="exchange", action="update",
+                changes={"exchange": {"from": before.model_dump(), "to": data.model_dump()}},
+            )  # fmt: skip
+        self.session.commit()
+        # تلقائي ولا سعر حديث لهذا الزوج: نجلبه فوراً، وفشل الإنترنت لا يمنع الحفظ.
+        out = self.exchange()
+        if data.enabled and data.mode == "auto" and out.stale:
+            try:
+                return self.refresh_exchange_rate(actor)
+            except AppError:
+                pass
+        return out
 
     def payment_config(self) -> PaymentConfigOut:
         raw = self.get(SettingKey.PAY_METHODS)

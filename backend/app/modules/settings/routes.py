@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_session
-from app.core.permissions import require_manager_write
+from app.core.permissions import require_authenticated_write, require_manager_write
 from app.core.security import Actor, get_actor, require_app_token
 
 from app.core.plan import Feature, require_feature
 
+from .exchange import ExchangeConfig, ExchangeOut
 from .receipt import ReceiptConfig
 from .scale import ScaleBarcodeConfig
 from app.modules.loyalty.config import LoyaltyConfig
@@ -42,6 +43,7 @@ def get_settings_public(session: DbSession):
         loyalty=service.loyalty(),
         tax=service.tax(),
         receipt=service.receipt(),
+        exchange=service.exchange(),
     )
 
 
@@ -98,3 +100,17 @@ def set_tax(data: TaxConfig, session: DbSession, actor: Annotated[Actor, Depends
 @router.put("/receipt", response_model=ReceiptConfig, dependencies=[Depends(require_manager_write)])
 def set_receipt(data: ReceiptConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
     return SettingsService(session).set_receipt(actor, data)
+
+
+# العملة الثانية وسعر الصرف: متاحة لكل الخطط.
+@router.put("/exchange", response_model=ExchangeOut, dependencies=[Depends(require_manager_write)])
+def set_exchange(data: ExchangeConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
+    return SettingsService(session).set_exchange(actor, data)
+
+
+# تحديث السعر من الإنترنت: أي مستخدم (اللوحة تحدّثه تلقائياً لو قديم).
+@router.post(
+    "/exchange/refresh", response_model=ExchangeOut, dependencies=[Depends(require_authenticated_write)]
+)
+def refresh_exchange(session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
+    return SettingsService(session).refresh_exchange_rate(actor)

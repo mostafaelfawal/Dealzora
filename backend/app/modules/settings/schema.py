@@ -12,6 +12,7 @@ from .constants import (
     MAX_CURRENCY_SYMBOL,
     MAX_PATH_LEN,
 )
+from .exchange import ExchangeOut
 from .receipt import ReceiptConfig
 from .scale import ScaleBarcodeConfig
 from app.modules.loyalty.config import LoyaltyConfig
@@ -159,6 +160,7 @@ class PublicSettingsOut(BaseModel):
     loyalty: LoyaltyConfig
     tax: TaxConfig
     receipt: ReceiptConfig
+    exchange: ExchangeOut
 
 
 class BackupLocationIn(BaseModel):

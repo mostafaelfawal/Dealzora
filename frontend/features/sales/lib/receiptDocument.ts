@@ -49,6 +49,8 @@ export interface ReceiptModel {
   totals: DocRow[];
   grandLabel: string;
   grand: number;
+  /** الإجمالي بالعملة الثانية وسعر الصرف (قيم HTML آمنة)، أو فارغة. */
+  alt: DocRow[];
   /** الدفع والباقي والآجل. */
   payments: DocRow[];
   /** سطور إضافية صغيرة (نقاط الولاء، سبب المرتجع، ملاحظة). */
@@ -126,6 +128,7 @@ function renderThermal(m: ReceiptModel, o: RenderOptions): string {
   <hr><table>${lines}</table><hr>
   ${m.totals.map((r) => row(esc(r.label), r.value)).join("")}
   ${row(`${esc(m.grandLabel)} (${currencySymbol()})`, money(m.grand), "total")}
+  ${m.alt.map((r) => row(esc(r.label), r.value, "alt")).join("")}
   ${c.showPaymentDetails ? m.payments.map((r) => row(esc(r.label), r.value)).join("") : ""}
   ${m.notes.length ? `<hr>${m.notes.map((n) => `<div class="center muted">${esc(n)}</div>`).join("")}` : ""}
   ${m.eta ? eReceiptBlockHtml(m.eta, o.paperMm, m.kind) : ""}
@@ -154,7 +157,8 @@ function renderThermal(m: ReceiptModel, o: RenderOptions): string {
   .sub td { font-size: ${base - 1}px; }
   .num { text-align: left; direction: ltr; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .row { display: flex; justify-content: space-between; gap: 8px; }
-  .total { font-size: ${base + 4}px; font-weight: bold; margin: 3px 0; }${m.eta ? E_RECEIPT_CSS : ""}
+  .total { font-size: ${base + 4}px; font-weight: bold; margin: 3px 0; }
+  .alt { font-size: ${base - 1}px; }${m.eta ? E_RECEIPT_CSS : ""}
 </style></head><body>${body}
 </body></html>`;
 }
@@ -247,6 +251,7 @@ function renderA4(m: ReceiptModel, o: RenderOptions): string {
     <div class="sums">
       ${m.totals.map((r) => `<div class="row"><span>${esc(r.label)}</span><span class="num">${r.value}</span></div>`).join("")}
       <div class="row grand"><span>${esc(m.grandLabel)}</span><span class="num">${money(m.grand)} ${esc(currencySymbol())}</span></div>
+      ${m.alt.map((r) => `<div class="row alt"><span>${esc(r.label)}</span><span class="num">${r.value}</span></div>`).join("")}
     </div>
   </section>
 
@@ -296,6 +301,7 @@ function renderA4(m: ReceiptModel, o: RenderOptions): string {
   .row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
   .sums { width: 44%; font-size: 12px; }
   .sums .row { padding: 4px 0; border-bottom: 1px solid #eee; }
+  .sums .alt { font-size: 11px; color: #444; border-bottom: 0; padding: 2px 0; }
   .grand { margin-top: 6px; padding: 8px 10px !important; border: 0 !important;
            background: ${accent}; color: #fff; font-size: 16px; font-weight: 700; }
   .eta { display: flex; gap: 12px; align-items: center; margin-top: 14px; padding: 8px 10px;

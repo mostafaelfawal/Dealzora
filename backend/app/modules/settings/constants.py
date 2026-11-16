@@ -35,6 +35,9 @@ class SettingKey(StrEnum):
     TAX = "tax.config"
     # شكل الفاتورة المطبوعة: الشعار وبيانات المحل وما يظهر (JSON، انظر receipt.py).
     RECEIPT = "receipt.config"
+    # العملة الثانية وسعر الصرف (JSON، انظر exchange.py): الإعداد، وآخر سعر جُلب من الإنترنت.
+    EXCHANGE = "exchange.config"
+    EXCHANGE_RATE = "exchange.rate"
     # الإيصال الإلكتروني (JSON، انظر eta/schema.py): إعدادات المحل، وبيانات الفرع (محلية لهذا الجهاز
     # الأساسي: كل فرع قاعدة مستقلة). أسرار الأجهزة ليست هنا (جدول device_eta_profiles مشفّرة).
     ETA_CONFIG = "eta.config"

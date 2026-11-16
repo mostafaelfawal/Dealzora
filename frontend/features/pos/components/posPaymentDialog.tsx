@@ -12,6 +12,8 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, RefObject } from "react";
 
 import { Money } from "@/components/shared/Money";
+import { formatSecond } from "@/lib/exchange";
+import { usePosSecondCurrency } from "./posSecondCurrency";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -240,6 +242,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         <span className="pb-1 text-sm text-muted-foreground">المطلوب</span>
         <Money amount={total} className="text-4xl leading-none" />
       </div>
+      <SecondCurrencyDue amount={total} />
 
       <div
         role="group"
@@ -495,5 +498,20 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         </Button>
       </div>
     </form>
+  );
+}
+
+/** المطلوب بالعملة الثانية (لو مفعّلة): الزبون يعرف كم يدفع بعملته. */
+function SecondCurrencyDue({ amount }: { amount: number }) {
+  const { state, enabled } = usePosSecondCurrency();
+  const text = enabled ? formatSecond(amount, state) : null;
+  if (!text) return null;
+  return (
+    <p className="-mt-2 text-end text-xs text-muted-foreground">
+      ≈{" "}
+      <bdi dir="ltr" className="font-mono font-medium text-foreground">
+        {text}
+      </bdi>
+    </p>
   );
 }

@@ -38,6 +38,7 @@ import {
 import { DashboardQuickActions } from "./dashboardQuickActions";
 import { DashboardRecentSales } from "./dashboardRecentSales";
 import { DashboardError, DashboardSkeleton } from "./dashboardStates";
+import { DashboardExchange } from "./dashboardExchange";
 import { DashboardTrend } from "./dashboardTrend";
 
 const isoLabel = (iso: string) => formatDate(parseIsoDay(iso));
@@ -63,7 +64,8 @@ function DashboardBody({
 }) {
   const moduleCards = useModuleCards(o);
   // ما خارج الخطة يختفي، إلا لو فيه بيانات فعلية (من قبل نزول الخطة).
-  const showExpenses = useFeature("expenses") || o.expensesByCategory.length > 0;
+  const showExpenses =
+    useFeature("expenses") || o.expensesByCategory.length > 0;
   const showCashiers = useFeature("multi_user") || o.cashiers.length > 1;
   return (
     <div
@@ -147,9 +149,7 @@ function useModuleCards(o: Overview) {
     cards.push(<TopCustomersCard key="customers" customers={o.customers} />);
   if (o.loyalty) cards.push(<LoyaltyCard key="loyalty" loyalty={o.loyalty} />);
   if (o.purchasing)
-    cards.push(
-      <PurchasingCard key="purchasing" purchasing={o.purchasing} />,
-    );
+    cards.push(<PurchasingCard key="purchasing" purchasing={o.purchasing} />);
   return cards;
 }
 
@@ -190,6 +190,8 @@ export function DashboardScreen() {
         onPeriodChange={setPeriod}
       />
       <DashboardQuickActions />
+      {/* العملة الثانية: سعر الصرف ومحوّل سريع (لا يعتمد على فترة اللوحة). */}
+      <DashboardExchange />
       {renderContent()}
     </div>
   );

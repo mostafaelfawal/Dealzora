@@ -6,6 +6,13 @@ import { getCachedPlan, upgradeMessage } from "@/lib/plan";
 import { printReceiptHtml } from "@/lib/print";
 import { getPrinterPrefs } from "@/lib/printerPrefs";
 import { getReceiptConfig } from "@/lib/receiptConfig";
+import { getCurrency } from "@/lib/currency";
+import {
+  activeRate,
+  formatSecond,
+  getExchange,
+  rateSentence,
+} from "@/lib/exchange";
 import { currencySymbol } from "@/lib/currency";
 import { formatQty } from "@/lib/format";
 
@@ -39,6 +46,25 @@ function currentRender(
     freePlan: Boolean(getCachedPlan()?.isFree),
     ...override,
   };
+}
+
+/**
+ * الإجمالي بالعملة الثانية وسعر الصرف المستخدم (لو مفعّلة للفاتورة).
+ * بسعر وقت الطباعة، والسعر مكتوب في الفاتورة نفسها حتى يكون واضحاً للزبون.
+ */
+function secondCurrencyRows(total: number): DocRow[] {
+  const ex = getExchange();
+  const rate = activeRate(ex);
+  if (!ex.config.showOnReceipt || !rate) return [];
+  const value = formatSecond(total, ex);
+  if (!value) return [];
+  return [
+    { label: `الإجمالي بـ${ex.config.name}`, value: esc(value) },
+    {
+      label: "سعر الصرف",
+      value: esc(rateSentence(rate, getCurrency(), ex.config).text),
+    },
+  ];
 }
 
 export function saleReceiptModel(sale: Sale, reprint = false): ReceiptModel {
@@ -119,6 +145,7 @@ export function saleReceiptModel(sale: Sale, reprint = false): ReceiptModel {
     totals,
     grandLabel: "الإجمالي",
     grand: sale.total,
+    alt: secondCurrencyRows(sale.total),
     payments,
     notes,
     eta: sale.etaPrint,
@@ -166,6 +193,7 @@ export function returnReceiptModel(ret: SaleReturn): ReceiptModel {
     totals,
     grandLabel: "قيمة المرتجع",
     grand: ret.total,
+    alt: secondCurrencyRows(ret.total),
     payments,
     notes,
     eta: ret.etaPrint,

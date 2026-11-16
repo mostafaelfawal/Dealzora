@@ -55,6 +55,7 @@ import { useSettingsTab } from "../hooks/useSettingsTab";
 import { AppearanceSection } from "./appearanceSection";
 import { BackupSection } from "./backupSection";
 import { CurrencySection } from "./currencySection";
+import { ExchangeSection } from "./exchangeSection";
 import { DemoDataSection } from "./demoDataSection";
 import { DiscountLimitSection } from "./discountLimitSection";
 import { LicenseSection } from "./licenseSection";
@@ -174,7 +175,7 @@ function buildPages(
     id: "shop",
     icon: <IconBuildingStore />,
     title: "محلي",
-    hint: "اسم المحل والعملة والضريبة",
+    hint: "اسم المحل والعملة وسعر الصرف والضريبة",
     sections: [
       {
         id: "shop-info",
@@ -189,6 +190,15 @@ function buildPages(
         title: "العملة",
         description: "تظهر مع كل الأسعار والفواتير والتقارير.",
         content: <CurrencySection />,
+      },
+      {
+        id: "exchange",
+        icon: <IconArrowsExchange />,
+        title: "العملة الثانية وسعر الصرف",
+        description:
+          "اعرض المقابل بعملة ثانية (دولار، ليرة…) في البيع والفاتورة، بسعر صرف من الإنترنت أو تكتبه بنفسك.",
+        content: <ExchangeSection />,
+        keywords: "دولار ليره صرف تحويل عمله سعر الصرف",
       },
       {
         id: "tax",
