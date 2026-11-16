@@ -70,6 +70,8 @@ export function useCreateReturn() {
             `رُدّ للعميل ${formatMoneyText(ret.cashRefund)} نقداً`,
           ret.walletRefund > 0 &&
             `حوّل للعميل ${formatMoneyText(ret.walletRefund)} على محفظته`,
+          ret.balanceRefund > 0 &&
+            `أُضيف ${formatMoneyText(ret.balanceRefund)} لرصيد العميل لدى المحل`,
           ret.creditRefund > 0 &&
             `خُصم ${formatMoneyText(ret.creditRefund)} من حساب العميل`,
         ]

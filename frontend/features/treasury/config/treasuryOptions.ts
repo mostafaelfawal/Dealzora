@@ -36,6 +36,8 @@ export const KIND_OPTIONS: { value: TreasuryKindFilter; label: string }[] = [
   { value: "supplier_payment", label: "سداد لموردين" },
   { value: "expense", label: "مصروفات" },
   { value: "shift_diff", label: "فروق الورديات" },
+  { value: "customer_deposit", label: "باقٍ محفوظ رصيداً للعملاء" },
+  { value: "customer_payout", label: "صرف أرصدة العملاء" },
   { value: "manual_in", label: "إيداع يدوي" },
   { value: "manual_out", label: "سحب يدوي" },
 ];
@@ -58,6 +60,8 @@ export const KIND_LABEL: Record<CashKind, string> = {
   customer_payment: "تحصيل من عميل",
   supplier_payment: "سداد لمورد",
   shift_diff: "فرق وردية",
+  customer_deposit: "باقٍ محفوظ رصيداً لعميل",
+  customer_payout: "صرف رصيد عميل",
 };
 
 /** اقتراحات سريعة لسبب الحركة اليدوية. */

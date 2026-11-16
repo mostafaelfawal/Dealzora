@@ -86,6 +86,9 @@ class CustomersSummaryOut(BaseModel):
     overdue: int
     at_limit: int
     inactive: int
+    # أرصدة العملاء لدى المحل (المحل مدين بها) وعدد أصحابها.
+    total_credit: int = 0
+    creditors: int = 0
 
 # ================= العمليات الجماعية =================
 class BulkItemIn(BaseModel):

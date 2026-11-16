@@ -1,8 +1,9 @@
 "use client";
 
+import { CustomerBalance } from "./customerBalance";
+
 import { IconCash, IconPhone } from "@tabler/icons-react";
 
-import { Money } from "@/components/shared/Money";
 import { listItem, MotionArticle } from "@/components/shared/motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export function CustomerCard({
   ...actions
 }: CustomerCardProps) {
   const hasDebt = customer.balance > 0;
+  const hasCredit = customer.balance < 0;
 
   return (
     <MotionArticle
@@ -63,7 +65,10 @@ export function CustomerCard({
           </button>
           <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <IconPhone className="size-3.5 shrink-0" aria-hidden />
-            <AppTooltip message={customer.phone || "بدون رقم"} onlyWhenTruncated>
+            <AppTooltip
+              message={customer.phone || "بدون رقم"}
+              onlyWhenTruncated
+            >
               <span
                 dir="ltr"
                 className="min-w-0 truncate text-start font-mono text-[11px]"
@@ -89,17 +94,10 @@ export function CustomerCard({
         )}
       >
         <div className="space-y-0.5">
-          <p className="text-[11px] text-muted-foreground">المديونية</p>
-          {hasDebt ? (
-            <Money
-              amount={customer.balance}
-              className="text-lg font-semibold text-destructive"
-            />
-          ) : (
-            <p className="text-sm font-medium text-success">لا مديونية</p>
-          )}
+          <p className="text-[11px] text-muted-foreground">الرصيد</p>
+          <CustomerBalance balance={customer.balance} />
         </div>
-        {hasDebt && (
+        {(hasDebt || hasCredit) && (
           <Button
             type="button"
             size="sm"
@@ -108,7 +106,7 @@ export function CustomerCard({
             className="relative z-10 gap-1.5 font-normal"
           >
             <IconCash className="size-3.5" />
-            تحصيل
+            {hasCredit ? "صرف رصيد" : "تحصيل"}
           </Button>
         )}
       </div>

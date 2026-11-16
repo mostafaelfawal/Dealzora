@@ -17,6 +17,7 @@ from app.core.snapshots import diff_snapshots
 from app.core.text import build_search_text
 
 from .constants import (
+    DEFAULT_PAYOUT_NOTE,
     CUSTOMER_SNAPSHOT_FIELDS,
     DEFAULT_PAYMENT_NOTE,
     ENTITY_CUSTOMER,
@@ -91,6 +92,8 @@ class CustomerService(EntityService):
             overdue=s.overdue,
             at_limit=s.at_limit,
             inactive=s.inactive,
+            total_credit=s.total_credit,
+            creditors=s.creditors,
         )
 
     def get_customer(self, customer_id: str) -> CustomerOut:
@@ -156,8 +159,10 @@ class CustomerService(EntityService):
     def delete_customer(self, customer_id: str, base_version: int) -> None:
         customer = self._get_or_404(customer_id)
         self._check_version(customer, base_version)
-        if customer.balance != 0:
+        if customer.balance > 0:
             raise self._err(ConflictError, CustomerError.HAS_BALANCE, balance=customer.balance)
+        if customer.balance < 0:
+            raise self._err(ConflictError, CustomerError.HAS_CREDIT, balance=-customer.balance)
         self._soft_delete(
             customer, base_version, {"name": customer.name, "balance": customer.balance}
         )
@@ -192,6 +197,38 @@ class CustomerService(EntityService):
             amount=data.amount,
             occurred_at=local_today(),
             note=f"تحصيل من {customer.name}",
+            source_entity=ENTITY_LEDGER_ENTRY,
+            source_id=entry.id,
+        )
+        self._commit()
+        return self._to_out(customer)
+
+    def payout_balance(self, customer_id: str, data: PaymentIn) -> CustomerOut:
+        """صرف رصيد العميل لدى المحل نقداً من الخزنة (المدير فقط)."""
+        customer = self._get_or_404(customer_id)
+        credit = -customer.balance
+        if credit <= 0:
+            raise self._err(BadRequestError, CustomerError.NO_CREDIT)
+        if data.amount > credit:
+            raise self._err(BadRequestError, CustomerError.AMOUNT_EXCEEDS_CREDIT, balance=credit)
+        entry = self._post_entry(
+            customer,
+            LedgerType.BALANCE_PAYOUT,
+            debit=data.amount,
+            note=data.note or DEFAULT_PAYOUT_NOTE,
+        )
+        self._audit(
+            customer, "payout_balance", {"amount": data.amount, "balance_after": entry.balance_after}
+        )
+        from app.modules.treasury.service import TreasuryService
+        from app.modules.treasury.types import CashDirection, CashKind
+
+        TreasuryService(self.session, self.actor).post_entry(
+            direction=CashDirection.OUT,
+            kind=CashKind.CUSTOMER_PAYOUT,
+            amount=data.amount,
+            occurred_at=local_today(),
+            note=f"صرف رصيد {customer.name}",
             source_entity=ENTITY_LEDGER_ENTRY,
             source_id=entry.id,
         )

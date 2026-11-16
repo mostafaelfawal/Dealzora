@@ -10,7 +10,7 @@ import type {
   AppTablePaginationProps,
 } from "@/components/shared/AppTable/types";
 import { AppTooltip } from "@/components/shared/AppTooltip";
-import { Money } from "@/components/shared/Money";
+import { CustomerBalance } from "./customerBalance";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -83,16 +83,20 @@ export function CustomersTable({
     },
     {
       id: "balance",
-      header: "المديونية",
+      header: "الرصيد",
       cell: (c) =>
-        c.balance > 0 ? (
+        c.balance !== 0 ? (
           <div className="flex items-center gap-2">
-            <Money amount={c.balance} className="text-sm text-destructive" />
+            <CustomerBalance balance={c.balance} size="sm" />
             <Button
               type="button"
               size="icon-sm"
               variant="outline"
-              aria-label={`تحصيل دفعة من ${c.name}`}
+              aria-label={
+                c.balance > 0
+                  ? `تحصيل دفعة من ${c.name}`
+                  : `صرف رصيد ${c.name} نقداً`
+              }
               onClick={() => actions.onCollect(c.id)}
               className="size-7"
             >

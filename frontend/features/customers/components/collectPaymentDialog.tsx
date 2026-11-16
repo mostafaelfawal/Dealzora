@@ -25,12 +25,18 @@ import { Separator } from "@/components/ui/separator";
 import { formatMoneyText } from "@/lib/format";
 import { round2 } from "@/features/pos/lib/posCalc";
 
-import { useCollectPayment } from "../hooks/useCustomerMutations";
+import {
+  useCollectPayment,
+  usePayoutBalance,
+} from "../hooks/useCustomerMutations";
 import { parseAmount } from "../lib/customerCalc";
 import type { Customer } from "../types/customer";
 import { CurrencyLabel } from "@/components/shared/CurrencyLabel";
 
-/** تحصيل دفعة من عميل عليه دين: المبلغ معبّأ بالدين كاملاً، فالتحصيل الكامل ضغطة Enter واحدة. */
+/**
+ * تحصيل دفعة من عميل عليه دين، أو (لو له رصيد لدى المحل) صرف رصيده نقداً من الخزنة.
+ * المبلغ معبّأ بالرصيد كاملاً، فالعملية الكاملة ضغطة Enter واحدة.
+ */
 export function CollectPaymentDialog({
   customer,
   onClose,
@@ -71,19 +77,26 @@ function CollectForm({
   inputRef: React.RefObject<HTMLInputElement | null>;
   onClose: () => void;
 }) {
-  const collect = useCollectPayment();
-  const [text, setText] = useState(String(customer.balance));
+  // رصيد سالب = له لدى المحل: نفس النافذة بالعكس (صرف بدل تحصيل).
+  const payout = customer.balance < 0;
+  const owed = Math.abs(customer.balance);
+  const collectMutation = useCollectPayment();
+  const payoutMutation = usePayoutBalance();
+  const collect = payout ? payoutMutation : collectMutation;
+  const [text, setText] = useState(String(owed));
   const [note, setNote] = useState("");
 
   const parsed = parseAmount(text);
   const amount = Number.isFinite(parsed) ? round2(parsed) : 0;
-  const remaining = round2(customer.balance - amount);
+  const remaining = round2(owed - amount);
 
   let error: string | null = null;
-  if (customer.balance <= 0) error = "هذا العميل ليس عليه مديونية.";
+  if (owed <= 0) error = "هذا العميل ليس عليه مديونية ولا له رصيد.";
   else if (!(amount > 0)) error = "اكتب مبلغاً أكبر من صفر.";
-  else if (amount > customer.balance)
-    error = `المبلغ أكبر من دينه (${formatMoneyText(customer.balance)}).`;
+  else if (amount > owed)
+    error = payout
+      ? `المبلغ أكبر من رصيده (${formatMoneyText(owed)}).`
+      : `المبلغ أكبر من دينه (${formatMoneyText(owed)}).`;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -95,22 +108,25 @@ function CollectForm({
   }
 
   const quick = [
-    { label: "الدين كاملاً", value: customer.balance },
-    { label: "النصف", value: round2(customer.balance / 2) },
+    { label: payout ? "الرصيد كاملاً" : "الدين كاملاً", value: owed },
+    { label: "النصف", value: round2(owed / 2) },
   ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <DialogHeader className="text-start">
-        <DialogTitle>تحصيل دفعة</DialogTitle>
-        <DialogDescription>{customer.name}</DialogDescription>
+        <DialogTitle>{payout ? "صرف رصيد نقداً" : "تحصيل دفعة"}</DialogTitle>
+        <DialogDescription>
+          {customer.name}
+          {payout && " · يخرج المبلغ من الخزنة ويُخصم من رصيده لدى المحل."}
+        </DialogDescription>
       </DialogHeader>
 
       <div className="flex items-end justify-between">
         <span className="pb-1 text-sm text-muted-foreground">
-          المديونية الحالية
+          {payout ? "رصيده لدى المحل" : "المديونية الحالية"}
         </span>
-        <Money amount={customer.balance} className="text-3xl leading-none" />
+        <Money amount={owed} className="text-3xl leading-none" />
       </div>
 
       <div className="space-y-2">
@@ -118,7 +134,7 @@ function CollectForm({
           htmlFor="collect-amount"
           className="text-xs text-muted-foreground"
         >
-          المبلغ المستلم
+          {payout ? "المبلغ المصروف" : "المبلغ المستلم"}
         </label>
         <InputGroup className="h-12">
           <InputGroupInput
@@ -169,10 +185,12 @@ function CollectForm({
 
       <dl aria-live="polite" className="space-y-1 text-xs">
         <div className="flex items-end justify-between">
-          <dt className="pb-0.5 text-sm font-medium">المتبقي عليه</dt>
+          <dt className="pb-0.5 text-sm font-medium">
+            {payout ? "يتبقى له" : "المتبقي عليه"}
+          </dt>
           <dd>
             <Money
-              amount={error ? customer.balance : Math.max(remaining, 0)}
+              amount={error ? owed : Math.max(remaining, 0)}
               className="text-2xl leading-none"
             />
           </dd>
@@ -214,7 +232,7 @@ function CollectForm({
             </>
           ) : (
             <>
-              تأكيد التحصيل
+              {payout ? "تأكيد الصرف" : "تأكيد التحصيل"}
               <ShortcutBadge className="rounded-none border-primary-foreground/30 text-primary-foreground/80">
                 Enter
               </ShortcutBadge>

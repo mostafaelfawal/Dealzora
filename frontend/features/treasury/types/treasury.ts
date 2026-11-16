@@ -9,7 +9,9 @@ export type CashKind =
   | "purchase_return"
   | "customer_payment"
   | "supplier_payment"
-  | "shift_diff";
+  | "shift_diff"
+  | "customer_deposit"
+  | "customer_payout";
 
 export interface CashEntry {
   id: string;

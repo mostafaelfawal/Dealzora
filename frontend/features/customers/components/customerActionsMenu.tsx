@@ -65,11 +65,11 @@ export function CustomerActionsMenu({
           كشف الحساب
         </DropdownMenuItem>
         <DropdownMenuItem
-          disabled={customer.balance <= 0}
+          disabled={customer.balance === 0}
           onClick={() => onCollect(customer.id)}
         >
           <IconCash />
-          تحصيل دفعة
+          {customer.balance < 0 ? "صرف رصيده نقداً" : "تحصيل دفعة"}
         </DropdownMenuItem>
         {loyalty && (
           <DropdownMenuItem onClick={() => onLoyalty(customer.id)}>

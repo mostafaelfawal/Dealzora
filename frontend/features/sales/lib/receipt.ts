@@ -102,6 +102,29 @@ export function saleReceiptModel(sale: Sale, reprint = false): ReceiptModel {
     });
   if (sale.walletAmount > 0 && sale.paymentRef)
     payments.push({ label: "رقم العملية", value: esc(sale.paymentRef) });
+  // رصيد العميل لدى المحل: ما دُفع منه، وما تُرك من الباقي، ورصيده بعد الفاتورة.
+  if (sale.balanceUsed > 0)
+    payments.push({
+      label: "من رصيدك لدى المحل",
+      value: money(sale.balanceUsed),
+    });
+  if (sale.changeKept > 0)
+    payments.push({
+      label: "تُرك من الباقي رصيداً",
+      value: money(sale.changeKept),
+    });
+  if (
+    (sale.balanceUsed > 0 || sale.changeKept > 0) &&
+    sale.customerBalance !== null
+  )
+    payments.push(
+      sale.customerBalance > 0
+        ? { label: "المتبقي عليك", value: money(sale.customerBalance) }
+        : {
+            label: "رصيدك لدى المحل الآن",
+            value: money(-sale.customerBalance),
+          },
+    );
   if (sale.returnedTotal > 0)
     payments.push({
       label: "مرتجع من الفاتورة",
@@ -164,6 +187,11 @@ export function returnReceiptModel(ret: SaleReturn): ReceiptModel {
     payments.push({ label: "رُد نقداً", value: money(ret.cashRefund) });
   if (ret.walletRefund > 0)
     payments.push({ label: "حُوّل للمحفظة", value: money(ret.walletRefund) });
+  if (ret.balanceRefund > 0)
+    payments.push({
+      label: "أُضيف لرصيدك لدى المحل",
+      value: money(ret.balanceRefund),
+    });
   if (ret.creditRefund > 0)
     payments.push({
       label: "خُصم من حساب العميل",

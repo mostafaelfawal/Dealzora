@@ -2,6 +2,7 @@
 
 import {
   IconAlertTriangle,
+  IconCoins,
   IconArrowsExchange,
   IconCreditCard,
   IconLoader2,
@@ -71,6 +72,10 @@ const KIND_ICON: Record<PaymentKind, typeof IconWallet> = {
   transfer: IconArrowsExchange,
 };
 const REF_MAX = 40;
+/** «احفظ الكسور»: يُسلَّم الباقي لأقرب مضاعف لهذه الفئة، والكسر يُحفظ رصيداً. */
+const CHANGE_UNIT = 5;
+
+type KeepMode = "none" | "fraction" | "all";
 
 const initialCashText = (method: PaymentMethod, total: number) =>
   method === "cash" ? String(total) : "";
@@ -117,6 +122,13 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
 
   // حالة الفورم (الطريقة الحالية والمبلغ المكتوب) محلية عمداً.
   const [method, setMethod] = useState<PaymentMethod>(initialMethod);
+  // رصيد العميل لدى المحل (رصيده سالب = له عندنا): الكاشير يقرر استخدامه، لا تلقائياً.
+  const storeCredit =
+    customer && customer.balance < 0 ? round2(-customer.balance) : 0;
+  const [useCredit, setUseCredit] = useState(false);
+  const balanceUsed = useCredit ? round2(Math.min(storeCredit, total)) : 0;
+  const due = round2(total - balanceUsed);
+  const [keepMode, setKeepMode] = useState<KeepMode>("none");
   const [cashText, setCashText] = useState(() =>
     initialCashText(initialMethod, total),
   );
@@ -142,7 +154,13 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
 
   function changeMethod(next: PaymentMethod) {
     setMethod(next);
-    setCashText(initialCashText(next, total));
+    setCashText(initialCashText(next, due));
+  }
+
+  function toggleCredit(on: boolean) {
+    setUseCredit(on);
+    const nextDue = round2(total - (on ? Math.min(storeCredit, total) : 0));
+    setCashText(initialCashText(method, nextDue));
   }
 
   const customersAllowed = useFeature("customers");
@@ -163,11 +181,12 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
   const KindIcon = KIND_ICON[walletMethod?.kind ?? "wallet"];
   const typed = round2(Number(normalizeDigits(cashText)) || 0);
   const cash = method === "credit" || wallet ? 0 : typed;
-  const applied = method === "cash" ? total : cash;
-  const credit = method === "cash" || wallet ? 0 : round2(total - applied);
-  const change = method === "cash" ? round2(Math.max(cash - total, 0)) : 0;
+  const applied = method === "cash" ? due : cash;
+  const credit = method === "cash" || wallet ? 0 : round2(due - applied);
+  const change = method === "cash" ? round2(Math.max(cash - due, 0)) : 0;
+  // الحد بعد خصم ما استُخدم من الرصيد في نفس الفاتورة (نفس حساب السيرفر).
   const available = customer
-    ? Math.max(customer.creditLimit - customer.balance, 0)
+    ? Math.max(customer.creditLimit - (customer.balance + balanceUsed), 0)
     : 0;
 
   let error: string | null = null;
@@ -180,12 +199,12 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
     // بَسطة: البيع كاش فقط (السيرفر يرفض الآجل أيضاً).
     error = upgradeMessage("customers");
   } else if (method === "cash") {
-    if (cash < total)
-      error = `المبلغ ناقص ${formatMoneyText(round2(total - cash))}`;
+    if (cash < due)
+      error = `المبلغ ناقص ${formatMoneyText(round2(due - cash))}`;
   } else if (!customer) {
     needsCustomer = true;
     error = "اختر عميلاً أولاً للبيع الآجل.";
-  } else if (method === "mixed" && !(cash > 0 && cash < total)) {
+  } else if (method === "mixed" && !(cash > 0 && cash < due)) {
     error =
       "في الدفع المختلط يجب أن يكون المدفوع نقداً أكبر من صفر وأقل من الإجمالي.";
   } else if (credit > available) {
@@ -194,6 +213,19 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         ? `${customer.name} غير مسموح له بالبيع الآجل.`
         : `المبلغ الآجل ${formatMoneyText(credit)} أكبر من المتاح للعميل (${formatMoneyText(available)}).`;
   }
+
+  const fraction = round2(
+    change - Math.floor(change / CHANGE_UNIT) * CHANGE_UNIT,
+  );
+  const canKeep = method === "cash" && !error && change > 0 && !!customer;
+  const keep = !canKeep
+    ? 0
+    : keepMode === "all"
+      ? change
+      : keepMode === "fraction" && fraction > 0 && fraction < change
+        ? fraction
+        : 0;
+  const handed = round2(change - keep);
 
   function pickCustomer() {
     dispatch(posUiActions.pickCustomerFromPayment(method));
@@ -207,7 +239,9 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         received: method === "cash" ? cash : applied,
         cash: wallet ? 0 : applied,
         credit,
-        change,
+        change: handed,
+        useBalance: balanceUsed,
+        keepChange: keep,
         paymentRef: wallet ? paymentRef.trim() || undefined : undefined,
         print,
       }),
@@ -230,7 +264,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
     }
   }
 
-  const quickAmounts = suggestCashAmounts(total);
+  const quickAmounts = suggestCashAmounts(due);
 
   return (
     <form
@@ -242,7 +276,26 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
         <span className="pb-1 text-sm text-muted-foreground">المطلوب</span>
         <Money amount={total} className="text-4xl leading-none" />
       </div>
-      <SecondCurrencyDue amount={total} />
+      <SecondCurrencyDue amount={due} />
+      {storeCredit > 0 && (
+        <label className="flex items-center gap-3 border border-success/40 bg-success/5 p-2.5 text-xs">
+          <Checkbox
+            checked={useCredit}
+            onCheckedChange={(v) => toggleCredit(Boolean(v))}
+          />
+          <IconCoins className="size-5 shrink-0 text-success" aria-hidden />
+          <span className="flex-1">
+            <span className="font-medium">
+              استخدم رصيد {customer?.name} لدى المحل
+            </span>
+            <span className="block text-muted-foreground">
+              رصيده {formatMoneyText(storeCredit)}
+              {useCredit &&
+                ` · يُخصم ${formatMoneyText(balanceUsed)} والمطلوب الآن ${formatMoneyText(due)}`}
+            </span>
+          </span>
+        </label>
+      )}
 
       <div
         role="group"
@@ -304,7 +357,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
               ) : (
                 <p className="text-sm">
                   {walletMethod.kind === "card"
-                    ? `ادفع ${formatMoneyText(total)} على جهاز ${walletMethod.name}`
+                    ? `ادفع ${formatMoneyText(due)} على جهاز ${walletMethod.name}`
                     : `الدفع عبر ${walletMethod.name}`}
                 </p>
               )}
@@ -348,9 +401,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
               value={cashText}
               onChange={(event) => setCashText(event.target.value)}
               onFocus={(event) => event.currentTarget.select()}
-              aria-invalid={
-                method === "cash" && cash < total ? true : undefined
-              }
+              aria-invalid={method === "cash" && cash < due ? true : undefined}
               maxLength={12}
               className="h-full text-center font-mono text-xl tabular-nums md:text-xl"
             />
@@ -367,7 +418,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => setCashText(String(total))}
+                onClick={() => setCashText(String(due))}
                 className="font-normal"
               >
                 بالضبط
@@ -394,12 +445,22 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
       <dl aria-live="polite" className="space-y-1.5 text-xs">
         {method === "cash" && (
           <div className="flex items-end justify-between">
-            <dt className="pb-0.5 text-sm font-medium">الباقي للعميل</dt>
+            <dt className="pb-0.5 text-sm font-medium">
+              {keep > 0 ? "يُسلَّم للعميل" : "الباقي للعميل"}
+            </dt>
             <dd>
               <Money
-                amount={error ? 0 : change}
+                amount={error ? 0 : handed}
                 className="text-3xl leading-none"
               />
+            </dd>
+          </div>
+        )}
+        {keep > 0 && (
+          <div className="flex items-center justify-between text-success">
+            <dt>يُحفظ رصيداً لـ{customer?.name}</dt>
+            <dd>
+              <Money amount={keep} />
             </dd>
           </div>
         )}
@@ -407,7 +468,7 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
           <div className="flex items-end justify-between">
             <dt className="pb-0.5 text-sm font-medium">المطلوب تحويله</dt>
             <dd>
-              <Money amount={total} className="text-3xl leading-none" />
+              <Money amount={due} className="text-3xl leading-none" />
             </dd>
           </div>
         )}
@@ -429,9 +490,12 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
             </div>
             {customer && (
               <div className="flex items-center justify-between text-muted-foreground">
-                <dt>دينه الحالي · المتاح</dt>
+                <dt>
+                  {customer.balance < 0 ? "له لدى المحل" : "دينه الحالي"} ·
+                  المتاح
+                </dt>
                 <dd className="flex items-center gap-2">
-                  <Money amount={customer.balance} />
+                  <Money amount={Math.abs(customer.balance)} />
                   <span aria-hidden>·</span>
                   <Money amount={available} />
                 </dd>
@@ -440,6 +504,17 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
           </>
         )}
       </dl>
+
+      {method === "cash" && !error && change > 0 && customersAllowed && (
+        <KeepChangeChoice
+          customerName={customer?.name ?? null}
+          change={change}
+          fraction={fraction > 0 && fraction < change ? fraction : 0}
+          value={canKeep ? keepMode : "none"}
+          onChange={setKeepMode}
+          onPickCustomer={pickCustomer}
+        />
+      )}
 
       {error && (
         <div
@@ -513,5 +588,86 @@ function SecondCurrencyDue({ amount }: { amount: number }) {
         {text}
       </bdi>
     </p>
+  );
+}
+
+/**
+ * العميل لم يأخذ الباقي: يُحفظ رصيداً له لدى المحل ويستخدمه في فاتورة قادمة.
+ * يحتاج عميلاً مسجّلاً (الرصيد على اسمه ورقمه)، وإلا زر لاختياره.
+ */
+function KeepChangeChoice({
+  customerName,
+  change,
+  fraction,
+  value,
+  onChange,
+  onPickCustomer,
+}: {
+  customerName: string | null;
+  change: number;
+  /** الكسر الذي يُحفظ لو سُلِّم الباقي لأقرب فئة (0 = غير متاح). */
+  fraction: number;
+  value: KeepMode;
+  onChange: (mode: KeepMode) => void;
+  onPickCustomer: () => void;
+}) {
+  if (!customerName) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2 border border-dashed p-2.5 text-xs text-muted-foreground">
+        <span>العميل لا يريد الباقي؟ اختره لحفظ الباقي رصيداً له.</span>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={onPickCustomer}
+          className="gap-2 font-normal text-foreground"
+        >
+          اختيار عميل
+          <ShortcutBadge className="rounded-none">F6</ShortcutBadge>
+        </Button>
+      </div>
+    );
+  }
+  const options: { id: KeepMode; label: string }[] = [
+    { id: "none", label: "يأخذ الباقي" },
+    ...(fraction > 0
+      ? [
+          {
+            id: "fraction" as const,
+            label: `يأخذ ${formatMoneyText(round2(change - fraction))} ويُحفظ ${formatMoneyText(fraction)}`,
+          },
+        ]
+      : []),
+    { id: "all", label: `يُحفظ الباقي كله (${formatMoneyText(change)})` },
+  ];
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs text-muted-foreground">
+        الباقي: هل يتركه {customerName} رصيداً لدى المحل؟
+      </p>
+      <div
+        role="radiogroup"
+        aria-label="الباقي"
+        className={cn(
+          "grid gap-1.5",
+          options.length === 3 ? "grid-cols-3" : "grid-cols-2",
+        )}
+      >
+        {options.map((o) => (
+          <Button
+            key={o.id}
+            type="button"
+            size="sm"
+            role="radio"
+            aria-checked={value === o.id}
+            variant={value === o.id ? "default" : "outline"}
+            onClick={() => onChange(o.id)}
+            className="h-auto min-h-9 py-1.5 text-[11px] leading-snug font-normal whitespace-normal"
+          >
+            {o.label}
+          </Button>
+        ))}
+      </div>
+    </div>
   );
 }

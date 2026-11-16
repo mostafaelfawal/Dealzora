@@ -1,12 +1,7 @@
 import type { TaxMode } from "@/lib/tax";
 
 export type EReceiptStatus =
-  | "not_sent"
-  | "pending"
-  | "accepted"
-  | "rejected"
-  | "not_required"
-  | "invalid";
+  "not_sent" | "pending" | "accepted" | "rejected" | "not_required" | "invalid";
 
 /** بيانات المنظومة على الإيصال المطبوع (من المستند المخزّن وقت الإصدار). */
 export interface EtaPrint {
@@ -31,7 +26,8 @@ export type BuiltinMethod = "cash" | "credit" | "mixed";
 export type PaymentMethod = BuiltinMethod | (string & {});
 
 /** رد مرتجع فاتورة مدفوعة إلكترونياً: لنفس المحفظة أو كاش من الدرج. */
-export type RefundVia = "wallet" | "cash";
+/** balance: لرصيد العميل لدى المحل (يحتاج عميلاً). */
+export type RefundVia = "wallet" | "cash" | "balance";
 export type ReturnReason =
   "wrong_item" | "defective" | "customer_changed" | "other";
 export type SaleStatusFilter = "all" | "credit" | "wallet" | "returned";
@@ -106,7 +102,14 @@ export interface Sale {
   /** رقم العملية أو رقم المحوِّل (اختياري). */
   paymentRef: string | null;
   received: number;
+  /** الباقي المُسلَّم للعميل فعلاً. */
   change: number;
+  /** باقٍ تركه العميل رصيداً لدى المحل (دخل الدرج). */
+  changeKept: number;
+  /** ما دُفع من رصيد العميل لدى المحل (لا يدخل الدرج). */
+  balanceUsed: number;
+  /** رصيد العميل الآن: موجب = عليه، سالب = له لدى المحل. null بلا عميل. */
+  customerBalance: number | null;
   returnedTotal: number;
   costTotal: number | null;
   profit: number | null;
@@ -143,6 +146,8 @@ export interface SaleReturn {
   cashRefund: number;
   creditRefund: number;
   walletRefund: number;
+  /** رُد لرصيد العميل لدى المحل. */
+  balanceRefund: number;
   lines: SaleReturnLine[];
 }
 
@@ -193,6 +198,9 @@ export interface SaleInput {
   received: number;
   paymentRef?: string;
   note?: string;
+  /** رصيد العميل لدى المحل: ما يُدفع منه، وما يُترك من الباقي رصيداً. */
+  useBalance?: number;
+  keepChange?: number;
 }
 
 export interface ReturnInput {

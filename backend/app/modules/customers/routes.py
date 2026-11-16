@@ -117,6 +117,17 @@ def collect_payment(customer_id: str, data: PaymentIn, service: Service):
     return service.collect_payment(customer_id, data)
 
 
+# صرف رصيد العميل لدى المحل نقداً (باقٍ تركه أو مرتجع لرصيده).
+@router.post(
+    "/{customer_id}/payouts",
+    response_model=CustomerOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_admin_write)],
+)
+def payout_balance(customer_id: str, data: PaymentIn, service: Service):
+    return service.payout_balance(customer_id, data)
+
+
 @router.delete(
     "/{customer_id}",
     status_code=status.HTTP_204_NO_CONTENT,

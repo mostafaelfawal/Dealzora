@@ -88,6 +88,17 @@ export const deleteCustomer = async (id: string, baseVersion: number) => {
   });
 };
 
+/** صرف رصيد العميل لدى المحل نقداً (المدير). */
+export const payoutBalance = async (id: string, payment: PaymentInput) =>
+  toCustomer(
+    (
+      await api.post<CustomerDto>(
+        `/customers/${id}/payouts`,
+        toPaymentPayload(payment),
+      )
+    ).data,
+  );
+
 export const collectPayment = async (id: string, payment: PaymentInput) =>
   toCustomer(
     (

@@ -64,6 +64,9 @@ export interface SaleDto {
   eta_error?: string | null;
   eta_print?: EtaPrintDto | null;
   customer_points?: number | null;
+  customer_balance?: number | null;
+  change_kept?: number;
+  balance_used?: number;
   invoice_discount: number;
   total: number;
   cash_amount: number;
@@ -112,6 +115,7 @@ export interface ReturnDto {
   cash_refund: number;
   credit_refund: number;
   wallet_refund: number;
+  balance_refund?: number;
   tax_total?: number | null;
   eta_uuid?: string | null;
   eta_print?: EtaPrintDto | null;

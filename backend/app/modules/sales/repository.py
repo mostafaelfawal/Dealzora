@@ -115,6 +115,17 @@ class SaleRepository(BaseRepository[Sale]):
         rows = self.session.execute(select(Sale.id, Sale.number).where(Sale.id.in_(sale_ids)))
         return {sid: num for sid, num in rows.all()}
 
+    def balance_refunded(self, sale_id: str) -> int:
+        """ما رُدّ لرصيد العميل من مرتجعات سابقة لهذه الفاتورة."""
+        return int(
+            self.session.scalar(
+                select(func.coalesce(func.sum(SaleReturn.balance_refund), 0)).where(
+                    SaleReturn.sale_id == sale_id, live(SaleReturn)
+                )
+            )
+            or 0
+        )
+
     def wallet_refunded(self, sale_id: str) -> int:
         """ما رُدّ للمحفظة من مرتجعات سابقة لهذه الفاتورة."""
         return int(

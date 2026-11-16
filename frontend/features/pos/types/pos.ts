@@ -65,7 +65,7 @@ export interface PosCustomer {
   id: string;
   name: string;
   phone: string;
-  /** المديونية الحالية على العميل. */
+  /** رصيد العميل: موجب = مديونية عليه، سالب = رصيد له لدى المحل. */
   balance: number;
   /** الحد الائتماني. 0 = مفيش بيع آجل للعميل ده. */
   creditLimit: number;
@@ -151,6 +151,10 @@ export interface PaymentResult {
   change: number;
   /** الدفع الإلكتروني: رقم العملية أو رقم المحوِّل (اختياري). */
   paymentRef?: string;
+  /** ما يُدفع من رصيد العميل لدى المحل (قبل طريقة الدفع). */
+  useBalance: number;
+  /** جزء الباقي الذي يتركه العميل رصيداً لدى المحل (كاش فقط). */
+  keepChange: number;
   print: boolean;
 }
 

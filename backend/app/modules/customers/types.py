@@ -13,6 +13,7 @@ class CustomerFilter(StrEnum):
     OVERDUE = "overdue"
     LIMIT = "limit"
     INACTIVE = "inactive"
+    CREDITORS = "creditors"  # لهم رصيد لدى المحل
 
 
 class CustomerSort(StrEnum):
@@ -36,6 +37,9 @@ class LedgerType(StrEnum):
     PAYMENT = "payment"  # تحصيل دفعة
     RETURN = "return"  # مرتجع يخفض الدين (من الكاشير)
     ADJUSTMENT = "adjustment"
+    DEPOSIT = "deposit"  # باقٍ تركه العميل رصيداً لدى المحل
+    BALANCE_USE = "balance_use"  # دفع فاتورة من رصيده لدى المحل
+    BALANCE_PAYOUT = "balance_payout"  # صرف رصيده نقداً (المدير)
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,3 +61,5 @@ class CustomersSummary:
     overdue: int
     at_limit: int
     inactive: int
+    total_credit: int = 0  # أرصدة العملاء لدى المحل
+    creditors: int = 0

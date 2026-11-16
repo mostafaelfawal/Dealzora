@@ -421,7 +421,12 @@ function buildSaleInput(
   state: RootState,
   payment: Pick<
     SaleInput,
-    "paymentMethod" | "cashAmount" | "received" | "paymentRef"
+    | "paymentMethod"
+    | "cashAmount"
+    | "received"
+    | "paymentRef"
+    | "useBalance"
+    | "keepChange"
   >,
 ): SaleInput {
   const invoice = state.cart.present;
@@ -508,16 +513,13 @@ const recordSaved =
           },
         );
     }
-    if (sale.customerId && sale.creditAmount > 0) {
+    // رصيد العميل من السيرفر بعد الفاتورة (آجل، دفع من رصيده، باقٍ محفوظ).
+    if (sale.customerId && sale.customerBalance !== null) {
       dispatch(
         catalogActions.setCatalog({
           customers: getState().catalog.customers.map((c) =>
             c.id === sale.customerId
-              ? {
-                  ...c,
-                  balance:
-                    Math.round((c.balance + sale.creditAmount) * 100) / 100,
-                }
+              ? { ...c, balance: sale.customerBalance ?? c.balance }
               : c,
           ),
         }),
@@ -535,6 +537,8 @@ export const confirmPayment =
       cashAmount: result.cash,
       received: result.method === "cash" ? result.received : result.cash,
       paymentRef: result.paymentRef,
+      useBalance: result.useBalance,
+      keepChange: result.keepChange,
     });
 
     dispatch(posUiActions.setSaving(true));
@@ -559,9 +563,28 @@ export const confirmPayment =
                 " آجل على " +
                 (sale.customerName ?? "العميل")
               : "تم استلام " + formatMoneyText(sale.cashAmount);
+      // رصيد العميل لدى المحل: ما حُفظ من الباقي وما دُفع منه، ورصيده الآن.
+      const creditNote = [
+        sale.changeKept > 0
+          ? "حُفظ " + formatMoneyText(sale.changeKept) + " رصيداً"
+          : null,
+        sale.balanceUsed > 0
+          ? "دُفع " + formatMoneyText(sale.balanceUsed) + " من رصيده"
+          : null,
+        (sale.changeKept > 0 || sale.balanceUsed > 0) &&
+        sale.customerBalance !== null
+          ? sale.customerBalance < 0
+            ? "رصيده لدى المحل " + formatMoneyText(-sale.customerBalance)
+            : "لا رصيد متبقٍ له"
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
       toast.success("تم حفظ الفاتورة #" + sale.number, {
-        description,
-        duration: sale.change > 0 ? 10_000 : 5000,
+        description: creditNote
+          ? `${description} · ${creditNote}`
+          : description,
+        duration: sale.change > 0 || creditNote ? 10_000 : 5000,
         action: {
           label: "واتساب",
           onClick: () =>

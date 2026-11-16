@@ -4,6 +4,7 @@ import {
   IconAlertTriangle,
   IconCash,
   IconClock,
+  IconCoins,
   IconUsers,
 } from "@tabler/icons-react";
 import type { ReactNode } from "react";
@@ -73,7 +74,12 @@ export function CustomersStats({
     onFilterChange(filter === target ? "all" : target);
 
   return (
-    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-2",
+        summary.creditors > 0 ? "lg:grid-cols-5" : "lg:grid-cols-4",
+      )}
+    >
       <Stat
         icon={<IconUsers />}
         label="إجمالي العملاء"
@@ -106,6 +112,17 @@ export function CustomersStats({
       >
         <Count value={summary.atLimit} />
       </Stat>
+      {/* أرصدة العملاء لدى المحل: التزام على المحل (باقٍ تركوه أو مرتجع لرصيدهم). */}
+      {summary.creditors > 0 && (
+        <Stat
+          icon={<IconCoins />}
+          label={`أرصدة العملاء لدينا (${summary.creditors})`}
+          active={filter === "creditors"}
+          onClick={() => toggle("creditors")}
+        >
+          <Money amount={summary.totalCredit} className="text-lg" />
+        </Stat>
+      )}
     </div>
   );
 }

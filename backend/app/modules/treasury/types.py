@@ -23,6 +23,8 @@ class CashKind(StrEnum):
     CUSTOMER_PAYMENT = "customer_payment"  # تحصيل من عميل
     SUPPLIER_PAYMENT = "supplier_payment"  # سداد لمورد
     SHIFT_DIFF = "shift_diff"  # عجز/زيادة الدرج عند قفل الوردية
+    CUSTOMER_DEPOSIT = "customer_deposit"  # باقٍ تركه العميل رصيداً (دخل الدرج)
+    CUSTOMER_PAYOUT = "customer_payout"  # صرف رصيد عميل نقداً
 
 
 MANUAL_KINDS = frozenset({CashKind.MANUAL_IN, CashKind.MANUAL_OUT})

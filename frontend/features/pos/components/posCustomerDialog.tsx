@@ -62,7 +62,8 @@ function Avatar({
 function CreditStatus({ customer }: { customer: PosCustomer }) {
   const { balance, creditLimit } = customer;
   const available = Math.max(creditLimit - balance, 0);
-  const ratio = creditLimit > 0 ? Math.min(balance / creditLimit, 1) : 1;
+  const ratio =
+    creditLimit > 0 ? Math.min(Math.max(balance, 0) / creditLimit, 1) : 1;
 
   return (
     <span className="flex w-36 shrink-0 flex-col items-end gap-1">
@@ -71,6 +72,11 @@ function CreditStatus({ customer }: { customer: PosCustomer }) {
           <>
             دين <Money amount={balance} className="text-foreground" />
           </>
+        ) : balance < 0 ? (
+          // رصيد له لدى المحل (باقٍ تركه أو مرتجع): يستخدمه في نافذة الدفع.
+          <span className="flex items-baseline gap-1 text-success">
+            له رصيد <Money amount={-balance} className="text-success" />
+          </span>
         ) : (
           "بدون مديونية"
         )}

@@ -45,6 +45,9 @@ class SaleError(StrEnum):
     PAYMENT_MISMATCH = "sale_payment_mismatch"
     CASH_SHORT = "sale_cash_short"
     WALLET_NOT_CONFIGURED = "sale_wallet_not_configured"
+    BALANCE_CUSTOMER_REQUIRED = "sale_balance_customer_required"
+    BALANCE_INSUFFICIENT = "sale_balance_insufficient"
+    KEEP_CHANGE_INVALID = "sale_keep_change_invalid"
     RETURN_NOT_FOUND = "sale_return_not_found"
     RETURN_EMPTY = "sale_return_empty"
     RETURN_LINE_NOT_FOUND = "sale_return_line_not_found"
@@ -75,6 +78,9 @@ ERROR_MESSAGES: dict[SaleError, str] = {
     SaleError.PAYMENT_MISMATCH: "المدفوع لا يطابق إجمالي الفاتورة",
     SaleError.CASH_SHORT: "المبلغ المستلم أقل من المطلوب",
     SaleError.WALLET_NOT_CONFIGURED: "طريقة الدفع ({method}) غير مفعّلة. فعّلها من الإعدادات ← طرق الدفع",
+    SaleError.BALANCE_CUSTOMER_REQUIRED: "اختر العميل أولاً: الرصيد يُحفظ على حسابه",
+    SaleError.BALANCE_INSUFFICIENT: "رصيد العميل لدى المحل أقل من المبلغ ({available})",
+    SaleError.KEEP_CHANGE_INVALID: "الباقي المحفوظ رصيداً أكبر من الباقي الفعلي ({change})",
     SaleError.RETURN_NOT_FOUND: "لم نجد هذا المرتجع",
     SaleError.RETURN_EMPTY: "اختر صنفاً واحداً على الأقل للإرجاع",
     SaleError.RETURN_LINE_NOT_FOUND: "الصنف ليس في هذه الفاتورة",

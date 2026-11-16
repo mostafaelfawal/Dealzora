@@ -28,7 +28,9 @@ export function DeleteCustomerDialog({
 }) {
   const remove = useDeleteCustomer();
   const backRef = useRef<HTMLButtonElement>(null);
-  const blocked = (customer?.balance ?? 0) > 0;
+  // عليه دين أو له رصيد لدى المحل: لا يُحذف قبل تسويته (السيرفر يرفض أيضاً).
+  const blocked = (customer?.balance ?? 0) !== 0;
+  const credit = (customer?.balance ?? 0) < 0;
 
   return (
     <Dialog
@@ -47,12 +49,14 @@ export function DeleteCustomerDialog({
               <span className="flex items-start gap-2 text-destructive">
                 <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
                 <span>
-                  لا يمكن حذف عميل عليه مديونية (
+                  {credit
+                    ? "لا يمكن حذف عميل له رصيد لدى المحل ("
+                    : "لا يمكن حذف عميل عليه مديونية ("}
                   <Money
-                    amount={customer.balance}
+                    amount={Math.abs(customer.balance)}
                     className="inline-flex text-xs"
                   />
-                  ). حصّل المبلغ أولاً.
+                  ). {credit ? "اصرف له رصيده أولاً." : "حصّل المبلغ أولاً."}
                 </span>
               </span>
             ) : (
@@ -74,7 +78,7 @@ export function DeleteCustomerDialog({
               size="lg"
               onClick={() => onCollect(customer.id)}
             >
-              تحصيل دفعة
+              {credit ? "صرف رصيده" : "تحصيل دفعة"}
             </Button>
           ) : (
             <Button

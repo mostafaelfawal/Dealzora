@@ -54,6 +54,9 @@ class SaleCreate(BaseModel):
     note: Note = None
     # نقاط ولاء يستبدلها العميل (مضاعف لباقة الاستبدال). تحتاج عميلاً.
     redeem_points: int = Field(0, ge=0, le=100_000_000)
+    # رصيد العميل لدى المحل: ما يُدفع من رصيده، وما يتركه من الباقي رصيداً (كاش فقط).
+    use_balance: Money = 0
+    keep_change: Money = 0
 
     @model_validator(mode="after")
     def _payment_shape(self):
@@ -67,6 +70,8 @@ class SaleCreate(BaseModel):
             raise ValueError("البيع الآجل بالكامل لا يحتوي مبلغاً كاشاً")
         if self.received and self.received < self.cash_amount:
             raise ValueError("المبلغ المستلم أقل من المدفوع كاش")
+        if self.keep_change and self.payment_method != PaymentMethod.CASH:
+            raise ValueError("حفظ الباقي رصيداً للدفع النقدي فقط")
         if self.received > MAX_MONEY:
             raise ValueError("المبلغ كبير جداً")
         return self
@@ -87,6 +92,7 @@ class ReturnCreate(BaseModel):
     note: Note = None
     lines: list[ReturnLineIn] = Field(min_length=1, max_length=MAX_LINES)
     # فاتورة مدفوعة إلكترونياً فقط: لنفس المحفظة (افتراضي) أو كاش من الدرج.
+    # balance: كل ما يُرد (عدا الآجل والمحفظة) يذهب لرصيد العميل لدى المحل بدل الدرج.
     refund_via: RefundVia = RefundVia.WALLET
 
 
@@ -160,6 +166,8 @@ class SaleOut(BaseModel):
     loyalty_discount: int
     loyalty_earned: int
     customer_points: int | None  # رصيد نقاط العميل الآن
+    # رصيد العميل الآن (موجب = عليه، سالب = له رصيد لدى المحل). null بلا عميل.
+    customer_balance: int | None = None
     # off/inclusive/exclusive. None = فاتورة قبل إضافة الضريبة.
     tax_mode: str | None = None
     taxable_total: int | None = None
@@ -177,6 +185,8 @@ class SaleOut(BaseModel):
     payment_ref: str | None
     received: int
     change: int
+    change_kept: int = 0
+    balance_used: int = 0
     returned_total: int
     cost_total: int | None  # None للكاشير
     profit: int | None  # None للكاشير
@@ -255,6 +265,7 @@ class ReturnOut(BaseModel):
     cash_refund: int
     credit_refund: int
     wallet_refund: int
+    balance_refund: int = 0
     loyalty_reversed: int
     loyalty_restored: int
     lines: list[ReturnLineOut]

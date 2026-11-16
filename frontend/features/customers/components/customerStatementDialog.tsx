@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import useGetStatement from "../hooks/useGetStatement";
 import { formatDate, formatDaysAgo, initialOf } from "../lib/customerCalc";
 import type { Customer, StatementEntryType } from "../types/customer";
+import { CustomerBalance } from "./customerBalance";
 import { CustomerCreditMeter } from "./customerCreditMeter";
 import { CustomerStatusBadges } from "./customerStatusBadges";
 
@@ -28,6 +29,9 @@ const TYPE_LABEL: Record<StatementEntryType, string> = {
   return: "مرتجع",
   opening: "رصيد افتتاحي",
   adjustment: "تعديل يدوي",
+  deposit: "باقٍ حُفظ رصيداً",
+  balance_use: "دفع من رصيده",
+  balance_payout: "صرف رصيد نقداً",
 };
 
 const th = "h-8 px-2.5 text-start text-xs font-normal text-muted-foreground";
@@ -82,6 +86,7 @@ function Statement({
   );
   const entries = data ? [...data].reverse() : [];
   const hasDebt = customer.balance > 0;
+  const hasCredit = customer.balance < 0;
 
   return (
     <>
@@ -112,15 +117,8 @@ function Statement({
 
       <div className="grid gap-2 sm:grid-cols-3">
         <div className="space-y-1 border p-3">
-          <p className="text-xs text-muted-foreground">المديونية</p>
-          {hasDebt ? (
-            <Money
-              amount={customer.balance}
-              className="text-2xl leading-none text-destructive"
-            />
-          ) : (
-            <p className="text-base font-semibold text-success">لا مديونية</p>
-          )}
+          <p className="text-xs text-muted-foreground">الرصيد</p>
+          <CustomerBalance balance={customer.balance} size="lg" />
           <p className="text-[11px] text-muted-foreground">
             آخر دفعة: {formatDaysAgo(customer.lastPaymentAt)}
           </p>
@@ -266,12 +264,12 @@ function Statement({
         <Button
           type="button"
           size="lg"
-          disabled={!hasDebt}
+          disabled={!hasDebt && !hasCredit}
           onClick={() => onCollect(customer.id)}
           className="gap-2"
         >
           <IconCash className="size-4" />
-          تحصيل دفعة
+          {hasCredit ? "صرف رصيده نقداً" : "تحصيل دفعة"}
         </Button>
       </div>
     </>

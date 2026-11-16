@@ -22,6 +22,7 @@ NEAR_LIMIT_PERCENT = 80  # استهلاك الحد الائتماني الذي �
 
 OPENING_NOTE = "رصيد افتتاحي"
 DEFAULT_PAYMENT_NOTE = "دفعة"
+DEFAULT_PAYOUT_NOTE = "صرف رصيد نقداً"
 
 # ---- أسماء الكيانات (للـ Outbox والـ Audit) ----
 ENTITY_CUSTOMER = "customer"
@@ -45,6 +46,9 @@ class CustomerError(StrEnum):
     HAS_BALANCE = "customer_has_balance"
     NO_DEBT = "customer_no_debt"
     AMOUNT_EXCEEDS_DEBT = "payment_exceeds_debt"
+    HAS_CREDIT = "customer_has_credit"
+    NO_CREDIT = "customer_no_credit"
+    AMOUNT_EXCEEDS_CREDIT = "payout_exceeds_credit"
 
 
 ERROR_MESSAGES: dict[CustomerError, str] = {
@@ -54,4 +58,7 @@ ERROR_MESSAGES: dict[CustomerError, str] = {
     CustomerError.HAS_BALANCE: "لا يمكن حذف عميل عليه مديونية. حصّل المبلغ أولاً",
     CustomerError.NO_DEBT: "هذا العميل ليس عليه مديونية",
     CustomerError.AMOUNT_EXCEEDS_DEBT: "المبلغ أكبر من مديونية العميل",
+    CustomerError.HAS_CREDIT: "لا يمكن حذف عميل له رصيد لدى المحل. اصرف له رصيده أولاً",
+    CustomerError.NO_CREDIT: "هذا العميل ليس له رصيد لدى المحل",
+    CustomerError.AMOUNT_EXCEEDS_CREDIT: "المبلغ أكبر من رصيد العميل لدى المحل",
 }

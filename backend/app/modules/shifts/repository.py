@@ -44,6 +44,7 @@ class ShiftRepository(BaseRepository[Shift]):
                     func.coalesce(func.sum(Sale.cash_amount), 0),
                     func.coalesce(func.sum(Sale.credit_amount), 0),
                     func.coalesce(func.sum(Sale.wallet_amount), 0),
+                    func.coalesce(func.sum(Sale.change_kept), 0),
                 )
                 .where(Sale.shift_id.in_(shift_ids), live(Sale))
                 .group_by(Sale.shift_id)
@@ -73,7 +74,7 @@ class ShiftRepository(BaseRepository[Shift]):
         }
         out: dict[str, ShiftTotals] = {}
         for sid in shift_ids:
-            s_cnt, s_total, s_cash, s_credit, s_wallet = sales.get(sid, (0, 0, 0, 0, 0))
+            s_cnt, s_total, s_cash, s_credit, s_wallet, s_kept = sales.get(sid, (0, 0, 0, 0, 0, 0))
             r_cnt, r_cash, r_wallet = returns.get(sid, (0, 0, 0))
             out[sid] = ShiftTotals(
                 sales_count=s_cnt,
@@ -85,5 +86,6 @@ class ShiftRepository(BaseRepository[Shift]):
                 wallet_sales=s_wallet,
                 wallet_refunds=r_wallet,
                 electronic=tuple(sorted(electronic.get(sid, []), key=lambda e: -e[2])),
+                kept_change=s_kept,
             )
         return out

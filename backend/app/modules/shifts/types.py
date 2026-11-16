@@ -16,6 +16,8 @@ class ShiftTotals:
     wallet_refunds: int = 0
     # تفصيل الإلكتروني: (معرّف الطريقة، اسمها، المبلغ).
     electronic: tuple[tuple[str, str, int], ...] = ()
+    # باقٍ تركه العملاء رصيداً: دخل الدرج ولم يُسلَّم (ليس مبيعات).
+    kept_change: int = 0
 
     def expected(self, opening_float: int) -> int:
-        return opening_float + self.cash_sales - self.cash_refunds
+        return opening_float + self.cash_sales + self.kept_change - self.cash_refunds

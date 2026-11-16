@@ -51,6 +51,10 @@ class Sale(SyncMixin, Base):
     payment_ref: Mapped[str | None] = mapped_column(String(40), nullable=True)
     received: Mapped[int] = mapped_column(Integer, default=0)  # ما سلّمه العميل فعلاً
     change: Mapped[int] = mapped_column(Integer, default=0)
+    # رصيد العميل لدى المحل: باقٍ تركه العميل رصيداً (دخل الدرج ولم يُسلَّم له)،
+    # وما دفعه من رصيده السابق (لا يدخل الدرج). change = الباقي المُسلَّم فعلاً.
+    change_kept: Mapped[int] = mapped_column(Integer, default=0)
+    balance_used: Mapped[int] = mapped_column(Integer, default=0)
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
     returned_total: Mapped[int] = mapped_column(Integer, default=0)
     note: Mapped[str | None] = mapped_column(String(MAX_NOTE_LEN), nullable=True)
@@ -133,6 +137,8 @@ class SaleReturn(SyncMixin, Base):
     loyalty_reversed: Mapped[int] = mapped_column(Integer, default=0)  # نقاط مكتسبة خُصمت
     loyalty_restored: Mapped[int] = mapped_column(Integer, default=0)  # نقاط مستبدلة رجعت
     wallet_refund: Mapped[int] = mapped_column(Integer, default=0)  # رُدّ لمحفظة العميل
+    # رُد لرصيد العميل لدى المحل (لا يخرج من الدرج).
+    balance_refund: Mapped[int] = mapped_column(Integer, default=0)
     cost_total: Mapped[int] = mapped_column(Integer, default=0)
     # الإيصال الإلكتروني للمرتجع (نفس معنى حقول Sale)، و eta_reference_uuid = UUID فاتورة البيع الأصلية.
     eta_status: Mapped[str | None] = mapped_column(String(12), nullable=True)

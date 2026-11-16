@@ -20,6 +20,8 @@ export function summarize(
     overdue: 0,
     atLimit: 0,
     inactive: 0,
+    totalCredit: 0,
+    creditors: 0,
   };
   for (const c of customers) {
     if (c.balance > 0) {
@@ -29,6 +31,10 @@ export function summarize(
     if (isOverdue(c, now)) summary.overdue++;
     if (c.balance > 0 && getCreditLevel(c) === "full") summary.atLimit++;
     if (!c.isActive) summary.inactive++;
+    if (c.balance < 0) {
+      summary.totalCredit += -c.balance;
+      summary.creditors++;
+    }
   }
   return summary;
 }
@@ -56,6 +62,8 @@ export function filterCustomers(
         return c.balance > 0 && getCreditLevel(c) === "full";
       case "inactive":
         return !c.isActive;
+      case "creditors":
+        return c.balance < 0;
       default:
         return true;
     }

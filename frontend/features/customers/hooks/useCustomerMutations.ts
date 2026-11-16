@@ -8,6 +8,7 @@ import {
   bulkDeactivateCustomers,
   bulkDeleteCustomers,
   collectPayment,
+  payoutBalance,
   deleteCustomer,
   saveCustomer,
   toggleCustomerActive,
@@ -81,6 +82,20 @@ export function useCollectPayment() {
     },
     onError: (error) =>
       toast.error(extractErrorMessage(error, "تعذّر تسجيل الدفعة")),
+  });
+}
+
+export function usePayoutBalance() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: ({ id, payment }: { id: string; payment: PaymentInput }) =>
+      payoutBalance(id, payment),
+    onSuccess: (_c, { payment }) => {
+      void refresh();
+      toast.success(`تم صرف ${formatMoneyText(payment.amount)} نقداً من الخزنة`);
+    },
+    onError: (error) =>
+      toast.error(extractErrorMessage(error, "تعذّر صرف الرصيد")),
   });
 }
 

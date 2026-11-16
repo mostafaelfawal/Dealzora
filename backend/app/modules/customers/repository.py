@@ -58,6 +58,8 @@ class CustomerRepository:
                 conds.append(_AT_LIMIT)
             case CustomerFilter.INACTIVE:
                 conds.append(Customer.is_active.is_(False))
+            case CustomerFilter.CREDITORS:
+                conds.append(Customer.balance < 0)
         return conds
 
     def list_customers(self, filters: CustomerFilters) -> tuple[list[Customer], int]:
@@ -83,8 +85,11 @@ class CustomerRepository:
             count_if(_overdue(overdue_before)),
             count_if(_AT_LIMIT),
             count_if(Customer.is_active.is_(False)),
+            # رصيد العملاء لدى المحل (باقٍ محفوظ/مرتجع لرصيدهم): التزام على المحل.
+            func.coalesce(func.sum(case((Customer.balance < 0, -Customer.balance), else_=0)), 0),
+            count_if(Customer.balance < 0),
         ).where(Customer.deleted_at.is_(None))
-        total, debt, debtors, overdue, at_limit, inactive = self.session.execute(stmt).one()
+        total, debt, debtors, overdue, at_limit, inactive, credit, creditors = self.session.execute(stmt).one()
         return CustomersSummary(
             total=total,
             total_debt=debt,
@@ -92,6 +97,8 @@ class CustomerRepository:
             overdue=overdue,
             at_limit=at_limit,
             inactive=inactive,
+            total_credit=credit,
+            creditors=creditors,
         )
 
     def list_entries(

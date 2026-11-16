@@ -39,7 +39,7 @@ export interface PaymentInput {
 }
 
 export type CustomerFilter =
-  "all" | "debtors" | "overdue" | "limit" | "inactive";
+  "all" | "debtors" | "overdue" | "limit" | "inactive" | "creditors";
 export type CustomerSortKey = "debt" | "name" | "recent" | "sales" | "newest";
 export type CustomersView = "cards" | "table";
 export type CreditLevel = "cash" | "ok" | "warn" | "full";
@@ -59,10 +59,20 @@ export interface CustomersSummary {
   overdue: number;
   atLimit: number;
   inactive: number;
+  /** أرصدة العملاء لدى المحل (المحل مدين بها) وعدد أصحابها. */
+  totalCredit: number;
+  creditors: number;
 }
 
 export type StatementEntryType =
-  "sale" | "payment" | "return" | "opening" | "adjustment";
+  | "sale"
+  | "payment"
+  | "return"
+  | "opening"
+  | "adjustment"
+  | "deposit"
+  | "balance_use"
+  | "balance_payout";
 
 export interface StatementEntry {
   id: string;

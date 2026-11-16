@@ -122,6 +122,10 @@ _NEW_COLUMNS = (
     # المرحلة 8: بيئة الإيصال (تجريبية/فعلية) و UUID الإيصال المرفوض الذي صُحّح (referenceOldUUID).
     ("sales", "eta_environment", "VARCHAR(10)"),
     ("sales", "eta_replaced_uuid", "VARCHAR(64)"),
+    # رصيد العميل لدى المحل (باقٍ محفوظ، دفع من الرصيد، مرتجع للرصيد).
+    ("sales", "change_kept", "INTEGER NOT NULL DEFAULT 0"),
+    ("sales", "balance_used", "INTEGER NOT NULL DEFAULT 0"),
+    ("sale_returns", "balance_refund", "INTEGER NOT NULL DEFAULT 0"),
     ("sale_returns", "eta_environment", "VARCHAR(10)"),
     ("sale_returns", "eta_replaced_uuid", "VARCHAR(64)"),
 )

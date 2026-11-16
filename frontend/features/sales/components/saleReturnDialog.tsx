@@ -60,7 +60,9 @@ function ReturnLineStepper({
     >
       <span className="min-w-0 flex-1">
         <AppTooltip message={line.name} onlyWhenTruncated>
-          <span className="block truncate text-sm font-medium">{line.name}</span>
+          <span className="block truncate text-sm font-medium">
+            {line.name}
+          </span>
         </AppTooltip>
         <span className="text-[11px] text-muted-foreground">
           مباع {formatQty(line.qty)} {line.unitName}
@@ -123,7 +125,20 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   const [reason, setReason] = useState<ReturnReason>("customer_changed");
   const [note, setNote] = useState("");
   const paidByWallet = sale.walletAmount > 0;
-  const [refundVia, setRefundVia] = useState<RefundVia>("wallet");
+  // فاتورة على عميل مسجّل: يمكن رد المبلغ لرصيده لدى المحل (استبدال لاحقاً بدل الكاش).
+  const hasCustomer = Boolean(sale.customerId);
+  const [refundVia, setRefundVia] = useState<RefundVia>(
+    paidByWallet ? "wallet" : "cash",
+  );
+  const refundItems = [
+    ...(paidByWallet
+      ? [{ id: "wallet" as const, label: `تحويل على ${sale.paymentLabel}` }]
+      : []),
+    { id: "cash" as const, label: "نقداً من الدرج" },
+    ...(hasCustomer
+      ? [{ id: "balance" as const, label: "رصيد للعميل لدى المحل" }]
+      : []),
+  ];
   const selection = saleReturnSelection(sale, qtys);
   const canSubmit = selection.chosen.length > 0 && !create.isPending;
 
@@ -136,12 +151,13 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
           reason,
           note: note.trim(),
           lines: selection.lines,
-          ...(paidByWallet ? { refundVia } : {}),
+          ...(paidByWallet || hasCustomer ? { refundVia } : {}),
         },
       },
       {
         onSuccess: (ret) => {
-          if (print) void printReturnReceipt(ret, shopName, { openDrawer: true });
+          if (print)
+            void printReturnReceipt(ret, shopName, { openDrawer: true });
           onClose();
         },
       },
@@ -185,23 +201,25 @@ function ReturnForm({ sale, onClose }: { sale: Sale; onClose: () => void }) {
           onChange={setReason}
         />
       </div>
-      {paidByWallet && (
+      {refundItems.length > 1 && (
         <div className="space-y-1.5">
           <span className="text-xs text-muted-foreground">
-            رد المبلغ (الفاتورة مدفوعة {sale.paymentLabel})
+            {paidByWallet
+              ? `رد المبلغ (الفاتورة مدفوعة ${sale.paymentLabel})`
+              : "رد المبلغ"}
           </span>
           <SegmentedTabs
             label="طريقة رد المبلغ"
-            items={[
-              {
-                id: "wallet" as const,
-                label: `تحويل على ${sale.paymentLabel}`,
-              },
-              { id: "cash" as const, label: "نقداً من الدرج" },
-            ]}
+            items={refundItems}
             value={refundVia}
             onChange={setRefundVia}
           />
+          {refundVia === "balance" && (
+            <p className="text-[11px] text-muted-foreground">
+              لا يخرج شيء من الدرج: يُضاف المبلغ لرصيد {sale.customerName}{" "}
+              ويستخدمه في أي فاتورة قادمة.
+            </p>
+          )}
         </div>
       )}
       <Input

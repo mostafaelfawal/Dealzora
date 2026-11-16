@@ -21,6 +21,7 @@ class RefundVia(StrEnum):
 
     WALLET = "wallet"
     CASH = "cash"
+    BALANCE = "balance"  # لرصيد العميل لدى المحل (يحتاج عميلاً)
 
 
 class ReturnReason(StrEnum):

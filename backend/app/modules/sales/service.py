@@ -23,6 +23,7 @@ from app.core.security import Actor
 from app.core.service_base import EntityService
 from app.modules.customers.model import Customer
 from app.modules.customers.service import CustomerService
+from app.modules.customers.constants import ENTITY_LEDGER_ENTRY
 from app.modules.customers.types import LedgerType
 from app.modules.products.model import Product, ProductUnit
 from app.modules.products.service import ProductService
@@ -309,7 +310,20 @@ class SaleService(EntityService):
             if data.customer_id or data.payment_method != PaymentMethod.CASH:
                 raise upgrade_error(Feature.CUSTOMERS)
         label = self._electronic_label(data.payment_method) if is_electronic(data.payment_method) else None
-        cash, credit, wallet, received, change = self._payment(data, total, customer)
+        # رصيد العميل لدى المحل: يُخصم من المطلوب قبل الدفع، والباقي المحفوظ يُطرح من الباقي المُسلَّم.
+        use_balance = data.use_balance
+        if (use_balance or data.keep_change) and customer is None:
+            raise self._err(BadRequestError, SaleError.BALANCE_CUSTOMER_REQUIRED)
+        if use_balance:
+            usable = min(max(-customer.balance, 0), total)
+            if use_balance > usable:
+                raise self._err(BadRequestError, SaleError.BALANCE_INSUFFICIENT, available=usable)
+        cash, credit, wallet, received, change = self._payment(data, total - use_balance, customer)
+        kept = data.keep_change
+        if kept:
+            if kept > change:
+                raise self._err(BadRequestError, SaleError.KEEP_CHANGE_INVALID, change=change)
+            change -= kept
 
         sale = Sale(
             id=sale_id,
@@ -340,6 +354,8 @@ class SaleService(EntityService):
             payment_ref=data.payment_ref if wallet else None,
             received=received,
             change=change,
+            change_kept=kept,
+            balance_used=use_balance,
             note=data.note,
         )
         self.repo.add(sale)
@@ -398,6 +414,16 @@ class SaleService(EntityService):
                 self.session, self.actor, customer, LoyaltyKind.EARN, earned,
                 note=f"فاتورة #{number}", ref_type=REF_SALE, ref_id=sale.id,
             )  # fmt: skip
+            if use_balance:
+                self.customers.post_entry(
+                    customer, LedgerType.BALANCE_USE, debit=use_balance,
+                    note=f"دفع من الرصيد — فاتورة #{number}", ref_type=REF_SALE, ref_id=sale.id,
+                )  # fmt: skip
+            if kept:
+                deposit = self.customers.post_entry(
+                    customer, LedgerType.DEPOSIT, credit=kept,
+                    note=f"باقي فاتورة #{number} محفوظ رصيداً", ref_type=REF_SALE, ref_id=sale.id,
+                )  # fmt: skip
             if credit:
                 self.customers.post_entry(
                     customer,
@@ -417,6 +443,18 @@ class SaleService(EntityService):
                 source_entity=ENTITY_SALE,
                 source_id=sale.id,
             )
+        if kept:
+            # الباقي المحفوظ دخل الدرج فعلاً: حركة مستقلة (ليست مبيعات، بل التزام للعميل).
+            self.treasury.post_entry(
+                direction=CashDirection.IN,
+                kind=CashKind.CUSTOMER_DEPOSIT,
+                amount=kept,
+                occurred_at=sale.sold_on,
+                note=f"باقي فاتورة #{number} محفوظ رصيداً لـ {customer.name}",
+                # مصدرها حركة كشف الحساب (حركة الفاتورة نفسها مصدرها البيع).
+                source_entity=ENTITY_LEDGER_ENTRY,
+                source_id=deposit.id,
+            )
 
         self._audit(
             sale,
@@ -427,6 +465,8 @@ class SaleService(EntityService):
                 "cash": cash,
                 "credit": credit,
                 "wallet": wallet,
+                "change_kept": kept,
+                "balance_used": use_balance,
                 "payment_method": sale.payment_method,
                 "payment_label": sale.payment_label,
                 "payment_ref": sale.payment_ref,
@@ -446,7 +486,8 @@ class SaleService(EntityService):
     def _payment(
         self, data: SaleCreate, total: int, customer: Customer | None
     ) -> tuple[int, int, int, int, int]:
-        """(كاش، آجل، محفظة، المستلم، الباقي) بعد التحقق من قواعد كل طريقة دفع."""
+        """(كاش، آجل، محفظة، المستلم، الباقي) بعد التحقق من قواعد كل طريقة دفع.
+        total هنا = المطلوب بعد الدفع من رصيد العميل لدى المحل."""
         method = data.payment_method
         if method == PaymentMethod.CASH:
             if data.cash_amount != total:
@@ -468,7 +509,7 @@ class SaleService(EntityService):
             if not 0 < cash < total:
                 raise self._err(BadRequestError, SaleError.PAYMENT_MISMATCH, total=total)
         credit = total - cash
-        available = max(customer.credit_limit - customer.balance, 0)
+        available = max(customer.credit_limit - (customer.balance + data.use_balance), 0)
         if credit > available:
             raise self._err(BadRequestError, SaleError.CREDIT_LIMIT, available=available)
         return cash, credit, 0, cash, 0
@@ -607,7 +648,18 @@ class SaleService(EntityService):
             # يُرد لنفس المحفظة (المحل يحوّل للعميل)، فلا يخرج من الدرج.
             already = self.repo.wallet_refunded(sale.id)
             wallet_refund = min(total - credit_refund, max(sale.wallet_amount - already, 0))
-        cash_refund = total - credit_refund - wallet_refund
+        balance_refund = 0
+        if data.refund_via is RefundVia.BALANCE and not force_cash:
+            if customer is None:
+                raise self._err(BadRequestError, SaleError.BALANCE_CUSTOMER_REQUIRED)
+            balance_refund = total - credit_refund - wallet_refund
+        elif customer and not force_cash and sale.balance_used > 0:
+            # ما دُفع من الرصيد يرجع للرصيد (لا كاش من الدرج).
+            already = self.repo.balance_refunded(sale.id)
+            balance_refund = min(
+                total - credit_refund - wallet_refund, max(sale.balance_used - already, 0)
+            )
+        cash_refund = total - credit_refund - wallet_refund - balance_refund
         if cash_refund and shift is None and not self.is_manager:
             self.shifts.require_open()
 
@@ -618,6 +670,7 @@ class SaleService(EntityService):
         ret.cash_refund = cash_refund
         ret.credit_refund = credit_refund
         ret.wallet_refund = wallet_refund
+        ret.balance_refund = balance_refund
         sale.returned_total += total
         if customer and (sale.loyalty_earned or sale.loyalty_redeemed):
             full = sale.total <= 0 or sale.returned_total >= sale.total
@@ -664,6 +717,12 @@ class SaleService(EntityService):
                     ref_type=REF_SALE_RETURN,
                     ref_id=ret.id,
                 )
+            if balance_refund:
+                self.customers.post_entry(
+                    customer, LedgerType.RETURN, credit=balance_refund,
+                    note=f"مرتجع #{number} من فاتورة #{sale.number} لرصيده لدى المحل",
+                    ref_type=REF_SALE_RETURN, ref_id=ret.id,
+                )  # fmt: skip
         if cash_refund:
             self.treasury.post_entry(
                 direction=CashDirection.OUT,
@@ -684,6 +743,7 @@ class SaleService(EntityService):
                 "cash_refund": cash_refund,
                 "credit_refund": credit_refund,
                 "wallet_refund": wallet_refund,
+                "balance_refund": balance_refund,
                 "tax_total": tax_total,
                 "reason": data.reason.value,
             },
@@ -718,6 +778,8 @@ class SaleService(EntityService):
             "credit_amount": sale.credit_amount,
             "wallet_amount": sale.wallet_amount,
             "payment_ref": sale.payment_ref,
+            "change_kept": sale.change_kept,
+            "balance_used": sale.balance_used,
             "cost_total": sale.cost_total,
             "lines": [
                 {
@@ -753,6 +815,7 @@ class SaleService(EntityService):
             "cash_refund": ret.cash_refund,
             "credit_refund": ret.credit_refund,
             "wallet_refund": ret.wallet_refund,
+            "balance_refund": ret.balance_refund,
             "lines": [
                 {
                     "id": l.id,
@@ -770,6 +833,7 @@ class SaleService(EntityService):
         cids = {s.customer_id for s in rows if s.customer_id}
         phones = self._customer_phones(cids)
         points = self._customer_points(cids)
+        balances = self._customer_balances(cids)
         labels = self._method_names()
         mgr = self.is_manager
         out: list[SaleOut] = []
@@ -797,6 +861,7 @@ class SaleService(EntityService):
                     loyalty_discount=s.loyalty_discount,
                     loyalty_earned=s.loyalty_earned,
                     customer_points=points.get(s.customer_id) if s.customer_id else None,
+                    customer_balance=balances.get(s.customer_id) if s.customer_id else None,
                     tax_mode=s.tax_mode,
                     taxable_total=s.taxable_total,
                     tax_total=s.tax_total,
@@ -812,6 +877,8 @@ class SaleService(EntityService):
                     payment_ref=s.payment_ref,
                     received=s.received,
                     change=s.change,
+                    change_kept=s.change_kept,
+                    balance_used=s.balance_used,
                     returned_total=s.returned_total,
                     cost_total=s.cost_total if mgr else None,
                     profit=(s.total - s.returned_total) - net_cost if mgr else None,
@@ -873,6 +940,7 @@ class SaleService(EntityService):
                 cash_refund=r.cash_refund,
                 credit_refund=r.credit_refund,
                 wallet_refund=r.wallet_refund,
+                balance_refund=r.balance_refund,
                 loyalty_reversed=r.loyalty_reversed,
                 loyalty_restored=r.loyalty_restored,
                 lines=[
@@ -926,6 +994,14 @@ class SaleService(EntityService):
             select(Customer.id, Customer.loyalty_points).where(Customer.id.in_(ids))
         )
         return {cid: pts for cid, pts in rows.all()}
+
+    def _customer_balances(self, ids: set[str]) -> dict[str, int]:
+        if not ids:
+            return {}
+        from sqlalchemy import select
+
+        rows = self.session.execute(select(Customer.id, Customer.balance).where(Customer.id.in_(ids)))
+        return {cid: bal for cid, bal in rows.all()}
 
     def _customer_phones(self, ids: set[str]) -> dict[str, str | None]:
         if not ids:

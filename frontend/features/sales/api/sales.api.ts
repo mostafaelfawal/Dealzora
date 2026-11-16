@@ -82,6 +82,9 @@ export const toSale = (d: SaleDto): Sale => ({
   paymentRef: d.payment_ref ?? null,
   received: toPounds(d.received),
   change: toPounds(d.change),
+  changeKept: toPounds(d.change_kept ?? 0),
+  balanceUsed: toPounds(d.balance_used ?? 0),
+  customerBalance: toPoundsOrNull(d.customer_balance ?? null),
   returnedTotal: toPounds(d.returned_total),
   costTotal: toPoundsOrNull(d.cost_total),
   profit: toPoundsOrNull(d.profit),
@@ -125,6 +128,7 @@ export const toSaleReturn = (d: ReturnDto): SaleReturn => ({
   cashRefund: toPounds(d.cash_refund),
   creditRefund: toPounds(d.credit_refund),
   walletRefund: toPounds(d.wallet_refund ?? 0),
+  balanceRefund: toPounds(d.balance_refund ?? 0),
   lines: d.lines.map((l) => ({
     id: l.id,
     saleLineId: l.sale_line_id,
@@ -155,6 +159,8 @@ const toSalePayload = (s: SaleInput) => ({
   payment_ref: s.paymentRef?.trim() || null,
   note: s.note || null,
   redeem_points: s.redeemPoints ?? 0,
+  use_balance: toCents(s.useBalance ?? 0),
+  keep_change: toCents(s.keepChange ?? 0),
 });
 
 const toReturnPayload = (r: ReturnInput) => ({
