@@ -25,6 +25,7 @@ from .constants import (
 )
 from .model import AppSetting
 from .payments import PaymentKind
+from .receipt import ReceiptConfig
 from .scale import ScaleBarcodeConfig
 from app.modules.loyalty.config import LoyaltyConfig
 from app.modules.tax.config import TaxConfig
@@ -142,6 +143,28 @@ class SettingsService:
             record_audit(
                 self.session, actor, entity=ENTITY_SETTING, entity_id="tax", action="update",
                 changes={"tax": {"from": before.model_dump(), "to": data.model_dump()}},
+            )  # fmt: skip
+        self.session.commit()
+        return data
+
+    def receipt(self) -> ReceiptConfig:
+        raw = self.get(SettingKey.RECEIPT)
+        if raw:
+            try:
+                return ReceiptConfig.model_validate_json(raw)
+            except ValueError:  # قيمة تالفة: الشكل الافتراضي حتى يُحفظ من جديد
+                pass
+        return ReceiptConfig()
+
+    def set_receipt(self, actor: Actor, data: ReceiptConfig) -> ReceiptConfig:
+        before = self.receipt()
+        self._set(actor, SettingKey.RECEIPT, data.model_dump_json())
+        if data != before:
+            # الشعار صورة كبيرة: نسجّل أنه تغيّر فقط، لا محتواه.
+            strip = lambda c: {**c.model_dump(), "logo": bool(c.logo)}  # noqa: E731
+            record_audit(
+                self.session, actor, entity=ENTITY_SETTING, entity_id="receipt", action="update",
+                changes={"receipt": {"from": strip(before), "to": strip(data)}},
             )  # fmt: skip
         self.session.commit()
         return data

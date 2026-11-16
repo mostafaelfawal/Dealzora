@@ -5,141 +5,195 @@ import { formatDateTime } from "@/lib/dates";
 import { getCachedPlan, upgradeMessage } from "@/lib/plan";
 import { printReceiptHtml } from "@/lib/print";
 import { getPrinterPrefs } from "@/lib/printerPrefs";
+import { getReceiptConfig } from "@/lib/receiptConfig";
 import { currencySymbol } from "@/lib/currency";
-import { formatNumber, formatQty } from "@/lib/format";
+import { formatQty } from "@/lib/format";
 
 import { RETURN_REASON_LABEL } from "../config/saleOptions";
 import { fetchReturn, fetchSale } from "../api/sales.api";
 import type { Sale, SaleReturn } from "../types/sale";
-import { E_RECEIPT_CSS, eReceiptBlockHtml } from "./eReceiptPrint";
+import {
+  esc,
+  money,
+  renderReceipt,
+  type DocRow,
+  type ReceiptModel,
+  type RenderOptions,
+} from "./receiptDocument";
 import { saleTaxRows } from "./saleTax";
 
 const FOOTER = "شكراً لزيارتكم";
-/** خطة «بَسطة» المجانية: سطر صغير في آخر الإيصال (إعلان يساعد على انتشار البرنامج). */
-const FREE_FOOTER = "بواسطة Dealzora";
 const EG_COUNTRY = "20";
 
-const esc = (text: string) =>
-  text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const money = (n: number) => formatNumber(n);
+/** إعدادات الرسم الحالية لهذا الجهاز (نوع الطابعة وعرض الورق) وشكل الفاتورة للمحل. */
+function currentRender(
+  shopName: string,
+  override?: Partial<RenderOptions>,
+): RenderOptions {
+  const prefs = getPrinterPrefs();
+  return {
+    kind: prefs.kind,
+    paperMm: prefs.paperMm,
+    config: getReceiptConfig(),
+    shopName,
+    freePlan: Boolean(getCachedPlan()?.isFree),
+    ...override,
+  };
+}
 
-/** HTML مستقل للإيصال (بدون خطوط خارجية حتى يطبع بدون إنترنت). */
+export function saleReceiptModel(sale: Sale, reprint = false): ReceiptModel {
+  const discount = sale.invoiceDiscount + sale.linesDiscount;
+  const totals: DocRow[] = [
+    { label: "الإجمالي قبل الخصم", value: money(sale.subtotal) },
+  ];
+  if (sale.promoDiscount > 0)
+    totals.push({ label: "العروض", value: money(sale.promoDiscount) });
+  if (discount > 0) totals.push({ label: "الخصم", value: money(discount) });
+  if (sale.loyaltyDiscount > 0)
+    totals.push({
+      label: `خصم ${sale.loyaltyRedeemed} نقطة`,
+      value: money(sale.loyaltyDiscount),
+    });
+  for (const r of saleTaxRows(sale))
+    totals.push({ label: r.label, value: money(r.amount) });
+
+  const payments: DocRow[] = [
+    { label: "طريقة الدفع", value: esc(sale.paymentLabel) },
+  ];
+  if (sale.cashAmount > 0)
+    payments.push({
+      label: "المدفوع نقداً",
+      value: money(sale.received || sale.cashAmount),
+    });
+  if (sale.change > 0)
+    payments.push({ label: "الباقي", value: money(sale.change) });
+  if (sale.creditAmount > 0)
+    payments.push({ label: "آجل على الحساب", value: money(sale.creditAmount) });
+  if (sale.walletAmount > 0)
+    payments.push({
+      label: `مدفوع ${sale.paymentLabel}`,
+      value: money(sale.walletAmount),
+    });
+  if (sale.walletAmount > 0 && sale.paymentRef)
+    payments.push({ label: "رقم العملية", value: esc(sale.paymentRef) });
+  if (sale.returnedTotal > 0)
+    payments.push({
+      label: "مرتجع من الفاتورة",
+      value: money(sale.returnedTotal),
+    });
+
+  const notes: string[] = [];
+  if (
+    sale.customerPoints !== null &&
+    (sale.loyaltyEarned > 0 || sale.loyaltyRedeemed > 0)
+  )
+    notes.push(
+      `كسبت ${sale.loyaltyEarned} نقطة · رصيدك ${sale.customerPoints} نقطة`,
+    );
+
+  return {
+    kind: "sale",
+    title: "فاتورة بيع",
+    number: sale.number,
+    reference: null,
+    date: sale.soldAt,
+    reprint,
+    cashier: sale.cashierName,
+    customer: sale.customerName,
+    customerPhone: sale.customerPhone,
+    lines: sale.lines.map((l) => ({
+      name: l.name,
+      qty: l.qty,
+      unit: l.unitName,
+      unitPrice: l.unitPrice,
+      discount: [
+        l.promoDiscount > 0
+          ? `${l.promoName ?? "عرض"} −${money(l.promoDiscount)}`
+          : "",
+        l.discount > 0 ? `خصم ${money(l.discount)}` : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+      total: l.lineTotal,
+    })),
+    totals,
+    grandLabel: "الإجمالي",
+    grand: sale.total,
+    payments,
+    notes,
+    eta: sale.etaPrint,
+  };
+}
+
+export function returnReceiptModel(ret: SaleReturn): ReceiptModel {
+  const totals: DocRow[] = [];
+  if (ret.taxTotal)
+    totals.push({
+      label: "منها ضريبة القيمة المضافة",
+      value: money(ret.taxTotal),
+    });
+  const payments: DocRow[] = [];
+  if (ret.cashRefund > 0)
+    payments.push({ label: "رُد نقداً", value: money(ret.cashRefund) });
+  if (ret.walletRefund > 0)
+    payments.push({ label: "حُوّل للمحفظة", value: money(ret.walletRefund) });
+  if (ret.creditRefund > 0)
+    payments.push({
+      label: "خُصم من حساب العميل",
+      value: money(ret.creditRefund),
+    });
+  const notes = [`السبب: ${RETURN_REASON_LABEL[ret.reason]}`];
+  if (ret.note) notes.push(`ملاحظة: ${ret.note}`);
+
+  return {
+    kind: "return",
+    title: "إيصال مرتجع",
+    number: ret.number,
+    reference: `من فاتورة ${ret.saleNumber}`,
+    date: ret.returnedAt,
+    reprint: false,
+    cashier: ret.cashierName,
+    customer: ret.customerName,
+    customerPhone: null,
+    lines: ret.lines.map((l) => ({
+      name: l.name,
+      qty: l.qty,
+      unit: l.unitName,
+      unitPrice: null,
+      discount: "",
+      total: l.amount,
+    })),
+    totals,
+    grandLabel: "قيمة المرتجع",
+    grand: ret.total,
+    payments,
+    notes,
+    eta: ret.etaPrint,
+  };
+}
+
+/** HTML الفاتورة بشكل طابعة هذا الجهاز (حراري/A4). override للمعاينة في الإعدادات. */
 export function buildReceiptHtml(
   sale: Sale,
   shopName: string,
   reprint = false,
+  override?: Partial<RenderOptions>,
 ): string {
-  const rows = sale.lines
-    .map(
-      (l) => `
-      <tr><td colspan="3" class="name">${esc(l.name)}</td></tr>
-      <tr class="sub">
-        <td>${formatQty(l.qty)} ${esc(l.unitName)} × ${money(l.unitPrice)}</td>
-        <td>${l.promoDiscount > 0 ? `${esc(l.promoName ?? "عرض")} −${money(l.promoDiscount)}` : ""}${l.discount > 0 ? ` خصم ${money(l.discount)}` : ""}</td>
-        <td class="num">${money(l.lineTotal)}</td>
-      </tr>`,
-    )
-    .join("");
-
-  const discount = sale.invoiceDiscount + sale.linesDiscount;
-
-  return receiptDocument(
-    `فاتورة ${sale.number}`,
-    `
-  <h1>${esc(shopName)}</h1>
-  ${reprint ? `<div class="center tag">نسخة</div>` : ""}
-  <div class="center muted">فاتورة رقم <b>${sale.number}</b></div>
-  <div class="center muted">${esc(formatDateTime(sale.soldAt))}</div>
-  ${sale.cashierName ? `<div class="center muted">الكاشير: ${esc(sale.cashierName)}</div>` : ""}
-  ${sale.customerName ? `<div class="center muted">العميل: ${esc(sale.customerName)}</div>` : ""}
-  <hr><table>${rows}</table><hr>
-  ${line("الإجمالي قبل الخصم", money(sale.subtotal))}
-  ${sale.promoDiscount > 0 ? line("العروض", money(sale.promoDiscount)) : ""}
-  ${discount > 0 ? line("الخصم", money(discount)) : ""}
-  ${sale.loyaltyDiscount > 0 ? line(`خصم ${sale.loyaltyRedeemed} نقطة`, money(sale.loyaltyDiscount)) : ""}
-  ${saleTaxRows(sale)
-    .map((r) => line(esc(r.label), money(r.amount)))
-    .join("")}
-  ${line(`الإجمالي (${currencySymbol()})`, money(sale.total), "total")}
-  ${line("طريقة الدفع", sale.paymentLabel)}
-  ${sale.cashAmount > 0 ? line("المدفوع نقداً", money(sale.received || sale.cashAmount)) : ""}
-  ${sale.change > 0 ? line("الباقي", money(sale.change)) : ""}
-  ${sale.creditAmount > 0 ? line("آجل على الحساب", money(sale.creditAmount)) : ""}
-  ${sale.walletAmount > 0 ? line(`مدفوع ${sale.paymentLabel}`, money(sale.walletAmount)) : ""}
-  ${sale.walletAmount > 0 && sale.paymentRef ? line("رقم العملية", esc(sale.paymentRef)) : ""}
-  ${sale.returnedTotal > 0 ? line("مرتجع من الفاتورة", money(sale.returnedTotal)) : ""}
-  ${sale.customerPoints !== null && (sale.loyaltyEarned > 0 || sale.loyaltyRedeemed > 0) ? `<hr><div class="center muted">كسبت ${sale.loyaltyEarned} نقطة · رصيدك ${sale.customerPoints} نقطة</div>` : ""}
-  ${sale.etaPrint ? eReceiptBlockHtml(sale.etaPrint, getPrinterPrefs().paperMm, "sale") : ""}${footer()}`,
-    sale.etaPrint ? E_RECEIPT_CSS : "",
+  return renderReceipt(
+    saleReceiptModel(sale, reprint),
+    currentRender(shopName, override),
   );
 }
 
-/** إيصال المرتجع: الأصناف الراجعة وكيف رُد المبلغ للعميل. */
-export function buildReturnReceiptHtml(ret: SaleReturn, shopName: string): string {
-  const rows = ret.lines
-    .map(
-      (l) => `
-      <tr><td colspan="2" class="name">${esc(l.name)}</td></tr>
-      <tr class="sub">
-        <td>${formatQty(l.qty)} ${esc(l.unitName)}</td>
-        <td class="num">${money(l.amount)}</td>
-      </tr>`,
-    )
-    .join("");
-
-  return receiptDocument(
-    `مرتجع ${ret.number}`,
-    `
-  <h1>${esc(shopName)}</h1>
-  <div class="center tag">إيصال مرتجع</div>
-  <div class="center muted">مرتجع رقم <b>${ret.number}</b> · من فاتورة <b>${ret.saleNumber}</b></div>
-  <div class="center muted">${esc(formatDateTime(ret.returnedAt))}</div>
-  ${ret.cashierName ? `<div class="center muted">الكاشير: ${esc(ret.cashierName)}</div>` : ""}
-  ${ret.customerName ? `<div class="center muted">العميل: ${esc(ret.customerName)}</div>` : ""}
-  <hr><table>${rows}</table><hr>
-  ${line(`قيمة المرتجع (${currencySymbol()})`, money(ret.total), "total")}
-  ${ret.taxTotal ? line("منها ضريبة القيمة المضافة", money(ret.taxTotal)) : ""}
-  ${ret.cashRefund > 0 ? line("رُد نقداً", money(ret.cashRefund)) : ""}
-  ${ret.walletRefund > 0 ? line("حُوّل للمحفظة", money(ret.walletRefund)) : ""}
-  ${ret.creditRefund > 0 ? line("خُصم من حساب العميل", money(ret.creditRefund)) : ""}
-  ${line("السبب", esc(RETURN_REASON_LABEL[ret.reason]))}
-  ${ret.note ? `<div class="muted">ملاحظة: ${esc(ret.note)}</div>` : ""}
-  ${ret.etaPrint ? eReceiptBlockHtml(ret.etaPrint, getPrinterPrefs().paperMm, "return") : ""}${footer()}`,
-    ret.etaPrint ? E_RECEIPT_CSS : "",
+export function buildReturnReceiptHtml(
+  ret: SaleReturn,
+  shopName: string,
+  override?: Partial<RenderOptions>,
+): string {
+  return renderReceipt(
+    returnReceiptModel(ret),
+    currentRender(shopName, override),
   );
-}
-
-const line = (label: string, value: string, cls = "") =>
-  `<div class="row ${cls}"><span>${label}</span><span class="num">${value}</span></div>`;
-
-const footer = () =>
-  `<hr><div class="center">${FOOTER}</div>
-  ${getCachedPlan()?.isFree ? `<div class="center muted" style="margin-top:4px">${FREE_FOOTER}</div>` : ""}`;
-
-/** هيكل الإيصال المشترك (بيع/مرتجع) بعرض ورق الطابعة المختار على هذا الجهاز. */
-function receiptDocument(title: string, body: string, extraCss = ""): string {
-  const paper = getPrinterPrefs().paperMm;
-  return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
-<title>${esc(title)}</title>
-<style>
-  @page { size: ${paper}mm auto; margin: 0; }
-  * { box-sizing: border-box; }
-  body { width: ${paper - 6}mm; margin: 0 auto; padding: 3mm 0;
-         font: 12px/1.45 Tahoma, "Segoe UI", Arial, sans-serif; color: #000; }
-  h1 { font-size: 16px; margin: 0 0 2px; text-align: center; }
-  .center { text-align: center; }
-  .muted { font-size: 11px; }
-  .tag { font-weight: bold; font-size: 13px; margin: 2px 0; }
-  hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
-  table { width: 100%; border-collapse: collapse; }
-  td { padding: 0; vertical-align: top; }
-  .name { font-weight: bold; padding-top: 3px; }
-  .sub td { font-size: 11px; }
-  .num { text-align: left; direction: ltr; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .row { display: flex; justify-content: space-between; gap: 8px; }
-  .total { font-size: 16px; font-weight: bold; margin: 3px 0; }${extraCss}
-</style></head><body>${body}
-</body></html>`;
 }
 
 /**
@@ -152,7 +206,8 @@ export async function printReceipt(
   opts: { reprint?: boolean; openDrawer?: boolean } = {},
 ) {
   // من قائمة (بلا بيانات الطباعة) لفاتورة لها إيصال إلكتروني: نجلبها كاملة حتى يُطبع الـ QR.
-  if (sale.etaUuid && !sale.etaPrint) sale = await fetchSale(sale.id).catch(() => sale);
+  if (sale.etaUuid && !sale.etaPrint)
+    sale = await fetchSale(sale.id).catch(() => sale);
   return printReceiptHtml(buildReceiptHtml(sale, shopName, opts.reprint), {
     jobName: `فاتورة ${sale.number}`,
     openDrawer: Boolean(opts.openDrawer) && sale.cashAmount > 0,
@@ -164,7 +219,8 @@ export async function printReturnReceipt(
   shopName: string,
   opts: { openDrawer?: boolean } = {},
 ) {
-  if (ret.etaUuid && !ret.etaPrint) ret = await fetchReturn(ret.id).catch(() => ret);
+  if (ret.etaUuid && !ret.etaPrint)
+    ret = await fetchReturn(ret.id).catch(() => ret);
   return printReceiptHtml(buildReturnReceiptHtml(ret, shopName), {
     jobName: `مرتجع ${ret.number}`,
     openDrawer: Boolean(opts.openDrawer) && ret.cashRefund > 0,

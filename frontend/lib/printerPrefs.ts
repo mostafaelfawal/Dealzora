@@ -3,16 +3,19 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * إعدادات طابعة الإيصالات. تُحفظ على الجهاز نفسه (localStorage) لأن كل جهاز كاشير
+ * إعدادات طابعة الفواتير. تُحفظ على الجهاز نفسه (localStorage) لأن كل جهاز كاشير
  * موصّل بطابعته الخاصة.
  *
  * direct: إرسال مباشر للطابعة الحرارية (ESC/POS) بدون نافذة الطباعة.
  * dialog: نافذة الطباعة العادية للنظام (لأي طابعة، أو لو الطابعة لا تدعم ESC/POS).
  */
 export type PrintMode = "direct" | "dialog";
+/** thermal: إيصال على ورق رول (58/80 مم). a4: فاتورة كاملة على ورق A4 بأي طابعة عادية. */
+export type PrinterKind = "thermal" | "a4";
 export type PaperWidth = 80 | 58;
 
 export interface PrinterPrefs {
+  kind: PrinterKind;
   mode: PrintMode;
   /** اسم الطابعة كما في ويندوز. null = لم تُختر بعد (نرجع لنافذة الطباعة). */
   printer: string | null;
@@ -26,6 +29,7 @@ export interface PrinterPrefs {
 }
 
 export const DEFAULT_PRINTER_PREFS: PrinterPrefs = {
+  kind: "thermal",
   mode: "direct",
   printer: null,
   paperMm: 80,
@@ -43,8 +47,12 @@ function load(): PrinterPrefs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_PRINTER_PREFS;
-    const saved = { ...DEFAULT_PRINTER_PREFS, ...JSON.parse(raw) } as PrinterPrefs;
+    const saved = {
+      ...DEFAULT_PRINTER_PREFS,
+      ...JSON.parse(raw),
+    } as PrinterPrefs;
     if (saved.paperMm !== 80 && saved.paperMm !== 58) saved.paperMm = 80;
+    if (saved.kind !== "thermal" && saved.kind !== "a4") saved.kind = "thermal";
     return saved;
   } catch {
     return DEFAULT_PRINTER_PREFS;

@@ -1,98 +1,83 @@
 "use client";
 
-import { IconLoader2, IconPrinter, IconRefresh } from "@tabler/icons-react";
+import {
+  IconFileText,
+  IconInfoCircle,
+  IconLoader2,
+  IconPrinter,
+  IconReceipt,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { OptionSelect } from "@/components/shared/OptionSelect";
+import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { formatDateTime } from "@/lib/dates";
+import { buildReceiptHtml } from "@/features/sales/lib/receipt";
 import { extractErrorMessage } from "@/lib/errors";
 import { canPrintDirect, listPrinters, printReceiptHtml } from "@/lib/print";
 import {
   setPrinterPrefs,
   usePrinterPrefs,
   type PaperWidth,
-  type PrintMode,
+  type PrinterKind,
 } from "@/lib/printerPrefs";
 
-const MODES: { value: PrintMode; label: string }[] = [
-  { value: "direct", label: "مباشرة على الطابعة الحرارية (بدون نافذة)" },
-  { value: "dialog", label: "نافذة الطباعة العادية" },
+import { useShopName } from "../hooks/useSettings";
+import { sampleSale } from "../lib/sampleReceipt";
+import {
+  ChoiceCards,
+  SettingGroup,
+  SettingRow,
+  SwitchRow,
+} from "./settingsControls";
+
+const KINDS: {
+  value: PrinterKind;
+  title: string;
+  description: string;
+  icon: ReactNode;
+  badge?: string;
+}[] = [
+  {
+    value: "thermal",
+    title: "طابعة إيصالات حرارية",
+    description:
+      "إيصال صغير على ورق رول 58 أو 80 مم. للسوبر ماركت والبقالة والصيدلية.",
+    icon: <IconReceipt />,
+    badge: "الأشهر",
+  },
+  {
+    value: "a4",
+    title: "طابعة عادية (A4)",
+    description:
+      "فاتورة كاملة بجدول وشعار على ورق A4. للجملة والتوريدات والشركات.",
+    icon: <IconFileText />,
+  },
 ];
 
-const PAPERS: { value: `${PaperWidth}`; label: string }[] = [
-  { value: "80", label: "80 مم (الأشهر)" },
-  { value: "58", label: "58 مم (الطابعات الصغيرة)" },
+const PAPERS = [
+  { id: "80" as const, label: "80 مم (الأشهر)" },
+  { id: "58" as const, label: "58 مم (صغيرة)" },
 ];
 
 const NO_PRINTER = "__none__";
 
-function testReceiptHtml(paperMm: number, printer: string) {
-  return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>تجربة الطباعة</title>
-<style>
-  @page { size: ${paperMm}mm auto; margin: 0; }
-  body { width: ${paperMm - 6}mm; margin: 0 auto; padding: 3mm 0; font: 12px/1.5 Tahoma, Arial, sans-serif; color: #000; }
-  h1 { font-size: 16px; margin: 0 0 4px; text-align: center; }
-  .c { text-align: center; } hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
-  .row { display: flex; justify-content: space-between; }
-  .big { font-size: 18px; font-weight: bold; }
-</style></head><body>
-  <h1>تجربة الطباعة</h1>
-  <div class="c">${printer.replace(/[&<>"']/g, "")}</div>
-  <div class="c">${formatDateTime(Date.now())}</div>
-  <hr>
-  <div class="row"><span>نص عربي عادي</span><span>123.50</span></div>
-  <div class="row"><b>نص عريض</b><b>9,999.00</b></div>
-  <div class="row big"><span>الإجمالي</span><span>1,250.00</span></div>
-  <hr>
-  <div class="c">لو ظهر هذا الإيصال واضحاً فالطابعة جاهزة ✓</div>
-</body></html>`;
-}
-
+/** نوع الطابعة وإعداداتها على هذا الجهاز (كل جهاز كاشير موصّل بطابعته). */
 export function PrinterSection() {
   const prefs = usePrinterPrefs();
-  const direct = canPrintDirect();
+  const desktop = canPrintDirect();
+  const shopName = useShopName().data ?? "اسم المحل";
   const [testing, setTesting] = useState(false);
 
-  const printers = useQuery({
-    queryKey: ["local-printers"],
-    queryFn: listPrinters,
-    enabled: direct,
-    staleTime: 60_000,
-  });
-
-  if (!direct) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        الطباعة المباشرة متاحة في برنامج Dealzora على ويندوز فقط. من المتصفح
-        تُستخدم نافذة الطباعة العادية.
-      </p>
-    );
-  }
-
-  const list = printers.data ?? [];
-  const missing =
-    prefs.printer !== null && !list.some((p) => p.name === prefs.printer);
-  const printerItems = [
-    { value: NO_PRINTER, label: "— اختر الطابعة —" },
-    ...list.map((p) => ({
-      value: p.name,
-      label: p.is_default ? `${p.name} (الافتراضية)` : p.name,
-    })),
-    ...(missing && prefs.printer
-      ? [{ value: prefs.printer, label: `${prefs.printer} (غير موصّلة)` }]
-      : []),
-  ];
-  const isDirect = prefs.mode === "direct";
+  const thermal = prefs.kind === "thermal";
+  const direct = desktop && thermal && prefs.mode === "direct";
 
   async function testPrint() {
-    if (!prefs.printer) return;
     setTesting(true);
     try {
-      await printReceiptHtml(testReceiptHtml(prefs.paperMm, prefs.printer), {
+      await printReceiptHtml(buildReceiptHtml(sampleSale(), shopName), {
         jobName: "تجربة الطباعة",
         openDrawer: true,
       });
@@ -102,124 +87,161 @@ export function PrinterSection() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-1.5">
-        <Label>طريقة الطباعة</Label>
-        <OptionSelect
-          label="طريقة الطباعة"
-          items={MODES}
-          value={prefs.mode}
-          onChange={(mode) => setPrinterPrefs({ mode })}
-          className="max-w-sm"
-        />
-        <p className="text-[11px] text-muted-foreground">
-          المباشرة تعمل مع طابعات الإيصالات الحرارية (ESC/POS) مثل Xprinter
-          وEpson وRongta. لو الطابعة عادية (A4) اختر نافذة الطباعة.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <ChoiceCards
+        label="نوع الطابعة"
+        items={KINDS}
+        value={prefs.kind}
+        onChange={(kind) => setPrinterPrefs({ kind })}
+      />
 
-      {isDirect && (
-        <>
-          <div className="space-y-1.5">
-            <Label>طابعة الإيصالات</Label>
-            <div className="flex max-w-xl items-center gap-2">
-              <OptionSelect
-                label="طابعة الإيصالات"
-                items={printerItems}
-                value={prefs.printer ?? NO_PRINTER}
-                onChange={(value) =>
-                  setPrinterPrefs({
-                    printer: value === NO_PRINTER ? null : value,
-                  })
-                }
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="تحديث قائمة الطابعات"
-                title="تحديث قائمة الطابعات"
-                onClick={() => printers.refetch()}
-                disabled={printers.isFetching}
-              >
-                {printers.isFetching ? (
-                  <IconLoader2 className="size-4 animate-spin" />
-                ) : (
-                  <IconRefresh className="size-4" />
-                )}
-              </Button>
-            </div>
-            {printers.isError && (
-              <p className="text-[11px] text-destructive">
-                {extractErrorMessage(printers.error, "تعذّر قراءة الطابعات")}
-              </p>
-            )}
-            {missing && (
-              <p className="text-[11px] text-destructive">
-                الطابعة المختارة غير موجودة الآن. تأكد من توصيلها وتشغيلها.
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>عرض الورق</Label>
-            <OptionSelect
+      {thermal ? (
+        <SettingGroup title="إعدادات الطابعة الحرارية">
+          {desktop && (
+            <SwitchRow
+              id="printer-direct"
+              title="طباعة فورية بدون نافذة"
+              description="الفاتورة تطلع على الطابعة مباشرة بعد البيع. أوقفها فقط لو الطابعة لا تطبع بها."
+              checked={prefs.mode === "direct"}
+              onChange={(on) =>
+                setPrinterPrefs({ mode: on ? "direct" : "dialog" })
+              }
+            />
+          )}
+          {direct && <PrinterPicker />}
+          <SettingRow
+            title="عرض الورق"
+            description="مكتوب على علبة الورق أو أسفل الطابعة."
+          >
+            <SegmentedTabs
               label="عرض الورق"
               items={PAPERS}
-              value={`${prefs.paperMm}`}
+              value={`${prefs.paperMm}` as "80" | "58"}
               onChange={(v) =>
                 setPrinterPrefs({ paperMm: Number(v) as PaperWidth })
               }
-              className="max-w-xs"
             />
+          </SettingRow>
+          {direct && (
+            <>
+              <SwitchRow
+                id="printer-cut"
+                title="قص الورق بعد كل فاتورة"
+                description="لو الطابعة فيها قطّاعة."
+                checked={prefs.cut}
+                onChange={(cut) => setPrinterPrefs({ cut })}
+              />
+              <SwitchRow
+                id="printer-drawer"
+                title="فتح درج النقود تلقائياً"
+                description="مع البيع النقدي ورد المرتجع نقداً، للدرج الموصّل بالطابعة."
+                checked={prefs.openDrawer}
+                onChange={(openDrawer) => setPrinterPrefs({ openDrawer })}
+              />
+            </>
+          )}
+        </SettingGroup>
+      ) : (
+        <div className="flex gap-3 border bg-muted/30 p-4 text-xs leading-relaxed">
+          <IconInfoCircle className="size-5 shrink-0 text-primary" />
+          <div className="space-y-1">
+            <p className="font-medium">كيف تطبع على A4؟</p>
+            <p className="text-muted-foreground">
+              بعد كل بيع تظهر نافذة الطباعة: اختر طابعتك مرة واحدة واضغط
+              «طباعة»، وويندوز يتذكرها في المرات القادمة. يمكنك أيضاً اختيار
+              «Microsoft Print to PDF» لحفظ الفاتورة كملف وإرسالها.
+            </p>
           </div>
-
-          <div className="flex max-w-xl items-center justify-between gap-3">
-            <Label htmlFor="printer-cut" className="flex-1">
-              قص الورق تلقائياً بعد كل إيصال
-            </Label>
-            <Switch
-              id="printer-cut"
-              checked={prefs.cut}
-              onCheckedChange={(cut) => setPrinterPrefs({ cut })}
-            />
-          </div>
-
-          <div className="flex max-w-xl items-center justify-between gap-3">
-            <Label htmlFor="printer-drawer" className="flex-1">
-              فتح درج النقود مع البيع النقدي ورد المرتجع نقداً
-              <span className="block text-[11px] font-normal text-muted-foreground">
-                للدرج الموصّل بالطابعة بكابل RJ11.
-              </span>
-            </Label>
-            <Switch
-              id="printer-drawer"
-              checked={prefs.openDrawer}
-              onCheckedChange={(openDrawer) => setPrinterPrefs({ openDrawer })}
-            />
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={testPrint}
-            disabled={!prefs.printer || testing}
-            className="gap-2"
-          >
-            {testing ? (
-              <IconLoader2 className="size-4 animate-spin" />
-            ) : (
-              <IconPrinter className="size-4" />
-            )}
-            طباعة صفحة تجربة
-          </Button>
-        </>
+        </div>
       )}
 
-      <p className="text-[11px] text-muted-foreground">
-        تُحفظ هذه الإعدادات على هذا الجهاز فقط، لأن كل جهاز كاشير موصّل بطابعته.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+        <p className="text-[11px] text-muted-foreground">
+          هذه الإعدادات لهذا الجهاز فقط، لأن كل جهاز موصّل بطابعته.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void testPrint()}
+          disabled={testing || (direct && !prefs.printer)}
+          className="gap-2"
+        >
+          {testing ? (
+            <IconLoader2 className="size-4 animate-spin" />
+          ) : (
+            <IconPrinter className="size-4" />
+          )}
+          طباعة فاتورة تجربة
+        </Button>
+      </div>
     </div>
+  );
+}
+
+function PrinterPicker() {
+  const prefs = usePrinterPrefs();
+  const printers = useQuery({
+    queryKey: ["local-printers"],
+    queryFn: listPrinters,
+    staleTime: 60_000,
+  });
+
+  const list = printers.data ?? [];
+  const missing =
+    prefs.printer !== null &&
+    printers.isSuccess &&
+    !list.some((p) => p.name === prefs.printer);
+  const items = [
+    { value: NO_PRINTER, label: "— اختر الطابعة —" },
+    ...list.map((p) => ({
+      value: p.name,
+      label: p.is_default ? `${p.name} (الافتراضية)` : p.name,
+    })),
+    ...(missing && prefs.printer
+      ? [{ value: prefs.printer, label: `${prefs.printer} (غير موصّلة)` }]
+      : []),
+  ];
+
+  return (
+    <SettingRow
+      title="الطابعة"
+      description={
+        printers.isError
+          ? extractErrorMessage(printers.error, "تعذّر قراءة الطابعات")
+          : missing
+            ? "الطابعة المختارة غير موجودة الآن. تأكد من توصيلها وتشغيلها."
+            : !prefs.printer
+              ? "اختر طابعة الإيصالات حتى تطبع فوراً."
+              : "تعمل مع Xprinter وEpson وRongta وأغلب الطابعات الحرارية."
+      }
+    >
+      <div className="flex items-center gap-2">
+        <OptionSelect
+          label="الطابعة"
+          items={items}
+          value={prefs.printer ?? NO_PRINTER}
+          onChange={(value) =>
+            setPrinterPrefs({ printer: value === NO_PRINTER ? null : value })
+          }
+          className="w-64 max-w-[60vw]"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="تحديث قائمة الطابعات"
+          title="تحديث قائمة الطابعات"
+          onClick={() => printers.refetch()}
+          disabled={printers.isFetching}
+          className="size-10"
+        >
+          {printers.isFetching ? (
+            <IconLoader2 className="size-4 animate-spin" />
+          ) : (
+            <IconRefresh className="size-4" />
+          )}
+        </Button>
+      </div>
+    </SettingRow>
   );
 }

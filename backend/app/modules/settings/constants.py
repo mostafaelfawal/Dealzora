@@ -33,6 +33,8 @@ class SettingKey(StrEnum):
     LOYALTY = "loyalty.config"
     # ضريبة القيمة المضافة (JSON، انظر tax/config.py).
     TAX = "tax.config"
+    # شكل الفاتورة المطبوعة: الشعار وبيانات المحل وما يظهر (JSON، انظر receipt.py).
+    RECEIPT = "receipt.config"
     # الإيصال الإلكتروني (JSON، انظر eta/schema.py): إعدادات المحل، وبيانات الفرع (محلية لهذا الجهاز
     # الأساسي: كل فرع قاعدة مستقلة). أسرار الأجهزة ليست هنا (جدول device_eta_profiles مشفّرة).
     ETA_CONFIG = "eta.config"

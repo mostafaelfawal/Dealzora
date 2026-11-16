@@ -69,21 +69,23 @@ async function sendToPrinter(
 
 /**
  * يطبع إيصالاً (بيع/مرتجع) على الطابعة الحرارية المختارة فوراً بدون نافذة.
- * بدون طابعة مختارة، أو خارج البرنامج (المتصفح)، أو في وضع «نافذة الطباعة»: نافذة الطباعة العادية.
+ * بدون طابعة مختارة، أو خارج البرنامج (المتصفح)، أو في وضع «نافذة الطباعة»، أو فاتورة A4:
+ * نافذة الطباعة العادية (ويندوز يتذكر آخر طابعة اختارها التاجر فيها).
  */
 export function printReceiptHtml(
   html: string,
   opts: { jobName: string; openDrawer?: boolean },
 ): Promise<void> {
   const prefs = getPrinterPrefs();
-  if (!canPrintDirect() || prefs.mode === "dialog") {
+  if (!canPrintDirect() || prefs.kind === "a4" || prefs.mode === "dialog") {
     printHtml(html);
     return Promise.resolve();
   }
   const printer = prefs.printer;
   if (!printer) {
     toast.info("لم تُختر طابعة الإيصالات بعد", {
-      description: "اخترها من الإعدادات ← البيع ← الطباعة لتطبع مباشرة بدون نافذة.",
+      description:
+        "اخترها من الإعدادات ← الطباعة والفاتورة لتطبع مباشرة بدون نافذة.",
       duration: 6000,
     });
     printHtml(html);

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 import { setLoyaltyConfig, type LoyaltyConfig } from "@/lib/loyalty";
 import { setTaxConfig, type TaxConfig } from "@/lib/tax";
+import { setReceiptConfig, type ReceiptConfig } from "@/lib/receiptConfig";
 import { setScaleConfig, type ScaleBarcodeConfig } from "@/lib/scaleBarcode";
 
 import { setCurrency, type Currency } from "@/lib/currency";
@@ -23,6 +24,7 @@ import {
   saveCurrency,
   saveDiscountLimit,
   saveLoyalty,
+  saveReceiptConfig,
   saveScaleBarcode,
   saveTax,
   savePaymentConfig,
@@ -236,7 +238,8 @@ export function useSaveTax() {
           : "تم إيقاف حساب الضريبة",
       );
     },
-    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ إعداد الضريبة")),
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّر حفظ إعداد الضريبة")),
   });
 }
 
@@ -252,5 +255,21 @@ export function useSaveLoyalty() {
       );
     },
     onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ نقاط الولاء")),
+  });
+}
+
+/* ---------- شكل الفاتورة ---------- */
+
+export function useSaveReceiptConfig() {
+  return useMutation({
+    mutationFn: (config: ReceiptConfig) => saveReceiptConfig(config),
+    onSuccess: (config) => {
+      setReceiptConfig(config);
+      toast.success("تم حفظ شكل الفاتورة", {
+        description: "يظهر في كل الفواتير المطبوعة من الآن، على كل الأجهزة.",
+      });
+    },
+    onError: (e) =>
+      toast.error(extractErrorMessage(e, "تعذّر حفظ شكل الفاتورة")),
   });
 }

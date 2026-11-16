@@ -11,6 +11,7 @@ from app.core.security import Actor, get_actor, require_app_token
 
 from app.core.plan import Feature, require_feature
 
+from .receipt import ReceiptConfig
 from .scale import ScaleBarcodeConfig
 from app.modules.loyalty.config import LoyaltyConfig
 from app.modules.tax.config import TaxConfig
@@ -40,6 +41,7 @@ def get_settings_public(session: DbSession):
         scale_barcode=service.scale_barcode(),
         loyalty=service.loyalty(),
         tax=service.tax(),
+        receipt=service.receipt(),
     )
 
 
@@ -90,3 +92,9 @@ def set_loyalty(data: LoyaltyConfig, session: DbSession, actor: Annotated[Actor,
 @router.put("/tax", response_model=TaxConfig, dependencies=[Depends(require_manager_write)])
 def set_tax(data: TaxConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
     return SettingsService(session).set_tax(actor, data)
+
+
+# شكل الفاتورة المطبوعة: متاح لكل الخطط.
+@router.put("/receipt", response_model=ReceiptConfig, dependencies=[Depends(require_manager_write)])
+def set_receipt(data: ReceiptConfig, session: DbSession, actor: Annotated[Actor, Depends(get_actor)]):
+    return SettingsService(session).set_receipt(actor, data)

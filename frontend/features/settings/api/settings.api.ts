@@ -25,6 +25,13 @@ import {
   type TaxConfig,
   type TaxDto,
 } from "@/lib/tax";
+import {
+  fromReceiptDto,
+  setReceiptConfig,
+  toReceiptDto,
+  type ReceiptConfig,
+  type ReceiptDto,
+} from "@/lib/receiptConfig";
 import { getLicenseStatus } from "@/features/setup/lib/license";
 import type { LicenseStatus } from "@/features/setup/types/setup";
 
@@ -148,13 +155,24 @@ export const fetchCurrency = async (): Promise<Currency> => {
     scale_barcode?: ScaleBarcodeDto;
     loyalty?: LoyaltyDto;
     tax?: TaxDto;
+    receipt?: ReceiptDto;
   }>("/settings");
   setPaymentConfig(toConfig(data.payments));
   setScaleConfig(fromScaleDto(data.scale_barcode));
   setLoyaltyConfig(fromLoyaltyDto(data.loyalty));
   setTaxConfig(fromTaxDto(data.tax));
+  setReceiptConfig(fromReceiptDto(data.receipt));
   return data.currency;
 };
+
+/* ---------- شكل الفاتورة ---------- */
+
+export const saveReceiptConfig = async (
+  config: ReceiptConfig,
+): Promise<ReceiptConfig> =>
+  fromReceiptDto(
+    (await api.put<ReceiptDto>("/settings/receipt", toReceiptDto(config))).data,
+  );
 
 /* ---------- باركود الميزان ---------- */
 

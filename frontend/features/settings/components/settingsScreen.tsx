@@ -17,6 +17,9 @@ import {
   IconPrinter,
   IconReceiptTax,
   IconRefresh,
+  IconSearch,
+  IconTemplate,
+  IconX,
   IconScale,
   IconSend,
   IconShieldCheck,
@@ -24,9 +27,10 @@ import {
   IconUserCircle,
   IconWallet,
 } from "@tabler/icons-react";
-import { useEffect, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
+import { Input } from "@/components/ui/input";
 import { isOwner } from "@/config/roles";
 import { BranchConnectSection } from "@/features/branchTransfers/components/branchConnectSection";
 import {
@@ -58,6 +62,7 @@ import { LoyaltySection } from "./loyaltySection";
 import { PasswordSection } from "./passwordSection";
 import { PaymentsSection } from "./paymentsSection";
 import { PrinterSection } from "./printerSection";
+import { ReceiptDesignSection } from "./receiptDesignSection";
 import { ScaleBarcodeSection } from "./scaleBarcodeSection";
 import { SettingsSection } from "./settingsSection";
 import { ShopSection } from "./shopSection";
@@ -78,6 +83,8 @@ interface Section {
   title: string;
   description: string;
   content: ReactNode;
+  /** كلمات إضافية للبحث (ما يكتبه التاجر بلغته). */
+  keywords?: string;
 }
 
 interface Page {
@@ -240,13 +247,32 @@ function buildPages(
           </PlanGate>
         ),
       },
+    ],
+  };
+
+  const printing: Page = {
+    id: "printing",
+    icon: <IconPrinter />,
+    title: "الطباعة والفاتورة",
+    hint: "نوع الطابعة وشكل الفاتورة",
+    sections: [
       {
         id: "printer",
         icon: <IconPrinter />,
-        title: "الطباعة",
+        title: "الطابعة",
         description:
-          "طابعة الإيصالات الحرارية: طباعة الفاتورة والمرتجع فوراً بدون نافذة الطباعة.",
+          "طابعة إيصالات حرارية أم طابعة عادية A4؟ اختر ما عندك على هذا الجهاز.",
         content: <PrinterSection />,
+        keywords: "حراريه رول 80 58 درج قص",
+      },
+      {
+        id: "receipt-design",
+        icon: <IconTemplate />,
+        title: "شكل الفاتورة",
+        description:
+          "الشعار والعنوان والتليفون ورسالة الشكر، وما يظهر في الفاتورة. يُطبّق على كل الأجهزة.",
+        content: <ReceiptDesignSection />,
+        keywords: "شعار لوجو عنوان تليفون رقم ضريبي لون خط شروط استبدال ايصال",
       },
     ],
   };
@@ -362,11 +388,20 @@ function buildPages(
 
   // الاشتراك والترخيص من الجهاز الأساسي فقط.
   return terminal
-    ? [shop, selling, account, safety]
-    : [shop, selling, eReceiptPage(eReceipt), safety, account, plan];
+    ? [shop, selling, printing, account, safety]
+    : [shop, selling, printing, eReceiptPage(eReceipt), safety, account, plan];
 }
 
 const tabId = (id: string) => `settings-tab-${id}`;
+
+/** بحث بسيط يتجاهل الهمزات والتاء المربوطة والألف المقصورة والتشكيل (ما يكتبه التاجر بسرعة). */
+const normalize = (t: string) =>
+  t
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[ً-ْ]/g, "");
 
 export function SettingsScreen() {
   const device = useDeviceConfig();
@@ -374,6 +409,7 @@ export function SettingsScreen() {
   const owner = isOwner(useSessionUser().role);
   const eReceipt = useFeature("e_receipt");
   const pages = buildPages(device, owner, eReceipt);
+  const [query, setQuery] = useState("");
 
   // الرابط قد يكون صفحة (#selling) أو قسماً داخلها (#scale).
   const sectionPage = new Map(
@@ -383,6 +419,19 @@ export function SettingsScreen() {
   const { active, setActive } = useSettingsTab(anchors);
   const pageId = sectionPage.get(active) ?? active;
   const page = pages.find((p) => p.id === pageId) ?? pages[0];
+
+  const q = normalize(query.trim());
+  const results = q
+    ? pages.flatMap((p) =>
+        p.sections
+          .filter((s) =>
+            normalize(
+              `${s.title} ${s.description} ${s.keywords ?? ""} ${p.title}`,
+            ).includes(q),
+          )
+          .map((s) => ({ page: p, section: s })),
+      )
+    : null;
 
   // رابط لقسم بعينه: ننزل لبطاقته بعد ظهور الصفحة.
   useEffect(() => {
@@ -398,104 +447,212 @@ export function SettingsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sectionPage مشتق من pages
   }, [active]);
 
-  function onNavKey(event: KeyboardEvent<HTMLDivElement>) {
+  function open(id: string) {
+    setQuery("");
+    setActive(id);
+  }
+
+  function onNavKey(event: KeyboardEvent<HTMLElement>) {
     const ids = pages.map((p) => p.id);
+    // عمودي على الشاشات الكبيرة، أفقي (RTL) على الصغيرة.
     const step =
-      event.key === "ArrowLeft" ? 1 : event.key === "ArrowRight" ? -1 : 0;
+      event.key === "ArrowDown" || event.key === "ArrowLeft"
+        ? 1
+        : event.key === "ArrowUp" || event.key === "ArrowRight"
+          ? -1
+          : 0;
     if (!step) return;
     event.preventDefault();
     const next = ids[(ids.indexOf(page.id) + step + ids.length) % ids.length];
-    setActive(next);
+    open(next);
     document.getElementById(tabId(next))?.focus();
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <PageHeader
         title="الإعدادات"
         description={
           terminal
             ? "إعدادات المحل المشتركة. النسخ الاحتياطي والاشتراك من الجهاز الأساسي."
-            : "اختر ما تريد ضبطه:"
+            : "كل ما يخص محلك في مكان واحد. اختر من القائمة أو ابحث."
+        }
+        actions={
+          <div className="relative w-full sm:w-72">
+            <IconSearch className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setQuery("");
+              }}
+              placeholder="ابحث: طابعة، شعار، ضريبة…"
+              aria-label="ابحث في الإعدادات"
+              className="h-10 ps-9 pe-9"
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="مسح البحث"
+                onClick={() => setQuery("")}
+                className="absolute end-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <IconX className="size-4" />
+              </button>
+            )}
+          </div>
         }
       />
 
-      <div
-        role="tablist"
-        aria-label="صفحات الإعدادات"
-        onKeyDown={onNavKey}
-        className={cn(
-          "no-scrollbar grid auto-cols-[minmax(9.5rem,1fr)] grid-flow-col gap-2 overflow-x-auto pb-1",
-          "md:grid-flow-row md:auto-cols-auto",
-          pages.length === 5 ? "md:grid-cols-5" : "md:grid-cols-4",
+      <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+        <nav
+          role="tablist"
+          aria-label="صفحات الإعدادات"
+          aria-orientation="vertical"
+          onKeyDown={onNavKey}
+          className={cn(
+            "no-scrollbar flex gap-1.5 overflow-x-auto pb-1",
+            "lg:sticky lg:top-4 lg:flex-col lg:overflow-visible lg:border lg:bg-card lg:p-2",
+          )}
+        >
+          {pages.map((p) => {
+            const selected = !results && p.id === page.id;
+            return (
+              <button
+                key={p.id}
+                id={tabId(p.id)}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                aria-controls={`settings-page-${p.id}`}
+                tabIndex={p.id === page.id ? 0 : -1}
+                onClick={() => open(p.id)}
+                className={cn(
+                  "group flex shrink-0 items-center gap-3 border p-2.5 text-start outline-none transition-colors",
+                  "focus-visible:ring-2 focus-visible:ring-primary/40",
+                  selected
+                    ? "border-primary bg-primary/5 lg:border-primary/30"
+                    : "bg-card hover:bg-muted/60 lg:border-transparent lg:bg-transparent",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-9 shrink-0 items-center justify-center [&_svg]:size-[18px]",
+                    selected
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground group-hover:text-foreground",
+                  )}
+                >
+                  {p.icon}
+                </span>
+                <span className="min-w-0">
+                  <span
+                    className={cn(
+                      "block text-sm whitespace-nowrap",
+                      selected ? "font-semibold" : "font-medium",
+                    )}
+                  >
+                    {p.title}
+                  </span>
+                  <AppTooltip message={p.hint} onlyWhenTruncated>
+                    <span className="hidden truncate text-[11px] text-muted-foreground lg:block">
+                      {p.hint}
+                    </span>
+                  </AppTooltip>
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {results ? (
+          <SearchResults query={query} results={results} onOpen={open} />
+        ) : (
+          <div
+            id={`settings-page-${page.id}`}
+            role="tabpanel"
+            aria-labelledby={tabId(page.id)}
+            className="flex min-w-0 flex-col gap-4"
+          >
+            <div className="flex items-center gap-3 border-b pb-3">
+              <span
+                aria-hidden
+                className="flex size-10 shrink-0 items-center justify-center bg-primary text-primary-foreground [&_svg]:size-5"
+              >
+                {page.icon}
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-base font-bold">{page.title}</h2>
+                <p className="text-xs text-muted-foreground">{page.hint}</p>
+              </div>
+            </div>
+            {page.sections.map((s) => (
+              // key: يعيد الحركة ويصفّر حالة القسم عند تغيير الصفحة.
+              <SettingsSection
+                key={`${page.id}-${s.id}`}
+                id={s.id}
+                icon={s.icon}
+                title={s.title}
+                description={s.description}
+              >
+                {s.content}
+              </SettingsSection>
+            ))}
+            {!terminal && page.id === "safety" && <DemoDataSection />}
+          </div>
         )}
-      >
-        {pages.map((p) => {
-          const selected = p.id === page.id;
-          return (
+      </div>
+    </div>
+  );
+}
+
+function SearchResults({
+  query,
+  results,
+  onOpen,
+}: {
+  query: string;
+  results: { page: Page; section: Section }[];
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <section aria-live="polite" className="min-w-0 space-y-3">
+      <p className="text-xs text-muted-foreground">
+        {results.length
+          ? `${results.length} نتيجة لـ «${query.trim()}»`
+          : `لا توجد نتائج لـ «${query.trim()}». جرّب كلمة أبسط مثل: طابعة، ضريبة، نسخ.`}
+      </p>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {results.map(({ page, section }) => (
+          <li key={`${page.id}-${section.id}`}>
             <button
-              key={p.id}
-              id={tabId(p.id)}
               type="button"
-              role="tab"
-              aria-selected={selected}
-              aria-controls={`settings-page-${p.id}`}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => setActive(p.id)}
-              className={cn(
-                "flex items-center gap-3 border p-3 text-start outline-none transition-colors",
-                "focus-visible:ring-2 focus-visible:ring-primary/40",
-                selected
-                  ? "border-primary bg-primary/5"
-                  : "bg-card hover:border-primary/40 hover:bg-muted/50",
-              )}
+              onClick={() => onOpen(section.id)}
+              className="flex h-full w-full items-start gap-3 border bg-card p-3 text-start outline-none transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <span
                 aria-hidden
-                className={cn(
-                  "flex size-10 shrink-0 items-center justify-center [&_svg]:size-5",
-                  selected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-                )}
+                className="flex size-9 shrink-0 items-center justify-center bg-primary/10 text-primary [&_svg]:size-[18px]"
               >
-                {p.icon}
+                {section.icon}
               </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold whitespace-nowrap">
-                  {p.title}
+              <span className="min-w-0 space-y-0.5">
+                <span className="block text-sm font-semibold">
+                  {section.title}
                 </span>
-                <AppTooltip message={p.hint} onlyWhenTruncated>
-                  <span className="block truncate text-[11px] text-muted-foreground">
-                    {p.hint}
-                  </span>
-                </AppTooltip>
+                <span className="block text-[11px] text-muted-foreground">
+                  {page.title}
+                </span>
+                <span className="line-clamp-2 block text-xs text-muted-foreground">
+                  {section.description}
+                </span>
               </span>
             </button>
-          );
-        })}
-      </div>
-
-      <div
-        id={`settings-page-${page.id}`}
-        role="tabpanel"
-        aria-labelledby={tabId(page.id)}
-        className="flex min-w-0 flex-col gap-4"
-      >
-        {page.sections.map((s) => (
-          // key: يعيد الحركة ويصفّر حالة القسم عند تغيير الصفحة.
-          <SettingsSection
-            key={`${page.id}-${s.id}`}
-            id={s.id}
-            icon={s.icon}
-            title={s.title}
-            description={s.description}
-          >
-            {s.content}
-          </SettingsSection>
+          </li>
         ))}
-        {!terminal && <DemoDataSection />}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }
