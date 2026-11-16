@@ -10,6 +10,9 @@
 # أسرار المستودع (Settings > Secrets and variables > Actions):
 #   TAURI_SIGNING_PRIVATE_KEY          (إجباري) محتوى %USERPROFILE%\.tauri\dealzora-updater.key
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD (اختياري) كلمة مرور المفتاح إن وُجدت
+#   DEALZORA_LICENSE_SECRET            (إجباري) نفس القيم في frontend/src-tauri/.cargo/config.toml
+#   DEALZORA_VENDOR_PUBKEY             (إجباري)   ⚠ لازم تطابق النسخ المثبّتة عند العملاء حرفياً،
+#   DEALZORA_DB_SECRET                 (إجباري)   وإلا لا يفتح العميل قاعدة بياناته أو ترخيصه.
 #   DEALZORA_SYNC_LEASE_PUBKEY         (اختياري) نفس متغير build-backend.ps1
 # متغيرات المستودع (Variables):
 #   NEXT_PUBLIC_SYNC_URL               عنوان سيرفر الفروع (نفس قيمة frontend/.env.local)
@@ -43,6 +46,21 @@ jobs:
         shell: pwsh
         run: |
           if ($env:VERSION -notmatch '^\d+\.\d+\.\d+$') { throw "الرقم لازم يكون بصيغة 1.2.3" }
+
+      - name: Check secrets
+        shell: pwsh
+        env:
+          S1: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          S2: ${{ secrets.DEALZORA_LICENSE_SECRET }}
+          S3: ${{ secrets.DEALZORA_VENDOR_PUBKEY }}
+          S4: ${{ secrets.DEALZORA_DB_SECRET }}
+        run: |
+          $missing = @()
+          if (-not $env:S1) { $missing += "TAURI_SIGNING_PRIVATE_KEY" }
+          if (-not $env:S2) { $missing += "DEALZORA_LICENSE_SECRET" }
+          if (-not $env:S3) { $missing += "DEALZORA_VENDOR_PUBKEY" }
+          if (-not $env:S4) { $missing += "DEALZORA_DB_SECRET" }
+          if ($missing) { throw "أسرار ناقصة في Settings > Secrets: $($missing -join ', ')" }
 
       - uses: actions/checkout@v5
 
@@ -104,6 +122,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          DEALZORA_LICENSE_SECRET: ${{ secrets.DEALZORA_LICENSE_SECRET }}
+          DEALZORA_VENDOR_PUBKEY: ${{ secrets.DEALZORA_VENDOR_PUBKEY }}
+          DEALZORA_DB_SECRET: ${{ secrets.DEALZORA_DB_SECRET }}
           NEXT_PUBLIC_SYNC_URL: ${{ vars.NEXT_PUBLIC_SYNC_URL }}
         with:
           projectPath: frontend

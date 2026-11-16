@@ -46,8 +46,10 @@ const VENDOR_PUBKEY: &str = match option_env!("DEALZORA_VENDOR_PUBKEY") {
 #[cfg(not(debug_assertions))]
 const _: () = assert!(
     option_env!("DEALZORA_LICENSE_SECRET").is_some() &&
-        option_env!("DEALZORA_VENDOR_PUBKEY").is_some(),
-    "set DEALZORA_LICENSE_SECRET and DEALZORA_VENDOR_PUBKEY for release builds"
+        option_env!("DEALZORA_VENDOR_PUBKEY").is_some() &&
+        // بدونه تتغير كلمة سر قاعدة البيانات المشفّرة فلا يفتح العميل بياناته بعد التحديث.
+        option_env!("DEALZORA_DB_SECRET").is_some(),
+    "set DEALZORA_LICENSE_SECRET, DEALZORA_VENDOR_PUBKEY and DEALZORA_DB_SECRET for release builds"
 );
 
 // ---------------- الأنواع ----------------
