@@ -1,10 +1,7 @@
 "use client";
 
 import {
-  IconBasket,
   IconBrandWhatsapp,
-  IconBuildingCommunity,
-  IconBuildingStore,
   IconCash,
   IconCheck,
   IconChevronDown,
@@ -19,7 +16,6 @@ import {
   IconMapPin,
   IconPackage,
   IconRefresh,
-  IconShoppingCart,
   IconUsers,
   type Icon,
 } from "@tabler/icons-react";
@@ -27,6 +23,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { PLAN_ICON } from "@/config/planBadges";
 import { usePlan } from "@/lib/plan";
 import { openWhatsapp } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
@@ -49,13 +46,6 @@ const PLANS_HASH = "#plans";
 
 /** كم ميزة تظهر في الكارت قبل «عرض كل الميزات». */
 const VISIBLE_FEATURES = 5;
-
-const PLAN_ICON: Record<PlanCard["id"], Icon> = {
-  free: IconBasket,
-  basic: IconBuildingStore,
-  pro: IconShoppingCart,
-  enterprise: IconBuildingCommunity,
-};
 
 const STAT_ROWS: { key: keyof PlanStats; label: string; icon: Icon }[] = [
   { key: "devices", label: "الأجهزة", icon: IconDevices },

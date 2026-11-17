@@ -27,7 +27,8 @@ export type PlanFeature =
   | "promotions"
   | "wholesale"
   | "purchase_orders"
-  | "loyalty";
+  | "loyalty"
+  | "statement_pdf";
 
 export interface PlanInfo {
   plan: "free" | "basic" | "pro" | "enterprise";
@@ -74,6 +75,7 @@ export const FEATURE_INFO: Record<PlanFeature, { name: string; plan: string }> =
     wholesale: { name: "أسعار الجملة", plan: "سوق" },
     purchase_orders: { name: "طلبات الشراء من النواقص", plan: "سوق" },
     loyalty: { name: "نقاط الولاء", plan: "سوق" },
+    statement_pdf: { name: "كشف حساب العميل PDF على واتساب", plan: "سوق" },
     branches: { name: "تعدد الفروع وتحويل المخزون", plan: "سلسلة" },
   };
 

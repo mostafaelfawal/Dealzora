@@ -1,6 +1,16 @@
 "use client";
 
-import { IconCash, IconPhone } from "@tabler/icons-react";
+import {
+  IconBrandWhatsapp,
+  IconCash,
+  IconFileTypePdf,
+  IconFolderOpen,
+  IconLoader2,
+  IconLock,
+  IconPhone,
+} from "@tabler/icons-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
@@ -13,26 +23,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useShopName } from "@/features/settings/hooks/useSettings";
+import { useSessionUser } from "@/hooks/useShellData";
 import { extractErrorMessage } from "@/lib/errors";
+import { PdfError } from "@/lib/pdfDocument";
+import { upgradeMessage, useFeature } from "@/lib/plan";
+import { revealFile, type SavedFile } from "@/lib/saveFile";
 import { cn } from "@/lib/utils";
 
+import { STATEMENT_TYPE_LABEL as TYPE_LABEL } from "../config/statementOptions";
 import useGetStatement from "../hooks/useGetStatement";
 import { formatDate, formatDaysAgo, initialOf } from "../lib/customerCalc";
-import type { Customer, StatementEntryType } from "../types/customer";
+import { saveStatementPdf, sendStatementWhatsapp } from "../lib/statementPdf";
+import type { Customer } from "../types/customer";
 import { CustomerBalance } from "./customerBalance";
 import { CustomerCreditMeter } from "./customerCreditMeter";
 import { CustomerStatusBadges } from "./customerStatusBadges";
-
-const TYPE_LABEL: Record<StatementEntryType, string> = {
-  sale: "فاتورة بيع",
-  payment: "دفعة",
-  return: "مرتجع",
-  opening: "رصيد افتتاحي",
-  adjustment: "تعديل يدوي",
-  deposit: "باقٍ حُفظ رصيداً",
-  balance_use: "دفع من رصيده",
-  balance_payout: "صرف رصيد نقداً",
-};
 
 const th = "h-8 px-2.5 text-start text-xs font-normal text-muted-foreground";
 
@@ -59,6 +65,7 @@ export function CustomerStatementDialog({
       >
         {customer && (
           <Statement
+            key={customer.id}
             customer={customer}
             onClose={onClose}
             onCollect={onCollect}
@@ -87,6 +94,50 @@ function Statement({
   const entries = data ? [...data].reverse() : [];
   const hasDebt = customer.balance > 0;
   const hasCredit = customer.balance < 0;
+  const pdfAllowed = useFeature("statement_pdf");
+  const shopName = useShopName().data ?? "Dealzora";
+  const userName = useSessionUser().name;
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [savedPdf, setSavedPdf] = useState<SavedFile | null>(null);
+
+  async function exportPdf() {
+    if (!pdfAllowed) {
+      toast.info(upgradeMessage("statement_pdf"), { duration: 6000 });
+      return;
+    }
+    if (!data) return;
+    setPdfBusy(true);
+    try {
+      const file = await saveStatementPdf({
+        customer,
+        entries: data,
+        shopName,
+        generatedBy: userName || undefined,
+      });
+      setSavedPdf(file);
+    } catch (e) {
+      toast.error(
+        e instanceof PdfError ? e.message : "تعذّر تجهيز ملف الـ PDF",
+        { duration: 8000 },
+      );
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
+  function openFolder(path: string) {
+    void revealFile(path).catch(() => toast.error("تعذّر فتح مجلد التنزيلات"));
+  }
+
+  async function sendToCustomer(file: SavedFile) {
+    // المجلد بجانب واتساب: يسحب التاجر الملف إلى المحادثة مباشرة.
+    if (file.path) openFolder(file.path);
+    try {
+      await sendStatementWhatsapp(customer, shopName);
+    } catch {
+      toast.error("تعذّر فتح واتساب. تأكد أنه مثبت على الجهاز.");
+    }
+  }
 
   return (
     <>
@@ -242,6 +293,47 @@ function Statement({
         )}
       </div>
 
+      {savedPdf && (
+        <div
+          role="status"
+          className="flex flex-col gap-2 border border-success/40 bg-success/5 p-3 sm:flex-row sm:items-center"
+        >
+          <div className="min-w-0 flex-1 space-y-0.5 text-xs">
+            <p className="font-medium">
+              حُفظ الكشف «{savedPdf.fileName}» في مجلد التنزيلات.
+            </p>
+            <p className="text-muted-foreground">
+              {customer.phone
+                ? "اضغط «إرسال للعميل» لتُفتح محادثته على واتساب، ثم اسحب الملف إلى المحادثة وأرسله."
+                : "لا يوجد رقم هاتف للعميل: اختر جهة الاتصال من واتساب، ثم اسحب الملف إلى المحادثة."}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            {savedPdf.path && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => openFolder(savedPdf.path as string)}
+                className="gap-1.5 font-normal"
+              >
+                <IconFolderOpen className="size-4" />
+                فتح المجلد
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void sendToCustomer(savedPdf)}
+              className="gap-1.5"
+            >
+              <IconBrandWhatsapp className="size-4" />
+              إرسال للعميل
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button
           type="button"
@@ -252,6 +344,31 @@ function Statement({
         >
           إغلاق
         </Button>
+        <AppTooltip
+          message={
+            pdfAllowed
+              ? "حفظ الكشف PDF لإرساله للعميل على واتساب"
+              : upgradeMessage("statement_pdf")
+          }
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            disabled={pdfBusy || !data || entries.length === 0}
+            onClick={() => void exportPdf()}
+            className="gap-2 font-normal"
+          >
+            {pdfBusy ? (
+              <IconLoader2 className="size-4 animate-spin" />
+            ) : pdfAllowed ? (
+              <IconFileTypePdf className="size-4" />
+            ) : (
+              <IconLock className="size-4" />
+            )}
+            كشف PDF
+          </Button>
+        </AppTooltip>
         <Button
           type="button"
           variant="outline"

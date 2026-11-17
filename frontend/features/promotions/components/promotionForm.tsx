@@ -239,4 +239,216 @@ export default function PromotionForm({
       {/* 1) نوع العرض */}
       <div className="grid grid-cols-3 gap-2">
         {KINDS.map((k) => (
- 
+          <button
+            key={k.id}
+            type="button"
+            aria-pressed={d.kind === k.id}
+            onClick={() => patch({ kind: k.id })}
+            className={cn(
+              "flex flex-col items-center gap-1 border p-3 text-center transition-colors [&_svg]:size-6",
+              d.kind === k.id
+                ? "border-primary bg-primary/5 text-primary"
+                : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            {k.icon}
+            <span className="text-sm font-medium text-foreground">
+              {k.label}
+            </span>
+            <span className="hidden text-[11px] sm:block">{k.hint}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* 2) قيمة العرض */}
+      {d.kind === "buy_get" ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            اشترِ
+            <Input
+              value={d.buyQty}
+              onChange={(e) => patch({ buyQty: e.target.value })}
+              inputMode="numeric"
+              dir="ltr"
+              className="h-10 w-16 text-center font-mono"
+              aria-label="كمية الشراء"
+            />
+            واحصل على
+            <Input
+              value={d.getQty}
+              onChange={(e) => patch({ getQty: e.target.value })}
+              inputMode="numeric"
+              dir="ltr"
+              className="h-10 w-16 text-center font-mono"
+              aria-label="كمية الهدية المجانية"
+            />
+            مجاناً من الصنف نفسه
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {BUY_GET_PRESETS.map(([b, g]) => (
+              <Button
+                key={`${b}-${g}`}
+                type="button"
+                size="sm"
+                variant={
+                  int(d.buyQty) === b && int(d.getQty) === g
+                    ? "default"
+                    : "outline"
+                }
+                onClick={() => patch({ buyQty: String(b), getQty: String(g) })}
+                className="font-normal"
+              >
+                {b} + {g}
+              </Button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label={d.kind === "percent" ? "نسبة الخصم %" : "الخصم على كل قطعة"}
+          >
+            <Input
+              value={d.value}
+              onChange={(e) => patch({ value: e.target.value })}
+              inputMode="decimal"
+              dir="ltr"
+              className="h-10 font-mono"
+              placeholder={d.kind === "percent" ? "10" : "5"}
+            />
+            {d.kind === "percent" && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {PERCENT_PRESETS.map((p) => (
+                  <Button
+                    key={p}
+                    type="button"
+                    size="sm"
+                    variant={num(d.value) === p ? "default" : "outline"}
+                    onClick={() => patch({ value: String(p) })}
+                    className="font-normal"
+                  >
+                    {p}%
+                  </Button>
+                ))}
+              </div>
+            )}
+          </Field>
+          <Field
+            label="عند شراء ما لا يقل عن (اختياري)"
+            hint="مثال: 3 = الخصم يبدأ من 3 قطع. فارغ = من أول قطعة."
+          >
+            <Input
+              value={d.minQty}
+              onChange={(e) => patch({ minQty: e.target.value })}
+              inputMode="decimal"
+              dir="ltr"
+              className="h-10 font-mono"
+              placeholder="1"
+            />
+          </Field>
+        </div>
+      )}
+
+      {/* 3) على أي أصناف */}
+      <div className="space-y-2">
+        <Label>العرض على</Label>
+        <SegmentedTabs
+          label="العرض على"
+          items={SCOPES}
+          value={d.scope}
+          onChange={(scope) => patch({ scope })}
+        />
+        {d.scope === "products" && (
+          <ProductPicker
+            value={d.productIds}
+            onChange={(productIds) => patch({ productIds })}
+          />
+        )}
+        {d.scope === "category" && (
+          <OptionSelect
+            label="القسم"
+            items={[
+              { value: "", label: "اختر القسم" },
+              ...categories.map((c) => ({ value: c.id, label: c.label })),
+            ]}
+            value={d.categoryId}
+            onChange={(categoryId) => patch({ categoryId })}
+            className="w-full"
+          />
+        )}
+        {d.scope === "all" && (
+          <p className="text-xs text-muted-foreground">
+            على كل أصناف المحل (ما عدا ما يُباع بسعر الجملة).
+          </p>
+        )}
+      </div>
+
+      {/* 4) المدة والاسم */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="من يوم (اختياري)">
+          <Input
+            type="date"
+            value={d.startsOn}
+            onChange={(e) => patch({ startsOn: e.target.value })}
+            dir="ltr"
+            className="h-10 font-mono"
+          />
+        </Field>
+        <Field label="إلى يوم (اختياري)">
+          <Input
+            type="date"
+            value={d.endsOn}
+            onChange={(e) => patch({ endsOn: e.target.value })}
+            dir="ltr"
+            className="h-10 font-mono"
+          />
+        </Field>
+        <Field label="اسم العرض (اختياري)">
+          <Input
+            value={d.name}
+            onChange={(e) => patch({ name: e.target.value })}
+            placeholder={preview}
+            maxLength={80}
+            className="h-10"
+          />
+        </Field>
+      </div>
+
+      <label className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
+        <span>
+          العرض مفعّل
+          <span className="block text-xs text-muted-foreground">
+            يظهر في الكاشير ويُطبق تلقائياً على الفاتورة.
+          </span>
+        </span>
+        <Switch
+          checked={d.isActive}
+          onCheckedChange={(isActive) => patch({ isActive })}
+        />
+      </label>
+
+      {submitted && error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" size="lg" onClick={onDone}>
+          إلغاء
+        </Button>
+        <Button
+          type="submit"
+          size="lg"
+          disabled={save.isPending}
+          className="gap-2"
+        >
+          {save.isPending ? (
+            <IconLoader2 className="size-4 animate-spin" />
+          ) : (
+            <IconDeviceFloppy className="size-4" />
+          )}
+          حفظ العرض
+        </Button>
+      </div>
+    </form>
+  );
+}

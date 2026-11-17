@@ -56,6 +56,7 @@ class Feature(StrEnum):
     WHOLESALE = "wholesale"  # أسعار الجملة وعملاء الجملة (سوق)
     PURCHASE_ORDERS = "purchase_orders"  # طلبات الشراء من النواقص (سوق)
     LOYALTY = "loyalty"  # نقاط ولاء العملاء (سوق)
+    STATEMENT_PDF = "statement_pdf"  # كشف حساب العميل PDF وإرساله على واتساب (سوق)
 
 
 FEATURE_NAMES: dict[Feature, str] = {
@@ -80,6 +81,7 @@ FEATURE_NAMES: dict[Feature, str] = {
     Feature.WHOLESALE: "أسعار الجملة",
     Feature.PURCHASE_ORDERS: "طلبات الشراء من النواقص",
     Feature.LOYALTY: "نقاط الولاء",
+    Feature.STATEMENT_PDF: "كشف حساب العميل PDF على واتساب",
 }
 
 _RANK = {Plan.FREE: 0, Plan.BASIC: 1, Plan.PRO: 2, Plan.ENTERPRISE: 3}
@@ -95,6 +97,7 @@ _UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
     Feature.WHOLESALE: Plan.PRO,
     Feature.PURCHASE_ORDERS: Plan.PRO,
     Feature.LOYALTY: Plan.PRO,
+    Feature.STATEMENT_PDF: Plan.PRO,
     Feature.BRANCHES: Plan.ENTERPRISE,
 }
 

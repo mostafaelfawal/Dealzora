@@ -37,6 +37,7 @@ BASIC = {
 PRO = {
     Feature.AUDIT_LOG, Feature.TERMINALS, Feature.EXPIRY, Feature.E_RECEIPT, Feature.SCALE_BARCODE,
     Feature.PROMOTIONS, Feature.WHOLESALE, Feature.PURCHASE_ORDERS, Feature.LOYALTY,
+    Feature.STATEMENT_PDF,
 }  # fmt: skip
 ENTERPRISE = {Feature.BRANCHES}
 
