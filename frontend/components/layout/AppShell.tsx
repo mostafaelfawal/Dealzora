@@ -1,3 +1,5 @@
+import { PageEnter } from "@/components/shared/PageEnter";
+
 import { AppHeader } from "./header/AppHeader";
 import { NavHotkeys } from "./NavHotkeys";
 import { AppSidebar } from "./sidebar/AppSidebar";
@@ -15,7 +17,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           وتُظهر شريط تمرير للنافذة يقص الـ sidebar.
         */}
         <main className="relative min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-          {children}
+          {/* حركة دخول كل صفحة (تتوقف تلقائياً حسب إعداد الحركة). */}
+          <PageEnter>{children}</PageEnter>
         </main>
       </div>
       <NavHotkeys />

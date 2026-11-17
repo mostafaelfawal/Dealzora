@@ -1,5 +1,10 @@
+import { PageEnter } from "@/components/shared/PageEnter";
 import { ConnectScreen } from "@/features/devices/components/connectScreen";
 
 export default function ConnectPage() {
-  return <ConnectScreen />;
+  return (
+    <PageEnter>
+      <ConnectScreen />
+    </PageEnter>
+  );
 }

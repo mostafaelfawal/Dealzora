@@ -1,5 +1,6 @@
 "use client";
 
+import { PageEnter } from "@/components/shared/PageEnter";
 import { LoginScreen } from "@/features/auth/components/loginScreen";
 import { DeviceSyncRunner } from "@/features/branchTransfers/components/deviceSyncRunner";
 import LoginFormContextProvider from "@/features/auth/context/LoginFormContext";
@@ -13,7 +14,9 @@ export default function LoginPage() {
 
   return (
     <LoginFormContextProvider>
-      <LoginScreen />
+      <PageEnter>
+        <LoginScreen />
+      </PageEnter>
       {/* جهاز فرع: حسابات أنشأها المالك من جهازه تصل هنا قبل أي دخول */}
       <DeviceSyncRunner />
     </LoginFormContextProvider>
