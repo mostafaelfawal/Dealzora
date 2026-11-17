@@ -32,6 +32,7 @@ const ICON: Record<NotificationKind, ComponentProps<typeof Ionicons>["name"]> =
     low_sales: "trending-down-outline",
     sensitive_op: "shield-outline",
     cash_diff: "cash-outline",
+    recap: "sparkles-outline",
     test: "flask-outline",
   };
 

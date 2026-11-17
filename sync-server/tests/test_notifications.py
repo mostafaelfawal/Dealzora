@@ -390,3 +390,53 @@ def test_migration_0009_reversible(client):
     command.upgrade(cfg, "head")
     get_engine().dispose()
     assert "notifications" in inspect(get_engine()).get_table_names()
+
+
+def _offset_for_hour(now: datetime, hour: int) -> int:
+    """فرق توقيت يجعل الساعة المحلية للمستخدم = hour الآن (في حدود ±14 ساعة)."""
+    offset = ((hour - now.hour) % 24) * 60 - now.minute
+    return offset - 24 * 60 if offset > 14 * 60 else offset
+
+
+def test_recap_daily_and_weekly_after_user_hour(client, ctx):
+    br, owner, mgr, push = ctx
+    now = datetime.now(UTC)
+    offset = _offset_for_hour(now, 22)
+    set_prefs(client, owner, offset=offset, recap={"mode": "both", "hour": 22})
+    local_day = (now + timedelta(minutes=offset)).date()
+    # أسبوع كامل حتى «اليوم» المحلي: لو اليوم جمعة يصل ملخص الأسبوع أيضاً.
+    days = [{"day": (local_day - timedelta(days=d)).isoformat(), "data": day_data(50_000)} for d in range(7)]
+    assert br["B"].post("/v1/stats/batch", json={"days": days}).status_code == 200
+
+    tick(push, now)
+    tick(push, now + timedelta(minutes=1))  # لا تكرار
+    recaps = sorted(r.dedup_key for r in rows("owner") if r.kind == "recap")
+    expected = [f"recap:day:{local_day.isoformat()}"]
+    if local_day.weekday() == 4:
+        expected.append(f"recap:week:{local_day.isoformat()}")
+    assert recaps == sorted(expected)
+    day_row = next(r for r in rows("owner") if r.dedup_key == expected[0])
+    assert day_row.route == f"/recap/day/{local_day.isoformat()}"
+    assert not re.search(r"\d", f"{day_row.title} {day_row.body}")  # لا أرقام على شاشة القفل
+
+    # الإيقاف أو «أسبوعي فقط» في غير الجمعة: لا ملخص يومي.
+    set_prefs(client, mgr, offset=offset, recap={"mode": "week"})
+    tick(push, now)
+    assert [r for r in rows("b.mgr") if r.kind == "recap" and r.dedup_key.startswith("recap:day")] == []
+
+
+def test_recap_waits_for_hour_and_needs_sales(client, ctx):
+    br, owner, _, push = ctx
+    now = datetime.now(UTC)
+    offset = _offset_for_hour(now, 20)
+    set_prefs(client, owner, offset=offset, recap={"hour": 22})
+    local_day = (now + timedelta(minutes=offset)).date()
+    assert br["B"].post("/v1/stats/batch", json={"days": [{"day": local_day.isoformat(), "data": day_data(9_000)}]}).status_code == 200
+    tick(push, now)  # الساعة 8 مساءً عند المستخدم وموعده 10
+    assert [r for r in rows("owner") if r.kind == "recap"] == []
+
+    set_prefs(client, owner, offset=offset, recap={"hour": 20})
+    # يوم بلا فواتير: لا ملخص
+    assert br["B"].put(f"/v1/stats/{local_day.isoformat()}", json={"data": {**day_data(0), "count": 0}}).status_code in (200, 204)
+    tick(push, now)
+    assert [r for r in rows("owner") if r.kind == "recap"] == []

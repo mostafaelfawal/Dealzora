@@ -131,6 +131,15 @@ function RootStack() {
           options={{ title: "حدود العمليات الحساسة" }}
         />
         <Stack.Screen name="prices" options={{ title: "أسعار الأصناف" }} />
+        <Stack.Screen
+          name="recap/[period]/[date]"
+          options={{
+            headerShown: false,
+            presentation: "fullScreenModal",
+            animation: "fade",
+            contentStyle: { backgroundColor: "#0a0a0a" },
+          }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={status === "planBlocked"}>
         <Stack.Screen name="upgrade" options={{ headerShown: false }} />

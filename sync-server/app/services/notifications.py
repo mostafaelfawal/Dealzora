@@ -6,6 +6,7 @@
      - eta_rejected     إيصالات إلكترونية مرفوضة جديدة (من الملخص اليومي للفرع)
      - transfer_request طلب تحويل ينتظر موافقة هذا الحساب (المالك أو مدير الفرع المطلوب منه)
      - low_sales        صافي مبيعات أمس أقل كثيراً من متوسط نفس اليوم في الأسابيع السابقة
+     - recap            «ملخص يومك/أسبوعك جاهز» في الساعة التي يختارها المستخدم (الأرقام في التطبيق فقط)
   2) send: لكل حساب، التنبيهات المنتظرة تُرسل **معاً في إشعار واحد** (لا أكثر من إشعار كل
      notify_min_gap_minutes)، ولا شيء في ساعات الهدوء (تُرسل مجمّعة بعدها)، وما لم يعد صحيحاً
      (الفرع رجع، الطلب اتحسم) يُسقط قبل الإرسال.
@@ -43,7 +44,7 @@ from .mobile_auth import Account, _account, check_shop
 
 log = logging.getLogger("notify")
 
-KINDS = ("branch_offline", "eta_rejected", "transfer_request", "low_sales", "sensitive_op", "cash_diff")
+KINDS = ("branch_offline", "eta_rejected", "transfer_request", "low_sales", "sensitive_op", "cash_diff", "recap")
 DEFAULT_OFFSET = 120  # مصر
 
 # دالة الإرسال: رسائل Expo ← تذاكر (قابلة للاستبدال في الاختبارات).
@@ -248,6 +249,49 @@ def _is_low(session: Session, branch_id: str, day: date, ratio: float) -> bool:
     return avg > 0 and int((nets[day] or {}).get("net") or 0) < avg * ratio
 
 
+# الجمعة: آخر يوم في أسبوع المحل (السبت ← الجمعة)، فملخص الأسبوع يصل مساء الجمعة.
+RECAP_WEEKDAY = 4
+
+
+def _has_sales(session: Session, shop_id: str, branch_ids: list[str], d1: date, d2: date) -> bool:
+    """فرع واحد على الأقل من فروع الحساب رفع فواتير في الفترة (لا ملخص لفترة بلا بيع)."""
+    if not branch_ids:
+        return False
+    rows = session.scalars(
+        select(DailyStat.data).where(
+            DailyStat.shop_id == shop_id, DailyStat.branch_id.in_(branch_ids), DailyStat.day >= d1, DailyStat.day <= d2
+        )
+    ).all()
+    return any(int((d or {}).get("count") or 0) > 0 for d in rows)
+
+
+def _recap(session: Session, shop: Shop, recipients, now: datetime) -> int:
+    """تنبيه «الملخص جاهز» مرة لكل يوم/أسبوع لكل حساب، بعد ساعة المستخدم وبتاريخه المحلي."""
+    n = 0
+    for account, prefs, row in recipients:
+        pref = prefs["recap"]
+        if not pref["enabled"]:
+            continue
+        local = local_now(row, now)
+        if local.hour < pref["hour"]:
+            continue
+        day = local.date()
+        if pref["mode"] in ("day", "both") and _has_sales(session, shop.id, account.branch_ids, day, day):
+            n += _add(session, shop_id=shop.id, account_id=account.id, kind="recap", key=f"recap:day:{day.isoformat()}",
+                      title="ملخص يومك جاهز", body="شاهد ما حدث اليوم في متاجرك على Dealzora مع تحليل سريع",
+                      route=f"/recap/day/{day.isoformat()}", ref_id=None, now=now)  # fmt: skip
+        start = day - timedelta(days=6)
+        if (
+            pref["mode"] in ("week", "both")
+            and day.weekday() == RECAP_WEEKDAY
+            and _has_sales(session, shop.id, account.branch_ids, start, day)
+        ):
+            n += _add(session, shop_id=shop.id, account_id=account.id, kind="recap", key=f"recap:week:{day.isoformat()}",
+                      title="ملخص أسبوعك جاهز", body="أسبوعك في متاجرك على Dealzora: الأرقام والتحليل في دقيقة",
+                      route=f"/recap/week/{day.isoformat()}", ref_id=None, now=now)  # fmt: skip
+    return n
+
+
 SENSITIVE_LABEL = {"discount": "خصم كبير على فاتورة", "return": "مرتجع بمبلغ كبير", "full_return": "مرتجع فاتورة كاملة"}
 
 
@@ -302,6 +346,7 @@ def produce(session: Session, now: datetime | None = None) -> int:
         created += _offline(session, shop, recipients, branches, now)
         created += _low_sales(session, shop, recipients, branches, now)
         created += _branch_records(session, shop, recipients, names, now)
+        created += _recap(session, shop, recipients, now)
     session.commit()
     return created
 

@@ -627,7 +627,7 @@ class CommandFailIn(Strict):
 
 # ================= تنبيهات الهاتف =================
 NotificationKind = Literal[
-    "branch_offline", "eta_rejected", "transfer_request", "low_sales", "sensitive_op", "cash_diff", "test"
+    "branch_offline", "eta_rejected", "transfer_request", "low_sales", "sensitive_op", "cash_diff", "recap", "test"
 ]  # test: إشعار تجريبي من سطر الأوامر (python -m app.cli test-notify)
 _HHMM = r"^([01]\d|2[0-3]):[0-5]\d$"
 
@@ -654,6 +654,15 @@ class QuietHours(Strict):
     end: str = Field("08:00", pattern=_HHMM)
 
 
+class RecapPref(Strict):
+    """ملخص المبيعات (قصة بشرائح في التطبيق): day كل يوم، week كل جمعة (السبت ← الجمعة)، both الاثنان."""
+
+    enabled: bool = True
+    mode: Literal["day", "week", "both"] = "both"
+    # ساعة الإرسال بتوقيت المستخدم: بعد إغلاق المحل عادةً (داخل ساعات الهدوء = يصل صباحاً).
+    hour: int = Field(22, ge=12, le=23)
+
+
 class NotificationPrefsBody(Strict):
     branch_offline: OfflinePref = Field(default_factory=OfflinePref)
     eta_rejected: KindToggle = Field(default_factory=KindToggle)
@@ -661,6 +670,7 @@ class NotificationPrefsBody(Strict):
     low_sales: KindToggle = Field(default_factory=KindToggle)
     sensitive_op: KindToggle = Field(default_factory=KindToggle)
     cash_diff: KindToggle = Field(default_factory=KindToggle)
+    recap: RecapPref = Field(default_factory=RecapPref)
     quiet: QuietHours = Field(default_factory=QuietHours)
 
 

@@ -13,3 +13,11 @@ test("روابط التنبيهات المعروفة فقط", () => {
   expect(safeRoute(undefined)).toBeNull();
   expect(safeRoute(42)).toBeNull();
 });
+
+test("رابط الملخص اليومي والأسبوعي", () => {
+  expect(safeRoute("/recap/day/2026-11-17")).toBe("/recap/day/2026-11-17");
+  expect(safeRoute("/recap/week/2026-11-20")).toBe("/recap/week/2026-11-20");
+  expect(safeRoute("/recap/month/2026-11-20")).toBeNull();
+  expect(safeRoute("/recap/day/2026-11-17/../../account")).toBeNull();
+  expect(safeRoute("/recap/day/17-11-2026")).toBeNull();
+});

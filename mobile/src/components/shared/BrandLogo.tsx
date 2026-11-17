@@ -29,13 +29,16 @@ const LOGOS = {
 
 export function BrandLogo({
   width = 200,
+  tone,
   style,
 }: {
   width?: number;
+  /** لون ثابت بغض النظر عن مظهر التطبيق (شاشة الملخص داكنة دائماً). */
+  tone?: "light" | "dark";
   style?: StyleProp<ViewStyle>;
 }) {
   const { isDark } = useTheme();
-  const logo = isDark ? LOGOS.dark : LOGOS.light;
+  const logo = (tone ? tone === "dark" : isDark) ? LOGOS.dark : LOGOS.light;
   return (
     <View
       accessibilityRole="image"

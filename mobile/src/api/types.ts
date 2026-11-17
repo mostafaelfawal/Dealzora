@@ -228,6 +228,7 @@ export type NotificationKind =
   | "low_sales"
   | "sensitive_op"
   | "cash_diff"
+  | "recap" // «ملخص يومك/أسبوعك جاهز» (الأرقام في شاشة الملخص فقط)
   | "test"; // إشعار تجريبي (python -m app.cli test-notify)
 
 export interface AppNotification {
@@ -247,6 +248,9 @@ export interface NotificationList {
   unread: number;
 }
 
+/** day كل يوم · week كل جمعة (السبت ← الجمعة) · both الاثنان. */
+export type RecapMode = "day" | "week" | "both";
+
 export interface NotificationPrefs {
   branch_offline: { enabled: boolean; minutes: number };
   eta_rejected: { enabled: boolean };
@@ -254,6 +258,8 @@ export interface NotificationPrefs {
   low_sales: { enabled: boolean };
   sensitive_op: { enabled: boolean };
   cash_diff: { enabled: boolean };
+  /** hour: ساعة الإرسال بتوقيت الهاتف (12–23). */
+  recap: { enabled: boolean; mode: RecapMode; hour: number };
   quiet: { enabled: boolean; start: string; end: string };
   utc_offset_minutes: number;
   push_on_this_device: boolean;

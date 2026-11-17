@@ -27,7 +27,6 @@ const MAX_STAGGERED = 7;
 const DURATION = 0.5;
 const STEP = 0.04;
 const OFFSET_Y = 10;
-// easeOutQuint تقريباً: بداية سريعة ونهاية ناعمة.
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 function motionDisabled(): boolean {

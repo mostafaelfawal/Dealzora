@@ -14,6 +14,7 @@ import { FadeIn } from "@/components/shared/Motion";
 import { Screen } from "@/components/shared/Screen";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLockSettings } from "@/features/lock/hooks/useLockSettings";
+import { toIsoDay } from "@/lib/period";
 import { getServerUrl } from "@/lib/serverUrl";
 import {
   THEME_LABEL,
@@ -75,6 +76,28 @@ export default function MoreRoute() {
           <AppText size="xs" tone="muted" weight="semibold">
             تقارير الفروع
           </AppText>
+          <ListRow
+            icon="sparkles-outline"
+            title="ملخص اليوم"
+            subtitle="أرقام يومك بالشرائح مع تحليل سريع"
+            onPress={() =>
+              router.push({
+                pathname: "/recap/[period]/[date]",
+                params: { period: "day", date: toIsoDay(new Date()) },
+              })
+            }
+          />
+          <ListRow
+            icon="calendar-outline"
+            title="ملخص الأسبوع"
+            subtitle="آخر 7 أيام: الأيام الأقوى والأصناف والفروع"
+            onPress={() =>
+              router.push({
+                pathname: "/recap/[period]/[date]",
+                params: { period: "week", date: toIsoDay(new Date()) },
+              })
+            }
+          />
           <ListRow
             icon="cube-outline"
             title="المخزون والنواقص"

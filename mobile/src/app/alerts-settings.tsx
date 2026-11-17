@@ -5,7 +5,7 @@
 import { StyleSheet, View } from "react-native";
 
 import { errorMessage } from "@/api/errors";
-import type { NotificationPrefs } from "@/api/types";
+import type { NotificationPrefs, RecapMode } from "@/api/types";
 import { AppText } from "@/components/shared/AppText";
 import { AppSwitch } from "@/components/shared/AppSwitch";
 import { Card } from "@/components/shared/Card";
@@ -22,6 +22,13 @@ import { space } from "@/theme/colors";
 const OFFLINE_MINUTES = [15, 30, 60, 120, 240];
 const QUIET_START = ["21:00", "22:00", "23:00", "00:00"];
 const QUIET_END = ["06:00", "07:00", "08:00", "09:00"];
+const RECAP_MODES: RecapMode[] = ["day", "week", "both"];
+const RECAP_MODE_LABEL: Record<RecapMode, string> = {
+  day: "يومي",
+  week: "أسبوعي",
+  both: "يومي وأسبوعي",
+};
+const RECAP_HOURS = [20, 21, 22, 23];
 
 function minutesLabel(m: number): string {
   if (m < 60) return `${m} دقيقة`;
@@ -164,6 +171,38 @@ export default function AlertsSettingsRoute() {
                     update({
                       branch_offline: { ...p.branch_offline, minutes: m },
                     }),
+                )}
+              </View>
+            )}
+          </Card>
+
+          <Card>
+            <ListRow
+              icon="sparkles-outline"
+              title="ملخص المبيعات"
+              subtitle="عرض سريع بالشرائح لأرقامك مع تحليل وملاحظات. الأسبوعي يصل كل جمعة"
+              trailing={toggle(
+                p.recap.enabled,
+                (v) => update({ recap: { ...p.recap, enabled: v } }),
+                "ملخص المبيعات",
+              )}
+            />
+            {p.recap.enabled && (
+              <View style={styles.sub}>
+                {chips(
+                  RECAP_MODES,
+                  p.recap.mode,
+                  (m) => RECAP_MODE_LABEL[m],
+                  (m) => update({ recap: { ...p.recap, mode: m } }),
+                )}
+                <AppText size="xs" tone="muted">
+                  وقت الإرسال
+                </AppText>
+                {chips(
+                  RECAP_HOURS,
+                  p.recap.hour,
+                  (h) => timeLabel(`${h}:00`),
+                  (h) => update({ recap: { ...p.recap, hour: h } }),
                 )}
               </View>
             )}
