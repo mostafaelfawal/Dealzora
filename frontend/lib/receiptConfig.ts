@@ -18,6 +18,10 @@ export interface ReceiptConfig {
   showCashier: boolean;
   showCustomer: boolean;
   showPaymentDetails: boolean;
+  /** باركود خطي برقم الفاتورة (يُمسح في البحث). */
+  showBarcode: boolean;
+  /** الإيصال الحراري المختصر (يوفّر الورق). */
+  compact: boolean;
   footer: string;
   /** شروط الاستبدال (A4 فقط). */
   terms: string;
@@ -36,6 +40,8 @@ export const DEFAULT_RECEIPT: ReceiptConfig = {
   showCashier: true,
   showCustomer: true,
   showPaymentDetails: true,
+  showBarcode: true,
+  compact: true,
   footer: "شكراً لزيارتكم",
   terms: "",
   fontSize: "normal",
@@ -96,6 +102,8 @@ export interface ReceiptDto {
   show_cashier: boolean;
   show_customer: boolean;
   show_payment_details: boolean;
+  show_barcode?: boolean;
+  compact?: boolean;
   footer: string;
   terms: string;
   font_size: ReceiptFontSize;
@@ -114,6 +122,8 @@ export const fromReceiptDto = (d: ReceiptDto | undefined): ReceiptConfig =>
         showCashier: d.show_cashier,
         showCustomer: d.show_customer,
         showPaymentDetails: d.show_payment_details,
+        showBarcode: d.show_barcode ?? true,
+        compact: d.compact ?? true,
         footer: d.footer,
         terms: d.terms,
         fontSize: d.font_size,
@@ -131,6 +141,8 @@ export const toReceiptDto = (c: ReceiptConfig): ReceiptDto => ({
   show_cashier: c.showCashier,
   show_customer: c.showCustomer,
   show_payment_details: c.showPaymentDetails,
+  show_barcode: c.showBarcode,
+  compact: c.compact,
   footer: c.footer,
   terms: c.terms,
   font_size: c.fontSize,

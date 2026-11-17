@@ -21,6 +21,7 @@ import type { SalesFilters } from "../hooks/useSalesFilters";
 import type { Sale } from "../types/sale";
 import { SaleBadges } from "./saleBadges";
 import { AppTooltip } from "@/components/shared/AppTooltip";
+import { Button } from "@/components/ui/button";
 
 const COLUMNS: AppTableColumn<Sale>[] = [
   {
@@ -33,7 +34,10 @@ const COLUMNS: AppTableColumn<Sale>[] = [
           <span className="font-mono text-sm font-semibold">
             #{sale.number}
           </span>
-          <AppTooltip message={sale.customerName ?? "عميل نقدي"} onlyWhenTruncated>
+          <AppTooltip
+            message={sale.customerName ?? "عميل نقدي"}
+            onlyWhenTruncated
+          >
             <span className="truncate text-xs">
               {sale.customerName ?? "عميل نقدي"}
             </span>
@@ -181,6 +185,11 @@ export function SalesTable({
         icon: IconReceipt,
         title: "لا توجد فواتير في هذه الفترة",
         description: "اختر فترة أخرى، أو ابدأ البيع من شاشة الكاشير.",
+        action: (
+          <Button variant="outline" onClick={f.clearFilters}>
+            مسح الفلاتر
+          </Button>
+        ),
       }}
       noResults={{
         title: "لا توجد فواتير مطابقة",

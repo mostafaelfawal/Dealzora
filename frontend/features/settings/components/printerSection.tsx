@@ -11,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ export function PrinterSection() {
 
   const thermal = prefs.kind === "thermal";
   const direct = desktop && thermal && prefs.mode === "direct";
+  const a4Direct = desktop && !thermal && prefs.a4Mode === "direct";
 
   async function testPrint() {
     setTesting(true);
@@ -108,7 +110,14 @@ export function PrinterSection() {
               }
             />
           )}
-          {direct && <PrinterPicker />}
+          {direct && (
+            <PrinterPicker
+              value={prefs.printer}
+              onChange={(printer) => setPrinterPrefs({ printer })}
+              hint="تعمل مع Xprinter وEpson وRongta وأغلب الطابعات الحرارية."
+              emptyHint="اختر طابعة الإيصالات حتى تطبع فوراً."
+            />
+          )}
           <SettingRow
             title="عرض الورق"
             description="مكتوب على علبة الورق أو أسفل الطابعة."
@@ -141,18 +150,39 @@ export function PrinterSection() {
             </>
           )}
         </SettingGroup>
+      ) : desktop ? (
+        <SettingGroup title="إعدادات طابعة A4">
+          <SwitchRow
+            id="a4-direct"
+            title="طباعة فورية بدون نافذة"
+            description="الفاتورة تطلع على الطابعة المختارة مباشرة بعد البيع، بدون سؤال كل مرة."
+            checked={prefs.a4Mode === "direct"}
+            onChange={(on) =>
+              setPrinterPrefs({ a4Mode: on ? "direct" : "dialog" })
+            }
+          />
+          {a4Direct && (
+            <PrinterPicker
+              value={prefs.a4Printer}
+              onChange={(a4Printer) => setPrinterPrefs({ a4Printer })}
+              hint="أي طابعة عادية (ليزر أو حبر) معرّفة في ويندوز."
+              emptyHint="اختر الطابعة التي تطبع عليها الفواتير A4."
+            />
+          )}
+          {!a4Direct && (
+            <div className="flex gap-3 py-3 text-xs leading-relaxed text-muted-foreground">
+              <IconInfoCircle className="size-5 shrink-0 text-primary" />
+              <p>
+                بعد كل بيع تظهر نافذة الطباعة لتختار الطابعة. مفيد لو تريد
+                أحياناً «Microsoft Print to PDF» لحفظ الفاتورة كملف.
+              </p>
+            </div>
+          )}
+        </SettingGroup>
       ) : (
-        <div className="flex gap-3 border bg-muted/30 p-4 text-xs leading-relaxed">
-          <IconInfoCircle className="size-5 shrink-0 text-primary" />
-          <div className="space-y-1">
-            <p className="font-medium">كيف تطبع على A4؟</p>
-            <p className="text-muted-foreground">
-              بعد كل بيع تظهر نافذة الطباعة: اختر طابعتك مرة واحدة واضغط
-              «طباعة»، وويندوز يتذكرها في المرات القادمة. يمكنك أيضاً اختيار
-              «Microsoft Print to PDF» لحفظ الفاتورة كملف وإرسالها.
-            </p>
-          </div>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          من المتصفح تظهر نافذة الطباعة. الطباعة الفورية في برنامج سطح المكتب.
+        </p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
@@ -163,7 +193,11 @@ export function PrinterSection() {
           type="button"
           variant="outline"
           onClick={() => void testPrint()}
-          disabled={testing || (direct && !prefs.printer)}
+          disabled={
+            testing ||
+            (direct && !prefs.printer) ||
+            (a4Direct && !prefs.a4Printer)
+          }
           className="gap-2"
         >
           {testing ? (
@@ -178,8 +212,18 @@ export function PrinterSection() {
   );
 }
 
-function PrinterPicker() {
-  const prefs = usePrinterPrefs();
+/** اختيار طابعة من طابعات ويندوز (الحرارية أو A4). */
+function PrinterPicker({
+  value,
+  onChange,
+  hint,
+  emptyHint,
+}: {
+  value: string | null;
+  onChange: (printer: string | null) => void;
+  hint: string;
+  emptyHint: string;
+}) {
   const printers = useQuery({
     queryKey: ["local-printers"],
     queryFn: listPrinters,
@@ -188,18 +232,14 @@ function PrinterPicker() {
 
   const list = printers.data ?? [];
   const missing =
-    prefs.printer !== null &&
-    printers.isSuccess &&
-    !list.some((p) => p.name === prefs.printer);
+    value !== null && printers.isSuccess && !list.some((p) => p.name === value);
   const items = [
     { value: NO_PRINTER, label: "— اختر الطابعة —" },
     ...list.map((p) => ({
       value: p.name,
       label: p.is_default ? `${p.name} (الافتراضية)` : p.name,
     })),
-    ...(missing && prefs.printer
-      ? [{ value: prefs.printer, label: `${prefs.printer} (غير موصّلة)` }]
-      : []),
+    ...(missing && value ? [{ value, label: `${value} (غير موصّلة)` }] : []),
   ];
 
   return (
@@ -210,37 +250,36 @@ function PrinterPicker() {
           ? extractErrorMessage(printers.error, "تعذّر قراءة الطابعات")
           : missing
             ? "الطابعة المختارة غير موجودة الآن. تأكد من توصيلها وتشغيلها."
-            : !prefs.printer
-              ? "اختر طابعة الإيصالات حتى تطبع فوراً."
-              : "تعمل مع Xprinter وEpson وRongta وأغلب الطابعات الحرارية."
+            : !value
+              ? emptyHint
+              : hint
       }
     >
       <div className="flex items-center gap-2">
         <OptionSelect
           label="الطابعة"
           items={items}
-          value={prefs.printer ?? NO_PRINTER}
-          onChange={(value) =>
-            setPrinterPrefs({ printer: value === NO_PRINTER ? null : value })
-          }
+          value={value ?? NO_PRINTER}
+          onChange={(next) => onChange(next === NO_PRINTER ? null : next)}
           className="w-64 max-w-[60vw]"
         />
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label="تحديث قائمة الطابعات"
-          title="تحديث قائمة الطابعات"
-          onClick={() => printers.refetch()}
-          disabled={printers.isFetching}
-          className="size-10"
-        >
-          {printers.isFetching ? (
-            <IconLoader2 className="size-4 animate-spin" />
-          ) : (
-            <IconRefresh className="size-4" />
-          )}
-        </Button>
+        <AppTooltip message="تحديث قائمة الطابعات">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="تحديث قائمة الطابعات"
+            onClick={() => printers.refetch()}
+            disabled={printers.isFetching}
+            className="size-10"
+          >
+            {printers.isFetching ? (
+              <IconLoader2 className="size-4 animate-spin" />
+            ) : (
+              <IconRefresh className="size-4" />
+            )}
+          </Button>
+        </AppTooltip>
       </div>
     </SettingRow>
   );

@@ -301,12 +301,6 @@ input::-ms-clear {
   --destructive: oklch(0.53 0.22 27);
   color: var(--foreground);
   background:
-    linear-gradient(
-      100deg,
-      oklch(1 0 0 / 0) 30%,
-      oklch(1 0 0 / 0.55) 50%,
-      oklch(1 0 0 / 0) 70%
-    ),
     linear-gradient(180deg, oklch(0.5 0.02 80 / 0) 60%, oklch(0.5 0.02 80 / 0.07)),
     var(--paper);
   padding-block: calc(var(--tooth) / 2 + 16px);

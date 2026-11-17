@@ -26,6 +26,10 @@ export interface PrinterPrefs {
   openDrawer: boolean;
   /** أسطر فارغة قبل القص حتى لا يُقص آخر الإيصال. */
   feedLines: number;
+  /** A4: direct = طباعة فورية على a4Printer بدون نافذة، dialog = نافذة الطباعة. */
+  a4Mode: PrintMode;
+  /** طابعة فواتير A4 كما في ويندوز. null = لم تُختر بعد (نافذة الطباعة). */
+  a4Printer: string | null;
 }
 
 export const DEFAULT_PRINTER_PREFS: PrinterPrefs = {
@@ -36,6 +40,8 @@ export const DEFAULT_PRINTER_PREFS: PrinterPrefs = {
   cut: true,
   openDrawer: false,
   feedLines: 4,
+  a4Mode: "direct",
+  a4Printer: null,
 };
 
 const STORAGE_KEY = "dealzora:printer:prefs";

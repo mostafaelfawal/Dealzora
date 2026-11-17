@@ -1,8 +1,12 @@
 "use client";
 
 import {
+  IconAlertTriangle,
+  IconCircleX,
+  IconClockHour4,
   IconExternalLink,
   IconFileCertificate,
+  IconHourglassHigh,
   IconRefresh,
   IconSearch,
 } from "@tabler/icons-react";
@@ -26,6 +30,7 @@ import {
   type PeriodValue,
 } from "@/components/shared/PeriodPicker";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
+import { StatTile } from "@/components/shared/StatTile";
 import { ViewToggle } from "@/components/shared/ViewToggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -313,21 +318,35 @@ export function EReceiptsScreen() {
       />
 
       {q0 && (
-        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {[
-            { k: "لم يصل بعد", v: q0.waiting, tone: "" },
-            { k: "مرفوض / خطأ تحقق", v: q0.rejected, tone: q0.rejected ? "text-destructive" : "" },
-            { k: "يقترب من مهلة 24 ساعة", v: q0.late, tone: q0.late ? "text-warning" : "" },
-            { k: "تجاوز المهلة", v: q0.overdue, tone: q0.overdue ? "text-destructive" : "" },
-          ].map((s) => (
-            <div key={s.k} className="border p-2.5">
-              <dt className="text-xs text-muted-foreground">{s.k}</dt>
-              <dd className={cn("text-xl font-semibold", s.tone)}>
-                <Num>{s.v}</Num>
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <StatTile index={0} icon={<IconClockHour4 />} label="لم يصل بعد">
+            <Num>{q0.waiting}</Num>
+          </StatTile>
+          <StatTile
+            index={1}
+            icon={<IconCircleX />}
+            label="مرفوض / خطأ تحقق"
+            tone={q0.rejected ? "danger" : "default"}
+          >
+            <Num>{q0.rejected}</Num>
+          </StatTile>
+          <StatTile
+            index={2}
+            icon={<IconHourglassHigh />}
+            label="يقترب من مهلة 24 ساعة"
+            tone={q0.late ? "warning" : "default"}
+          >
+            <Num>{q0.late}</Num>
+          </StatTile>
+          <StatTile
+            index={3}
+            icon={<IconAlertTriangle />}
+            label="تجاوز المهلة"
+            tone={q0.overdue ? "danger" : "default"}
+          >
+            <Num>{q0.overdue}</Num>
+          </StatTile>
+        </div>
       )}
 
       <div className="space-y-2">

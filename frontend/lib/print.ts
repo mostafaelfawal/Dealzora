@@ -77,7 +77,8 @@ export function printReceiptHtml(
   opts: { jobName: string; openDrawer?: boolean },
 ): Promise<void> {
   const prefs = getPrinterPrefs();
-  if (!canPrintDirect() || prefs.kind === "a4" || prefs.mode === "dialog") {
+  if (prefs.kind === "a4") return printA4(html, opts.jobName);
+  if (!canPrintDirect() || prefs.mode === "dialog") {
     printHtml(html);
     return Promise.resolve();
   }
@@ -104,4 +105,49 @@ export function printReceiptHtml(
   );
   queue = job;
   return job;
+}
+
+/* ---------- فاتورة A4: طباعة فورية على الطابعة المختارة (بدون نافذة) ---------- */
+
+const A4_ERRORS: Record<string, string> = {
+  printer_unavailable: "الطابعة غير متاحة الآن. تأكد أنها موصّلة وتعمل.",
+  webview2_print_unsupported:
+    "الطباعة الفورية تحتاج تحديث Microsoft Edge WebView2 على هذا الجهاز.",
+  print_timeout: "الطابعة لم تستجب. تأكد أنها موصّلة وتعمل.",
+};
+
+/**
+ * فاتورة A4 على طابعة هذا الجهاز فوراً (Rust: a4print.rs يطبع بنفس محرك العرض).
+ * بدون طابعة مختارة، أو خارج البرنامج، أو وضع «نافذة الطباعة»: نافذة الطباعة العادية.
+ */
+function printA4(html: string, jobName: string): Promise<void> {
+  const prefs = getPrinterPrefs();
+  if (!canPrintDirect() || prefs.a4Mode === "dialog") {
+    printHtml(html);
+    return Promise.resolve();
+  }
+  const printer = prefs.a4Printer;
+  if (!printer) {
+    toast.info("لم تُختر طابعة الفواتير A4 بعد", {
+      description:
+        "اخترها من الإعدادات ← الطباعة والفاتورة لتطبع فوراً بدون نافذة.",
+      duration: 6000,
+    });
+    printHtml(html);
+    return Promise.resolve();
+  }
+  const job = queue.then(() =>
+    invoke("print_html_silent", { html, printer, jobName }).catch(
+      (e: unknown) => {
+        const code = typeof e === "string" ? e : (e as Error)?.message;
+        toast.error("تعذّرت طباعة الفاتورة على " + printer, {
+          description: A4_ERRORS[code ?? ""] ?? code,
+          duration: 10_000,
+          action: { label: "طباعة عادية", onClick: () => printHtml(html) },
+        });
+      },
+    ),
+  );
+  queue = job;
+  return job.then(() => undefined);
 }

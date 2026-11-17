@@ -3,6 +3,7 @@
 import { IconArrowsExchange } from "@tabler/icons-react";
 import { useSyncExternalStore } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { useCurrency } from "@/lib/currency";
 import {
@@ -102,15 +103,18 @@ export function PosSecondCurrencyRow({ amount }: { amount: number }) {
           ≈
         </span>
         {other}
-        <button
-          type="button"
-          onClick={() => setBig(!secondBig)}
-          aria-label={`إظهار الإجمالي بـ${secondBig ? main.name : state.config.name}`}
-          title={`إظهار الإجمالي بـ${secondBig ? main.name : state.config.name}`}
-          className="flex size-7 items-center justify-center border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+        <AppTooltip
+          message={`إظهار الإجمالي بـ${secondBig ? main.name : state.config.name}`}
         >
-          <IconArrowsExchange className="size-4" />
-        </button>
+          <button
+            type="button"
+            onClick={() => setBig(!secondBig)}
+            aria-label={`إظهار الإجمالي بـ${secondBig ? main.name : state.config.name}`}
+            className="flex size-7 items-center justify-center border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none"
+          >
+            <IconArrowsExchange className="size-4" />
+          </button>
+        </AppTooltip>
       </div>
     </div>
   );

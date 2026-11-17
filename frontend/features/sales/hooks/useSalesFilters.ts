@@ -61,6 +61,7 @@ export function useSalesFilters() {
     setPageSize: withPageReset(setPageSize),
     isFiltered: q !== "" || method !== "all" || status !== "all",
     clearFilters: () => {
+      setPeriod(periodOf("all"))
       setSearch("");
       setMethod("all");
       setStatus("all");

@@ -11,8 +11,10 @@ import {
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -131,6 +133,13 @@ export function ReceiptDesignSection() {
             checked={cfg.showPaymentDetails}
             onChange={(showPaymentDetails) => set({ showPaymentDetails })}
           />
+          <SwitchRow
+            id="rc-barcode"
+            title="باركود رقم الفاتورة"
+            description="امسحه بقارئ الباركود في بحث الفواتير أو المرتجع فتظهر الفاتورة فوراً."
+            checked={cfg.showBarcode}
+            onChange={(showBarcode) => set({ showBarcode })}
+          />
         </SettingGroup>
 
         <SettingGroup title="آخر الفاتورة">
@@ -155,6 +164,13 @@ export function ReceiptDesignSection() {
         </SettingGroup>
 
         <SettingGroup title="المظهر">
+          <SwitchRow
+            id="rc-compact"
+            title="إيصال حراري مختصر (يوفّر الورق)"
+            description="بيانات الفاتورة في سطور أقل، والصنف بكمية 1 في سطر واحد، والدفع في عمودين."
+            checked={cfg.compact}
+            onChange={(compact) => set({ compact })}
+          />
           <SettingRow
             title="حجم الخط (الإيصال الحراري)"
             description="«كبير» أوضح لكبار السن، و«صغير» يوفّر ورق."
@@ -178,25 +194,25 @@ export function ReceiptDesignSection() {
               {ACCENT_COLORS.map((c) => {
                 const active = cfg.accent === c.value;
                 return (
-                  <button
-                    key={c.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    aria-label={c.label}
-                    title={c.label}
-                    onClick={() => set({ accent: c.value })}
-                    style={{ backgroundColor: c.value }}
-                    className={cn(
-                      "flex size-8 items-center justify-center text-white outline-none transition-transform",
-                      "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
-                      active
-                        ? "scale-110 ring-2 ring-offset-2 ring-foreground/30"
-                        : "hover:scale-105",
-                    )}
-                  >
-                    {active && <IconCheck className="size-4" />}
-                  </button>
+                  <AppTooltip key={c.value} message={c.label}>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      aria-label={c.label}
+                      onClick={() => set({ accent: c.value })}
+                      style={{ backgroundColor: c.value }}
+                      className={cn(
+                        "flex size-8 items-center justify-center text-white outline-none transition-transform",
+                        "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2",
+                        active
+                          ? "scale-110 ring-2 ring-offset-2 ring-foreground/30"
+                          : "hover:scale-105",
+                      )}
+                    >
+                      {active && <IconCheck className="size-4" />}
+                    </button>
+                  </AppTooltip>
                 );
               })}
             </div>
@@ -437,7 +453,13 @@ function TextArea({
 const A4_PX = { w: 794, h: 1123 };
 const MM = 96 / 25.4;
 
-/** المعاينة = نفس HTML الطباعة داخل iframe، مصغّرة لتناسب العمود. */
+const pageWidthPx = (kind: PrinterKind, paperMm: number) =>
+  kind === "a4" ? A4_PX.w : Math.round(paperMm * MM);
+
+/**
+ * المعاينة = نفس HTML الطباعة داخل iframe، مصغّرة لتناسب العمود.
+ * الضغط عليها (مؤشر العدسة +) يكبّرها في نافذة ليراها التاجر بوضوح.
+ */
 function ReceiptPreview({
   html,
   kind,
@@ -448,9 +470,9 @@ function ReceiptPreview({
   paperMm: number;
 }) {
   const box = useRef<HTMLDivElement>(null);
-  const frame = useRef<HTMLIFrameElement>(null);
   const [boxWidth, setBoxWidth] = useState(320);
-  const [contentHeight, setContentHeight] = useState(600);
+  const [zoomed, setZoomed] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(1024);
 
   useEffect(() => {
     const el = box.current;
@@ -460,8 +482,90 @@ function ReceiptPreview({
     return () => ro.disconnect();
   }, []);
 
-  const pageWidth = kind === "a4" ? A4_PX.w : Math.round(paperMm * MM);
+  useEffect(() => {
+    const update = () => setViewportWidth(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const pageWidth = pageWidthPx(kind, paperMm);
   const scale = Math.min(1, boxWidth / pageWidth);
+  // التكبير: الحراري حتى ضعف حجمه الحقيقي، والـ A4 بحجمه الحقيقي، بحدود عرض الشاشة.
+  const zoomScale = Math.min(
+    kind === "a4" ? 1 : 2,
+    (viewportWidth - 64) / pageWidth,
+  );
+
+  return (
+    <>
+      <div
+        ref={box}
+        className="max-h-[70vh] overflow-y-auto border bg-muted/40 p-3"
+      >
+        <AppTooltip message="اضغط للتكبير">
+          <button
+            type="button"
+            onClick={() => setZoomed(true)}
+            aria-label="تكبير المعاينة"
+            className="group relative mx-auto block cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          >
+            <PreviewPage
+              html={html}
+              kind={kind}
+              paperMm={paperMm}
+              scale={scale}
+            />
+            {/* الـ iframe يبتلع الماوس: طبقة شفافة فوقه تُظهر مؤشر العدسة وتستقبل الضغط */}
+            <span
+              aria-hidden
+              className="absolute inset-0 transition-colors group-hover:bg-foreground/[0.03]"
+            />
+          </button>
+        </AppTooltip>
+      </div>
+
+      <Dialog open={zoomed} onOpenChange={setZoomed}>
+        <DialogContent className="max-h-[92vh] w-auto max-w-[calc(100%-2rem)] overflow-y-auto bg-muted p-6 sm:max-w-[calc(100%-2rem)]">
+          <DialogTitle className="sr-only">معاينة الفاتورة مكبّرة</DialogTitle>
+          <button
+            type="button"
+            onClick={() => setZoomed(false)}
+            aria-label="تصغير المعاينة"
+            className="mx-auto block cursor-zoom-out outline-none"
+          >
+            <span className="relative block">
+              <PreviewPage
+                html={html}
+                kind={kind}
+                paperMm={paperMm}
+                scale={zoomScale}
+              />
+              <span aria-hidden className="absolute inset-0" />
+            </span>
+          </button>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** صفحة الفاتورة بمقياس معيّن: الارتفاع يُقاس من محتوى الـ iframe بعد التحميل. */
+function PreviewPage({
+  html,
+  kind,
+  paperMm,
+  scale,
+}: {
+  html: string;
+  kind: PrinterKind;
+  paperMm: number;
+  scale: number;
+}) {
+  const frame = useRef<HTMLIFrameElement>(null);
+  const [contentHeight, setContentHeight] = useState(600);
+
+  const pageWidth = pageWidthPx(kind, paperMm);
   const pageHeight =
     kind === "a4" ? Math.max(A4_PX.h, contentHeight) : contentHeight;
 
@@ -471,38 +575,34 @@ function ReceiptPreview({
   }
 
   return (
-    <div
-      ref={box}
-      className="max-h-[70vh] overflow-y-auto border bg-muted/40 p-3"
+    <span
+      className="block overflow-hidden bg-white shadow-md"
+      style={{ width: pageWidth * scale, height: pageHeight * scale }}
     >
-      <div
-        className="mx-auto overflow-hidden bg-white shadow-md"
-        style={{ width: pageWidth * scale, height: pageHeight * scale }}
-      >
-        <iframe
-          ref={frame}
-          title="معاينة الفاتورة"
-          // هوامش @page لا تظهر على الشاشة: نضيفها للمعاينة فقط.
-          srcDoc={
-            kind === "a4"
-              ? html.replace(
-                  "</head>",
-                  "<style>@media screen{body{padding:12mm}}</style></head>",
-                )
-              : html
-          }
-          onLoad={measure}
-          sandbox="allow-same-origin"
-          style={{
-            width: pageWidth,
-            height: pageHeight,
-            border: 0,
-            transform: `scale(${scale})`,
-            transformOrigin: "top right",
-            background: "#fff",
-          }}
-        />
-      </div>
-    </div>
+      <iframe
+        ref={frame}
+        title="معاينة الفاتورة"
+        // هوامش @page لا تظهر على الشاشة: نضيفها للمعاينة فقط.
+        srcDoc={
+          kind === "a4"
+            ? html.replace(
+                "</head>",
+                "<style>@media screen{body{padding:12mm}}</style></head>",
+              )
+            : html
+        }
+        onLoad={measure}
+        sandbox="allow-same-origin"
+        style={{
+          width: pageWidth,
+          height: pageHeight,
+          border: 0,
+          transform: `scale(${scale})`,
+          transformOrigin: "top right",
+          background: "#fff",
+          pointerEvents: "none",
+        }}
+      />
+    </span>
   );
 }

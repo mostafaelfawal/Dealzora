@@ -35,6 +35,10 @@ class ReceiptConfig(BaseModel):
     show_cashier: bool = True
     show_customer: bool = True
     show_payment_details: bool = True
+    # باركود خطي برقم الفاتورة (للبحث بالقارئ).
+    show_barcode: bool = True
+    # الإيصال الحراري المختصر: البيانات في سطور أقل، والصنف البسيط في سطر واحد.
+    compact: bool = True
 
     # ---- أسفل الفاتورة ----
     footer: str = Field(DEFAULT_FOOTER, max_length=300)

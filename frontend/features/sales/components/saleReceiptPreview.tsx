@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useMotionTemplate,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import { useMotionValue, useSpring, useTransform } from "framer-motion";
 import type { PointerEvent, ReactNode } from "react";
 
 import { listItem, MotionDiv, MotionLi } from "@/components/shared/motion";
@@ -58,7 +53,9 @@ function EReceiptPreview({
           {print.uuid}
         </p>
         {status && (
-          <p className="text-muted-foreground">الحالة: {STATUS_LABEL[status]}</p>
+          <p className="text-muted-foreground">
+            الحالة: {STATUS_LABEL[status]}
+          </p>
         )}
       </section>
     </>
@@ -102,7 +99,7 @@ function Row({
 
 const Rule = () => <hr aria-hidden className="receipt-rule my-3" />;
 
-/** ميل ثلاثي الأبعاد مع الماوس ولمعة تتحرك على الورق. يتوقف مع إيقاف الحركة. */
+/** ميل ثلاثي الأبعاد مع الماوس (بدون لمعة على الورق). يتوقف مع إيقاف الحركة. */
 function useTilt(enabled: boolean) {
   const px = useMotionValue(0);
   const py = useMotionValue(0);
@@ -114,10 +111,6 @@ function useTilt(enabled: boolean) {
     useTransform(py, [-0.5, 0.5], [MAX_TILT, -MAX_TILT]),
     TILT_SPRING,
   );
-  const sheenX = useTransform(px, [-0.5, 0.5], ["15%", "85%"]);
-  const sheenY = useTransform(py, [-0.5, 0.5], ["0%", "100%"]);
-  const sheen = useMotionTemplate`radial-gradient(90% 55% at ${sheenX} ${sheenY}, oklch(1 0 0 / 0.5), transparent 70%)`;
-
   const reset = () => {
     px.set(0);
     py.set(0);
@@ -137,7 +130,6 @@ function useTilt(enabled: boolean) {
   return {
     handlers,
     style: enabled ? { rotateX, rotateY } : undefined,
-    sheen: enabled ? sheen : undefined,
   };
 }
 
@@ -174,14 +166,6 @@ export function SaleReceiptPreview({
               aria-label={`إيصال فاتورة رقم ${sale.number}`}
               className="receipt-paper relative px-5 text-xs"
             >
-              {tilt.sheen && (
-                <MotionDiv
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0"
-                  style={{ background: tilt.sheen }}
-                />
-              )}
-
               <header className="space-y-0.5 text-center">
                 <p className="text-base font-bold">{shopName}</p>
                 <p className="text-muted-foreground">
@@ -206,7 +190,10 @@ export function SaleReceiptPreview({
                       <span className="min-w-0 font-semibold wrap-break-word">
                         {l.name}
                       </span>
-                      <Money amount={l.lineTotal} className="shrink-0 text-xs" />
+                      <Money
+                        amount={l.lineTotal}
+                        className="shrink-0 text-xs"
+                      />
                     </div>
                     <div className="flex flex-wrap items-baseline gap-x-1.5 text-[11px] text-muted-foreground">
                       <span className="inline-flex items-baseline gap-1">
@@ -217,7 +204,10 @@ export function SaleReceiptPreview({
                       {l.promoDiscount > 0 && (
                         <span className="inline-flex items-baseline gap-1 text-success">
                           · {l.promoName ?? "عرض"} −
-                          <Money amount={l.promoDiscount} className="text-[11px]" />
+                          <Money
+                            amount={l.promoDiscount}
+                            className="text-[11px]"
+                          />
                         </span>
                       )}
                       {l.discount > 0 && (
@@ -262,10 +252,7 @@ export function SaleReceiptPreview({
                     <Money amount={r.amount} className="text-xs" />
                   </Row>
                 ))}
-                <Row
-                  label="الإجمالي"
-                  className="pt-1 text-base font-bold"
-                >
+                <Row label="الإجمالي" className="pt-1 text-base font-bold">
                   <Money amount={sale.total} className="text-lg" />
                 </Row>
               </dl>
@@ -319,7 +306,12 @@ export function SaleReceiptPreview({
                   </p>
                 )}
 
-              {sale.etaPrint && <EReceiptPreview print={sale.etaPrint} status={sale.etaStatus} />}
+              {sale.etaPrint && (
+                <EReceiptPreview
+                  print={sale.etaPrint}
+                  status={sale.etaStatus}
+                />
+              )}
 
               <Rule />
 

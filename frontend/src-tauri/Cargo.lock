@@ -83,7 +83,10 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-log",
  "tauri-plugin-updater",
+ "tokio",
+ "webview2-com",
  "win32job",
+ "windows-core 0.62.2",
  "winreg 0.52.0",
 ]
 

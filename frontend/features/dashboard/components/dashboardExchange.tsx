@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { ChartCard } from "@/components/shared/charts/ChartCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,31 +76,34 @@ export function DashboardExchange() {
       action={
         <div className="flex items-center gap-1">
           {auto && (
+            <AppTooltip message="تحديث سعر الصرف">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="تحديث سعر الصرف"
+                onClick={() => refresh.mutate()}
+                disabled={busy}
+              >
+                {busy ? (
+                  <IconLoader2 className="animate-spin" />
+                ) : (
+                  <IconRefresh />
+                )}
+              </Button>
+            </AppTooltip>
+          )}
+          <AppTooltip message="إعدادات العملة الثانية">
             <Button
-              type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label="تحديث سعر الصرف"
-              title="تحديث سعر الصرف"
-              onClick={() => refresh.mutate()}
-              disabled={busy}
+              aria-label="إعدادات العملة الثانية"
+              nativeButton={false}
+              render={<Link href="/admin/settings#exchange" />}
             >
-              {busy ? (
-                <IconLoader2 className="animate-spin" />
-              ) : (
-                <IconRefresh />
-              )}
+              <IconSettings />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="إعدادات العملة الثانية"
-            title="إعدادات العملة الثانية"
-            render={<Link href="/admin/settings#exchange" />}
-          >
-            <IconSettings />
-          </Button>
+          </AppTooltip>
         </div>
       }
     >
@@ -131,17 +135,18 @@ export function DashboardExchange() {
                   {fromLabel}
                 </span>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="عكس اتجاه التحويل"
-                title="عكس اتجاه التحويل"
-                onClick={() => setReverse((v) => !v)}
-                className="size-10"
-              >
-                <IconArrowsExchange className="size-4" />
-              </Button>
+              <AppTooltip message="عكس اتجاه التحويل">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="عكس اتجاه التحويل"
+                  onClick={() => setReverse((v) => !v)}
+                  className="size-10"
+                >
+                  <IconArrowsExchange className="size-4" />
+                </Button>
+              </AppTooltip>
             </div>
             <p className="flex items-baseline gap-1.5" aria-live="polite">
               <span className="text-xs text-muted-foreground">=</span>

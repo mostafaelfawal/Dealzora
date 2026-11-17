@@ -15,6 +15,7 @@ import type { ReceiptConfig } from "@/lib/receiptConfig";
 
 import type { EtaPrint } from "../types/sale";
 import { E_RECEIPT_CSS, eReceiptBlockHtml, qrSvg } from "./eReceiptPrint";
+import { a4BarcodeSvg, thermalBarcodeSvg } from "./receiptBarcode";
 
 export interface DocLine {
   name: string;
@@ -96,44 +97,97 @@ function renderThermal(m: ReceiptModel, o: RenderOptions): string {
   const row = (label: string, value: string, cls = "") =>
     `<div class="row ${cls}"><span>${label}</span><span class="num">${value}</span></div>`;
 
+  const compact = c.compact;
+  const sub = (l: DocLine) =>
+    `${formatQty(l.qty)} ${esc(l.unit)}${l.unitPrice !== null ? ` × ${money(l.unitPrice)}` : ""}`;
+
+  // المختصر: الاسم والإجمالي في سطر واحد، وسطر الكمية فقط لو فيه معلومة (كمية ≠ 1 أو خصم).
   const lines = m.lines
-    .map(
-      (l) => `
+    .map((l) =>
+      compact
+        ? `
+      <tr><td class="name">${esc(l.name)}</td><td class="num name">${money(l.total)}</td></tr>
+      ${
+        l.qty !== 1 || l.discount
+          ? `<tr class="sub"><td colspan="2">${sub(l)}${l.discount ? ` · ${esc(l.discount)}` : ""}</td></tr>`
+          : ""
+      }`
+        : `
       <tr><td colspan="3" class="name">${esc(l.name)}</td></tr>
       <tr class="sub">
-        <td>${formatQty(l.qty)} ${esc(l.unit)}${l.unitPrice !== null ? ` × ${money(l.unitPrice)}` : ""}</td>
+        <td>${sub(l)}</td>
         <td>${esc(l.discount)}</td>
         <td class="num">${money(l.total)}</td>
       </tr>`,
     )
     .join("");
 
-  const contact = [c.address, c.phone && `ت: ${c.phone}`]
-    .filter(Boolean)
-    .map((t) => `<div class="center muted">${esc(t as string)}</div>`)
-    .join("");
+  const center = (parts: (string | false | null | undefined)[]) =>
+    parts
+      .filter(Boolean)
+      .map((t) => `<div class="center muted">${t}</div>`)
+      .join("");
+  const join = (parts: (string | false | null | undefined)[]) =>
+    parts.filter(Boolean).join(" · ");
+
+  const taxNo = c.taxNumber
+    ? `الرقم الضريبي: <span dir="ltr">${esc(c.taxNumber)}</span>`
+    : null;
+  const contact = compact
+    ? center([
+        join([
+          c.address && esc(c.address),
+          c.phone && `ت: <span dir="ltr">${esc(c.phone)}</span>`,
+          taxNo,
+        ]),
+      ])
+    : center([
+        c.address && esc(c.address),
+        c.phone && `ت: ${esc(c.phone)}`,
+        taxNo,
+      ]);
+
+  const docNo = `${m.kind === "return" ? "مرتجع" : "فاتورة"} رقم <b>${m.number}</b>${m.reference ? ` · ${esc(m.reference)}` : ""}`;
+  const people = [
+    c.showCashier && m.cashier && `الكاشير: ${esc(m.cashier)}`,
+    c.showCustomer && m.customer && `العميل: ${esc(m.customer)}`,
+  ];
+  const meta = compact
+    ? center([join([docNo, esc(formatDateTime(m.date))]), join(people)])
+    : center([docNo, esc(formatDateTime(m.date)), ...people]);
+
+  // المختصر: «الإجمالي قبل الخصم» بلا خصم ولا ضريبة = الإجمالي نفسه، فلا نكرره.
+  const totals = compact && m.totals.length === 1 ? [] : m.totals;
+  const payments = c.showPaymentDetails ? m.payments : [];
+  // المختصر على 80مم: الدفع في عمودين (المدفوع والباقي في سطر واحد).
+  const payGrid = compact && o.paperMm === 80 && payments.length > 1;
+  const payHtml = payGrid
+    ? `<div class="pay">${payments.map((r) => `<div class="row"><span>${esc(r.label)}</span><span class="num">${r.value}</span></div>`).join("")}</div>`
+    : payments.map((r) => row(esc(r.label), r.value)).join("");
+
+  const barcode =
+    c.showBarcode && m.kind === "sale"
+      ? `<div class="barcode">${thermalBarcodeSvg(String(m.number), o.paperMm)}<div class="code">${m.number}</div></div>`
+      : "";
 
   const body = `
   ${c.showLogo && c.logo ? `<div class="logo"><img src="${c.logo}" alt=""></div>` : ""}
   <h1>${esc(o.shopName)}</h1>
   ${c.headerNote ? `<div class="center muted">${esc(c.headerNote)}</div>` : ""}
   ${contact}
-  ${c.taxNumber ? `<div class="center muted">الرقم الضريبي: <span dir="ltr">${esc(c.taxNumber)}</span></div>` : ""}
   ${m.kind === "return" ? `<div class="center tag">${esc(m.title)}</div>` : ""}
   ${m.reprint ? `<div class="center tag">نسخة</div>` : ""}
-  <div class="center muted">${m.kind === "return" ? "مرتجع" : "فاتورة"} رقم <b>${m.number}</b>${m.reference ? ` · ${esc(m.reference)}` : ""}</div>
-  <div class="center muted">${esc(formatDateTime(m.date))}</div>
-  ${c.showCashier && m.cashier ? `<div class="center muted">الكاشير: ${esc(m.cashier)}</div>` : ""}
-  ${c.showCustomer && m.customer ? `<div class="center muted">العميل: ${esc(m.customer)}</div>` : ""}
+  ${meta}
   <hr><table>${lines}</table><hr>
-  ${m.totals.map((r) => row(esc(r.label), r.value)).join("")}
+  ${totals.map((r) => row(esc(r.label), r.value)).join("")}
   ${row(`${esc(m.grandLabel)} (${currencySymbol()})`, money(m.grand), "total")}
   ${m.alt.map((r) => row(esc(r.label), r.value, "alt")).join("")}
-  ${c.showPaymentDetails ? m.payments.map((r) => row(esc(r.label), r.value)).join("") : ""}
+  ${payHtml}
   ${m.notes.length ? `<hr>${m.notes.map((n) => `<div class="center muted">${esc(n)}</div>`).join("")}` : ""}
   ${m.eta ? eReceiptBlockHtml(m.eta, o.paperMm, m.kind) : ""}
-  ${c.footer ? `<hr><div class="center foot">${esc(c.footer)}</div>` : ""}
-  ${o.freePlan ? `<div class="center muted" style="margin-top:4px">${FREE_FOOTER}</div>` : ""}`;
+  ${barcode ? `<hr>${barcode}` : ""}
+  ${c.footer ? `${barcode ? "" : "<hr>"}<div class="center foot">${esc(c.footer)}</div>` : ""}
+  ${o.freePlan ? `<div class="center muted" style="margin-top:2px">${FREE_FOOTER}</div>` : ""}`;
 
   const paper = o.paperMm;
   return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
@@ -141,24 +195,28 @@ function renderThermal(m: ReceiptModel, o: RenderOptions): string {
 <style>
   @page { size: ${paper}mm auto; margin: 0; }
   * { box-sizing: border-box; }
-  body { width: ${paper - 6}mm; margin: 0 auto; padding: 3mm 0;
-         font: ${base}px/1.45 Tahoma, "Segoe UI", Arial, sans-serif; color: #000; }
+  body { width: ${paper - 6}mm; margin: 0 auto; padding: ${compact ? 2 : 3}mm 0;
+         font: ${base}px/${compact ? 1.3 : 1.45} Tahoma, "Segoe UI", Arial, sans-serif; color: #000; }
   h1 { font-size: ${base + 4}px; margin: 0 0 2px; text-align: center; }
   .logo { text-align: center; margin-bottom: 3px; }
-  .logo img { max-width: 60%; max-height: 22mm; filter: grayscale(1) contrast(1.2); }
+  .logo img { max-width: 60%; max-height: ${compact ? 15 : 22}mm; filter: grayscale(1) contrast(1.2); }
   .center { text-align: center; }
   .muted { font-size: ${base - 1}px; }
   .tag { font-weight: bold; font-size: ${base + 1}px; margin: 2px 0; }
   .foot { white-space: pre-line; }
-  hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+  hr { border: 0; border-top: 1px dashed #000; margin: ${compact ? 4 : 6}px 0; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 0; vertical-align: top; }
-  .name { font-weight: bold; padding-top: 3px; }
+  .name { font-weight: bold; padding-top: ${compact ? 2 : 3}px; }
   .sub td { font-size: ${base - 1}px; }
   .num { text-align: left; direction: ltr; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .row { display: flex; justify-content: space-between; gap: 8px; }
   .total { font-size: ${base + 4}px; font-weight: bold; margin: 3px 0; }
-  .alt { font-size: ${base - 1}px; }${m.eta ? E_RECEIPT_CSS : ""}
+  .alt { font-size: ${base - 1}px; }
+  .pay { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; font-size: ${base - 1}px; }
+  .barcode { text-align: center; line-height: 0; margin: 2px 0; }
+  .barcode svg { display: inline-block; }
+  .barcode .code { font: ${base - 1}px/1.2 Consolas, "Courier New", monospace; letter-spacing: 2px; margin-top: 2px; }${m.eta ? E_RECEIPT_CSS : ""}
 </style></head><body>${body}
 </body></html>`;
 }
@@ -229,6 +287,7 @@ function renderA4(m: ReceiptModel, o: RenderOptions): string {
         <tr><th>التاريخ</th><td>${esc(formatDateTime(m.date))}</td></tr>
         ${m.reference ? `<tr><th>المرجع</th><td>${esc(m.reference)}</td></tr>` : ""}
       </table>
+      ${c.showBarcode && m.kind === "sale" ? `<div class="a4-barcode">${a4BarcodeSvg(String(m.number))}</div>` : ""}
     </div>
   </header>
 
@@ -279,6 +338,8 @@ function renderA4(m: ReceiptModel, o: RenderOptions): string {
   .doc { text-align: left; flex-shrink: 0; }
   .doc-title { font-size: 20px; font-weight: 700; color: ${accent}; text-align: right; }
   .copy { font-size: 11px; border: 1px solid ${accent}; padding: 0 6px; vertical-align: middle; }
+  .a4-barcode { margin-top: 6px; line-height: 0; text-align: right; }
+  .a4-barcode svg { display: inline-block; }
   .meta { border-collapse: collapse; margin-top: 4px; font-size: 11.5px; }
   .meta th { text-align: right; color: #555; font-weight: 400; padding: 1px 0 1px 10px; }
   .meta td { text-align: right; font-weight: 700; }

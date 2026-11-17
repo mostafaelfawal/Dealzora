@@ -1,3 +1,4 @@
+mod a4print;
 mod device;
 mod downloads;
 mod hardware;
@@ -391,6 +392,7 @@ pub fn run() {
                 printing::list_printers,
                 printing::print_raw,
                 pdf::html_to_pdf,
+                a4print::print_html_silent,
                 updater::check_update,
                 updater::install_update
             ]
