@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 
 import "./globals.css";
 
 import { cn } from "@/lib/utils";
 import { AppProviders } from "@/providers/AppProviders";
 import { BRAND } from "@/config/brand";
+import { HIDE_IN_DESKTOP } from "@/features/landing/components/hideInDesktop";
 
 // ========================================
 // Constants
@@ -238,6 +240,10 @@ export default function RootLayout({
             __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
           }}
         />
+        {/* يخفي الصفحة التعريفية داخل برنامج الكمبيوتر قبل تحميل React (انظر DesktopRedirect). */}
+        <Script id="hide-in-desktop" strategy="beforeInteractive">
+          {HIDE_IN_DESKTOP}
+        </Script>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

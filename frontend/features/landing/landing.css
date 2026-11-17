@@ -1,0 +1,133 @@
+/*
+ * أنماط الصفحة التعريفية فقط (لا تعيد تعريف أي متغير من globals.css).
+ * كل الألوان من متغيرات الهوية: --border و --foreground و --background.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.landing-root) {
+    scroll-behavior: smooth;
+  }
+}
+
+html:has(.landing-root) {
+  scroll-padding-top: 5rem;
+}
+
+/* شبكة دفتر الحسابات خلف الواجهة، تتلاشى نحو الأطراف. */
+.landing-grid {
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(
+    ellipse 70% 60% at 30% 40%,
+    #000 20%,
+    transparent 75%
+  );
+  opacity: 0.7;
+}
+
+/*
+ * توهج الشبكة حول مؤشر الفأرة: نفس خطوط الشبكة بلون النص (--foreground) مع هالة خفيفة،
+ * ومقصوصة بدائرة مركزها المؤشر (--mx / --my يكتبها GridBackground).
+ */
+.landing-grid-glow {
+  --mx: 50%;
+  --my: 50%;
+  background-image:
+    linear-gradient(to right, var(--foreground) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--foreground) 1px, transparent 1px),
+    radial-gradient(
+      220px circle at var(--mx) var(--my),
+      color-mix(in oklch, var(--foreground) 9%, transparent),
+      transparent 70%
+    );
+  background-size:
+    56px 56px,
+    56px 56px,
+    100% 100%;
+  mask-image: radial-gradient(
+    200px circle at var(--mx) var(--my),
+    #000 0%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+}
+
+.landing-grid-glow[data-active] {
+  opacity: 0.42;
+}
+
+.dark .landing-grid-glow[data-active] {
+  opacity: 0.4;
+}
+
+/* خروج الإيصال من فتحة الطابعة مرة واحدة عند الفتح (نفس فكرة المعاينة في البرنامج). */
+@media (prefers-reduced-motion: no-preference) {
+  .landing-print {
+    animation: landing-print-out 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s
+      both;
+  }
+}
+
+@keyframes landing-print-out {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* الأسئلة الشائعة: <details> أصلي، مع تدوير علامة الفتح. */
+.landing-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing-faq[open] .landing-faq-icon {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-faq-icon {
+    transition: transform 0.2s ease-out;
+  }
+
+  .landing-faq[open] .landing-faq-body {
+    animation: landing-faq-in 0.2s ease-out;
+  }
+}
+
+@keyframes landing-faq-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ظهور الأقسام مع التمرير (بلا JavaScript). غير المدعوم يعرض المحتوى كما هو. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .landing-reveal {
+      animation: landing-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes landing-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
