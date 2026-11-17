@@ -79,6 +79,9 @@ export const SOCIAL_LINKS: SocialLink[] = [
 ];
 
 export const WHATSAPP_COMMUNITY_URL = SOCIAL_LINKS[0].url;
+
+/** رقم التواصل الهاتفي بالصيغة الدولية (E.164) لرابط tel:. */
+export const CONTACT_PHONE = "+201039872640";
 export const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@dealzora-s";
 
 // ========================================
