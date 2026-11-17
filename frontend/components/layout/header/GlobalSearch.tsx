@@ -166,7 +166,10 @@ export function GlobalSearch() {
                 >
                   <IconReceipt className="size-4" />
                   <span className="font-mono">#{s.number}</span>
-                  <AppTooltip message={s.customerName ?? "عميل نقدي"} onlyWhenTruncated>
+                  <AppTooltip
+                    message={s.customerName ?? "عميل نقدي"}
+                    onlyWhenTruncated
+                  >
                     <span className="truncate text-muted-foreground">
                       {s.customerName ?? "عميل نقدي"}
                     </span>

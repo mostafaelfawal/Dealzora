@@ -225,8 +225,7 @@ export function SupplierForm() {
               message={errors.openingBalance?.message}
             />
             <p className="text-xs text-muted-foreground">
-              المبلغ الذي علينا له قبل استخدام البرنامج. اتركه فارغاً لو لا
-              يوجد.
+              المبلغ الذي علينا له قبل استخدام البرنامج. اتركه فارغاً لو لا يوجد.
             </p>
           </div>
         )}

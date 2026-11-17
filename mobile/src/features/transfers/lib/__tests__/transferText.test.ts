@@ -1,10 +1,24 @@
 import type { TransferApproval } from "@/api/types";
 
-import { approvalBusy, approvalText, formatQty, parseQty, transferSummary } from "../transferText";
+import {
+  approvalBusy,
+  approvalText,
+  formatQty,
+  parseQty,
+  transferSummary,
+} from "../transferText";
 
 const approval = (over: Partial<TransferApproval>): TransferApproval => ({
-  id: "c", action: "approve", status: "pending", requested_by: "owner", device_name: "Pixel",
-  created_at: "2026-11-15T10:00:00Z", claimed_at: null, resolved_at: null, error_message: null, ...over,
+  id: "c",
+  action: "approve",
+  status: "pending",
+  requested_by: "owner",
+  device_name: "Pixel",
+  created_at: "2026-11-15T10:00:00Z",
+  claimed_at: null,
+  resolved_at: null,
+  error_message: null,
+  ...over,
 });
 
 describe("الكميات (× 1000)", () => {
@@ -26,11 +40,21 @@ describe("الكميات (× 1000)", () => {
 describe("موافقة الهاتف", () => {
   test("النصوص", () => {
     expect(approvalText(null, "requested")).toBeNull();
-    expect(approvalText(approval({}), "requested")).toBe("وافق owner من الهاتف، وتنتظر تنفيذ الفرع");
-    expect(approvalText(approval({ status: "failed", error_message: "الكمية المتاحة من «لبن» أقل" }), "requested")).toBe(
-      "تعذّر على الفرع التنفيذ: الكمية المتاحة من «لبن» أقل",
+    expect(approvalText(approval({}), "requested")).toBe(
+      "وافق owner من الهاتف، وتنتظر تنفيذ الفرع",
     );
-    expect(approvalText(approval({ status: "done" }), "sent")).toBe("وافق owner من الهاتف");
+    expect(
+      approvalText(
+        approval({
+          status: "failed",
+          error_message: "الكمية المتاحة من «لبن» أقل",
+        }),
+        "requested",
+      ),
+    ).toBe("تعذّر على الفرع التنفيذ: الكمية المتاحة من «لبن» أقل");
+    expect(approvalText(approval({ status: "done" }), "sent")).toBe(
+      "وافق owner من الهاتف",
+    );
   });
   test("approvalBusy", () => {
     expect(approvalBusy(approval({ status: "pending" }))).toBe(true);
@@ -41,6 +65,18 @@ describe("موافقة الهاتف", () => {
 });
 
 test("transferSummary", () => {
-  expect(transferSummary({ from_branch_name: "المعادي", to_branch_name: "الدقي", status: "requested" })).toBe("الدقي يطلب من المعادي");
-  expect(transferSummary({ from_branch_name: "المعادي", to_branch_name: "الدقي", status: "sent" })).toBe("من المعادي إلى الدقي");
+  expect(
+    transferSummary({
+      from_branch_name: "المعادي",
+      to_branch_name: "الدقي",
+      status: "requested",
+    }),
+  ).toBe("الدقي يطلب من المعادي");
+  expect(
+    transferSummary({
+      from_branch_name: "المعادي",
+      to_branch_name: "الدقي",
+      status: "sent",
+    }),
+  ).toBe("من المعادي إلى الدقي");
 });

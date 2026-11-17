@@ -7,7 +7,13 @@
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { QueryClient, defaultShouldDehydrateQuery, focusManager, onlineManager, type Query } from "@tanstack/react-query";
+import {
+  QueryClient,
+  defaultShouldDehydrateQuery,
+  focusManager,
+  onlineManager,
+  type Query,
+} from "@tanstack/react-query";
 import { addNetworkStateListener } from "expo-network";
 import { AppState, type AppStateStatus } from "react-native";
 
@@ -23,7 +29,8 @@ export const queryClient = new QueryClient({
     queries: {
       gcTime: CACHE_MAX_AGE, // لازم ≥ maxAge وإلا يُحذف قبل الحفظ
       staleTime: 30_000,
-      retry: (count, error) => error instanceof ApiError && error.status >= 500 && count < 2,
+      retry: (count, error) =>
+        error instanceof ApiError && error.status >= 500 && count < 2,
     },
     mutations: { retry: false },
   },
@@ -55,11 +62,15 @@ export function wireQueryManagers(): void {
   if (wired) return;
   wired = true;
   onlineManager.setEventListener((setOnline) => {
-    const sub = addNetworkStateListener((state) => setOnline(isOnlineState(state)));
+    const sub = addNetworkStateListener((state) =>
+      setOnline(isOnlineState(state)),
+    );
     return () => sub.remove();
   });
   focusManager.setEventListener((setFocused) => {
-    const sub = AppState.addEventListener("change", (status: AppStateStatus) => setFocused(status === "active"));
+    const sub = AppState.addEventListener("change", (status: AppStateStatus) =>
+      setFocused(status === "active"),
+    );
     return () => sub.remove();
   });
 }

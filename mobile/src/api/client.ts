@@ -21,7 +21,12 @@ import {
   TIMEOUT_MESSAGE,
   fromResponse,
 } from "./errors";
-import type { LoginInput, MobileTokens, MobileUser, StoredTokens } from "./types";
+import type {
+  LoginInput,
+  MobileTokens,
+  MobileUser,
+  StoredTokens,
+} from "./types";
 import { MOBILE_PREFIX, normalizeServerUrl } from "./url";
 
 export interface TokenStore {
@@ -54,7 +59,8 @@ export interface RequestOptions {
 const EXPIRY_SKEW_MS = 30_000;
 const DEFAULT_TIMEOUT_MS = 15_000;
 
-const unauthorized = () => new ApiError("unauthorized", SESSION_ENDED_MESSAGE, 401);
+const unauthorized = () =>
+  new ApiError("unauthorized", SESSION_ENDED_MESSAGE, 401);
 
 export class ApiClient {
   /** undefined = لم تُقرأ من التخزين بعد. */
@@ -85,7 +91,11 @@ export class ApiClient {
   }
 
   async login(input: LoginInput): Promise<MobileTokens> {
-    const out = await this.request<MobileTokens>("/auth/login", { method: "POST", body: input, auth: false });
+    const out = await this.request<MobileTokens>("/auth/login", {
+      method: "POST",
+      body: input,
+      auth: false,
+    });
     await this.store(out);
     return out;
   }
@@ -108,7 +118,9 @@ export class ApiClient {
 
   /** الخروج من كل الأجهزة: لازم يصل للخادم (وإلا يفشل والهاتف يبقى مسجلاً). */
   async logoutAll(): Promise<number> {
-    const out = await this.request<{ revoked: number }>("/auth/logout-all", { method: "POST" });
+    const out = await this.request<{ revoked: number }>("/auth/logout-all", {
+      method: "POST",
+    });
     await this.clearTokens();
     return out.revoked;
   }
@@ -146,7 +158,8 @@ export class ApiClient {
     const tokens = await this.loadTokens();
     if (!tokens) throw unauthorized();
     const expires = Date.parse(tokens.expires_at);
-    if (Number.isNaN(expires) || expires - EXPIRY_SKEW_MS <= this.now()) return this.refresh();
+    if (Number.isNaN(expires) || expires - EXPIRY_SKEW_MS <= this.now())
+      return this.refresh();
     return tokens;
   }
 
@@ -162,10 +175,14 @@ export class ApiClient {
   private async doRefresh(): Promise<StoredTokens> {
     const tokens = await this.loadTokens();
     if (!tokens) throw unauthorized();
-    const out = await this.send<MobileTokens>("/auth/refresh", {
-      method: "POST",
-      body: { refresh_token: tokens.refresh_token },
-    }, null);
+    const out = await this.send<MobileTokens>(
+      "/auth/refresh",
+      {
+        method: "POST",
+        body: { refresh_token: tokens.refresh_token },
+      },
+      null,
+    );
     return this.store(out);
   }
 
@@ -176,18 +193,23 @@ export class ApiClient {
     try {
       return await this.send<T>(path, options, tokens.access_token);
     } catch (error) {
-      if (!(error instanceof ApiError) || error.code !== "token_expired") throw error;
+      if (!(error instanceof ApiError) || error.code !== "token_expired")
+        throw error;
       // طلب آخر جدّد بالفعل؟ نستخدم توكنه بدل تجديد ثانٍ.
       const current = await this.loadTokens();
       const next =
-        current && current.access_token !== tokens.access_token ? current : await this.refresh();
+        current && current.access_token !== tokens.access_token
+          ? current
+          : await this.refresh();
       return this.send<T>(path, options, next.access_token); // مرة واحدة فقط (لا حلقة)
     }
   }
 
   private async handle(error: unknown, authed: boolean): Promise<ApiError> {
     const apiError =
-      error instanceof ApiError ? error : new ApiError("unknown", FALLBACK_MESSAGE);
+      error instanceof ApiError
+        ? error
+        : new ApiError("unknown", FALLBACK_MESSAGE);
     if (!authed) return apiError;
     if (apiError.isSessionEnded) {
       const had = (await this.loadTokens()) !== null;
@@ -199,7 +221,11 @@ export class ApiClient {
     return apiError;
   }
 
-  private async send<T>(path: string, options: RequestOptions, accessToken: string | null): Promise<T> {
+  private async send<T>(
+    path: string,
+    options: RequestOptions,
+    accessToken: string | null,
+  ): Promise<T> {
     const base = normalizeServerUrl(await this.opts.baseUrl());
     if (!base) throw new ApiError("no_server", NO_SERVER_MESSAGE);
 
@@ -214,7 +240,8 @@ export class ApiClient {
     options.signal?.addEventListener("abort", onAbort);
 
     const headers: Record<string, string> = { Accept: "application/json" };
-    if (options.body !== undefined) headers["Content-Type"] = "application/json";
+    if (options.body !== undefined)
+      headers["Content-Type"] = "application/json";
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
     let response: Response;
@@ -222,11 +249,13 @@ export class ApiClient {
       response = await fetchFn(`${base}${MOBILE_PREFIX}${path}`, {
         method: options.method ?? "GET",
         headers,
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        body:
+          options.body === undefined ? undefined : JSON.stringify(options.body),
         signal: controller.signal,
       });
     } catch {
-      if (options.signal?.aborted) throw new ApiError("aborted", FALLBACK_MESSAGE);
+      if (options.signal?.aborted)
+        throw new ApiError("aborted", FALLBACK_MESSAGE);
       if (timedOut) throw new ApiError("timeout", TIMEOUT_MESSAGE);
       throw new ApiError("network", NETWORK_MESSAGE);
     } finally {
@@ -237,7 +266,8 @@ export class ApiClient {
     if (response.status === 204) return undefined as T;
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) throw fromResponse(response.status, body);
-    if (body === null) throw new ApiError("bad_response", SERVER_MESSAGE, response.status);
+    if (body === null)
+      throw new ApiError("bad_response", SERVER_MESSAGE, response.status);
     return body as T;
   }
 }

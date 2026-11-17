@@ -7,7 +7,12 @@ export function StatusDot({ online }: { online: boolean }) {
   return (
     <View
       accessibilityLabel={online ? "متصل" : "غير متصل"}
-      style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: online ? colors.success : colors.mutedForeground }}
+      style={{
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: online ? colors.success : colors.mutedForeground,
+      }}
     />
   );
 }

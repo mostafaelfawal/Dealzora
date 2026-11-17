@@ -1,6 +1,16 @@
 /** الوضع الفاتح/الداكن: اختيار المستخدم في «المزيد» (تلقائي = إعداد الهاتف)، وألوان التنقّل من نفس الهوية. */
-import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider, type Theme } from "expo-router";
-import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider as NavThemeProvider,
+  type Theme,
+} from "expo-router";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  type PropsWithChildren,
+} from "react";
 import { useColorScheme } from "react-native";
 
 import { chartDark, chartLight, dark, light, type Palette } from "./colors";
@@ -13,13 +23,24 @@ interface ThemeValue {
   isDark: boolean;
 }
 
-const ThemeContext = createContext<ThemeValue>({ colors: light, chart: chartLight, isDark: false });
+const ThemeContext = createContext<ThemeValue>({
+  colors: light,
+  chart: chartLight,
+  isDark: false,
+});
 
 export function ThemeProvider({ children }: PropsWithChildren) {
   const scheme = useColorScheme();
   const pref = useThemePref();
   const isDark = pref === "system" ? scheme === "dark" : pref === "dark";
-  const value = useMemo<ThemeValue>(() => ({ colors: isDark ? dark : light, chart: isDark ? chartDark : chartLight, isDark }), [isDark]);
+  const value = useMemo<ThemeValue>(
+    () => ({
+      colors: isDark ? dark : light,
+      chart: isDark ? chartDark : chartLight,
+      isDark,
+    }),
+    [isDark],
+  );
 
   const navTheme = useMemo<Theme>(() => {
     const base = isDark ? DarkTheme : DefaultTheme;

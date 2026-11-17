@@ -15,16 +15,32 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Screen } from "@/components/shared/Screen";
 import { TextField } from "@/components/shared/TextField";
 import { ListSkeleton } from "@/components/shared/Skeletons";
-import { useReportConfig, useSaveReportConfig } from "@/features/reports/hooks/useReports";
+import {
+  useReportConfig,
+  useSaveReportConfig,
+} from "@/features/reports/hooks/useReports";
 import { parseMoneyInput } from "@/features/reports/lib/reportText";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
 import { useIsOwner } from "@/features/security/hooks/useSecurity";
 
-const MONEY_FIELDS: { key: keyof ReportConfig; label: string; hint: string }[] = [
-  { key: "discount_min", label: "خصم الكاشير على فاتورة (ج.م)", hint: "خصم أسطر + فاتورة بهذا المبلغ أو أكثر = عملية حساسة" },
-  { key: "return_min", label: "المرتجع (ج.م)", hint: "مرتجع بهذا المبلغ أو أكثر = عملية حساسة (المرتجع الكامل دائماً)" },
-  { key: "cash_diff_min", label: "فرق نقدية الوردية (ج.م)", hint: "عجز أو زيادة بهذا المبلغ أو أكثر = تنبيه" },
-];
+const MONEY_FIELDS: { key: keyof ReportConfig; label: string; hint: string }[] =
+  [
+    {
+      key: "discount_min",
+      label: "خصم الكاشير على فاتورة (ج.م)",
+      hint: "خصم أسطر + فاتورة بهذا المبلغ أو أكثر = عملية حساسة",
+    },
+    {
+      key: "return_min",
+      label: "المرتجع (ج.م)",
+      hint: "مرتجع بهذا المبلغ أو أكثر = عملية حساسة (المرتجع الكامل دائماً)",
+    },
+    {
+      key: "cash_diff_min",
+      label: "فرق نقدية الوردية (ج.م)",
+      hint: "عجز أو زيادة بهذا المبلغ أو أكثر = تنبيه",
+    },
+  ];
 const EXPIRY_DAYS = [7, 14, 30, 60, 90];
 
 export default function ReportSettingsRoute() {
@@ -41,7 +57,15 @@ function ReportSettings() {
   if (!q.data) {
     return (
       <Screen>
-        {q.isPending ? <ListSkeleton count={2} /> : <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
+        {q.isPending ? (
+          <ListSkeleton count={2} />
+        ) : (
+          <EmptyState
+            icon="alert-circle-outline"
+            title="تعذّر التحميل"
+            description={errorMessage(q.error)}
+          />
+        )}
       </Screen>
     );
   }
@@ -52,19 +76,35 @@ function ReportSettings() {
 function ReportForm({ initial }: { initial: ReportConfig }) {
   const save = useSaveReportConfig();
   const [text, setText] = useState<Record<string, string>>(() =>
-    Object.fromEntries(MONEY_FIELDS.map((f) => [f.key, String(initial[f.key] / 100)])),
+    Object.fromEntries(
+      MONEY_FIELDS.map((f) => [f.key, String(initial[f.key] / 100)]),
+    ),
   );
   const [days, setDays] = useState(initial.expiry_days);
 
-  const parsed = MONEY_FIELDS.map((f) => ({ f, v: parseMoneyInput(text[f.key] ?? "") }));
+  const parsed = MONEY_FIELDS.map((f) => ({
+    f,
+    v: parseMoneyInput(text[f.key] ?? ""),
+  }));
   const invalid = parsed.some((p) => p.v === null);
 
   const submit = () => {
-    const next = { ...Object.fromEntries(parsed.map((p) => [p.f.key, p.v ?? 0])), expiry_days: days } as unknown as ReportConfig;
-    Alert.alert("حفظ الحدود", "تسري على كل الفروع بعد مزامنتها التالية (خلال دقائق والبرنامج مفتوح).", [
-      { text: "رجوع", style: "cancel" },
-      { text: "حفظ", onPress: () => save.mutate(next, { onSuccess: () => Alert.alert("تم الحفظ") }) },
-    ]);
+    const next = {
+      ...Object.fromEntries(parsed.map((p) => [p.f.key, p.v ?? 0])),
+      expiry_days: days,
+    } as unknown as ReportConfig;
+    Alert.alert(
+      "حفظ الحدود",
+      "تسري على كل الفروع بعد مزامنتها التالية (خلال دقائق والبرنامج مفتوح).",
+      [
+        { text: "رجوع", style: "cancel" },
+        {
+          text: "حفظ",
+          onPress: () =>
+            save.mutate(next, { onSuccess: () => Alert.alert("تم الحفظ") }),
+        },
+      ],
+    );
   };
 
   return (
@@ -79,7 +119,11 @@ function ReportForm({ initial }: { initial: ReportConfig }) {
             onChangeText={(v) => setText((s) => ({ ...s, [f.key]: v }))}
             keyboardType="decimal-pad"
             ltr
-            error={parseMoneyInput(text[f.key] ?? "") === null ? "مبلغ غير صالح" : null}
+            error={
+              parseMoneyInput(text[f.key] ?? "") === null
+                ? "مبلغ غير صالح"
+                : null
+            }
           />
         ))}
       </Card>
@@ -87,9 +131,20 @@ function ReportForm({ initial }: { initial: ReportConfig }) {
         <AppText weight="medium" size="sm">
           «قريب من الانتهاء» خلال
         </AppText>
-        <Chips options={EXPIRY_DAYS} value={days} label={(d) => `${d} يوم`} onChange={setDays} />
+        <Chips
+          options={EXPIRY_DAYS}
+          value={days}
+          label={(d) => `${d} يوم`}
+          onChange={setDays}
+        />
       </Card>
-      <Button title="حفظ الحدود" icon="save-outline" onPress={submit} loading={save.isPending} disabled={invalid} />
+      <Button
+        title="حفظ الحدود"
+        icon="save-outline"
+        onPress={submit}
+        loading={save.isPending}
+        disabled={invalid}
+      />
     </Screen>
   );
 }

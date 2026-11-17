@@ -5,8 +5,20 @@
  * - مخرج دائم: «تسجيل الخروج» لو تعذّرت البصمة.
  */
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
-import { Alert, AppState, StyleSheet, View, type AppStateStatus } from "react-native";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PropsWithChildren,
+} from "react";
+import {
+  Alert,
+  AppState,
+  StyleSheet,
+  View,
+  type AppStateStatus,
+} from "react-native";
 
 import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
@@ -28,7 +40,9 @@ export function LockGate({ active, children }: Props) {
   const { enabled, loading, label } = useLockSettings();
   // الجذر يرسم القفل بعد معرفة حالة الدخول: جلسة محفوظة عند الفتح = مقفل، ودخول جديد = مفتوح.
   const [lockedRaw, setLocked] = useState(active);
-  const [appState, setAppState] = useState<AppStateStatus>((AppState.currentState as AppStateStatus | null) ?? "active");
+  const [appState, setAppState] = useState<AppStateStatus>(
+    (AppState.currentState as AppStateStatus | null) ?? "active",
+  );
   const backgroundAt = useRef<number | null>(null);
   const authenticating = useRef(false);
 
@@ -59,7 +73,8 @@ export function LockGate({ active, children }: Props) {
       if (authenticating.current) return; // نافذة البصمة نفسها تغيّر حالة التطبيق
       if (next === "background") backgroundAt.current = Date.now();
       if (next === "active" && backgroundAt.current !== null) {
-        if (guard && Date.now() - backgroundAt.current >= IDLE_LOCK_MS) setLocked(true);
+        if (guard && Date.now() - backgroundAt.current >= IDLE_LOCK_MS)
+          setLocked(true);
         backgroundAt.current = null;
       }
     });
@@ -72,20 +87,39 @@ export function LockGate({ active, children }: Props) {
   }, [guard, locked, appState, unlock]);
 
   const confirmSignOut = () =>
-    Alert.alert("تسجيل الخروج", "ستحتاج كود ربط جديد وكلمة المرور للدخول مرة أخرى.", [
-      { text: "إلغاء", style: "cancel" },
-      { text: "تسجيل الخروج", style: "destructive", onPress: () => void signOut() },
-    ]);
+    Alert.alert(
+      "تسجيل الخروج",
+      "ستحتاج كود ربط جديد وكلمة المرور للدخول مرة أخرى.",
+      [
+        { text: "إلغاء", style: "cancel" },
+        {
+          text: "تسجيل الخروج",
+          style: "destructive",
+          onPress: () => void signOut(),
+        },
+      ],
+    );
 
-  const showCover = active && (loading || (guard && (locked || appState !== "active")));
+  const showCover =
+    active && (loading || (guard && (locked || appState !== "active")));
 
   return (
     <View style={styles.root}>
       {children}
       {showCover && (
-        <View style={[StyleSheet.absoluteFill, styles.cover, { backgroundColor: colors.background }]}>
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            styles.cover,
+            { backgroundColor: colors.background },
+          ]}
+        >
           <View style={[styles.badge, { backgroundColor: colors.muted }]}>
-            <Ionicons name="lock-closed-outline" size={34} color={colors.foreground} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={34}
+              color={colors.foreground}
+            />
           </View>
           <AppText weight="bold" size="xl" center>
             Dealzora مقفل
@@ -96,8 +130,16 @@ export function LockGate({ active, children }: Props) {
                 افتح التطبيق بـ{label} أو رمز قفل الهاتف
               </AppText>
               <View style={styles.actions}>
-                <Button title="فتح" icon="finger-print-outline" onPress={unlock} />
-                <Button title="تسجيل الخروج" variant="ghost" onPress={confirmSignOut} />
+                <Button
+                  title="فتح"
+                  icon="finger-print-outline"
+                  onPress={unlock}
+                />
+                <Button
+                  title="تسجيل الخروج"
+                  variant="ghost"
+                  onPress={confirmSignOut}
+                />
               </View>
             </>
           )}
@@ -109,7 +151,18 @@ export function LockGate({ active, children }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  cover: { alignItems: "center", justifyContent: "center", gap: space.md, padding: space.xl, zIndex: 100 },
-  badge: { width: 72, height: 72, alignItems: "center", justifyContent: "center" },
+  cover: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.md,
+    padding: space.xl,
+    zIndex: 100,
+  },
+  badge: {
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   actions: { alignSelf: "stretch", gap: space.sm, marginTop: space.md },
 });

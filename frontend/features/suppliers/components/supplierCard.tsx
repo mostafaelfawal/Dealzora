@@ -60,7 +60,10 @@ export function SupplierCard({
           </Link>
           <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <IconPhone className="size-3.5 shrink-0" aria-hidden />
-            <AppTooltip message={supplier.phone || "بدون هاتف"} onlyWhenTruncated>
+            <AppTooltip
+              message={supplier.phone || "بدون هاتف"}
+              onlyWhenTruncated
+            >
               <span
                 dir="ltr"
                 className="min-w-0 truncate text-start font-mono text-[11px]"

@@ -51,9 +51,20 @@ function Prices() {
         hint="الأصناف المشتركة بين الفروع فقط"
       />
       {q.isFetching && <AppText tone="muted">جارٍ البحث…</AppText>}
-      {q.isError && <EmptyState icon="alert-circle-outline" title="تعذّر البحث" description={errorMessage(q.error)} />}
+      {q.isError && (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر البحث"
+          description={errorMessage(q.error)}
+        />
+      )}
       {rows.map((p) => (
-        <Pressable key={p.gid} accessibilityRole="button" onPress={() => setEditing(p)} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+        <Pressable
+          key={p.gid}
+          accessibilityRole="button"
+          onPress={() => setEditing(p)}
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
           <Card>
             <View style={styles.head}>
               <View style={styles.flex}>
@@ -77,22 +88,35 @@ function Prices() {
         </Pressable>
       ))}
       {q.data && rows.length === 0 && text.trim().length >= 2 && (
-        <EmptyState icon="search-outline" title="لا نتائج" description="جرّب جزءاً من الاسم أو أول أرقام الباركود" />
+        <EmptyState
+          icon="search-outline"
+          title="لا نتائج"
+          description="جرّب جزءاً من الاسم أو أول أرقام الباركود"
+        />
       )}
       {editing && <PriceSheet p={editing} onClose={() => setEditing(null)} />}
     </Screen>
   );
 }
 
-function PriceSheet({ p, onClose }: { p: CatalogProduct; onClose: () => void }) {
+function PriceSheet({
+  p,
+  onClose,
+}: {
+  p: CatalogProduct;
+  onClose: () => void;
+}) {
   const update = useUpdatePrice();
   const online = useOnline();
   const [sale, setSale] = useState(String(p.sale_price / 100));
-  const [wholesale, setWholesale] = useState(p.wholesale_price === null ? "" : String(p.wholesale_price / 100));
+  const [wholesale, setWholesale] = useState(
+    p.wholesale_price === null ? "" : String(p.wholesale_price / 100),
+  );
 
   const saleP = parseMoneyInput(sale);
   const wholeP = wholesale.trim() === "" ? null : parseMoneyInput(wholesale);
-  const saleErr = saleP === null || saleP <= 0 ? "سعر البيع يجب أن يكون أكبر من صفر" : null;
+  const saleErr =
+    saleP === null || saleP <= 0 ? "سعر البيع يجب أن يكون أكبر من صفر" : null;
   const wholeErr =
     wholesale.trim() !== "" && wholeP === null
       ? "مبلغ غير صالح"
@@ -106,11 +130,20 @@ function PriceSheet({ p, onClose }: { p: CatalogProduct; onClose: () => void }) 
     Alert.alert(
       "تأكيد تعديل السعر",
       `«${p.name}»: سعر البيع ${formatPiastres(p.sale_price)} ← ${formatPiastres(saleP)}` +
-        (wholeP !== p.wholesale_price ? `\nالجملة: ${p.wholesale_price === null ? "—" : formatPiastres(p.wholesale_price)} ← ${wholeP === null ? "بلا" : formatPiastres(wholeP)}` : "") +
+        (wholeP !== p.wholesale_price
+          ? `\nالجملة: ${p.wholesale_price === null ? "—" : formatPiastres(p.wholesale_price)} ← ${wholeP === null ? "بلا" : formatPiastres(wholeP)}`
+          : "") +
         "\n\nسيصل لكل الفروع مع مزامنتها التالية. الفواتير السابقة لا تتغير.",
       [
         { text: "رجوع", style: "cancel" },
-        { text: "تعديل لكل الفروع", onPress: () => update.mutate({ p, sale_price: saleP, wholesale_price: wholeP }, { onSuccess: onClose }) },
+        {
+          text: "تعديل لكل الفروع",
+          onPress: () =>
+            update.mutate(
+              { p, sale_price: saleP, wholesale_price: wholeP },
+              { onSuccess: onClose },
+            ),
+        },
       ],
     );
   };
@@ -120,7 +153,14 @@ function PriceSheet({ p, onClose }: { p: CatalogProduct; onClose: () => void }) 
       <AppText size="sm" tone="muted">
         آخر تعديل: {p.updated_by ?? "—"}
       </AppText>
-      <TextField label="سعر البيع (ج.م)" value={sale} onChangeText={setSale} keyboardType="decimal-pad" ltr error={saleErr} />
+      <TextField
+        label="سعر البيع (ج.م)"
+        value={sale}
+        onChangeText={setSale}
+        keyboardType="decimal-pad"
+        ltr
+        error={saleErr}
+      />
       <TextField
         label="سعر الجملة (ج.م، اختياري)"
         value={wholesale}

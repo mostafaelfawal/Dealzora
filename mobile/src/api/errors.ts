@@ -7,8 +7,10 @@
  */
 import type { ServerErrorBody } from "./types";
 
-export const NETWORK_MESSAGE = "لا يوجد اتصال بالإنترنت. تأكد من الشبكة وحاول مرة أخرى";
-export const TIMEOUT_MESSAGE = "الخادم لا يستجيب. تأكد من الإنترنت وحاول مرة أخرى";
+export const NETWORK_MESSAGE =
+  "لا يوجد اتصال بالإنترنت. تأكد من الشبكة وحاول مرة أخرى";
+export const TIMEOUT_MESSAGE =
+  "الخادم لا يستجيب. تأكد من الإنترنت وحاول مرة أخرى";
 export const SERVER_MESSAGE = "حدث خطأ في الخادم. حاول بعد قليل";
 export const FALLBACK_MESSAGE = "حدث خطأ غير متوقع. حاول مرة أخرى";
 export const SESSION_ENDED_MESSAGE = "انتهت الجلسة. سجّل الدخول من جديد";
@@ -58,7 +60,8 @@ const text = (value: unknown): string | null =>
 /** يحوّل رد خطأ من الخادم إلى ApiError. */
 export function fromResponse(status: number, body: unknown): ApiError {
   const err = (body as ServerErrorBody | null)?.error;
-  const code = text(err?.code) ?? (status >= 500 ? "server_error" : `http_${status}`);
+  const code =
+    text(err?.code) ?? (status >= 500 ? "server_error" : `http_${status}`);
   if (status >= 500) {
     // لا نعرض تفاصيل داخلية، والخادم يرد أصلاً برسالة عامة.
     return new ApiError(code, SERVER_MESSAGE, status);

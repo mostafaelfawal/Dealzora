@@ -17,6 +17,11 @@ export function ensureRTL(): void {
 }
 
 /** محاذاة بداية السطر العربي (يمين الشاشة) في الحالتين. */
-export const textStart: TextStyle["textAlign"] = I18nManager.isRTL ? "left" : "right";
+export const textStart: TextStyle["textAlign"] = I18nManager.isRTL
+  ? "left"
+  : "right";
 
-export const rtlText: TextStyle = { writingDirection: "rtl", textAlign: textStart };
+export const rtlText: TextStyle = {
+  writingDirection: "rtl",
+  textAlign: textStart,
+};

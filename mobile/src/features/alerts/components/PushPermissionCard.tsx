@@ -29,13 +29,18 @@ export function PushPermissionCard({ compact = false }: { compact?: boolean }) {
     try {
       const s = await enablePush();
       if (s === "enabled" || s === "local") await sendTestNotification();
-      else if (s === "error") Alert.alert("تعذّر تفعيل الإشعارات", "حاول مرة أخرى بعد قليل.");
+      else if (s === "error")
+        Alert.alert("تعذّر تفعيل الإشعارات", "حاول مرة أخرى بعد قليل.");
       else
         // لم يُمنح الإذن (رفض الآن، أو النظام لم يُظهر النافذة لأن الرفض سابق): التفعيل من الإعدادات
-        Alert.alert("الإشعارات غير مسموحة", "اسمح بالإشعارات للتطبيق من إعدادات الهاتف ← الإشعارات.", [
-          { text: "لاحقاً", style: "cancel" },
-          { text: "فتح الإعدادات", onPress: () => void openPhoneSettings() },
-        ]);
+        Alert.alert(
+          "الإشعارات غير مسموحة",
+          "اسمح بالإشعارات للتطبيق من إعدادات الهاتف ← الإشعارات.",
+          [
+            { text: "لاحقاً", style: "cancel" },
+            { text: "فتح الإعدادات", onPress: () => void openPhoneSettings() },
+          ],
+        );
     } catch {
       Alert.alert("تعذّر تفعيل الإشعارات", "حاول مرة أخرى بعد قليل.");
     } finally {
@@ -47,7 +52,10 @@ export function PushPermissionCard({ compact = false }: { compact?: boolean }) {
     try {
       await sendTestNotification();
     } catch {
-      Alert.alert("تعذّر إرسال الإشعار التجريبي", "تأكد أن الإشعارات مفعّلة للتطبيق في إعدادات الهاتف.");
+      Alert.alert(
+        "تعذّر إرسال الإشعار التجريبي",
+        "تأكد أن الإشعارات مفعّلة للتطبيق في إعدادات الهاتف.",
+      );
     }
   };
 
@@ -71,17 +79,34 @@ export function PushPermissionCard({ compact = false }: { compact?: boolean }) {
             : "ليصلك على الهاتف: طلب تحويل ينتظر موافقتك، فرع انقطع، إيصالات مرفوضة، وعمليات حساسة. الإشعار لا يحوي مبالغ."}
       </AppText>
       {(state === "needs_permission" || state === "error") && (
-        <Button title="تفعيل الإشعارات" icon="notifications-outline" onPress={enable} loading={busy} />
+        <Button
+          title="تفعيل الإشعارات"
+          icon="notifications-outline"
+          onPress={enable}
+          loading={busy}
+        />
       )}
       {state === "denied" && (
         <>
           <AppText size="xs" tone="warning">
             {PUSH_STATE_TEXT.denied}
           </AppText>
-          <Button title="فتح إعدادات الهاتف" icon="settings-outline" variant="secondary" onPress={() => void openPhoneSettings()} />
+          <Button
+            title="فتح إعدادات الهاتف"
+            icon="settings-outline"
+            variant="secondary"
+            onPress={() => void openPhoneSettings()}
+          />
         </>
       )}
-      {on && !compact && <Button title="إرسال إشعار تجريبي" icon="paper-plane-outline" variant="secondary" onPress={test} />}
+      {on && !compact && (
+        <Button
+          title="إرسال إشعار تجريبي"
+          icon="paper-plane-outline"
+          variant="secondary"
+          onPress={test}
+        />
+      )}
     </Card>
   );
 }

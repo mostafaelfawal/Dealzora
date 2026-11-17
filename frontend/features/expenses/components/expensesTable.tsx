@@ -69,7 +69,10 @@ export function ExpensesTable({
       className: "hidden md:table-cell",
       skeletonClassName: "w-40",
       cell: (e) => (
-        <AppTooltip message={e.note || <span className="text-muted-foreground">—</span>} onlyWhenTruncated>
+        <AppTooltip
+          message={e.note || <span className="text-muted-foreground">—</span>}
+          onlyWhenTruncated
+        >
           <span className="block max-w-64 truncate text-xs">
             {e.note || <span className="text-muted-foreground">—</span>}
           </span>

@@ -16,7 +16,13 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { duration, easeOut, spring, staggerDelay, useReducedMotion } from "@/theme/motion";
+import {
+  duration,
+  easeOut,
+  spring,
+  staggerDelay,
+  useReducedMotion,
+} from "@/theme/motion";
 import { useTheme } from "@/theme/ThemeProvider";
 
 /* ---------- FadeIn ---------- */
@@ -31,7 +37,13 @@ interface FadeInProps extends PropsWithChildren {
   style?: StyleProp<ViewStyle>;
 }
 
-export function FadeIn({ index = 0, delay = 0, offset = 12, style, children }: FadeInProps) {
+export function FadeIn({
+  index = 0,
+  delay = 0,
+  offset = 12,
+  style,
+  children,
+}: FadeInProps) {
   const reduced = useReducedMotion();
   const [progress] = useState(() => new Animated.Value(reduced ? 1 : 0));
 
@@ -53,8 +65,17 @@ export function FadeIn({ index = 0, delay = 0, offset = 12, style, children }: F
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [offset, 0] });
-  return <Animated.View style={[style, { opacity: progress, transform: [{ translateY }] }]}>{children}</Animated.View>;
+  const translateY = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [offset, 0],
+  });
+  return (
+    <Animated.View
+      style={[style, { opacity: progress, transform: [{ translateY }] }]}
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 /* ---------- PressableScale ---------- */
@@ -67,12 +88,23 @@ interface PressableScaleProps extends Omit<PressableProps, "style"> {
   style?: StyleProp<ViewStyle>;
 }
 
-export function PressableScale({ scaleTo = 0.97, style, onPressIn, onPressOut, disabled, ...rest }: PressableScaleProps) {
+export function PressableScale({
+  scaleTo = 0.97,
+  style,
+  onPressIn,
+  onPressOut,
+  disabled,
+  ...rest
+}: PressableScaleProps) {
   const reduced = useReducedMotion();
   const [scale] = useState(() => new Animated.Value(1));
 
   const to = (value: number, config: typeof spring.press | typeof spring.pop) =>
-    Animated.spring(scale, { toValue: value, ...config, useNativeDriver: true }).start();
+    Animated.spring(scale, {
+      toValue: value,
+      ...config,
+      useNativeDriver: true,
+    }).start();
 
   return (
     <AnimatedPressable
@@ -99,7 +131,11 @@ interface SkeletonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Skeleton({ width = "100%", height = 14, style }: SkeletonProps) {
+export function Skeleton({
+  width = "100%",
+  height = 14,
+  style,
+}: SkeletonProps) {
   const { colors } = useTheme();
   const reduced = useReducedMotion();
   const [pulse] = useState(() => new Animated.Value(0.55));
@@ -108,8 +144,18 @@ export function Skeleton({ width = "100%", height = 14, style }: SkeletonProps) 
     if (reduced) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 650, easing: easeOut, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0.55, duration: 650, easing: easeOut, useNativeDriver: true }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 650,
+          easing: easeOut,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0.55,
+          duration: 650,
+          easing: easeOut,
+          useNativeDriver: true,
+        }),
       ]),
     );
     loop.start();
@@ -120,7 +166,10 @@ export function Skeleton({ width = "100%", height = 14, style }: SkeletonProps) 
     <Animated.View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[{ width, height, backgroundColor: colors.muted, opacity: pulse }, style]}
+      style={[
+        { width, height, backgroundColor: colors.muted, opacity: pulse },
+        style,
+      ]}
     />
   );
 }
@@ -131,7 +180,10 @@ export function Skeleton({ width = "100%", height = 14, style }: SkeletonProps) 
  * قيمة 0←1 تُعاد كلما تغيّر key (بيانات جديدة للرسم): الأعمدة تنمو من خط الأساس.
  * native = false للخصائص التي لا يحركها الـ native driver (العرض بالنسبة المئوية).
  */
-export function useGrow(key: unknown, { native = true, delay = 0 }: { native?: boolean; delay?: number } = {}) {
+export function useGrow(
+  key: unknown,
+  { native = true, delay = 0 }: { native?: boolean; delay?: number } = {},
+) {
   const reduced = useReducedMotion();
   const [progress] = useState(() => new Animated.Value(reduced ? 1 : 0));
 
@@ -159,7 +211,11 @@ export function useGrow(key: unknown, { native = true, delay = 0 }: { native?: b
 export function useFadeTo(target: number) {
   const [value] = useState(() => new Animated.Value(target));
   useEffect(() => {
-    Animated.timing(value, { toValue: target, duration: duration.base, useNativeDriver: true }).start();
+    Animated.timing(value, {
+      toValue: target,
+      duration: duration.base,
+      useNativeDriver: true,
+    }).start();
   }, [target, value]);
   return value;
 }
@@ -167,7 +223,10 @@ export function useFadeTo(target: number) {
 /* ---------- useCountUp ---------- */
 
 /** يعدّ من آخر قيمة معروضة للقيمة الجديدة (أول عرض: من الصفر). يرجع القيمة الحالية كعدد صحيح. */
-export function useCountUp(target: number, ms: number = duration.count): number {
+export function useCountUp(
+  target: number,
+  ms: number = duration.count,
+): number {
   const reduced = useReducedMotion();
   const [shown, setShown] = useState(reduced ? target : 0);
   const shownRef = useRef(shown);

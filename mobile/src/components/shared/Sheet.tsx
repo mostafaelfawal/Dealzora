@@ -3,7 +3,16 @@
  * الخلفية تظهر تدريجياً والنافذة تصعد بنابض، والإغلاق (لمس الخلفية / زر الرجوع) يعكس الحركة ثم يُبلغ الأب.
  */
 import { useEffect, useState, type PropsWithChildren } from "react";
-import { Animated, Dimensions, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { radius, space } from "@/theme/colors";
@@ -29,10 +38,18 @@ export function Sheet({ title, onClose, children }: Props) {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(backdrop, { toValue: 1, duration: duration.base, useNativeDriver: true }),
+      Animated.timing(backdrop, {
+        toValue: 1,
+        duration: duration.base,
+        useNativeDriver: true,
+      }),
       reduced
         ? Animated.timing(y, { toValue: 0, duration: 0, useNativeDriver: true })
-        : Animated.spring(y, { toValue: 0, ...spring.sheet, useNativeDriver: true }),
+        : Animated.spring(y, {
+            toValue: 0,
+            ...spring.sheet,
+            useNativeDriver: true,
+          }),
     ]).start();
   }, [backdrop, y, reduced]);
 
@@ -40,16 +57,40 @@ export function Sheet({ title, onClose, children }: Props) {
     if (closing) return;
     setClosing(true);
     Animated.parallel([
-      Animated.timing(backdrop, { toValue: 0, duration: duration.base, useNativeDriver: true }),
-      Animated.timing(y, { toValue: reduced ? 0 : OFFSCREEN, duration: duration.base, easing: easeOut, useNativeDriver: true }),
+      Animated.timing(backdrop, {
+        toValue: 0,
+        duration: duration.base,
+        useNativeDriver: true,
+      }),
+      Animated.timing(y, {
+        toValue: reduced ? 0 : OFFSCREEN,
+        duration: duration.base,
+        easing: easeOut,
+        useNativeDriver: true,
+      }),
     ]).start(() => onClose());
   };
 
   return (
-    <Modal transparent animationType="none" statusBarTranslucent onRequestClose={close}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdrop }]} />
+    <Modal
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={close}
+    >
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          styles.backdrop,
+          { opacity: backdrop },
+        ]}
+      />
       <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-        <Pressable style={styles.flex} onPress={close} accessibilityLabel="إغلاق" />
+        <Pressable
+          style={styles.flex}
+          onPress={close}
+          accessibilityLabel="إغلاق"
+        />
         <Animated.View
           style={[
             styles.sheet,
@@ -65,7 +106,10 @@ export function Sheet({ title, onClose, children }: Props) {
           <AppText weight="bold" size="lg">
             {title}
           </AppText>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.body}
+          >
             {children}
           </ScrollView>
         </Animated.View>
@@ -86,6 +130,12 @@ const styles = StyleSheet.create({
     paddingTop: space.sm,
     gap: space.md,
   },
-  handle: { alignSelf: "center", width: 36, height: 4, marginBottom: space.xs, opacity: 0.6 },
+  handle: {
+    alignSelf: "center",
+    width: 36,
+    height: 4,
+    marginBottom: space.xs,
+    opacity: 0.6,
+  },
   body: { gap: space.md, paddingBottom: space.sm },
 });

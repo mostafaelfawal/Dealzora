@@ -177,10 +177,9 @@ const BRANCH_FIELDS: {
 ];
 
 const branchDraft = (b: EtaBranch) =>
-  Object.fromEntries(BRANCH_FIELDS.map((f) => [f.key, b[f.key] ?? ""])) as Record<
-    BranchKey,
-    string
-  >;
+  Object.fromEntries(
+    BRANCH_FIELDS.map((f) => [f.key, b[f.key] ?? ""]),
+  ) as Record<BranchKey, string>;
 
 /** بيانات هذا الفرع (كل جهاز أساسي = فرع بقاعدته). الدولة EG دائماً للممول المصري. */
 export function EtaBranchForm() {

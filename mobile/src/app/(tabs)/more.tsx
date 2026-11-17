@@ -15,7 +15,12 @@ import { Screen } from "@/components/shared/Screen";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLockSettings } from "@/features/lock/hooks/useLockSettings";
 import { getServerUrl } from "@/lib/serverUrl";
-import { THEME_LABEL, THEME_PREFS, setThemePref, useThemePref } from "@/theme/themePref";
+import {
+  THEME_LABEL,
+  THEME_PREFS,
+  setThemePref,
+  useThemePref,
+} from "@/theme/themePref";
 
 export default function MoreRoute() {
   const { user } = useAuth();
@@ -31,7 +36,11 @@ export default function MoreRoute() {
   async function onToggle(next: boolean) {
     setToggling(true);
     try {
-      if (!(await lock.toggle(next))) Alert.alert("لم يتم التغيير", `تأكيد ${lock.label} مطلوب لتغيير القفل.`);
+      if (!(await lock.toggle(next)))
+        Alert.alert(
+          "لم يتم التغيير",
+          `تأكيد ${lock.label} مطلوب لتغيير القفل.`,
+        );
     } finally {
       setToggling(false);
     }
@@ -41,19 +50,53 @@ export default function MoreRoute() {
     <Screen>
       <FadeIn index={0}>
         <Card>
-          <ListRow icon="person-circle-outline" title="حسابي" subtitle={user?.username} onPress={() => router.push("/account")} />
-          <ListRow icon="receipt-outline" title="الإيصالات الإلكترونية" subtitle="المنتظر والمقبول والمرفوض لكل فرع" onPress={() => router.push("/receipts")} />
-          <ListRow icon="notifications-outline" title="إعدادات التنبيهات" onPress={() => router.push("/alerts-settings")} />
+          <ListRow
+            icon="person-circle-outline"
+            title="حسابي"
+            subtitle={user?.username}
+            onPress={() => router.push("/account")}
+          />
+          <ListRow
+            icon="receipt-outline"
+            title="الإيصالات الإلكترونية"
+            subtitle="المنتظر والمقبول والمرفوض لكل فرع"
+            onPress={() => router.push("/receipts")}
+          />
+          <ListRow
+            icon="notifications-outline"
+            title="إعدادات التنبيهات"
+            onPress={() => router.push("/alerts-settings")}
+          />
         </Card>
       </FadeIn>
 
       <FadeIn index={1}>
         <Card>
-          <AppText size="xs" tone="muted" weight="semibold">تقارير الفروع</AppText>
-          <ListRow icon="cube-outline" title="المخزون والنواقص" subtitle="تحت حد الطلب، واقتراح التحويل، وقرب الانتهاء" onPress={() => router.push("/stock")} />
-          <ListRow icon="time-outline" title="الورديات" subtitle="فروق النقدية لكل كاشير" onPress={() => router.push("/shifts")} />
-          <ListRow icon="shield-outline" title="العمليات الحساسة" onPress={() => router.push("/sensitive")} />
-          <ListRow icon="podium-outline" title="الأكثر مبيعاً" onPress={() => router.push("/top-sellers")} />
+          <AppText size="xs" tone="muted" weight="semibold">
+            تقارير الفروع
+          </AppText>
+          <ListRow
+            icon="cube-outline"
+            title="المخزون والنواقص"
+            subtitle="تحت حد الطلب، واقتراح التحويل، وقرب الانتهاء"
+            onPress={() => router.push("/stock")}
+          />
+          <ListRow
+            icon="time-outline"
+            title="الورديات"
+            subtitle="فروق النقدية لكل كاشير"
+            onPress={() => router.push("/shifts")}
+          />
+          <ListRow
+            icon="shield-outline"
+            title="العمليات الحساسة"
+            onPress={() => router.push("/sensitive")}
+          />
+          <ListRow
+            icon="podium-outline"
+            title="الأكثر مبيعاً"
+            onPress={() => router.push("/top-sellers")}
+          />
         </Card>
       </FadeIn>
 
@@ -61,20 +104,56 @@ export default function MoreRoute() {
       {user?.role === "owner" && (
         <FadeIn index={2}>
           <Card>
-            <AppText size="xs" tone="muted" weight="semibold">أمان المحل</AppText>
-            <ListRow icon="people-outline" title="الموظفون" subtitle="إيقاف حساب موظف فوراً" onPress={() => router.push("/security/staff")} />
-            <ListRow icon="desktop-outline" title="أجهزة الفروع" subtitle="إلغاء ربط جهاز مفقود، وكود ربط جديد" onPress={() => router.push("/security/devices")} />
-            <ListRow icon="phone-portrait-outline" title="جلسات الهاتف" subtitle="هواتف كل المستخدمين المسجّلة" onPress={() => router.push("/security/sessions")} />
-            <ListRow icon="pricetag-outline" title="أسعار الأصناف" subtitle="تعديل سعر البيع والجملة لكل الفروع" onPress={() => router.push("/prices")} />
-            <ListRow icon="options-outline" title="حدود العمليات الحساسة" subtitle="الخصم والمرتجع وفرق النقدية وأيام الصلاحية" onPress={() => router.push("/report-settings")} />
+            <AppText size="xs" tone="muted" weight="semibold">
+              أمان المحل
+            </AppText>
+            <ListRow
+              icon="people-outline"
+              title="الموظفون"
+              subtitle="إيقاف حساب موظف فوراً"
+              onPress={() => router.push("/security/staff")}
+            />
+            <ListRow
+              icon="desktop-outline"
+              title="أجهزة الفروع"
+              subtitle="إلغاء ربط جهاز مفقود، وكود ربط جديد"
+              onPress={() => router.push("/security/devices")}
+            />
+            <ListRow
+              icon="phone-portrait-outline"
+              title="جلسات الهاتف"
+              subtitle="هواتف كل المستخدمين المسجّلة"
+              onPress={() => router.push("/security/sessions")}
+            />
+            <ListRow
+              icon="pricetag-outline"
+              title="أسعار الأصناف"
+              subtitle="تعديل سعر البيع والجملة لكل الفروع"
+              onPress={() => router.push("/prices")}
+            />
+            <ListRow
+              icon="options-outline"
+              title="حدود العمليات الحساسة"
+              subtitle="الخصم والمرتجع وفرق النقدية وأيام الصلاحية"
+              onPress={() => router.push("/report-settings")}
+            />
           </Card>
         </FadeIn>
       )}
 
       <FadeIn index={3}>
         <Card>
-          <ListRow icon="contrast-outline" title="المظهر" subtitle="تلقائي يتبع إعداد الهاتف" />
-          <Chips options={THEME_PREFS} value={theme} label={(t) => THEME_LABEL[t]} onChange={setThemePref} />
+          <ListRow
+            icon="contrast-outline"
+            title="المظهر"
+            subtitle="تلقائي يتبع إعداد الهاتف"
+          />
+          <Chips
+            options={THEME_PREFS}
+            value={theme}
+            label={(t) => THEME_LABEL[t]}
+            onChange={setThemePref}
+          />
         </Card>
       </FadeIn>
 
@@ -102,7 +181,11 @@ export default function MoreRoute() {
 
       <FadeIn index={5}>
         <Card>
-          <ListRow icon="server-outline" title="خادم المزامنة" subtitle={server?.replace(/^https?:\/\//, "") ?? "—"} />
+          <ListRow
+            icon="server-outline"
+            title="خادم المزامنة"
+            subtitle={server?.replace(/^https?:\/\//, "") ?? "—"}
+          />
           <View style={styles.about}>
             <BrandLogo width={96} style={styles.logo} />
             <AppText size="xs" tone="muted">
@@ -117,6 +200,11 @@ export default function MoreRoute() {
 
 const styles = StyleSheet.create({
   // الشعار بجانب رقم الإصدار أسفل الشاشة
-  about: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 },
+  about: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
   logo: { alignSelf: "auto" },
 });

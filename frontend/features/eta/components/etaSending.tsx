@@ -79,8 +79,8 @@ export function EtaSending() {
         >
           {overdue > 0 && (
             <>
-              <Num>{overdue}</Num> إيصال تجاوز مهلة الإرسال (24 ساعة من
-              إصداره) وقد ترفضه المنظومة.{" "}
+              <Num>{overdue}</Num> إيصال تجاوز مهلة الإرسال (24 ساعة من إصداره)
+              وقد ترفضه المنظومة.{" "}
             </>
           )}
           {late > 0 && (
@@ -123,8 +123,8 @@ export function EtaSending() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           الإرسال تلقائي كل دقيقة على البيئة{" "}
-          {config.data.environment === "prod" ? "الفعلية" : "التجريبية"}، والمرفوض
-          لا يُعاد تلقائياً.
+          {config.data.environment === "prod" ? "الفعلية" : "التجريبية"}،
+          والمرفوض لا يُعاد تلقائياً.
         </p>
         <Button
           type="button"
@@ -172,7 +172,8 @@ export function EtaSending() {
                   <td>
                     {a.receipts_count > 0 && (
                       <>
-                        <Num>{a.accepted_count}</Num>/<Num>{a.receipts_count}</Num>
+                        <Num>{a.accepted_count}</Num>/
+                        <Num>{a.receipts_count}</Num>
                       </>
                     )}
                   </td>

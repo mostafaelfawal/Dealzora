@@ -4,7 +4,9 @@
  */
 import { useNetworkState, type NetworkState } from "expo-network";
 
-export function isOnlineState(state: Pick<NetworkState, "isConnected" | "isInternetReachable">): boolean {
+export function isOnlineState(
+  state: Pick<NetworkState, "isConnected" | "isInternetReachable">,
+): boolean {
   if (state.isConnected === false) return false;
   if (state.isInternetReachable === false) return false;
   return true;

@@ -1,4 +1,10 @@
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/shared/AppText";
@@ -20,7 +26,9 @@ export default function LoginRoute() {
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
         >
           <View style={styles.head}>
             <FadeIn offset={-10}>
@@ -46,6 +54,11 @@ export default function LoginRoute() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { flexGrow: 1, justifyContent: "center", padding: space.lg, gap: space.xl },
+  content: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: space.lg,
+    gap: space.xl,
+  },
   head: { gap: space.md },
 });

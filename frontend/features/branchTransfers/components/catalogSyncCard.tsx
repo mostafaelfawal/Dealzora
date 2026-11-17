@@ -90,7 +90,8 @@ export function CatalogSyncCard() {
         <div className="space-y-1.5 border border-warning/40 bg-warning/5 p-2.5">
           <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
             <IconAlertTriangle className="size-4" />
-            {s.errorCount} سجل لم تتم مزامنته. يُعاد رفعه تلقائياً كل ساعة، أو اضغط «مزامنة الآن» لإعادة المحاولة فوراً:
+            {s.errorCount} سجل لم تتم مزامنته. يُعاد رفعه تلقائياً كل ساعة، أو
+            اضغط «مزامنة الآن» لإعادة المحاولة فوراً:
           </p>
           <ul className="space-y-1 text-xs">
             {s.errors.map((e, i) => (

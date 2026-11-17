@@ -46,3 +46,18 @@ export interface PromotionsSummary {
   expired: number;
   paused: number;
 }
+
+export interface Draft {
+  name: string;
+  kind: PromoKind;
+  value: string;
+  buyQty: string;
+  getQty: string;
+  minQty: string;
+  scope: PromoScope;
+  categoryId: string;
+  productIds: string[];
+  startsOn: string;
+  endsOn: string;
+  isActive: boolean;
+}

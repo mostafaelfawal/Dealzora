@@ -88,14 +88,23 @@ const label = (r: ReceiptItem) =>
 
 /** سبب المشكلة بالعربي + ماذا أفعل + رسالة المنظومة الأصلية. */
 function Problem({ r, full = false }: { r: ReceiptItem; full?: boolean }) {
-  if (!r.help_title && !r.late) return <span className="text-muted-foreground">—</span>;
+  if (!r.help_title && !r.late)
+    return <span className="text-muted-foreground">—</span>;
   return (
     <div className="min-w-0 space-y-0.5 text-xs">
       {r.help_title && <p className="font-medium">{r.help_title}</p>}
-      {r.help_action && <p className="text-muted-foreground">{r.help_action}</p>}
+      {r.help_action && (
+        <p className="text-muted-foreground">{r.help_action}</p>
+      )}
       {r.error && (
         <AppTooltip message={r.error} onlyWhenTruncated={!full}>
-          <p className={cn("text-[11px] text-muted-foreground/80", !full && "truncate")} dir="auto">
+          <p
+            className={cn(
+              "text-[11px] text-muted-foreground/80",
+              !full && "truncate",
+            )}
+            dir="auto"
+          >
             {r.error}
           </p>
         </AppTooltip>
@@ -121,13 +130,22 @@ function ReceiptCard({
   return (
     <>
       <CardHead
-        title={<span className="font-mono text-sm font-semibold">{label(r)}</span>}
+        title={
+          <span className="font-mono text-sm font-semibold">{label(r)}</span>
+        }
         subtitle={r.device_name ?? "—"}
-        aside={<Money amount={toPounds(r.total)} className="text-base font-semibold" />}
+        aside={
+          <Money
+            amount={toPounds(r.total)}
+            className="text-base font-semibold"
+          />
+        }
       />
       <CardBadges>
         <StatusChip status={r.status} />
-        {r.replaced_uuid && <span className="text-[11px] text-muted-foreground">مُصحَّح</span>}
+        {r.replaced_uuid && (
+          <span className="text-[11px] text-muted-foreground">مُصحَّح</span>
+        )}
       </CardBadges>
       <Problem r={r} full />
       {r.resend && (
@@ -171,9 +189,9 @@ function LateDialog({
         <DialogHeader className="text-start">
           <DialogTitle>تصحيح إيصالات متأخرة</DialogTitle>
           <DialogDescription>
-            <Num>{count}</Num> إيصال مرفوض مرّ عليه أكثر من 96 ساعة. المنظومة
-            لا تقبل تصحيحه بعد هذه المدة إلا بطلب إرسال متأخر من المصلحة. هل
-            ترسله على أي حال؟
+            <Num>{count}</Num> إيصال مرفوض مرّ عليه أكثر من 96 ساعة. المنظومة لا
+            تقبل تصحيحه بعد هذه المدة إلا بطلب إرسال متأخر من المصلحة. هل ترسله
+            على أي حال؟
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -219,10 +237,12 @@ export function EReceiptsScreen() {
   const list = useReceipts(query);
   const rows = list.data?.items ?? [];
   const resendable = rows.filter((r) => r.resend);
-  const reset = <T,>(set: (v: T) => void) => (v: T) => {
-    set(v);
-    setPage(1);
-  };
+  const reset =
+    <T,>(set: (v: T) => void) =>
+    (v: T) => {
+      set(v);
+      setPage(1);
+    };
 
   function runResend(items: ReceiptItem[], acceptLate = false) {
     const target = items.filter((r) => r.resend);
@@ -231,7 +251,10 @@ export function EReceiptsScreen() {
       setPendingLate(target);
       return;
     }
-    resend.mutate({ items: target.map((r) => ({ kind: r.kind, id: r.id })), acceptLate });
+    resend.mutate({
+      items: target.map((r) => ({ kind: r.kind, id: r.id })),
+      acceptLate,
+    });
   }
 
   const columns = useMemo<AppTableColumn<ReceiptItem>[]>(
@@ -255,7 +278,9 @@ export function EReceiptsScreen() {
         cell: (r) => (
           <div className="space-y-0.5">
             <StatusChip status={r.status} />
-            {r.replaced_uuid && <p className="text-[11px] text-muted-foreground">مُصحَّح</p>}
+            {r.replaced_uuid && (
+              <p className="text-[11px] text-muted-foreground">مُصحَّح</p>
+            )}
           </div>
         ),
       },
@@ -364,21 +389,41 @@ export function EReceiptsScreen() {
             />
           </InputGroup>
           <PeriodPicker value={period} onChange={reset(setPeriod)} />
-          <OptionSelect label="النوع" items={KINDS} value={kind} onChange={reset(setKind)} className="w-36" />
+          <OptionSelect
+            label="النوع"
+            items={KINDS}
+            value={kind}
+            onChange={reset(setKind)}
+            className="w-36"
+          />
           <OptionSelect
             label="الجهاز"
             items={[
               { value: "all", label: "كل الأجهزة" },
-              ...(list.data?.devices ?? []).map((d) => ({ value: d.id, label: d.name })),
+              ...(list.data?.devices ?? []).map((d) => ({
+                value: d.id,
+                label: d.name,
+              })),
             ]}
             value={device}
             onChange={reset(setDevice)}
             className="w-40"
           />
-          {!narrow && <ViewToggle view={view} onChange={setView} hotkey={openSale === null} />}
+          {!narrow && (
+            <ViewToggle
+              view={view}
+              onChange={setView}
+              hotkey={openSale === null}
+            />
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <SegmentedTabs label="حالة الإيصال" items={STATUS_TABS} value={status} onChange={reset(setStatus)} />
+          <SegmentedTabs
+            label="حالة الإيصال"
+            items={STATUS_TABS}
+            value={status}
+            onChange={reset(setStatus)}
+          />
           {resendable.length > 0 && (
             <Button
               type="button"
@@ -403,7 +448,9 @@ export function EReceiptsScreen() {
         isError={list.isError}
         errorMessage={extractErrorMessage(list.error, "تعذّر تحميل الإيصالات")}
         onRetry={() => list.refetch()}
-        isFiltered={status !== "all" || kind !== "all" || device !== "all" || Boolean(q)}
+        isFiltered={
+          status !== "all" || kind !== "all" || device !== "all" || Boolean(q)
+        }
         onClearFilters={() => {
           setStatus("all");
           setKind("all");
@@ -414,11 +461,18 @@ export function EReceiptsScreen() {
         empty={{
           icon: IconFileCertificate,
           title: "لا توجد إيصالات في هذه الفترة",
-          description: "الإيصالات تتولد مع كل بيع بعد تفعيل المنظومة من الإعدادات.",
+          description:
+            "الإيصالات تتولد مع كل بيع بعد تفعيل المنظومة من الإعدادات.",
         }}
         noResults={{
-          title: status === "attention" ? "لا شيء يحتاج انتباهاً" : "لا توجد إيصالات مطابقة",
-          description: status === "attention" ? "كل الإيصالات في هذه الفترة سليمة." : "جرّب فترة أو حالة أخرى.",
+          title:
+            status === "attention"
+              ? "لا شيء يحتاج انتباهاً"
+              : "لا توجد إيصالات مطابقة",
+          description:
+            status === "attention"
+              ? "كل الإيصالات في هذه الفترة سليمة."
+              : "جرّب فترة أو حالة أخرى.",
         }}
         rowHeightClassName="h-16"
         selectable
@@ -440,7 +494,11 @@ export function EReceiptsScreen() {
         }}
         view={narrow ? "cards" : view}
         renderCard={(r) => (
-          <ReceiptCard r={r} busy={resend.isPending} onResend={() => runResend([r])} />
+          <ReceiptCard
+            r={r}
+            busy={resend.isPending}
+            onResend={() => runResend([r])}
+          />
         )}
         onRowClick={(r) => setOpenSale(r.sale_id)}
         getCardLabel={label}
@@ -455,7 +513,11 @@ export function EReceiptsScreen() {
         }}
       />
 
-      <SaleDetailSheet saleId={openSale} onClose={() => setOpenSale(null)} onReturn={() => setOpenSale(null)} />
+      <SaleDetailSheet
+        saleId={openSale}
+        onClose={() => setOpenSale(null)}
+        onReturn={() => setOpenSale(null)}
+      />
       {pendingLate && (
         <LateDialog
           count={pendingLate.filter((r) => r.amendment_late).length}

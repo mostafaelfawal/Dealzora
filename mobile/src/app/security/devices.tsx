@@ -18,7 +18,11 @@ import { ListSkeleton } from "@/components/shared/Skeletons";
 import { BranchStatusBadge } from "@/features/branches/components/BranchStatusBadge";
 import { statusText } from "@/features/dashboard/lib/insights";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
-import { useDevices, usePairingCode, useRevokeDevice } from "@/features/security/hooks/useSecurity";
+import {
+  useDevices,
+  usePairingCode,
+  useRevokeDevice,
+} from "@/features/security/hooks/useSecurity";
 import { useOnline } from "@/hooks/useOnline";
 import { formatDateTime } from "@/lib/format";
 import { radius, space } from "@/theme/colors";
@@ -48,7 +52,11 @@ function DevicesScreen() {
         : "الجهاز يتوقف فوراً عن المزامنة. لربط جهاز جديد للفرع اطلب كود ربط بعدها.",
       [
         { text: "رجوع", style: "cancel" },
-        { text: "إلغاء الربط", style: "destructive", onPress: () => revoke.mutate(d.id) },
+        {
+          text: "إلغاء الربط",
+          style: "destructive",
+          onPress: () => revoke.mutate(d.id),
+        },
       ],
     );
 
@@ -60,7 +68,10 @@ function DevicesScreen() {
         : "اكتب الكود في البرنامج على جهاز الفرع (فرع تابع). صالح 15 دقيقة ومرة واحدة.",
       [
         { text: "رجوع", style: "cancel" },
-        { text: "إصدار الكود", onPress: () => pairing.mutate(d.id, { onSuccess: setCode }) },
+        {
+          text: "إصدار الكود",
+          onPress: () => pairing.mutate(d.id, { onSuccess: setCode }),
+        },
       ],
     );
 
@@ -77,7 +88,9 @@ function DevicesScreen() {
             <BranchStatusBadge status={d.status} />
           </View>
           <AppText size="xs" tone="muted">
-            {d.paired ? statusText(d.status, d.seconds_since_seen) : "لا يوجد جهاز مربوط حالياً"}
+            {d.paired
+              ? statusText(d.status, d.seconds_since_seen)
+              : "لا يوجد جهاز مربوط حالياً"}
           </AppText>
           <View style={styles.actions}>
             {d.paired && (
@@ -106,29 +119,51 @@ function DevicesScreen() {
         </Card>
       ))}
       {q.isPending && <ListSkeleton count={3} />}
-      {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
+      {q.isError && !q.data && (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر التحميل"
+          description={errorMessage(q.error)}
+        />
+      )}
       {code && <CodeSheet code={code} onClose={() => setCode(null)} />}
     </Screen>
   );
 }
 
-function CodeSheet({ code, onClose }: { code: PairingCode; onClose: () => void }) {
+function CodeSheet({
+  code,
+  onClose,
+}: {
+  code: PairingCode;
+  onClose: () => void;
+}) {
   const { colors } = useTheme();
   return (
     <Sheet title={`كود ربط فرع «${code.branch_name}»`} onClose={onClose}>
-      <View style={[styles.codeBox, { borderColor: colors.border, backgroundColor: colors.muted }]}>
+      <View
+        style={[
+          styles.codeBox,
+          { borderColor: colors.border, backgroundColor: colors.muted },
+        ]}
+      >
         <AppText selectable center style={styles.code}>
           {code.code}
         </AppText>
       </View>
       <AppText size="sm" tone="muted" center>
-        صالح حتى {formatDateTime(code.expires_at)} ولمرة واحدة. يكتبه الموظف في البرنامج على جهاز الفرع («فرع تابع»).
+        صالح حتى {formatDateTime(code.expires_at)} ولمرة واحدة. يكتبه الموظف في
+        البرنامج على جهاز الفرع («فرع تابع»).
       </AppText>
       <Button
         title="مشاركة الكود"
         icon="share-outline"
         variant="secondary"
-        onPress={() => void Share.share({ message: `كود ربط فرع ${code.branch_name} في Dealzora: ${code.code}` })}
+        onPress={() =>
+          void Share.share({
+            message: `كود ربط فرع ${code.branch_name} في Dealzora: ${code.code}`,
+          })
+        }
       />
       <Button title="تم" onPress={onClose} />
     </Sheet>
@@ -139,6 +174,16 @@ const styles = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "center", gap: space.sm },
   flex: { flex: 1 },
   actions: { flexDirection: "row", gap: space.sm, flexWrap: "wrap" },
-  codeBox: { borderWidth: 1, borderRadius: radius.md, paddingVertical: space.lg },
-  code: { fontFamily: fontFamily.bold, fontSize: 28, lineHeight: 40, letterSpacing: 2, writingDirection: "ltr" },
+  codeBox: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: space.lg,
+  },
+  code: {
+    fontFamily: fontFamily.bold,
+    fontSize: 28,
+    lineHeight: 40,
+    letterSpacing: 2,
+    writingDirection: "ltr",
+  },
 });

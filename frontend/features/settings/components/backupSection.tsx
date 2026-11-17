@@ -181,7 +181,14 @@ function BackupList({
         >
           <div className="min-w-0">
             <p className="font-medium">{formatWhen(b.createdAt)}</p>
-            <AppTooltip message={b.name.includes("before-restore") ? "نسخة أمان قبل استعادة" : formatFileSize(b.size)} onlyWhenTruncated>
+            <AppTooltip
+              message={
+                b.name.includes("before-restore")
+                  ? "نسخة أمان قبل استعادة"
+                  : formatFileSize(b.size)
+              }
+              onlyWhenTruncated
+            >
               <p className="truncate text-[11px] text-muted-foreground">
                 {b.name.includes("before-restore")
                   ? "نسخة أمان قبل استعادة"

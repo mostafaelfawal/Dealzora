@@ -141,9 +141,13 @@ export async function importProducts({
         throw new Error("حدد نوع كود المنظومة (EGS أو GS1)");
 
       const base = {
-        ...(etaCode ? { eta_item_type: etaType as EtaItemType, eta_item_code: etaCode } : {}),
+        ...(etaCode
+          ? { eta_item_type: etaType as EtaItemType, eta_item_code: etaCode }
+          : {}),
         ...(taxType ? { tax_type: taxType } : {}),
-        ...(Number.isFinite(ratePercent) && taxType !== "exempt" && taxType !== "zero"
+        ...(Number.isFinite(ratePercent) &&
+        taxType !== "exempt" &&
+        taxType !== "zero"
           ? { tax_rate: Math.round(ratePercent * 100) }
           : {}),
         name,

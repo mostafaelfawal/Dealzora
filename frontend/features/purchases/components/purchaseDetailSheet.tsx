@@ -58,7 +58,9 @@ function PurchaseLines({ lines }: { lines: Purchase["lines"] }) {
         >
           <span className="min-w-0 flex-1">
             <AppTooltip message={l.name} onlyWhenTruncated>
-              <span className="block truncate text-sm font-medium">{l.name}</span>
+              <span className="block truncate text-sm font-medium">
+                {l.name}
+              </span>
             </AppTooltip>
             <span className="text-[11px] text-muted-foreground">
               {formatQty(l.qty)} {l.unitName} × {l.unitCost}

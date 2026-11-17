@@ -125,13 +125,7 @@ function Change({
 }
 
 /** مؤشر صغير في رأس البطاقة: رقم كبير وتحته وصف. */
-function Figure({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function Figure({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0 border bg-muted/30 p-2.5">
       <AppTooltip message={label} onlyWhenTruncated>
@@ -240,7 +234,11 @@ export function ReturnReasonsCard({ reasons }: { reasons: NamedValue[] }) {
 
 /* ---------- العملاء ---------- */
 
-export function TopCustomersCard({ customers: c }: { customers: CustomersBrief }) {
+export function TopCustomersCard({
+  customers: c,
+}: {
+  customers: CustomersBrief;
+}) {
   return (
     <ChartCard
       index={13}

@@ -68,8 +68,18 @@ export const dark: Palette = {
  * للوضعين (فرق CVD ≥ 9.2، الرؤية العادية ≥ 26). الأزرق لسلسلة واحدة، والثلاثة لتوزيع الدفع.
  * الأخضر الفاتح أقل من 3:1 على الأبيض: المبالغ تُكتب دائماً بجانبه في المفتاح (لا لون وحده).
  */
-export const chartLight = { series1: "#2a78d6", series2: "#eb6834", series3: "#1baf7a", track: "#f0efec" };
-export const chartDark = { series1: "#3987e5", series2: "#d95926", series3: "#199e70", track: "#2a2a28" };
+export const chartLight = {
+  series1: "#2a78d6",
+  series2: "#eb6834",
+  series3: "#1baf7a",
+  track: "#f0efec",
+};
+export const chartDark = {
+  series1: "#3987e5",
+  series2: "#d95926",
+  series3: "#199e70",
+  track: "#2a2a28",
+};
 
 /** حواف حادة مثل البرنامج المكتبي (rounded-none في كل مكوّنات الواجهة). الدوائر للنقاط الصغيرة فقط. */
 export const radius = { sm: 0, md: 0, lg: 0 } as const;

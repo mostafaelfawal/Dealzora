@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Alert } from "react-native";
 
 import { ApiError, errorMessage } from "@/api/errors";
@@ -26,9 +31,11 @@ export function useTransfers(filter: TransferFilter) {
   const live = useLiveRefresh(true);
   return useInfiniteQuery({
     queryKey: transferKeys.list(filter),
-    queryFn: ({ pageParam, signal }) => fetchTransfers(filter, pageParam, signal),
+    queryFn: ({ pageParam, signal }) =>
+      fetchTransfers(filter, pageParam, signal),
     initialPageParam: 1,
-    getNextPageParam: (last, pages) => (pages.length * 30 < last.total ? pages.length + 1 : undefined),
+    getNextPageParam: (last, pages) =>
+      pages.length * 30 < last.total ? pages.length + 1 : undefined,
     ...live,
   });
 }
@@ -41,7 +48,11 @@ export function useTransfer(id: string) {
     queryFn: ({ signal }) => fetchTransfer(id, signal),
     ...live,
     refetchInterval: (q) =>
-      live.refetchInterval === false ? false : approvalBusy(q.state.data?.approval ?? null) ? 15_000 : 60_000,
+      live.refetchInterval === false
+        ? false
+        : approvalBusy(q.state.data?.approval ?? null)
+          ? 15_000
+          : 60_000,
   });
 }
 
@@ -62,22 +73,30 @@ export function useTransferActions(id: string) {
       const current = (e.details as { transfer?: Transfer } | null)?.transfer;
       if (current) qc.setQueryData(transferKeys.one(id), current);
       void qc.invalidateQueries({ queryKey: transferKeys.all });
-      Alert.alert("تغيّر الطلب من جهاز آخر", `${e.message}. تم تحديث الشاشة بالحالة الحالية.`);
+      Alert.alert(
+        "تغيّر الطلب من جهاز آخر",
+        `${e.message}. تم تحديث الشاشة بالحالة الحالية.`,
+      );
       return;
     }
-    if (e instanceof ApiError && (e.code === "approval_pending" || e.code === "approval_in_progress")) {
+    if (
+      e instanceof ApiError &&
+      (e.code === "approval_pending" || e.code === "approval_in_progress")
+    ) {
       void qc.invalidateQueries({ queryKey: transferKeys.all });
     }
     Alert.alert(title, errorMessage(e));
   };
 
   const approve = useMutation({
-    mutationFn: (v: { t: Transfer; lines: ApproveLine[]; note?: string }) => approveTransfer(v.t, v.lines, v.note),
+    mutationFn: (v: { t: Transfer; lines: ApproveLine[]; note?: string }) =>
+      approveTransfer(v.t, v.lines, v.note),
     onSuccess: onDone,
     onError: onError("تعذّرت الموافقة"),
   });
   const reject = useMutation({
-    mutationFn: (v: { t: Transfer; reason: string }) => rejectTransfer(v.t, v.reason),
+    mutationFn: (v: { t: Transfer; reason: string }) =>
+      rejectTransfer(v.t, v.reason),
     onSuccess: onDone,
     onError: onError("تعذّر الرفض"),
   });

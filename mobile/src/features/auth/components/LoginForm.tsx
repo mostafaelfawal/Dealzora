@@ -45,7 +45,11 @@ export function LoginForm() {
   const serverUrl = normalizeServerUrl(server);
   const serverError = server && !serverUrl ? "عنوان غير صالح" : null;
   const insecure = serverUrl ? isInsecureRemote(serverUrl) : false;
-  const ready = !!serverUrl && code.length === CODE_LEN && username.trim().length >= 3 && password.length > 0;
+  const ready =
+    !!serverUrl &&
+    code.length === CODE_LEN &&
+    username.trim().length >= 3 &&
+    password.length > 0;
 
   async function submit() {
     if (!ready || submitting || !serverUrl) return;
@@ -66,7 +70,12 @@ export function LoginForm() {
   return (
     <View style={styles.form}>
       {notice && (
-        <View style={[styles.notice, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.notice,
+            { backgroundColor: colors.muted, borderColor: colors.border },
+          ]}
+        >
           <AppText size="sm">{notice}</AppText>
         </View>
       )}
@@ -81,7 +90,12 @@ export function LoginForm() {
           autoCorrect={false}
           keyboardType="url"
           ltr
-          error={serverError ?? (insecure ? "اتصال غير مشفّر: استخدم https لعنوان على الإنترنت" : null)}
+          error={
+            serverError ??
+            (insecure
+              ? "اتصال غير مشفّر: استخدم https لعنوان على الإنترنت"
+              : null)
+          }
           hint="نفس العنوان المكتوب في إعدادات المزامنة في البرنامج"
         />
       ) : (
@@ -89,7 +103,12 @@ export function LoginForm() {
           <AppText size="sm" tone="muted" style={styles.flex} numberOfLines={1}>
             الخادم: {serverUrl?.replace(/^https?:\/\//, "")}
           </AppText>
-          <Button title="تغيير" variant="ghost" onPress={() => setEditServer(true)} style={styles.smallBtn} />
+          <Button
+            title="تغيير"
+            variant="ghost"
+            onPress={() => setEditServer(true)}
+            style={styles.smallBtn}
+          />
         </View>
       )}
 
@@ -140,9 +159,20 @@ export function LoginForm() {
         <FadeIn key={error} offset={-6}>
           <View
             accessibilityRole="alert"
-            style={[styles.notice, styles.errorBox, { backgroundColor: colors.destructiveSoft, borderColor: colors.destructive }]}
+            style={[
+              styles.notice,
+              styles.errorBox,
+              {
+                backgroundColor: colors.destructiveSoft,
+                borderColor: colors.destructive,
+              },
+            ]}
           >
-            <Ionicons name="alert-circle" size={18} color={colors.destructive} />
+            <Ionicons
+              name="alert-circle"
+              size={18}
+              color={colors.destructive}
+            />
             <AppText size="sm" tone="destructive" style={styles.flex}>
               {error}
             </AppText>
@@ -150,7 +180,13 @@ export function LoginForm() {
         </FadeIn>
       )}
 
-      <Button title="دخول" icon="log-in-outline" onPress={submit} disabled={!ready} loading={submitting} />
+      <Button
+        title="دخول"
+        icon="log-in-outline"
+        onPress={submit}
+        disabled={!ready}
+        loading={submitting}
+      />
     </View>
   );
 }

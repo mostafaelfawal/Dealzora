@@ -33,7 +33,12 @@ function tokensOut(n: number, expiresInMin = 10): MobileTokens {
 
 function stored(n: number, expiresInMin = 10): StoredTokens {
   const t = tokensOut(n, expiresInMin);
-  return { access_token: t.access_token, expires_at: t.expires_at, refresh_token: t.refresh_token, session_id: t.session_id };
+  return {
+    access_token: t.access_token,
+    expires_at: t.expires_at,
+    refresh_token: t.refresh_token,
+    session_id: t.session_id,
+  };
 }
 
 class MemoryStore implements TokenStore {
@@ -60,8 +65,14 @@ const errorBody = (code: string, message: string, details: unknown = null) => ({
   error: { code, message, details },
 });
 
-function setup(store: MemoryStore, handler: Handler, extra: Partial<ConstructorParameters<typeof ApiClient>[0]> = {}) {
-  const fetchMock = jest.fn((url: string, init: RequestInit) => Promise.resolve(handler(url, init)));
+function setup(
+  store: MemoryStore,
+  handler: Handler,
+  extra: Partial<ConstructorParameters<typeof ApiClient>[0]> = {},
+) {
+  const fetchMock = jest.fn((url: string, init: RequestInit) =>
+    Promise.resolve(handler(url, init)),
+  );
   const onSessionEnded = jest.fn();
   const onPlanBlocked = jest.fn();
   const onUser = jest.fn();
@@ -78,7 +89,8 @@ function setup(store: MemoryStore, handler: Handler, extra: Partial<ConstructorP
   return { client, fetchMock, onSessionEnded, onPlanBlocked, onUser };
 }
 
-const auth = (init: RequestInit) => (init.headers as Record<string, string>).Authorization;
+const auth = (init: RequestInit) =>
+  (init.headers as Record<string, string>).Authorization;
 const path = (url: string) => url.replace(`${BASE}/mobile/v1`, "");
 
 describe("ApiClient", () => {
@@ -97,7 +109,9 @@ describe("ApiClient", () => {
     const store = new MemoryStore(stored(1, 0)); // ينتهي الآن
     const { client, fetchMock, onUser } = setup(store, (url, init) => {
       if (path(url) === "/auth/refresh") {
-        expect(JSON.parse(init.body as string)).toEqual({ refresh_token: "sess.refresh-1" });
+        expect(JSON.parse(init.body as string)).toEqual({
+          refresh_token: "sess.refresh-1",
+        });
         expect(auth(init)).toBeUndefined();
         return json(200, tokensOut(2));
       }
@@ -105,7 +119,10 @@ describe("ApiClient", () => {
       return json(200, USER);
     });
     await client.get("/me");
-    expect(fetchMock.mock.calls.map(([u]) => path(u))).toEqual(["/auth/refresh", "/me"]);
+    expect(fetchMock.mock.calls.map(([u]) => path(u))).toEqual([
+      "/auth/refresh",
+      "/me",
+    ]);
     expect(store.value?.refresh_token).toBe("sess.refresh-2");
     expect(onUser).toHaveBeenCalledWith(USER);
   });
@@ -114,19 +131,28 @@ describe("ApiClient", () => {
     const store = new MemoryStore(stored(1));
     const { client, fetchMock } = setup(store, (url, init) => {
       if (path(url) === "/auth/refresh") return json(200, tokensOut(2));
-      if (auth(init) === "Bearer access-1") return json(401, errorBody("token_expired", "انتهى التوكن"));
+      if (auth(init) === "Bearer access-1")
+        return json(401, errorBody("token_expired", "انتهى التوكن"));
       return json(200, { ok: true });
     });
     await expect(client.get("/branches")).resolves.toEqual({ ok: true });
-    expect(fetchMock.mock.calls.map(([u]) => path(u))).toEqual(["/branches", "/auth/refresh", "/branches"]);
+    expect(fetchMock.mock.calls.map(([u]) => path(u))).toEqual([
+      "/branches",
+      "/auth/refresh",
+      "/branches",
+    ]);
   });
 
   test("لا حلقة: token_expired بعد التجديد يفشل بدل التكرار", async () => {
     const store = new MemoryStore(stored(1));
     const { client, fetchMock } = setup(store, (url) =>
-      path(url) === "/auth/refresh" ? json(200, tokensOut(2)) : json(401, errorBody("token_expired", "انتهى التوكن")),
+      path(url) === "/auth/refresh"
+        ? json(200, tokensOut(2))
+        : json(401, errorBody("token_expired", "انتهى التوكن")),
     );
-    await expect(client.get("/me")).rejects.toMatchObject({ code: "token_expired" });
+    await expect(client.get("/me")).rejects.toMatchObject({
+      code: "token_expired",
+    });
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
@@ -142,7 +168,11 @@ describe("ApiClient", () => {
       expect(auth(init)).toBe("Bearer access-2");
       return json(200, { path: path(url) });
     });
-    const results = await Promise.all([client.get("/me"), client.get("/branches"), client.get("/sessions")]);
+    const results = await Promise.all([
+      client.get("/me"),
+      client.get("/branches"),
+      client.get("/sessions"),
+    ]);
     expect(results).toHaveLength(3);
     expect(refreshes).toBe(1);
   });
@@ -176,10 +206,16 @@ describe("ApiClient", () => {
   test("refresh مرفوض ← مسح التوكنات وإبلاغ انتهاء الجلسة", async () => {
     const store = new MemoryStore(stored(1, 0));
     const { client, onSessionEnded } = setup(store, () =>
-      json(401, errorBody("refresh_invalid", "انتهت الجلسة. سجّل الدخول من جديد")),
+      json(
+        401,
+        errorBody("refresh_invalid", "انتهت الجلسة. سجّل الدخول من جديد"),
+      ),
     );
     const error = await client.get("/me").catch((e: unknown) => e);
-    expect(error).toMatchObject({ code: "refresh_invalid", message: "انتهت الجلسة. سجّل الدخول من جديد" });
+    expect(error).toMatchObject({
+      code: "refresh_invalid",
+      message: "انتهت الجلسة. سجّل الدخول من جديد",
+    });
     expect(store.value).toBeNull();
     expect(onSessionEnded).toHaveBeenCalledTimes(1);
   });
@@ -189,7 +225,9 @@ describe("ApiClient", () => {
     const { client, onSessionEnded } = setup(store, () =>
       json(401, errorBody("session_revoked", "تم تسجيل الخروج من هذا الهاتف")),
     );
-    await expect(client.get("/me")).rejects.toMatchObject({ isSessionEnded: true });
+    await expect(client.get("/me")).rejects.toMatchObject({
+      isSessionEnded: true,
+    });
     expect(store.clear).toHaveBeenCalled();
     expect(onSessionEnded).toHaveBeenCalled();
     expect(await client.hasSession()).toBe(false);
@@ -199,10 +237,22 @@ describe("ApiClient", () => {
     const store = new MemoryStore(stored(1));
     const details = { current_plan: "pro", required_plan: "enterprise" };
     const { client, onPlanBlocked, onSessionEnded } = setup(store, () =>
-      json(403, errorBody("plan_upgrade_required", "تطبيق الهاتف متاح في خطة «سلسلة» فقط", details)),
+      json(
+        403,
+        errorBody(
+          "plan_upgrade_required",
+          "تطبيق الهاتف متاح في خطة «سلسلة» فقط",
+          details,
+        ),
+      ),
     );
     const error = await client.get("/me").catch((e: unknown) => e);
-    expect(error).toMatchObject({ code: "plan_upgrade_required", status: 403, details, isPlanBlocked: true });
+    expect(error).toMatchObject({
+      code: "plan_upgrade_required",
+      status: 403,
+      details,
+      isPlanBlocked: true,
+    });
     expect(onPlanBlocked).toHaveBeenCalledTimes(1);
     expect(onSessionEnded).not.toHaveBeenCalled();
     expect(store.value).not.toBeNull();
@@ -214,7 +264,12 @@ describe("ApiClient", () => {
       throw new TypeError("Network request failed");
     });
     const error = await client.get("/me").catch((e: unknown) => e);
-    expect(error).toMatchObject({ code: "network", message: NETWORK_MESSAGE, isOffline: true, status: 0 });
+    expect(error).toMatchObject({
+      code: "network",
+      message: NETWORK_MESSAGE,
+      isOffline: true,
+      status: 0,
+    });
     expect(store.value).not.toBeNull();
     expect(onSessionEnded).not.toHaveBeenCalled();
   });
@@ -225,31 +280,61 @@ describe("ApiClient", () => {
       store,
       (_url, init) =>
         new Promise<Response>((_resolve, reject) => {
-          init.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+          init.signal?.addEventListener("abort", () =>
+            reject(new Error("aborted")),
+          );
         }),
       { timeoutMs: 20 },
     );
-    await expect(client.get("/me")).rejects.toMatchObject({ code: "timeout", message: TIMEOUT_MESSAGE, isOffline: true });
+    await expect(client.get("/me")).rejects.toMatchObject({
+      code: "timeout",
+      message: TIMEOUT_MESSAGE,
+      isOffline: true,
+    });
   });
 
   test("خطأ 500 ← رسالة عامة بلا تفاصيل داخلية", async () => {
     const store = new MemoryStore(stored(1));
-    const { client } = setup(store, () => json(500, { error: { code: "server_error", message: "Traceback ..." } }));
-    await expect(client.get("/me")).rejects.toMatchObject({ code: "server_error", message: SERVER_MESSAGE, status: 500 });
+    const { client } = setup(store, () =>
+      json(500, { error: { code: "server_error", message: "Traceback ..." } }),
+    );
+    await expect(client.get("/me")).rejects.toMatchObject({
+      code: "server_error",
+      message: SERVER_MESSAGE,
+      status: 500,
+    });
   });
 
   test("رد غير JSON (بوابة/بروكسي) ← رسالة عامة", async () => {
     const store = new MemoryStore(stored(1));
-    const { client } = setup(store, () => new Response("<html>Bad Gateway</html>", { status: 502 }));
-    await expect(client.get("/me")).rejects.toMatchObject({ message: SERVER_MESSAGE, status: 502 });
+    const { client } = setup(
+      store,
+      () => new Response("<html>Bad Gateway</html>", { status: 502 }),
+    );
+    await expect(client.get("/me")).rejects.toMatchObject({
+      message: SERVER_MESSAGE,
+      status: 502,
+    });
   });
 
   test("رسالة الخادم العربية تُعرض كما هي (مثل حد المحاولات)", async () => {
     const store = new MemoryStore(null);
     const { client } = setup(store, () =>
-      json(429, errorBody("rate_limited", "محاولات كثيرة. انتظر دقيقة وحاول مرة أخرى", { retry_after: 30 })),
+      json(
+        429,
+        errorBody("rate_limited", "محاولات كثيرة. انتظر دقيقة وحاول مرة أخرى", {
+          retry_after: 30,
+        }),
+      ),
     );
-    const input = { code: "AAAA-BBBB-CCCC", username: "owner", password: "x", device_id: "dev-0001", device_name: "Pixel", platform: "android" as const };
+    const input = {
+      code: "AAAA-BBBB-CCCC",
+      username: "owner",
+      password: "x",
+      device_id: "dev-0001",
+      device_name: "Pixel",
+      platform: "android" as const,
+    };
     await expect(client.login(input)).rejects.toMatchObject({
       code: "rate_limited",
       message: "محاولات كثيرة. انتظر دقيقة وحاول مرة أخرى",
@@ -263,14 +348,24 @@ describe("ApiClient", () => {
     const { client, onPlanBlocked } = setup(store, (url, init) => {
       expect(path(url)).toBe("/auth/login");
       expect(auth(init)).toBeUndefined();
-      if (planned) return json(403, errorBody("plan_upgrade_required", "رقِّ الخطة"));
+      if (planned)
+        return json(403, errorBody("plan_upgrade_required", "رقِّ الخطة"));
       return json(200, tokensOut(1));
     });
-    const input = { code: "AAAA-BBBB-CCCC", username: "owner", password: "pw", device_id: "dev-0001", device_name: "Pixel", platform: "android" as const };
+    const input = {
+      code: "AAAA-BBBB-CCCC",
+      username: "owner",
+      password: "pw",
+      device_id: "dev-0001",
+      device_name: "Pixel",
+      platform: "android" as const,
+    };
     await client.login(input);
     expect(store.value).toEqual(stored(1));
     planned = true;
-    await expect(client.login(input)).rejects.toMatchObject({ code: "plan_upgrade_required" });
+    await expect(client.login(input)).rejects.toMatchObject({
+      code: "plan_upgrade_required",
+    });
     expect(onPlanBlocked).not.toHaveBeenCalled();
   });
 
@@ -304,15 +399,23 @@ describe("ApiClient", () => {
 
   test("بدون عنوان خادم ← رسالة واضحة", async () => {
     const store = new MemoryStore(stored(1));
-    const { client, fetchMock } = setup(store, () => json(200, {}), { baseUrl: () => "  " });
-    await expect(client.get("/me")).rejects.toMatchObject({ code: "no_server" });
+    const { client, fetchMock } = setup(store, () => json(200, {}), {
+      baseUrl: () => "  ",
+    });
+    await expect(client.get("/me")).rejects.toMatchObject({
+      code: "no_server",
+    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("بدون جلسة محفوظة ← unauthorized بلا طلب", async () => {
     const store = new MemoryStore(null);
-    const { client, fetchMock, onSessionEnded } = setup(store, () => json(200, {}));
-    await expect(client.get("/me")).rejects.toMatchObject({ code: "unauthorized" });
+    const { client, fetchMock, onSessionEnded } = setup(store, () =>
+      json(200, {}),
+    );
+    await expect(client.get("/me")).rejects.toMatchObject({
+      code: "unauthorized",
+    });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(onSessionEnded).not.toHaveBeenCalled(); // لم تكن هناك جلسة أصلاً
   });

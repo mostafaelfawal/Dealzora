@@ -27,7 +27,10 @@ export function BranchRanking({ branches, singleDay }: Props) {
   const now = useNow();
   const { chart, colors } = useTheme();
   // الأشرطة تنمو من بداية السطر حين تتغير الأرقام (لا مع كل تحديث تلقائي بنفس الأرقام) (العرض بالنسبة: بلا native driver، والفروع قليلة)
-  const grow = useGrow(branches.map((b) => b.net).join("|"), { native: false, delay: 250 });
+  const grow = useGrow(branches.map((b) => b.net).join("|"), {
+    native: false,
+    delay: 250,
+  });
   const max = Math.max(...branches.map((b) => b.net), 0);
 
   return (
@@ -45,8 +48,13 @@ export function BranchRanking({ branches, singleDay }: Props) {
             key={b.id}
             accessibilityRole="button"
             accessibilityHint="تفاصيل الفرع"
-            onPress={() => router.push({ pathname: "/branch/[id]", params: { id: b.id } })}
-            style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.muted }]}
+            onPress={() =>
+              router.push({ pathname: "/branch/[id]", params: { id: b.id } })
+            }
+            style={({ pressed }) => [
+              styles.row,
+              pressed && { backgroundColor: colors.muted },
+            ]}
           >
             <View style={styles.head}>
               <AppText size="sm" tone="muted" style={styles.rank}>
@@ -60,7 +68,12 @@ export function BranchRanking({ branches, singleDay }: Props) {
                   لم يرسل بعد
                 </AppText>
               ) : (
-                <Money amount={b.net} size="sm" weight="semibold" tone={b.net < 0 ? "destructive" : "default"} />
+                <Money
+                  amount={b.net}
+                  size="sm"
+                  weight="semibold"
+                  tone={b.net < 0 ? "destructive" : "default"}
+                />
               )}
             </View>
             {cov !== "none" && (
@@ -70,7 +83,10 @@ export function BranchRanking({ branches, singleDay }: Props) {
                     style={[
                       styles.bar,
                       {
-                        width: grow.interpolate({ inputRange: [0, 1], outputRange: ["0%", `${share * 100}%`] }),
+                        width: grow.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", `${share * 100}%`],
+                        }),
                         backgroundColor: chart.series1,
                       },
                     ]}
@@ -79,7 +95,9 @@ export function BranchRanking({ branches, singleDay }: Props) {
               </View>
             )}
             <AppText size="xs" tone="muted">
-              {b.last_update ? `آخر تحديث من الفرع: ${formatTimeAgo(b.last_update, now)}` : "لا تحديثات من الفرع في هذه الفترة"}
+              {b.last_update
+                ? `آخر تحديث من الفرع: ${formatTimeAgo(b.last_update, now)}`
+                : "لا تحديثات من الفرع في هذه الفترة"}
               {note && cov === "partial" ? ` · ${note}` : ""}
             </AppText>
           </Pressable>
@@ -96,7 +114,12 @@ export function BranchRanking({ branches, singleDay }: Props) {
 
 const styles = StyleSheet.create({
   // الخلفية عند الضغط تمتد لحواف البطاقة تقريباً
-  row: { gap: 4, paddingVertical: space.sm, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
+  row: {
+    gap: 4,
+    paddingVertical: space.sm,
+    marginHorizontal: -space.sm,
+    paddingHorizontal: space.sm,
+  },
   head: { flexDirection: "row", alignItems: "center", gap: space.sm },
   rank: { width: 18, textAlign: "center" },
   name: { flex: 1 },

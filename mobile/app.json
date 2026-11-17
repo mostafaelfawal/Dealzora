@@ -12,9 +12,7 @@
       "bundleIdentifier": "com.dealzora.chain",
       "infoPlist": {
         "ExpoLocalization_forcesRTL": true,
-        "CFBundleLocalizations": [
-          "ar"
-        ]
+        "CFBundleLocalizations": ["ar"]
       }
     },
     "android": {
@@ -47,9 +45,7 @@
         {
           "supportsRTL": true,
           "forcesRTL": true,
-          "supportedLocales": [
-            "ar"
-          ]
+          "supportedLocales": ["ar"]
         }
       ],
       [

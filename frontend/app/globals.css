@@ -301,14 +301,18 @@ input::-ms-clear {
   --destructive: oklch(0.53 0.22 27);
   color: var(--foreground);
   background:
-    linear-gradient(180deg, oklch(0.5 0.02 80 / 0) 60%, oklch(0.5 0.02 80 / 0.07)),
+    linear-gradient(
+      180deg,
+      oklch(0.5 0.02 80 / 0) 60%,
+      oklch(0.5 0.02 80 / 0.07)
+    ),
     var(--paper);
   padding-block: calc(var(--tooth) / 2 + 16px);
   mask:
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg)
       bottom / var(--tooth) 51% repeat-x,
-    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top /
-      var(--tooth) 51% repeat-x;
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg)
+      top / var(--tooth) 51% repeat-x;
 }
 
 .dark .receipt-paper {

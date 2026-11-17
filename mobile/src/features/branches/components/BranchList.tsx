@@ -19,12 +19,20 @@ import { useTheme } from "@/theme/ThemeProvider";
 import { BranchStatusBadge } from "./BranchStatusBadge";
 
 /** الأسوأ أولاً: المنقطع والمتأخر يحتاجان انتباهاً. */
-const ORDER = { offline: 0, late: 1, never: 2, online: 3, disabled: 4 } as const;
+const ORDER = {
+  offline: 0,
+  late: 1,
+  never: 2,
+  online: 3,
+  disabled: 4,
+} as const;
 
 export function BranchList({ branches }: { branches: MobileBranch[] }) {
   const now = useNow();
   const { colors } = useTheme();
-  const sorted = [...branches].sort((a, b) => ORDER[a.status] - ORDER[b.status]);
+  const sorted = [...branches].sort(
+    (a, b) => ORDER[a.status] - ORDER[b.status],
+  );
   return (
     <View style={styles.list}>
       {sorted.map((b, i) => {
@@ -42,15 +50,25 @@ export function BranchList({ branches }: { branches: MobileBranch[] }) {
               accessibilityRole="button"
               accessibilityHint="تفاصيل الفرع"
               scaleTo={0.985}
-              onPress={() => router.push({ pathname: "/branch/[id]", params: { id: b.id } })}
+              onPress={() =>
+                router.push({ pathname: "/branch/[id]", params: { id: b.id } })
+              }
             >
               <Card style={[styles.card, { borderStartColor: stripe }]}>
                 <View style={styles.head}>
-                  <AppText weight="semibold" style={styles.name} numberOfLines={1}>
+                  <AppText
+                    weight="semibold"
+                    style={styles.name}
+                    numberOfLines={1}
+                  >
                     {b.name}
                   </AppText>
                   <BranchStatusBadge status={b.status} />
-                  <Ionicons name="chevron-back" size={16} color={colors.mutedForeground} />
+                  <Ionicons
+                    name="chevron-back"
+                    size={16}
+                    color={colors.mutedForeground}
+                  />
                 </View>
                 <AppText size="xs" tone="muted">
                   {statusText(b.status, b.seconds_since_seen)}

@@ -10,7 +10,11 @@ export function OwnerOnly({ children }: PropsWithChildren) {
   if (useIsOwner()) return <>{children}</>;
   return (
     <Screen>
-      <EmptyState icon="lock-closed-outline" title="لمالك المحل فقط" description="هذه الإعدادات تظهر لحساب المالك." />
+      <EmptyState
+        icon="lock-closed-outline"
+        title="لمالك المحل فقط"
+        description="هذه الإعدادات تظهر لحساب المالك."
+      />
     </Screen>
   );
 }

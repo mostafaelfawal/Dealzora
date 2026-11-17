@@ -35,20 +35,42 @@ export default function SensitiveRoute() {
   const rows = q.data ?? [];
 
   return (
-    <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching && !q.isPlaceholderData}>
+    <Screen
+      onRefresh={() => void q.refetch()}
+      refreshing={q.isRefetching && !q.isPlaceholderData}
+    >
       <PeriodPicker preset={preset} range={range} />
       <AppText size="xs" tone="muted">
-        الحدود يحددها المالك (المزيد ← حدود العمليات الحساسة)، وتصل للفروع مع مزامنتها.
+        الحدود يحددها المالك (المزيد ← حدود العمليات الحساسة)، وتصل للفروع مع
+        مزامنتها.
       </AppText>
       {q.isPending && <ListSkeleton count={4} />}
-      {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
+      {q.isError && !q.data && (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر التحميل"
+          description={errorMessage(q.error)}
+        />
+      )}
       {rows.map((r) => (
-        <Card key={r.id} style={[styles.row, q.isPlaceholderData && styles.stale]}>
-          <Ionicons name={ICON[r.data.type]} size={22} color={r.data.type === "full_return" ? colors.destructive : colors.warning} />
+        <Card
+          key={r.id}
+          style={[styles.row, q.isPlaceholderData && styles.stale]}
+        >
+          <Ionicons
+            name={ICON[r.data.type]}
+            size={22}
+            color={
+              r.data.type === "full_return"
+                ? colors.destructive
+                : colors.warning
+            }
+          />
           <View style={styles.flex}>
             <AppText weight="semibold">{SENSITIVE_LABEL[r.data.type]}</AppText>
             <AppText size="sm" tone="muted">
-              {r.branch_name} · {r.data.cashier} · {r.data.type === "return" ? "مرتجع" : "فاتورة"} #{r.data.number}
+              {r.branch_name} · {r.data.cashier} ·{" "}
+              {r.data.type === "return" ? "مرتجع" : "فاتورة"} #{r.data.number}
             </AppText>
             {r.at && (
               <AppText size="xs" tone="muted">
@@ -60,14 +82,23 @@ export default function SensitiveRoute() {
             <Money amount={r.data.amount} weight="bold" size="sm" />
             {r.data.type === "discount" && (
               <AppText size="xs" tone="muted">
-                من <Money amount={r.data.total} size="xs" tone="muted" hideCurrency />
+                من{" "}
+                <Money
+                  amount={r.data.total}
+                  size="xs"
+                  tone="muted"
+                  hideCurrency
+                />
               </AppText>
             )}
           </View>
         </Card>
       ))}
       {q.data && rows.length === 0 && (
-        <EmptyState icon="shield-checkmark-outline" title="لا عمليات حساسة في هذه الفترة" />
+        <EmptyState
+          icon="shield-checkmark-outline"
+          title="لا عمليات حساسة في هذه الفترة"
+        />
       )}
     </Screen>
   );

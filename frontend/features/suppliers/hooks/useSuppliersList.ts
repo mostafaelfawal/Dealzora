@@ -89,9 +89,7 @@ export function useSuppliersList() {
         return;
       }
       toast(
-        updated.isActive
-          ? `فُعّل «${updated.name}»`
-          : `عُطّل «${updated.name}»`,
+        updated.isActive ? `فُعّل «${updated.name}»` : `عُطّل «${updated.name}»`,
         {
           action: {
             label: "تراجع",
@@ -148,8 +146,7 @@ export function useSuppliersList() {
   const bulkDeactivateMutation = useMutation({
     mutationFn: (rows: Supplier[]) => bulkDeactivateSuppliers(toItems(rows)),
     onSuccess: (result) => showBulkResult(result, "تم تعطيل", "مورد"),
-    onError: (error) =>
-      toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
+    onError: (error) => toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
     onSettled: refresh,
   });
 

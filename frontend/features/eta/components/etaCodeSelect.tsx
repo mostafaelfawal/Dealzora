@@ -162,7 +162,11 @@ export function EtaCodeSelect({
           />
         </div>
 
-        <ul role="listbox" aria-label="الأكواد" className="max-h-72 overflow-y-auto">
+        <ul
+          role="listbox"
+          aria-label="الأكواد"
+          className="max-h-72 overflow-y-auto"
+        >
           {visible.length === 0 ? (
             <li className="py-6 text-center text-muted-foreground">
               لا توجد نتائج

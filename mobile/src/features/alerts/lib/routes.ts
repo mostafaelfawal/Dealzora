@@ -3,7 +3,15 @@
  * رابط غير متوقع لا يفتح أي شيء.
  */
 const STATIC = new Set([
-  "/alerts", "/receipts", "/transfers", "/branches", "/", "/stock", "/shifts", "/sensitive", "/top-sellers",
+  "/alerts",
+  "/receipts",
+  "/transfers",
+  "/branches",
+  "/",
+  "/stock",
+  "/shifts",
+  "/sensitive",
+  "/top-sellers",
 ]);
 const DYNAMIC = /^\/(transfer|branch)\/[0-9A-Za-z-]{8,36}$/;
 

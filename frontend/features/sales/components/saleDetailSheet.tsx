@@ -128,7 +128,8 @@ export function SaleDetailSheet({
   const shopName = shop.data ?? DEFAULT_SHOP_NAME;
   const open = saleId !== null;
 
-  const print = () => sale && void printReceipt(sale, shopName, { reprint: true });
+  const print = () =>
+    sale && void printReceipt(sale, shopName, { reprint: true });
   const whatsapp = () =>
     sale &&
     sendWhatsapp(sale, shopName, sale.customerPhone).catch(() =>

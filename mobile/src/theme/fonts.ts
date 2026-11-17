@@ -25,4 +25,11 @@ export const fontFamily: Record<FontWeight, string> = {
   bold: "IBMPlexSansArabic_700Bold",
 };
 
-export const fontSize = { xs: 12, sm: 13, md: 15, lg: 17, xl: 20, xxl: 26 } as const;
+export const fontSize = {
+  xs: 12,
+  sm: 13,
+  md: 15,
+  lg: 17,
+  xl: 20,
+  xxl: 26,
+} as const;

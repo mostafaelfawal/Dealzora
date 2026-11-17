@@ -4,7 +4,11 @@ import type { Transfer, TransferList, TransferStatus } from "@/api/types";
 
 export type TransferFilter = "needs_action" | "all" | TransferStatus;
 
-export function fetchTransfers(filter: TransferFilter, page: number, signal?: AbortSignal): Promise<TransferList> {
+export function fetchTransfers(
+  filter: TransferFilter,
+  page: number,
+  signal?: AbortSignal,
+): Promise<TransferList> {
   const params = new URLSearchParams({ page: String(page), page_size: "30" });
   if (filter === "needs_action") params.set("needs_action", "true");
   else if (filter !== "all") params.set("status", filter);
@@ -21,10 +25,25 @@ export interface ApproveLine {
 }
 
 /** موافقة ينفّذها جهاز الفرع المطلوب منه (خصم المخزون والتكلفة) مع مزامنته التالية. */
-export const approveTransfer = (t: Pick<Transfer, "id" | "version">, lines: ApproveLine[], note?: string) =>
-  api.post<Transfer>(`/transfers/${encodeURIComponent(t.id)}/approve`, { version: t.version, lines, note: note || null });
+export const approveTransfer = (
+  t: Pick<Transfer, "id" | "version">,
+  lines: ApproveLine[],
+  note?: string,
+) =>
+  api.post<Transfer>(`/transfers/${encodeURIComponent(t.id)}/approve`, {
+    version: t.version,
+    lines,
+    note: note || null,
+  });
 
-export const rejectTransfer = (t: Pick<Transfer, "id" | "version">, reason: string) =>
-  api.post<Transfer>(`/transfers/${encodeURIComponent(t.id)}/reject`, { version: t.version, reason });
+export const rejectTransfer = (
+  t: Pick<Transfer, "id" | "version">,
+  reason: string,
+) =>
+  api.post<Transfer>(`/transfers/${encodeURIComponent(t.id)}/reject`, {
+    version: t.version,
+    reason,
+  });
 
-export const cancelApproval = (id: string) => api.post<Transfer>(`/transfers/${encodeURIComponent(id)}/approval/cancel`);
+export const cancelApproval = (id: string) =>
+  api.post<Transfer>(`/transfers/${encodeURIComponent(id)}/approval/cancel`);

@@ -19,17 +19,30 @@ interface Props {
   accessibilityLabel?: string;
 }
 
-export function AppSwitch({ value, onValueChange, disabled, accessibilityLabel }: Props) {
+export function AppSwitch({
+  value,
+  onValueChange,
+  disabled,
+  accessibilityLabel,
+}: Props) {
   const { colors, isDark } = useTheme();
   // قيمة متحركة واحدة لعمر المكوّن (useState: لا قراءة ref أثناء الرسم).
   const [x] = useState(() => new Animated.Value(value ? TRAVEL : 0));
 
   useEffect(() => {
-    Animated.timing(x, { toValue: value ? TRAVEL : 0, duration: 150, useNativeDriver: true }).start();
+    Animated.timing(x, {
+      toValue: value ? TRAVEL : 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
   }, [value, x]);
 
   // نفس ألوان البرنامج: المقبض لون الخلفية، وفي الداكن primary-foreground مفعّلاً و foreground متوقفاً.
-  const thumb = isDark ? (value ? colors.primaryForeground : colors.foreground) : colors.background;
+  const thumb = isDark
+    ? value
+      ? colors.primaryForeground
+      : colors.foreground
+    : colors.background;
 
   return (
     <Pressable
@@ -41,16 +54,30 @@ export function AppSwitch({ value, onValueChange, disabled, accessibilityLabel }
       onPress={() => onValueChange(!value)}
       style={[
         styles.track,
-        { backgroundColor: value ? colors.primary : colors.input, opacity: disabled ? 0.5 : 1 },
+        {
+          backgroundColor: value ? colors.primary : colors.input,
+          opacity: disabled ? 0.5 : 1,
+        },
       ]}
     >
-      <Animated.View style={[styles.thumb, { backgroundColor: thumb, transform: [{ translateX: x }] }]} />
+      <Animated.View
+        style={[
+          styles.thumb,
+          { backgroundColor: thumb, transform: [{ translateX: x }] },
+        ]}
+      />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   // direction ltr: المقبض يتحرك يميناً عند التفعيل حتى داخل واجهة RTL (كما في البرنامج).
-  track: { width: WIDTH, height: HEIGHT, padding: 2, justifyContent: "center", direction: "ltr" },
+  track: {
+    width: WIDTH,
+    height: HEIGHT,
+    padding: 2,
+    justifyContent: "center",
+    direction: "ltr",
+  },
   thumb: { width: THUMB, height: THUMB },
 });

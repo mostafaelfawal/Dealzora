@@ -151,7 +151,9 @@ export function AppTable<T>({
 
   const showEmpty = !isLoading && !isError && data.length === 0;
   const hasBulk = Boolean(
-    bulkActions?.onDelete || bulkActions?.onDeactivate || bulkActions?.extra?.length,
+    bulkActions?.onDelete ||
+    bulkActions?.onDeactivate ||
+    bulkActions?.extra?.length,
   );
 
   function renderState() {

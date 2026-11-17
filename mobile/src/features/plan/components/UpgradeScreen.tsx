@@ -35,7 +35,11 @@ export function UpgradeScreen() {
     setChecking(true);
     try {
       const ok = await refreshUser();
-      if (!ok) Alert.alert("ما زالت الخطة لا تدعم التطبيق", "بعد الترقية من البرنامج، انتظر دقيقة وحاول مرة أخرى.");
+      if (!ok)
+        Alert.alert(
+          "ما زالت الخطة لا تدعم التطبيق",
+          "بعد الترقية من البرنامج، انتظر دقيقة وحاول مرة أخرى.",
+        );
     } catch (e) {
       Alert.alert("تعذّر التحقق", errorMessage(e));
     } finally {
@@ -46,7 +50,11 @@ export function UpgradeScreen() {
   const confirmSignOut = () =>
     Alert.alert("تسجيل الخروج", "سيتم الخروج من هذا الهاتف.", [
       { text: "إلغاء", style: "cancel" },
-      { text: "تسجيل الخروج", style: "destructive", onPress: () => void signOut() },
+      {
+        text: "تسجيل الخروج",
+        style: "destructive",
+        onPress: () => void signOut(),
+      },
     ]);
 
   return (
@@ -56,14 +64,18 @@ export function UpgradeScreen() {
         <BrandLogo width={180} />
         <Card style={styles.card}>
           <View style={[styles.badge, { backgroundColor: colors.warningSoft }]}>
-            <Ionicons name="lock-closed-outline" size={30} color={colors.warning} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={30}
+              color={colors.warning}
+            />
           </View>
           <AppText weight="bold" size="xl" center>
             التطبيق متاح في خطة «سلسلة» فقط
           </AppText>
           <AppText tone="muted" center>
-            تطبيق الهاتف لمتابعة كل فروعك من مكان واحد جزء من خطة «سلسلة». رقِّ خطة المحل من البرنامج على
-            الجهاز الرئيسي، ثم ارجع هنا.
+            تطبيق الهاتف لمتابعة كل فروعك من مكان واحد جزء من خطة «سلسلة». رقِّ
+            خطة المحل من البرنامج على الجهاز الرئيسي، ثم ارجع هنا.
           </AppText>
           {currentPlan && (
             <AppText size="sm" tone="muted" center>
@@ -71,7 +83,12 @@ export function UpgradeScreen() {
             </AppText>
           )}
         </Card>
-        <Button title="تحقّق مرة أخرى" icon="refresh-outline" onPress={recheck} loading={checking} />
+        <Button
+          title="تحقّق مرة أخرى"
+          icon="refresh-outline"
+          onPress={recheck}
+          loading={checking}
+        />
         <Button title="تسجيل الخروج" variant="ghost" onPress={confirmSignOut} />
       </ScrollView>
     </SafeAreaView>
@@ -80,7 +97,17 @@ export function UpgradeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { flexGrow: 1, justifyContent: "center", padding: space.lg, gap: space.lg },
+  content: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: space.lg,
+    gap: space.lg,
+  },
   card: { alignItems: "center", gap: space.md, paddingVertical: space.xl },
-  badge: { width: 64, height: 64, alignItems: "center", justifyContent: "center" },
+  badge: {
+    width: 64,
+    height: 64,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

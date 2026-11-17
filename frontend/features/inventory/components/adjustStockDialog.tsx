@@ -107,8 +107,8 @@ function AdjustForm({
       <DialogHeader className="text-start">
         <DialogTitle>تعديل مخزون «{target.name}»</DialogTitle>
         <DialogDescription>
-          الرصيد الحالي {formatQty(target.stock)} {target.unit}. كل تعديل
-          يُسجَّل بسببه في حركة الصنف.
+          الرصيد الحالي {formatQty(target.stock)} {target.unit}. كل تعديل يُسجَّل
+          بسببه في حركة الصنف.
         </DialogDescription>
       </DialogHeader>
 

@@ -35,7 +35,8 @@ const SCREEN = "/admin/e-receipts";
 export function PosEReceiptBadge({ manager }: { manager: boolean }) {
   const allowed = useFeature("e_receipt");
   const { data } = useReceiptQueue();
-  if (!allowed || !data?.enabled || (data.waiting === 0 && data.rejected === 0)) return null;
+  if (!allowed || !data?.enabled || (data.waiting === 0 && data.rejected === 0))
+    return null;
   const warn = data.rejected > 0 || data.late > 0;
   const text = `إيصالات لم تصل للمنظومة: ${data.waiting}${data.rejected ? ` · مرفوضة: ${data.rejected}` : ""}${data.late ? ` · قاربت المهلة: ${data.late}` : ""}`;
   const chip = (
@@ -62,7 +63,12 @@ export function PosEReceiptBadge({ manager }: { manager: boolean }) {
 export function DashboardEReceiptAlert() {
   const allowed = useFeature("e_receipt");
   const { data } = useReceiptQueue();
-  if (!allowed || !data?.enabled || (!data.rejected && !data.late && !data.overdue)) return null;
+  if (
+    !allowed ||
+    !data?.enabled ||
+    (!data.rejected && !data.late && !data.overdue)
+  )
+    return null;
   const parts = [
     data.rejected > 0 && `${data.rejected} إيصال مرفوض أو به خطأ تحقق`,
     data.overdue > 0 && `${data.overdue} تجاوز مهلة الإرسال (24 ساعة)`,
@@ -77,7 +83,12 @@ export function DashboardEReceiptAlert() {
       <p className="min-w-0 flex-1">
         <b>الإيصال الإلكتروني:</b> {parts.join(" · ")}.
       </p>
-      <Button size="sm" variant="outline" nativeButton={false} render={<Link href={SCREEN} />}>
+      <Button
+        size="sm"
+        variant="outline"
+        nativeButton={false}
+        render={<Link href={SCREEN} />}
+      >
         متابعة الإيصالات
       </Button>
     </div>
@@ -86,7 +97,11 @@ export function DashboardEReceiptAlert() {
 
 /* ---------- تفاصيل الفاتورة ---------- */
 
-const RESENDABLE = { rejected: "correct", invalid: "regenerate", not_sent: "send" } as const;
+const RESENDABLE = {
+  rejected: "correct",
+  invalid: "regenerate",
+  not_sent: "send",
+} as const;
 
 /** حالة المنظومة والـ UUID في تفاصيل الفاتورة (لا شيء لفاتورة قبل تفعيل المنظومة). */
 export function SaleEReceiptInfo({ sale }: { sale: Sale }) {
@@ -100,7 +115,10 @@ export function SaleEReceiptInfo({ sale }: { sale: Sale }) {
       () => toast.error("تعذّر النسخ"),
     );
   return (
-    <section className="space-y-2 border p-3 text-xs" aria-label="الإيصال الإلكتروني">
+    <section
+      className="space-y-2 border p-3 text-xs"
+      aria-label="الإيصال الإلكتروني"
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 font-medium">
           <IconFileCertificate className="size-4" /> الإيصال الإلكتروني
@@ -109,10 +127,19 @@ export function SaleEReceiptInfo({ sale }: { sale: Sale }) {
       </div>
       {sale.etaUuid && (
         <div className="flex items-start gap-1">
-          <p className="min-w-0 flex-1 font-mono text-[10px] break-all" dir="ltr">
+          <p
+            className="min-w-0 flex-1 font-mono text-[10px] break-all"
+            dir="ltr"
+          >
             {sale.etaUuid}
           </p>
-          <Button type="button" size="icon-xs" variant="ghost" aria-label="نسخ الـ UUID" onClick={() => void copy(sale.etaUuid!)}>
+          <Button
+            type="button"
+            size="icon-xs"
+            variant="ghost"
+            aria-label="نسخ الـ UUID"
+            onClick={() => void copy(sale.etaUuid!)}
+          >
             <IconCopy />
           </Button>
         </div>
@@ -130,13 +157,21 @@ export function SaleEReceiptInfo({ sale }: { sale: Sale }) {
             variant="outline"
             className="gap-1 font-normal"
             disabled={resend.isPending}
-            onClick={() => resend.mutate({ items: [{ kind: "sale", id: sale.id }] })}
+            onClick={() =>
+              resend.mutate({ items: [{ kind: "sale", id: sale.id }] })
+            }
           >
             <IconRefresh className="size-4" />
             {RESEND_LABEL[mode]}
           </Button>
         )}
-        <Button size="sm" variant="ghost" nativeButton={false} render={<Link href={SCREEN} />} className="font-normal">
+        <Button
+          size="sm"
+          variant="ghost"
+          nativeButton={false}
+          render={<Link href={SCREEN} />}
+          className="font-normal"
+        >
           كل الإيصالات
         </Button>
       </div>
@@ -155,7 +190,11 @@ export function EReceiptReportPanel({ range }: { range: DateRange }) {
     { label: "صدر", value: data.issued },
     { label: "أُرسل", value: data.sent },
     { label: "مقبول", value: data.accepted, tone: "text-success" },
-    { label: "مرفوض", value: data.rejected + data.invalid, tone: data.rejected + data.invalid ? "text-destructive" : "" },
+    {
+      label: "مرفوض",
+      value: data.rejected + data.invalid,
+      tone: data.rejected + data.invalid ? "text-destructive" : "",
+    },
     { label: "لم يصل بعد", value: data.not_sent + data.pending },
   ];
   return (
@@ -175,7 +214,9 @@ export function EReceiptReportPanel({ range }: { range: DateRange }) {
         الضريبة المُبلغ عنها (المقبول فقط):
         <Money amount={toPounds(data.tax_reported)} className="font-semibold" />
         <span className="text-xs text-muted-foreground">
-          (فواتير <Money amount={toPounds(data.tax_sales)} className="text-xs" /> − مرتجعات{" "}
+          (فواتير{" "}
+          <Money amount={toPounds(data.tax_sales)} className="text-xs" /> −
+          مرتجعات{" "}
           <Money amount={toPounds(data.tax_returns)} className="text-xs" />)
         </span>
       </p>

@@ -19,10 +19,18 @@ export function RejectSheet({ t, onClose, onConfirm }: Props) {
   const ok = reason.trim().length >= 2;
 
   const confirm = () =>
-    Alert.alert("تأكيد الرفض", `سيُرفض طلب ${t.to_branch_name} رقم #${t.number}، ويصلهم السبب.`, [
-      { text: "رجوع", style: "cancel" },
-      { text: "رفض الطلب", style: "destructive", onPress: () => onConfirm(reason.trim()) },
-    ]);
+    Alert.alert(
+      "تأكيد الرفض",
+      `سيُرفض طلب ${t.to_branch_name} رقم #${t.number}، ويصلهم السبب.`,
+      [
+        { text: "رجوع", style: "cancel" },
+        {
+          text: "رفض الطلب",
+          style: "destructive",
+          onPress: () => onConfirm(reason.trim()),
+        },
+      ],
+    );
 
   return (
     <Sheet title={`رفض طلب #${t.number}`} onClose={onClose}>
@@ -38,7 +46,13 @@ export function RejectSheet({ t, onClose, onConfirm }: Props) {
         autoFocus
         placeholder="مثال: الكمية غير متوفرة حالياً"
       />
-      <Button title="رفض الطلب" icon="close-circle-outline" variant="destructive" onPress={confirm} disabled={!ok} />
+      <Button
+        title="رفض الطلب"
+        icon="close-circle-outline"
+        variant="destructive"
+        onPress={confirm}
+        disabled={!ok}
+      />
       <Button title="إلغاء" variant="ghost" onPress={onClose} />
     </Sheet>
   );

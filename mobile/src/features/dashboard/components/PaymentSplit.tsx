@@ -19,15 +19,35 @@ const LABEL_MIN_SHARE = 0.14;
 export function PaymentSplit({ totals }: { totals: Totals }) {
   const { colors, chart } = useTheme();
   const parts = [
-    { key: "cash", label: "نقدي", value: Math.max(totals.cash, 0), color: chart.series1 },
-    { key: "credit", label: "آجل", value: Math.max(totals.credit, 0), color: chart.series2 },
-    { key: "wallet", label: "محفظة", value: Math.max(totals.wallet, 0), color: chart.series3 },
+    {
+      key: "cash",
+      label: "نقدي",
+      value: Math.max(totals.cash, 0),
+      color: chart.series1,
+    },
+    {
+      key: "credit",
+      label: "آجل",
+      value: Math.max(totals.credit, 0),
+      color: chart.series2,
+    },
+    {
+      key: "wallet",
+      label: "محفظة",
+      value: Math.max(totals.wallet, 0),
+      color: chart.series3,
+    },
   ];
   const sum = parts.reduce((a, p) => a + p.value, 0);
   // الشريط يمتد من بداية السطر مع كل فترة جديدة
-  const grow = useGrow(`${totals.cash}|${totals.credit}|${totals.wallet}`, { native: false, delay: 200 });
+  const grow = useGrow(`${totals.cash}|${totals.credit}|${totals.wallet}`, {
+    native: false,
+    delay: 200,
+  });
   const pct = (v: number) => (sum ? Math.round((v / sum) * 100) : 0);
-  const a11y = parts.map((p) => `${p.label} ${formatPiastres(p.value)} (${pct(p.value)}%)`).join("، ");
+  const a11y = parts
+    .map((p) => `${p.label} ${formatPiastres(p.value)} (${pct(p.value)}%)`)
+    .join("، ");
 
   return (
     <Card>
@@ -38,7 +58,15 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
         </AppText>
       ) : (
         <Animated.View
-          style={[styles.bar, { width: grow.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }) }]}
+          style={[
+            styles.bar,
+            {
+              width: grow.interpolate({
+                inputRange: [0, 1],
+                outputRange: ["0%", "100%"],
+              }),
+            },
+          ]}
           accessible
           accessibilityLabel={`توزيع الدفع: ${a11y}`}
         >
@@ -47,7 +75,14 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
             .map((p) => (
               <View
                 key={p.key}
-                style={[styles.part, { flex: p.value, backgroundColor: p.color, borderColor: colors.card }]}
+                style={[
+                  styles.part,
+                  {
+                    flex: p.value,
+                    backgroundColor: p.color,
+                    borderColor: colors.card,
+                  },
+                ]}
               >
                 {p.value / sum >= LABEL_MIN_SHARE && (
                   <AppText
@@ -55,7 +90,9 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
                     weight="semibold"
                     numberOfLines={1}
                     // الأخضر فاتح: نص داكن عليه، والأزرق والبرتقالي: أبيض (تباين مقروء في الوضعين)
-                    style={{ color: p.key === "wallet" ? "#0b0b0b" : "#ffffff" }}
+                    style={{
+                      color: p.key === "wallet" ? "#0b0b0b" : "#ffffff",
+                    }}
                   >
                     {pct(p.value)}%
                   </AppText>
@@ -85,7 +122,12 @@ export function PaymentSplit({ totals }: { totals: Totals }) {
 const styles = StyleSheet.create({
   bar: { flexDirection: "row", height: 28, marginVertical: space.xs },
   // الفاصل 2px بلون السطح = حد بلون البطاقة بين الأجزاء (لا إطار حول الشكل)
-  part: { justifyContent: "center", paddingHorizontal: 6, borderLeftWidth: 1, borderRightWidth: 1 },
+  part: {
+    justifyContent: "center",
+    paddingHorizontal: 6,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+  },
   legend: { gap: space.xs },
   legendRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   swatch: { width: 10, height: 10 },

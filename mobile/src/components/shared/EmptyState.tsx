@@ -1,5 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState, type ComponentProps, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
 import { space } from "@/theme/colors";
@@ -24,13 +29,24 @@ export function EmptyState({ icon, title, description, action }: Props) {
 
   useEffect(() => {
     if (reduced) return;
-    Animated.spring(pop, { toValue: 1, ...spring.pop, useNativeDriver: true }).start();
+    Animated.spring(pop, {
+      toValue: 1,
+      ...spring.pop,
+      useNativeDriver: true,
+    }).start();
   }, [pop, reduced]);
 
   return (
     <View style={styles.wrap}>
       <Animated.View
-        style={[styles.icon, { backgroundColor: colors.muted, borderColor: colors.border, transform: [{ scale: pop }] }]}
+        style={[
+          styles.icon,
+          {
+            backgroundColor: colors.muted,
+            borderColor: colors.border,
+            transform: [{ scale: pop }],
+          },
+        ]}
       >
         <Ionicons name={icon} size={30} color={colors.mutedForeground} />
       </Animated.View>
@@ -50,8 +66,19 @@ export function EmptyState({ icon, title, description, action }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: "center", gap: space.md, paddingVertical: space.xl * 2, paddingHorizontal: space.lg },
-  icon: { width: 72, height: 72, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  wrap: {
+    alignItems: "center",
+    gap: space.md,
+    paddingVertical: space.xl * 2,
+    paddingHorizontal: space.lg,
+  },
+  icon: {
+    width: 72,
+    height: 72,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   text: { alignItems: "center", gap: space.xs },
   desc: { maxWidth: 300 },
 });

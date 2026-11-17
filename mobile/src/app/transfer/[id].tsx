@@ -20,8 +20,17 @@ import { ListSkeleton } from "@/components/shared/Skeletons";
 import { ApproveSheet } from "@/features/transfers/components/ApproveSheet";
 import { RejectSheet } from "@/features/transfers/components/RejectSheet";
 import { TransferStatusBadge } from "@/features/transfers/components/TransferStatusBadge";
-import { useTransfer, useTransferActions } from "@/features/transfers/hooks/useTransfers";
-import { approvalBusy, approvalText, formatQty, lineQty, transferSummary } from "@/features/transfers/lib/transferText";
+import {
+  useTransfer,
+  useTransferActions,
+} from "@/features/transfers/hooks/useTransfers";
+import {
+  approvalBusy,
+  approvalText,
+  formatQty,
+  lineQty,
+  transferSummary,
+} from "@/features/transfers/lib/transferText";
 import { useOnline } from "@/hooks/useOnline";
 import { formatDateTime } from "@/lib/format";
 import { radius, space } from "@/theme/colors";
@@ -41,13 +50,21 @@ export default function TransferRoute() {
       <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching}>
         {!t && q.isPending && <ListSkeleton count={2} />}
         {!t && q.isError && (
-          <EmptyState icon="alert-circle-outline" title="تعذّر فتح التحويل" description={errorMessage(q.error)} />
+          <EmptyState
+            icon="alert-circle-outline"
+            title="تعذّر فتح التحويل"
+            description={errorMessage(q.error)}
+          />
         )}
         {t && (
           <>
             <Header t={t} />
             <LastUpdated at={q.dataUpdatedAt} />
-            <ApprovalCard t={t} onCancel={() => confirmCancel(() => actions.cancel.mutate())} cancelling={actions.cancel.isPending} />
+            <ApprovalCard
+              t={t}
+              onCancel={() => confirmCancel(() => actions.cancel.mutate())}
+              cancelling={actions.cancel.isPending}
+            />
             <Lines t={t} />
             {(t.can_approve || t.can_reject) && (
               <View style={styles.actions}>
@@ -105,17 +122,34 @@ export default function TransferRoute() {
 }
 
 function confirmCancel(onYes: () => void) {
-  Alert.alert("إلغاء الموافقة", "لن ينفّذ الفرع هذه الموافقة، ويرجع الطلب في انتظار الرد.", [
-    { text: "رجوع", style: "cancel" },
-    { text: "إلغاء الموافقة", style: "destructive", onPress: onYes },
-  ]);
+  Alert.alert(
+    "إلغاء الموافقة",
+    "لن ينفّذ الفرع هذه الموافقة، ويرجع الطلب في انتظار الرد.",
+    [
+      { text: "رجوع", style: "cancel" },
+      { text: "إلغاء الموافقة", style: "destructive", onPress: onYes },
+    ],
+  );
 }
 
 function Header({ t }: { t: Transfer }) {
   const rows: [string, string | null][] = [
-    ["طلبه", t.requested_by && t.requested_at ? `${t.requested_by} · ${formatDateTime(t.requested_at)}` : null],
-    ["أرسله", t.sent_at ? `${t.sent_by ?? "—"} · ${formatDateTime(t.sent_at)}` : null],
-    ["استلمه", t.received_at ? `${t.received_by ?? "—"} · ${formatDateTime(t.received_at)}` : null],
+    [
+      "طلبه",
+      t.requested_by && t.requested_at
+        ? `${t.requested_by} · ${formatDateTime(t.requested_at)}`
+        : null,
+    ],
+    [
+      "أرسله",
+      t.sent_at ? `${t.sent_by ?? "—"} · ${formatDateTime(t.sent_at)}` : null,
+    ],
+    [
+      "استلمه",
+      t.received_at
+        ? `${t.received_by ?? "—"} · ${formatDateTime(t.received_at)}`
+        : null,
+    ],
     ["رُفض", t.rejected_at ? formatDateTime(t.rejected_at) : null],
     ["سبب الرفض", t.reject_reason],
     ["ملاحظة", t.note],
@@ -145,11 +179,21 @@ function Header({ t }: { t: Transfer }) {
   );
 }
 
-function ApprovalCard({ t, onCancel, cancelling }: { t: Transfer; onCancel: () => void; cancelling: boolean }) {
+function ApprovalCard({
+  t,
+  onCancel,
+  cancelling,
+}: {
+  t: Transfer;
+  onCancel: () => void;
+  cancelling: boolean;
+}) {
   const { colors } = useTheme();
   const text = approvalText(t.approval, t.status);
   if (!text || !t.approval) return null;
-  const failed = ["failed", "superseded", "expired"].includes(t.approval.status);
+  const failed = ["failed", "superseded", "expired"].includes(
+    t.approval.status,
+  );
   const busy = approvalBusy(t.approval);
   return (
     <View
@@ -157,15 +201,35 @@ function ApprovalCard({ t, onCancel, cancelling }: { t: Transfer; onCancel: () =
       style={[
         styles.notice,
         {
-          backgroundColor: failed ? colors.destructiveSoft : busy ? colors.warningSoft : colors.muted,
-          borderColor: failed ? colors.destructive : busy ? colors.warning : colors.border,
+          backgroundColor: failed
+            ? colors.destructiveSoft
+            : busy
+              ? colors.warningSoft
+              : colors.muted,
+          borderColor: failed
+            ? colors.destructive
+            : busy
+              ? colors.warning
+              : colors.border,
         },
       ]}
     >
       <Ionicons
-        name={failed ? "alert-circle-outline" : busy ? "time-outline" : "phone-portrait-outline"}
+        name={
+          failed
+            ? "alert-circle-outline"
+            : busy
+              ? "time-outline"
+              : "phone-portrait-outline"
+        }
         size={18}
-        color={failed ? colors.destructive : busy ? colors.warning : colors.mutedForeground}
+        color={
+          failed
+            ? colors.destructive
+            : busy
+              ? colors.warning
+              : colors.mutedForeground
+        }
       />
       <View style={styles.flex}>
         <AppText size="sm" weight="medium">
@@ -176,12 +240,19 @@ function ApprovalCard({ t, onCancel, cancelling }: { t: Transfer; onCancel: () =
         </AppText>
         {busy && (
           <AppText size="xs" tone="muted">
-            يخصم الفرع الكميات من مخزونه مع مزامنته التالية (عادة خلال دقيقة والبرنامج مفتوح).
+            يخصم الفرع الكميات من مخزونه مع مزامنته التالية (عادة خلال دقيقة
+            والبرنامج مفتوح).
           </AppText>
         )}
       </View>
       {t.approval.status === "pending" && (
-        <Button title="إلغاء" variant="ghost" onPress={onCancel} loading={cancelling} style={styles.smallBtn} />
+        <Button
+          title="إلغاء"
+          variant="ghost"
+          onPress={onCancel}
+          loading={cancelling}
+          style={styles.smallBtn}
+        />
       )}
     </View>
   );
@@ -189,8 +260,14 @@ function ApprovalCard({ t, onCancel, cancelling }: { t: Transfer; onCancel: () =
 
 function qtyText(l: TransferLine, t: Transfer): string {
   const parts = [`المطلوب ${formatQty(lineQty(l))}`];
-  if (t.status !== "requested" && t.status !== "rejected" && t.status !== "withdrawn") parts.push(`المرسل ${formatQty(l.qty_sent)}`);
-  if (l.qty_received !== null) parts.push(`المستلم ${formatQty(l.qty_received)}`);
+  if (
+    t.status !== "requested" &&
+    t.status !== "rejected" &&
+    t.status !== "withdrawn"
+  )
+    parts.push(`المرسل ${formatQty(l.qty_sent)}`);
+  if (l.qty_received !== null)
+    parts.push(`المستلم ${formatQty(l.qty_received)}`);
   return `${parts.join(" · ")} ${l.unit}`;
 }
 
@@ -227,7 +304,12 @@ function Lines({ t }: { t: Transfer }) {
           <AppText size="sm" tone="muted" style={styles.flex}>
             تكلفة العجز
           </AppText>
-          <Money amount={t.shortage_cost} size="sm" weight="semibold" tone="destructive" />
+          <Money
+            amount={t.shortage_cost}
+            size="sm"
+            weight="semibold"
+            tone="destructive"
+          />
         </View>
       )}
     </Card>
@@ -238,7 +320,13 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: space.sm },
   flex: { flex: 1 },
   key: { width: 96 },
-  notice: { flexDirection: "row", gap: space.sm, borderWidth: 1, borderRadius: radius.md, padding: space.md },
+  notice: {
+    flexDirection: "row",
+    gap: space.sm,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: space.md,
+  },
   line: { gap: 2, paddingVertical: space.xs },
   actions: { gap: space.sm },
   smallBtn: { minHeight: 36, paddingHorizontal: space.sm },

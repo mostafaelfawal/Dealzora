@@ -17,7 +17,11 @@ export function cashTone(s: Pick<ShiftData, "difference">): CashTone {
   return "ok";
 }
 
-export const CASH_LABEL: Record<CashTone, string> = { ok: "مطابق", short: "عجز", over: "زيادة" };
+export const CASH_LABEL: Record<CashTone, string> = {
+  ok: "مطابق",
+  short: "عجز",
+  over: "زيادة",
+};
 
 /** «بعد 10 أيام» / «اليوم» / «منتهي منذ يومين» (أيام تقويمية بتاريخ الهاتف). */
 export function expiryText(expiry: string, today: Date = new Date()): string {
@@ -25,7 +29,13 @@ export function expiryText(expiry: string, today: Date = new Date()): string {
   const target = new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
   const base = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const days = Math.round((target.getTime() - base.getTime()) / 86_400_000);
-  const count = (n: number) => formatArabicCount(n, { one: "يوم", two: "يومين", few: "أيام", many: "يومًا" });
+  const count = (n: number) =>
+    formatArabicCount(n, {
+      one: "يوم",
+      two: "يومين",
+      few: "أيام",
+      many: "يومًا",
+    });
   if (days === 0) return "ينتهي اليوم";
   if (days > 0) return `ينتهي بعد ${count(days)}`;
   return `منتهي منذ ${count(-days)}`;
@@ -33,7 +43,9 @@ export function expiryText(expiry: string, today: Date = new Date()): string {
 
 /** مبلغ بالجنيه من المستخدم ← قروش. null = غير صالح. */
 export function parseMoneyInput(text: string): number | null {
-  const cleaned = normalizeDigits(text).replace(/٫/g, ".").replace(/[,\s]/g, "");
+  const cleaned = normalizeDigits(text)
+    .replace(/٫/g, ".")
+    .replace(/[,\s]/g, "");
   if (cleaned === "") return 0;
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
   return Math.round(Number(cleaned) * 100);

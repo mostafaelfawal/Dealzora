@@ -43,9 +43,7 @@ export function DeviceRoleNotice() {
           <IconDeviceDesktop className="size-5" aria-hidden />
         </span>
         <div className="space-y-0.5">
-          <p className="text-sm font-semibold">
-            هذا الجهاز الأساسي لمحل جديد
-          </p>
+          <p className="text-sm font-semibold">هذا الجهاز الأساسي لمحل جديد</p>
           <p className="text-xs text-muted-foreground">
             بيانات المحل كلها تُحفظ على هذا الجهاز، ومنه تربط باقي الأجهزة.
           </p>

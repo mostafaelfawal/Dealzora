@@ -11,7 +11,11 @@ import { Skeleton } from "./Motion";
 /** بطاقات قائمة (فروع، تحويلات، تنبيهات). */
 export function ListSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <View style={styles.list} accessibilityLabel="جارٍ التحميل" accessibilityRole="progressbar">
+    <View
+      style={styles.list}
+      accessibilityLabel="جارٍ التحميل"
+      accessibilityRole="progressbar"
+    >
       {Array.from({ length: count }, (_, i) => (
         <Card key={i} style={styles.card}>
           <View style={styles.row}>
@@ -29,7 +33,11 @@ export function ListSkeleton({ count = 4 }: { count?: number }) {
 /** لوحة الأرقام: الرقم الرئيسي + 6 بطاقات + بطاقة رسم. */
 export function DashboardSkeleton() {
   return (
-    <View style={styles.list} accessibilityLabel="جارٍ تحميل الأرقام" accessibilityRole="progressbar">
+    <View
+      style={styles.list}
+      accessibilityLabel="جارٍ تحميل الأرقام"
+      accessibilityRole="progressbar"
+    >
       <Card style={styles.hero}>
         <Skeleton width={90} height={12} />
         <Skeleton width="65%" height={38} />
@@ -56,7 +64,11 @@ export function DashboardSkeleton() {
 const styles = StyleSheet.create({
   list: { gap: space.sm },
   card: { gap: space.sm, paddingVertical: space.md },
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   hero: { gap: space.sm },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   tile: { flexBasis: "48%", flexGrow: 1, gap: space.sm, padding: space.md },

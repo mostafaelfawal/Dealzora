@@ -151,12 +151,7 @@ export interface Readiness {
 /* ---------- متابعة الإيصالات (المرحلة 8) ---------- */
 
 export type EReceiptStatus =
-  | "not_sent"
-  | "pending"
-  | "accepted"
-  | "rejected"
-  | "not_required"
-  | "invalid";
+  "not_sent" | "pending" | "accepted" | "rejected" | "not_required" | "invalid";
 
 /** ماذا يفعل زر «إعادة الإرسال»: تصحيح مرفوض / إعادة توليد خطأ تحقق / إرسال فوري. */
 export type ResendMode = "correct" | "regenerate" | "send";
@@ -214,7 +209,12 @@ export interface ResendResult {
   corrected: number;
   regenerated: number;
   queued: number;
-  errors: { id: string; number: number | null; message: string; code: string }[];
+  errors: {
+    id: string;
+    number: number | null;
+    message: string;
+    code: string;
+  }[];
 }
 
 export interface QueueInfo {

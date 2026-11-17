@@ -403,7 +403,11 @@ export const fetchCatalogStatus = async () =>
 /** manual = زر «مزامنة الآن»: يعيد رفع السجلات التي رفضها السيرفر من قبل فوراً (الدورية لا تفعل كل دقيقة). */
 export const syncCatalogNow = async (manual = false) =>
   toCatalog(
-    (await api.post(`${BASE}/catalog/sync`, null, { params: manual ? { retry_failed: true } : undefined })).data,
+    (
+      await api.post(`${BASE}/catalog/sync`, null, {
+        params: manual ? { retry_failed: true } : undefined,
+      })
+    ).data,
   );
 
 /* ---------- إدارة فروع المحل (المالك من الفرع الرئيسي) ---------- */
@@ -518,7 +522,6 @@ const toJoin = (d: any): JoinResult => ({
   ...toStatus(d),
   ownerReady: Boolean(d.owner_ready),
 });
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export const joinBranch = async (code: string, serverUrl: string) =>
   toJoin(

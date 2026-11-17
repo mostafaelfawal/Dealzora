@@ -209,7 +209,8 @@ ${sections}
 const PDF_ERRORS: Record<string, string> = {
   edge_not_found:
     "لم نجد متصفح Microsoft Edge على الجهاز (يُستخدم لتجهيز الـ PDF). سنفتح نافذة الطباعة بدلاً منه.",
-  pdf_timeout: "استغرق تجهيز الملف وقتاً طويلاً. جرّب قسماً واحداً بدل التقرير الكامل.",
+  pdf_timeout:
+    "استغرق تجهيز الملف وقتاً طويلاً. جرّب قسماً واحداً بدل التقرير الكامل.",
 };
 
 export class PdfError extends Error {}
@@ -230,7 +231,7 @@ export async function saveHtmlAsPdf(
     const path = await invoke<string>("html_to_pdf", { html, fileName });
     return { fileName: path.split(/[\\/]/).pop() ?? fileName, path };
   } catch (e) {
-    const code = typeof e === "string" ? e : (e as Error)?.message ?? "";
+    const code = typeof e === "string" ? e : ((e as Error)?.message ?? "");
     if (code === "edge_not_found") {
       printHtml(html);
       throw new PdfError(PDF_ERRORS.edge_not_found);

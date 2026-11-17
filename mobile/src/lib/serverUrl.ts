@@ -14,7 +14,8 @@ let cached: string | null | undefined;
 export async function getServerUrl(): Promise<string | null> {
   if (cached === undefined) {
     try {
-      cached = normalizeServerUrl(await AsyncStorage.getItem(KEY)) ?? DEFAULT_URL;
+      cached =
+        normalizeServerUrl(await AsyncStorage.getItem(KEY)) ?? DEFAULT_URL;
     } catch {
       cached = DEFAULT_URL;
     }

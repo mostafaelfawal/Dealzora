@@ -22,7 +22,10 @@ import type { EtaEnvironment } from "../types/eta";
 
 /** نفس كلمة التأكيد في الـ backend (e_receipt/constants.PROD_CONFIRM_TEXT). */
 const CONFIRM_WORD = "فعلي";
-const NAME: Record<EtaEnvironment, string> = { preprod: "التجريبية", prod: "الفعلية" };
+const NAME: Record<EtaEnvironment, string> = {
+  preprod: "التجريبية",
+  prod: "الفعلية",
+};
 
 /** البيئة الحالية + تغييرها بتأكيد صريح (التحويل للفعلية يحتاج كتابة «فعلي»). */
 export function EtaEnvironmentSwitch({ current }: { current: EtaEnvironment }) {
@@ -33,7 +36,9 @@ export function EtaEnvironmentSwitch({ current }: { current: EtaEnvironment }) {
       <div className="space-y-0.5 text-sm">
         <p>
           البيئة الحالية:{" "}
-          <b className={current === "prod" ? "text-success" : "text-warning"}>{NAME[current]}</b>
+          <b className={current === "prod" ? "text-success" : "text-warning"}>
+            {NAME[current]}
+          </b>
         </p>
         <p className="text-xs text-muted-foreground">
           {current === "prod"
@@ -53,7 +58,13 @@ export function EtaEnvironmentSwitch({ current }: { current: EtaEnvironment }) {
   );
 }
 
-function SwitchDialog({ target, onClose }: { target: EtaEnvironment; onClose: () => void }) {
+function SwitchDialog({
+  target,
+  onClose,
+}: {
+  target: EtaEnvironment;
+  onClose: () => void;
+}) {
   const preview = useEnvironmentPreview(true);
   const switcher = useSwitchEnvironment();
   const [text, setText] = useState("");
@@ -83,14 +94,19 @@ function SwitchDialog({ target, onClose }: { target: EtaEnvironment; onClose: ()
               "جارٍ حساب الإيصالات المعلّقة…"
             ) : unsent > 0 ? (
               <>
-                <Num>{unsent}</Num> إيصال على البيئة الحالية لم يكتمل إرسالها: ستصبح «غير مطلوب» ولن تُرسل
-                أبداً. أرسلها أولاً لو كانت مهمة.
+                <Num>{unsent}</Num> إيصال على البيئة الحالية لم يكتمل إرسالها:
+                ستصبح «غير مطلوب» ولن تُرسل أبداً. أرسلها أولاً لو كانت مهمة.
               </>
             ) : (
               "لا توجد إيصالات معلّقة على البيئة الحالية."
             )}
           </li>
-          {needsWord && <li>تأكد أن بيانات الأجهزة (Client ID/Secret) هي بيانات البيئة الفعلية.</li>}
+          {needsWord && (
+            <li>
+              تأكد أن بيانات الأجهزة (Client ID/Secret) هي بيانات البيئة
+              الفعلية.
+            </li>
+          )}
         </ul>
 
         {needsWord && (
@@ -117,11 +133,16 @@ function SwitchDialog({ target, onClose }: { target: EtaEnvironment; onClose: ()
             variant={needsWord ? "destructive" : "default"}
             disabled={!ready || switcher.isPending || preview.isPending}
             onClick={() =>
-              switcher.mutate({ environment: target, confirmText: text }, { onSuccess: onClose })
+              switcher.mutate(
+                { environment: target, confirmText: text },
+                { onSuccess: onClose },
+              )
             }
             className="gap-2"
           >
-            {switcher.isPending && <IconLoader2 className="size-4 animate-spin" />}
+            {switcher.isPending && (
+              <IconLoader2 className="size-4 animate-spin" />
+            )}
             تحويل للبيئة {NAME[target]}
           </Button>
         </DialogFooter>

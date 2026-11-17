@@ -28,11 +28,18 @@ export const api = new ApiClient({
   onUser: applyUser,
   onSessionEnded: (error: ApiError) => {
     void clearLocalAccountData();
-    setAuthState({ status: "signedOut", user: null, currentPlan: null, notice: error.message });
+    setAuthState({
+      status: "signedOut",
+      user: null,
+      currentPlan: null,
+      notice: error.message,
+    });
   },
   onPlanBlocked: (error: ApiError) => {
     const details = error.details as { current_plan?: unknown } | null;
-    const plan = typeof details?.current_plan === "string" ? details.current_plan : null;
-    if (getAuthState().status !== "signedOut") setAuthState({ status: "planBlocked", currentPlan: plan });
+    const plan =
+      typeof details?.current_plan === "string" ? details.current_plan : null;
+    if (getAuthState().status !== "signedOut")
+      setAuthState({ status: "planBlocked", currentPlan: plan });
   },
 });

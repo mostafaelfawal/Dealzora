@@ -23,29 +23,47 @@ export function TransferRow({ t }: { t: Transfer }) {
       accessibilityRole="button"
       accessibilityHint="تفاصيل التحويل"
       scaleTo={0.985}
-      onPress={() => router.push({ pathname: "/transfer/[id]", params: { id: t.id } })}
+      onPress={() =>
+        router.push({ pathname: "/transfer/[id]", params: { id: t.id } })
+      }
     >
       {/* ما ينتظر ردك: شريط تحذير في بداية البطاقة */}
-      <Card style={[styles.card, { borderStartColor: t.can_approve ? colors.warning : colors.border }]}>
+      <Card
+        style={[
+          styles.card,
+          { borderStartColor: t.can_approve ? colors.warning : colors.border },
+        ]}
+      >
         <View style={styles.head}>
-          <AppText label weight="semibold">#{t.number}</AppText>
+          <AppText label weight="semibold">
+            #{t.number}
+          </AppText>
           <TransferStatusBadge status={t.status} />
           <View style={styles.flex} />
           {t.can_approve && (
-            <View style={[styles.waiting, { backgroundColor: colors.warningSoft }]}>
+            <View
+              style={[styles.waiting, { backgroundColor: colors.warningSoft }]}
+            >
               <AppText label size="xs" weight="semibold" tone="warning">
                 ينتظر ردك
               </AppText>
             </View>
           )}
-          <Ionicons name="chevron-back" size={16} color={colors.mutedForeground} />
+          <Ionicons
+            name="chevron-back"
+            size={16}
+            color={colors.mutedForeground}
+          />
         </View>
         <AppText size="sm">{transferSummary(t)}</AppText>
         <AppText size="xs" tone="muted">
           {t.lines.length} صنف{when ? ` · ${formatDateTime(when)}` : ""}
         </AppText>
         {approval && (
-          <AppText size="xs" tone={t.approval?.status === "failed" ? "destructive" : "muted"}>
+          <AppText
+            size="xs"
+            tone={t.approval?.status === "failed" ? "destructive" : "muted"}
+          >
             {approval}
           </AppText>
         )}

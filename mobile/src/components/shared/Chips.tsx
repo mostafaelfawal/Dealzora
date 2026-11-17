@@ -18,7 +18,13 @@ interface Props<T> {
   disabled?: boolean;
 }
 
-export function Chips<T extends string | number>({ options, value, label, onChange, disabled }: Props<T>) {
+export function Chips<T extends string | number>({
+  options,
+  value,
+  label,
+  onChange,
+  disabled,
+}: Props<T>) {
   const { colors } = useTheme();
   return (
     <View style={styles.wrap}>
@@ -45,7 +51,9 @@ export function Chips<T extends string | number>({ options, value, label, onChan
               label
               size="sm"
               weight={active ? "semibold" : "medium"}
-              style={{ color: active ? colors.primaryForeground : colors.foreground }}
+              style={{
+                color: active ? colors.primaryForeground : colors.foreground,
+              }}
             >
               {label(o)}
             </AppText>
@@ -58,5 +66,10 @@ export function Chips<T extends string | number>({ options, value, label, onChan
 
 const styles = StyleSheet.create({
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  chip: { borderWidth: 1, paddingHorizontal: space.md, minHeight: 36, justifyContent: "center" },
+  chip: {
+    borderWidth: 1,
+    paddingHorizontal: space.md,
+    minHeight: 36,
+    justifyContent: "center",
+  },
 });

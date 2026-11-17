@@ -27,7 +27,10 @@ interface ArabicCountForms {
 }
 
 /** "يوم" / "يومين" / "3 أيام" / "11 يومًا". */
-export function formatArabicCount(count: number, forms: ArabicCountForms): string {
+export function formatArabicCount(
+  count: number,
+  forms: ArabicCountForms,
+): string {
   if (count === 1) return forms.one;
   if (count === 2) return forms.two;
   return `${count} ${count <= 10 ? forms.few : forms.many}`;
@@ -38,7 +41,10 @@ export function formatDateTime(value: Date | string | number): string {
 }
 
 /** "الآن" / "منذ دقيقتين" / "منذ 3 ساعات" / "منذ يومين"، وبعد أسبوع التاريخ نفسه. */
-export function formatTimeAgo(from: Date | string | number, now: number = Date.now()): string {
+export function formatTimeAgo(
+  from: Date | string | number,
+  now: number = Date.now(),
+): string {
   const ts = new Date(from).getTime();
   const minutes = Math.max(Math.floor((now - ts) / 60_000), 0);
   if (minutes < 1) return "الآن";

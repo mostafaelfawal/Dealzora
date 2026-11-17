@@ -2,7 +2,9 @@
 
 export const MOBILE_PREFIX = "/mobile/v1";
 
-export function normalizeServerUrl(input: string | null | undefined): string | null {
+export function normalizeServerUrl(
+  input: string | null | undefined,
+): string | null {
   let value = (input ?? "").trim();
   if (!value) return null;
   if (!/^https?:\/\//i.test(value)) value = `https://${value}`;

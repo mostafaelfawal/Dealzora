@@ -15,7 +15,10 @@ import { Screen } from "@/components/shared/Screen";
 import { ListSkeleton } from "@/components/shared/Skeletons";
 import { useOnline } from "@/hooks/useOnline";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
-import { useSetStaffActive, useStaff } from "@/features/security/hooks/useSecurity";
+import {
+  useSetStaffActive,
+  useStaff,
+} from "@/features/security/hooks/useSecurity";
 import { space } from "@/theme/colors";
 
 const ROLE: Record<string, string> = { manager: "مدير فرع", cashier: "كاشير" };
@@ -32,7 +35,11 @@ function StaffScreen() {
   const q = useStaff();
   const toggle = useSetStaffActive();
   const online = useOnline();
-  const rows = [...(q.data ?? [])].sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.username.localeCompare(b.username));
+  const rows = [...(q.data ?? [])].sort(
+    (a, b) =>
+      Number(b.is_active) - Number(a.is_active) ||
+      a.username.localeCompare(b.username),
+  );
 
   const confirm = (s: StaffMember) => {
     const branches = s.branches.map((b) => b.name).join("، ");
@@ -43,14 +50,25 @@ function StaffScreen() {
           (s.role === "manager" ? " ويتوقف تطبيق الهاتف عنده فوراً." : ""),
         [
           { text: "رجوع", style: "cancel" },
-          { text: "إيقاف الحساب", style: "destructive", onPress: () => toggle.mutate({ id: s.id, active: false }) },
+          {
+            text: "إيقاف الحساب",
+            style: "destructive",
+            onPress: () => toggle.mutate({ id: s.id, active: false }),
+          },
         ],
       );
     } else {
-      Alert.alert(`إعادة تفعيل «${s.username}»؟`, `يقدر يدخل على أجهزة ${branches} من جديد بعد مزامنتها.`, [
-        { text: "رجوع", style: "cancel" },
-        { text: "تفعيل", onPress: () => toggle.mutate({ id: s.id, active: true }) },
-      ]);
+      Alert.alert(
+        `إعادة تفعيل «${s.username}»؟`,
+        `يقدر يدخل على أجهزة ${branches} من جديد بعد مزامنتها.`,
+        [
+          { text: "رجوع", style: "cancel" },
+          {
+            text: "تفعيل",
+            onPress: () => toggle.mutate({ id: s.id, active: true }),
+          },
+        ],
+      );
     }
   };
 
@@ -63,10 +81,15 @@ function StaffScreen() {
             <View style={styles.flex}>
               <AppText weight="semibold">{s.username}</AppText>
               <AppText size="xs" tone="muted">
-                {ROLE[s.role] ?? s.role} · {s.branches.map((b) => b.name).join("، ")}
+                {ROLE[s.role] ?? s.role} ·{" "}
+                {s.branches.map((b) => b.name).join("، ")}
               </AppText>
             </View>
-            <AppText size="xs" weight="semibold" tone={s.is_active ? "success" : "destructive"}>
+            <AppText
+              size="xs"
+              weight="semibold"
+              tone={s.is_active ? "success" : "destructive"}
+            >
               {s.is_active ? "نشط" : "موقوف"}
             </AppText>
           </View>
@@ -81,9 +104,19 @@ function StaffScreen() {
         </Card>
       ))}
       {q.isPending && <ListSkeleton count={4} />}
-      {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
+      {q.isError && !q.data && (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر التحميل"
+          description={errorMessage(q.error)}
+        />
+      )}
       {q.data && rows.length === 0 && (
-        <EmptyState icon="people-outline" title="لا يوجد موظفون" description="المديرون والكاشيرية تضيفهم من البرنامج على الجهاز الرئيسي" />
+        <EmptyState
+          icon="people-outline"
+          title="لا يوجد موظفون"
+          description="المديرون والكاشيرية تضيفهم من البرنامج على الجهاز الرئيسي"
+        />
       )}
       {!online && (
         <AppText size="xs" tone="muted" center>

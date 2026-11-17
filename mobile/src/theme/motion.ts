@@ -8,7 +8,12 @@
 import { useSyncExternalStore } from "react";
 import { AccessibilityInfo, Easing } from "react-native";
 
-export const duration = { fast: 140, base: 220, slow: 320, count: 700 } as const;
+export const duration = {
+  fast: 140,
+  base: 220,
+  slow: 320,
+  count: 700,
+} as const;
 
 /** منحنى «خروج» ناعم: سريع في البداية ويهدأ عند الوصول (يشبه حركة iOS و Material 3). */
 export const easeOut = Easing.bezier(0.2, 0.8, 0.2, 1);
@@ -26,7 +31,8 @@ export const STAGGER_MS = 40;
 export const STAGGER_MAX = 8;
 
 /** تأخير عنصر رقم index في قائمة متدرجة. */
-export const staggerDelay = (index: number) => Math.min(index, STAGGER_MAX) * STAGGER_MS;
+export const staggerDelay = (index: number) =>
+  Math.min(index, STAGGER_MAX) * STAGGER_MS;
 
 /* ---------- تقليل الحركة (قيمة واحدة لكل التطبيق) ---------- */
 
@@ -53,5 +59,9 @@ function subscribe(listener: () => void) {
 }
 
 export function useReducedMotion(): boolean {
-  return useSyncExternalStore(subscribe, () => reduced, () => false);
+  return useSyncExternalStore(
+    subscribe,
+    () => reduced,
+    () => false,
+  );
 }

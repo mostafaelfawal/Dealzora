@@ -34,9 +34,19 @@ export default function BranchRoute() {
   return (
     <>
       <Stack.Screen options={{ title: b?.name ?? "الفرع" }} />
-      <Screen onRefresh={refresh} refreshing={(branch.isRefetching || summary.isRefetching) && !summary.isPlaceholderData}>
+      <Screen
+        onRefresh={refresh}
+        refreshing={
+          (branch.isRefetching || summary.isRefetching) &&
+          !summary.isPlaceholderData
+        }
+      >
         {!b && branch.isError && (
-          <EmptyState icon="alert-circle-outline" title="تعذّر فتح الفرع" description={errorMessage(branch.error)} />
+          <EmptyState
+            icon="alert-circle-outline"
+            title="تعذّر فتح الفرع"
+            description={errorMessage(branch.error)}
+          />
         )}
         {b && (
           <Card>
@@ -55,13 +65,23 @@ export default function BranchRoute() {
                 : "لم يرسل الفرع ملخص مبيعات بعد"}
             </AppText>
             {lag && (
-              <AppText size="xs" tone={b.status === "online" ? "muted" : "warning"}>
+              <AppText
+                size="xs"
+                tone={b.status === "online" ? "muted" : "warning"}
+              >
                 تأخر المزامنة: {lag}
               </AppText>
             )}
           </Card>
         )}
-        {(b || !branch.isError) && <DashboardBody query={summary} preset={preset} range={range} showRanking={false} />}
+        {(b || !branch.isError) && (
+          <DashboardBody
+            query={summary}
+            preset={preset}
+            range={range}
+            showRanking={false}
+          />
+        )}
       </Screen>
     </>
   );

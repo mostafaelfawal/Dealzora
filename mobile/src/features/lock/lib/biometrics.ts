@@ -19,9 +19,18 @@ export async function getBiometricInfo(): Promise<BiometricInfo> {
       LocalAuthentication.isEnrolledAsync(),
       LocalAuthentication.supportedAuthenticationTypesAsync(),
     ]);
-    const face = types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
-    const finger = types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT);
-    const label = face && !finger ? "بصمة الوجه" : finger && !face ? "البصمة" : "البصمة أو الوجه";
+    const face = types.includes(
+      LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,
+    );
+    const finger = types.includes(
+      LocalAuthentication.AuthenticationType.FINGERPRINT,
+    );
+    const label =
+      face && !finger
+        ? "بصمة الوجه"
+        : finger && !face
+          ? "البصمة"
+          : "البصمة أو الوجه";
     return { available: hardware && enrolled, label };
   } catch {
     return { available: false, label: "البصمة" };

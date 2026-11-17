@@ -23,7 +23,11 @@ export function Screen({ children, onRefresh, refreshing = false }: Props) {
         keyboardShouldPersistTaps="handled"
         refreshControl={
           onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.mutedForeground} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.mutedForeground}
+            />
           ) : undefined
         }
       >

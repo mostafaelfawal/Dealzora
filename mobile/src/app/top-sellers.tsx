@@ -24,11 +24,20 @@ export default function TopSellersRoute() {
   const max = Math.max(...rows.map((r) => r.revenue), 1);
 
   return (
-    <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching && !q.isPlaceholderData}>
+    <Screen
+      onRefresh={() => void q.refetch()}
+      refreshing={q.isRefetching && !q.isPlaceholderData}
+    >
       <PeriodPicker preset={preset} range={range} />
       <LastUpdated at={q.dataUpdatedAt} label="آخر تحديث من الخادم" />
       {q.isPending && <ListSkeleton count={5} />}
-      {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
+      {q.isError && !q.data && (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر التحميل"
+          description={errorMessage(q.error)}
+        />
+      )}
       {rows.length > 0 && (
         <Card style={q.isPlaceholderData && styles.stale}>
           {rows.map((r, i) => (
@@ -43,7 +52,15 @@ export default function TopSellersRoute() {
                 <Money amount={r.revenue} size="sm" weight="semibold" />
               </View>
               <View style={[styles.track, { backgroundColor: chart.track }]}>
-                <View style={[styles.bar, { width: `${(Math.max(r.revenue, 0) / max) * 100}%`, backgroundColor: chart.series1 }]} />
+                <View
+                  style={[
+                    styles.bar,
+                    {
+                      width: `${(Math.max(r.revenue, 0) / max) * 100}%`,
+                      backgroundColor: chart.series1,
+                    },
+                  ]}
+                />
               </View>
               <AppText size="xs" tone="muted">
                 {formatQty(r.qty)} {r.unit}
@@ -53,7 +70,9 @@ export default function TopSellersRoute() {
           ))}
         </Card>
       )}
-      {q.data && rows.length === 0 && <EmptyState icon="podium-outline" title="لا مبيعات في هذه الفترة بعد" />}
+      {q.data && rows.length === 0 && (
+        <EmptyState icon="podium-outline" title="لا مبيعات في هذه الفترة بعد" />
+      )}
       <AppText size="xs" tone="muted">
         أعلى 20 صنفاً لكل فرع يومياً، قبل خصم المرتجعات.
       </AppText>

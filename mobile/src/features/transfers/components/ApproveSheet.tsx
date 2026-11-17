@@ -23,11 +23,16 @@ interface Props {
 
 export function ApproveSheet({ t, onClose, onConfirm }: Props) {
   const [text, setText] = useState<Record<string, string>>(() =>
-    Object.fromEntries(t.lines.map((l) => [l.id, formatQty(lineQty(l)).replace(/,/g, "")])),
+    Object.fromEntries(
+      t.lines.map((l) => [l.id, formatQty(lineQty(l)).replace(/,/g, "")]),
+    ),
   );
   const [note, setNote] = useState("");
 
-  const parsed = t.lines.map((l) => ({ line: l, qty: parseQty(text[l.id] ?? "", lineQty(l)) }));
+  const parsed = t.lines.map((l) => ({
+    line: l,
+    qty: parseQty(text[l.id] ?? "", lineQty(l)),
+  }));
   const invalid = parsed.some((p) => p.qty === null);
   const sending = parsed.filter((p) => (p.qty ?? 0) > 0);
 
@@ -77,9 +82,18 @@ export function ApproveSheet({ t, onClose, onConfirm }: Props) {
           </View>
         );
       })}
-      <TextField label="ملاحظة للفرع (اختياري)" value={note} onChangeText={setNote} maxLength={300} />
+      <TextField
+        label="ملاحظة للفرع (اختياري)"
+        value={note}
+        onChangeText={setNote}
+        maxLength={300}
+      />
       <Button
-        title={sending.length ? `موافقة وإرسال ${sending.length} صنف` : "لا توجد كميات للإرسال"}
+        title={
+          sending.length
+            ? `موافقة وإرسال ${sending.length} صنف`
+            : "لا توجد كميات للإرسال"
+        }
         icon="checkmark-circle-outline"
         onPress={confirm}
         disabled={invalid || sending.length === 0}

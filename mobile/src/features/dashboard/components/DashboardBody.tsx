@@ -13,7 +13,12 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { LastUpdated } from "@/components/shared/LastUpdated";
 import { FadeIn, useFadeTo } from "@/components/shared/Motion";
 import { DashboardSkeleton } from "@/components/shared/Skeletons";
-import { includesToday, rangeDays, type DateRange, type PeriodPreset } from "@/lib/period";
+import {
+  includesToday,
+  rangeDays,
+  type DateRange,
+  type PeriodPreset,
+} from "@/lib/period";
 import { space } from "@/theme/colors";
 
 import { BranchRanking } from "./BranchRanking";
@@ -44,7 +49,11 @@ export function DashboardBody({ query, preset, range, showRanking }: Props) {
       <PeriodPicker preset={preset} range={range} />
       {!summary && query.isPending && <DashboardSkeleton />}
       {!summary && query.isError && (
-        <EmptyState icon="alert-circle-outline" title="تعذّر تحميل الأرقام" description={errorMessage(query.error)} />
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر تحميل الأرقام"
+          description={errorMessage(query.error)}
+        />
       )}
       {summary && (
         <Animated.View style={[styles.body, { opacity }]}>
@@ -66,12 +75,18 @@ export function DashboardBody({ query, preset, range, showRanking }: Props) {
           </FadeIn>
           {showRanking && summary.branches.length > 1 && (
             <FadeIn index={9} delay={120}>
-              <BranchRanking branches={summary.branches} singleDay={span === 1} />
+              <BranchRanking
+                branches={summary.branches}
+                singleDay={span === 1}
+              />
             </FadeIn>
           )}
           {span > 1 && (
             <FadeIn index={10} delay={120}>
-              <TrendBars days={summary.days} branchCount={summary.branches_total} />
+              <TrendBars
+                days={summary.days}
+                branchCount={summary.branches_total}
+              />
             </FadeIn>
           )}
         </Animated.View>

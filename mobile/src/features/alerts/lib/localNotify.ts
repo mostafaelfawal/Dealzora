@@ -33,14 +33,24 @@ async function readSeen(): Promise<string[] | null> {
 }
 
 async function saveSeen(ids: string[]): Promise<void> {
-  await AsyncStorage.setItem(KEY, JSON.stringify(ids.slice(0, KEEP))).catch(() => undefined);
+  await AsyncStorage.setItem(KEY, JSON.stringify(ids.slice(0, KEEP))).catch(
+    () => undefined,
+  );
 }
 
 /** التنبيهات التي تستحق إشعاراً الآن (منطق بلا أجهزة: مُختبر). */
-export function pickNew(items: AppNotification[], seen: string[], now = Date.now()): AppNotification[] {
+export function pickNew(
+  items: AppNotification[],
+  seen: string[],
+  now = Date.now(),
+): AppNotification[] {
   const known = new Set(seen);
   return items.filter(
-    (n) => !known.has(n.id) && !n.read_at && n.status !== "dropped" && now - Date.parse(n.created_at) < DAY_MS,
+    (n) =>
+      !known.has(n.id) &&
+      !n.read_at &&
+      n.status !== "dropped" &&
+      now - Date.parse(n.created_at) < DAY_MS,
   );
 }
 
@@ -61,7 +71,12 @@ async function run(items: AppNotification[]): Promise<void> {
   if (fresh.length === 0) return;
   await saveSeen([...fresh.map((n) => n.id), ...seen]);
   if (fresh.length > MAX_SINGLE) {
-    const count = formatArabicCount(fresh.length, { one: "تنبيه جديد", two: "تنبيهان جديدان", few: "تنبيهات جديدة", many: "تنبيهاً جديداً" });
+    const count = formatArabicCount(fresh.length, {
+      one: "تنبيه جديد",
+      two: "تنبيهان جديدان",
+      few: "تنبيهات جديدة",
+      many: "تنبيهاً جديداً",
+    });
     const titles = [...new Set(fresh.map((n) => n.title))].join("، ");
     await show(count, titles.slice(0, 180), "/alerts");
     return;

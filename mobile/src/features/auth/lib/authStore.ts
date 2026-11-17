@@ -20,7 +20,12 @@ export interface AuthState {
   currentPlan: string | null;
 }
 
-let state: AuthState = { status: "loading", user: null, notice: null, currentPlan: null };
+let state: AuthState = {
+  status: "loading",
+  user: null,
+  notice: null,
+  currentPlan: null,
+};
 const listeners = new Set<() => void>();
 
 export const getAuthState = () => state;

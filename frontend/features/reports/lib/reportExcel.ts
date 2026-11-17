@@ -44,9 +44,7 @@ function tableTitle(table: HTMLTableElement): string {
 
 function tableRows(table: HTMLTableElement): (string | number)[][] {
   return Array.from(table.rows).map((row) =>
-    Array.from(row.cells).map((cell) =>
-      toCellValue(cell.textContent ?? ""),
-    ),
+    Array.from(row.cells).map((cell) => toCellValue(cell.textContent ?? "")),
   );
 }
 
@@ -82,8 +80,7 @@ export async function exportReportTables(
   if (workbook.SheetNames.length === 0) return null;
   workbook.Workbook = { Views: [{ RTL: true }] };
   const bytes = XLSX.write(workbook, { bookType: "xlsx", type: "array" }) as
-    | ArrayBuffer
-    | Uint8Array;
+    ArrayBuffer | Uint8Array;
   const date = new Date().toISOString().slice(0, 10);
   const file = await saveFile(
     new Uint8Array(bytes),

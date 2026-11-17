@@ -11,7 +11,10 @@ import { LastUpdated } from "@/components/shared/LastUpdated";
 import { Screen } from "@/components/shared/Screen";
 import { ListSkeleton } from "@/components/shared/Skeletons";
 import { OwnerOnly } from "@/features/security/components/OwnerOnly";
-import { useRevokeShopSession, useShopSessions } from "@/features/security/hooks/useSecurity";
+import {
+  useRevokeShopSession,
+  useShopSessions,
+} from "@/features/security/hooks/useSecurity";
 import { useNow } from "@/hooks/useNow";
 import { useOnline } from "@/hooks/useOnline";
 import { formatTimeAgo } from "@/lib/format";
@@ -39,7 +42,11 @@ function SessionsScreen() {
         : `يخرج ${s.username} من تطبيق الهاتف على «${s.device_name}» فوراً، ويحتاج كود ربط جديد للدخول.`,
       [
         { text: "رجوع", style: "cancel" },
-        { text: "إلغاء الجلسة", style: "destructive", onPress: () => revoke.mutate(s.id) },
+        {
+          text: "إلغاء الجلسة",
+          style: "destructive",
+          onPress: () => revoke.mutate(s.id),
+        },
       ],
     );
 
@@ -55,7 +62,8 @@ function SessionsScreen() {
                 {s.is_current ? "  (هذا الهاتف)" : ""}
               </AppText>
               <AppText size="xs" tone="muted">
-                {s.device_name} · آخر استخدام {formatTimeAgo(s.last_used_at ?? s.created_at, now)}
+                {s.device_name} · آخر استخدام{" "}
+                {formatTimeAgo(s.last_used_at ?? s.created_at, now)}
               </AppText>
             </View>
           </View>
@@ -70,7 +78,13 @@ function SessionsScreen() {
         </Card>
       ))}
       {q.isPending && <ListSkeleton count={3} />}
-      {q.isError && !q.data && <EmptyState icon="alert-circle-outline" title="تعذّر التحميل" description={errorMessage(q.error)} />}
+      {q.isError && !q.data && (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر التحميل"
+          description={errorMessage(q.error)}
+        />
+      )}
     </Screen>
   );
 }

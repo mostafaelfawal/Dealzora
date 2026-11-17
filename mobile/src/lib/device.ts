@@ -24,5 +24,7 @@ export function getDeviceName(): string {
 }
 
 export function getPlatform(): LoginInput["platform"] {
-  return Platform.OS === "android" || Platform.OS === "ios" ? Platform.OS : "other";
+  return Platform.OS === "android" || Platform.OS === "ios"
+    ? Platform.OS
+    : "other";
 }

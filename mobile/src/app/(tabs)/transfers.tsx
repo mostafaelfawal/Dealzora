@@ -28,7 +28,10 @@ export default function TransfersRoute() {
   const items = q.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
-    <Screen onRefresh={() => void q.refetch()} refreshing={q.isRefetching && !q.isFetchingNextPage}>
+    <Screen
+      onRefresh={() => void q.refetch()}
+      refreshing={q.isRefetching && !q.isFetchingNextPage}
+    >
       <Chips
         options={FILTERS.map((f) => f.id)}
         value={filter}
@@ -46,18 +49,37 @@ export default function TransfersRoute() {
 
       {q.isPending && <ListSkeleton />}
       {q.isError && !q.data && (
-        <EmptyState icon="alert-circle-outline" title="تعذّر تحميل التحويلات" description={errorMessage(q.error)} />
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر تحميل التحويلات"
+          description={errorMessage(q.error)}
+        />
       )}
       {q.data && items.length === 0 && (
         <EmptyState
-          icon={filter === "needs_action" ? "checkmark-done-outline" : "swap-horizontal-outline"}
-          title={filter === "needs_action" ? "لا طلبات تنتظر ردك" : "لا توجد تحويلات"}
-          description={filter === "needs_action" ? "طلبات التحويل من فروعك تظهر هنا للموافقة أو الرفض" : undefined}
+          icon={
+            filter === "needs_action"
+              ? "checkmark-done-outline"
+              : "swap-horizontal-outline"
+          }
+          title={
+            filter === "needs_action" ? "لا طلبات تنتظر ردك" : "لا توجد تحويلات"
+          }
+          description={
+            filter === "needs_action"
+              ? "طلبات التحويل من فروعك تظهر هنا للموافقة أو الرفض"
+              : undefined
+          }
         />
       )}
       {q.hasNextPage && (
         <View>
-          <Button title="تحميل المزيد" variant="secondary" onPress={() => void q.fetchNextPage()} loading={q.isFetchingNextPage} />
+          <Button
+            title="تحميل المزيد"
+            variant="secondary"
+            onPress={() => void q.fetchNextPage()}
+            loading={q.isFetchingNextPage}
+          />
         </View>
       )}
     </Screen>

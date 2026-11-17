@@ -9,14 +9,19 @@ import { Appearance } from "react-native";
 
 export type ThemePref = "system" | "light" | "dark";
 export const THEME_PREFS: readonly ThemePref[] = ["system", "light", "dark"];
-export const THEME_LABEL: Record<ThemePref, string> = { system: "تلقائي", light: "فاتح", dark: "داكن" };
+export const THEME_LABEL: Record<ThemePref, string> = {
+  system: "تلقائي",
+  light: "فاتح",
+  dark: "داكن",
+};
 
 const KEY = "dz.theme";
 let pref: ThemePref = "system";
 let loaded = false;
 const listeners = new Set<() => void>();
 
-const isPref = (v: unknown): v is ThemePref => v === "system" || v === "light" || v === "dark";
+const isPref = (v: unknown): v is ThemePref =>
+  v === "system" || v === "light" || v === "dark";
 
 function apply(next: ThemePref): void {
   pref = next;
@@ -50,9 +55,17 @@ const subscribe = (fn: () => void) => {
 };
 
 export function useThemePref(): ThemePref {
-  return useSyncExternalStore(subscribe, () => pref, () => pref);
+  return useSyncExternalStore(
+    subscribe,
+    () => pref,
+    () => pref,
+  );
 }
 
 export function useThemePrefLoaded(): boolean {
-  return useSyncExternalStore(subscribe, () => loaded, () => loaded);
+  return useSyncExternalStore(
+    subscribe,
+    () => loaded,
+    () => loaded,
+  );
 }

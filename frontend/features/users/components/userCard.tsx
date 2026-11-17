@@ -88,7 +88,10 @@ export function UserCard({ user, index, ...actions }: UserCardProps) {
       >
         <IconClock className="size-3.5 shrink-0" aria-hidden />
         <span>آخر دخول:</span>
-        <AppTooltip message={lastLoginLabel(user.lastLoginAt)} onlyWhenTruncated>
+        <AppTooltip
+          message={lastLoginLabel(user.lastLoginAt)}
+          onlyWhenTruncated
+        >
           <span className="min-w-0 truncate text-foreground">
             {lastLoginLabel(user.lastLoginAt)}
           </span>

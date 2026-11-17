@@ -20,7 +20,10 @@ function RecentSaleRow({ sale, index }: { sale: RecentSale; index: number }) {
         className="flex items-center gap-3 py-2 text-xs hover:bg-muted/40"
       >
         <span className="w-12 font-mono font-semibold">#{sale.number}</span>
-        <AppTooltip message={sale.customerName ?? "عميل نقدي"} onlyWhenTruncated>
+        <AppTooltip
+          message={sale.customerName ?? "عميل نقدي"}
+          onlyWhenTruncated
+        >
           <span className="min-w-0 flex-1 truncate">
             {sale.customerName ?? "عميل نقدي"}
           </span>

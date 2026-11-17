@@ -71,7 +71,7 @@ export function SidebarNavItem({
       )}
       {!collapsed && item.hotkey !== undefined && (
         <kbd
-        dir="ltr"
+          dir="ltr"
           aria-hidden
           className="ms-auto hidden font-mono text-[10px] text-muted-foreground/70 opacity-0 transition-opacity group-hover/item:opacity-100 lg:inline"
         >

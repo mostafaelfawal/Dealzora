@@ -9,10 +9,18 @@ export const branchesKey = ["branches"] as const;
 /** حالة الفروع تتغير لحظياً: تحديث كل دقيقة والشاشة ظاهرة فقط. */
 export function useBranches() {
   const live = useLiveRefresh(true);
-  return useQuery({ queryKey: branchesKey, queryFn: ({ signal }) => fetchBranches(signal), ...live });
+  return useQuery({
+    queryKey: branchesKey,
+    queryFn: ({ signal }) => fetchBranches(signal),
+    ...live,
+  });
 }
 
 export function useBranch(id: string) {
   const live = useLiveRefresh(true);
-  return useQuery({ queryKey: ["branches", id], queryFn: ({ signal }) => fetchBranch(id, signal), ...live });
+  return useQuery({
+    queryKey: ["branches", id],
+    queryFn: ({ signal }) => fetchBranch(id, signal),
+    ...live,
+  });
 }

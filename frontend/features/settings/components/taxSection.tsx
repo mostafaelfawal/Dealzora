@@ -122,9 +122,7 @@ export function TaxSection() {
                 onClick={() => patch({ pricesIncludeTax: m.include })}
                 className={cn(
                   "space-y-1 border p-3 text-start transition-colors",
-                  active
-                    ? "border-primary bg-primary/5"
-                    : "hover:bg-muted/50",
+                  active ? "border-primary bg-primary/5" : "hover:bg-muted/50",
                 )}
               >
                 <span className="block text-sm font-medium">{m.title}</span>

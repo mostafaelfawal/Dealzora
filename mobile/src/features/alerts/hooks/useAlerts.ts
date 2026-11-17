@@ -6,7 +6,12 @@ import { errorMessage } from "@/api/errors";
 import type { NotificationPrefs } from "@/api/types";
 import { useLiveRefresh } from "@/hooks/useLiveRefresh";
 
-import { fetchNotifications, fetchPrefs, markRead, savePrefs } from "../api/alerts.api";
+import {
+  fetchNotifications,
+  fetchPrefs,
+  markRead,
+  savePrefs,
+} from "../api/alerts.api";
 import { notifyNewAlerts } from "../lib/localNotify";
 import { utcOffsetMinutes } from "../lib/push";
 import { usePushState } from "../lib/pushStore";
@@ -18,7 +23,11 @@ export const alertKeys = {
 
 export function useNotifications() {
   const live = useLiveRefresh(true);
-  return useQuery({ queryKey: alertKeys.list, queryFn: ({ signal }) => fetchNotifications(signal), ...live });
+  return useQuery({
+    queryKey: alertKeys.list,
+    queryFn: ({ signal }) => fetchNotifications(signal),
+    ...live,
+  });
 }
 
 /**
@@ -26,7 +35,11 @@ export function useNotifications() {
  * يظهر كإشعار حقيقي في شريط الهاتف (localNotify).
  */
 export function useUnreadCount(): number {
-  const q = useQuery({ queryKey: alertKeys.list, queryFn: ({ signal }) => fetchNotifications(signal), refetchInterval: 60_000 });
+  const q = useQuery({
+    queryKey: alertKeys.list,
+    queryFn: ({ signal }) => fetchNotifications(signal),
+    refetchInterval: 60_000,
+  });
   const push = usePushState();
   useEffect(() => {
     if (push === "local" && q.data) void notifyNewAlerts(q.data.items);
@@ -43,13 +56,17 @@ export function useMarkRead() {
 }
 
 export function usePrefs() {
-  return useQuery({ queryKey: alertKeys.prefs, queryFn: ({ signal }) => fetchPrefs(signal) });
+  return useQuery({
+    queryKey: alertKeys.prefs,
+    queryFn: ({ signal }) => fetchPrefs(signal),
+  });
 }
 
 export function useSavePrefs() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (prefs: NotificationPrefs) => savePrefs(prefs, utcOffsetMinutes()),
+    mutationFn: (prefs: NotificationPrefs) =>
+      savePrefs(prefs, utcOffsetMinutes()),
     // تحديث فوري للشاشة، والرجوع للقيمة السابقة لو فشل الحفظ.
     onMutate: async (prefs) => {
       await qc.cancelQueries({ queryKey: alertKeys.prefs });

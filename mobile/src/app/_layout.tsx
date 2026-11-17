@@ -50,7 +50,8 @@ export default function RootLayout() {
   }, []);
 
   // لو فشل تحميل الخط نكمل بخط النظام بدل شاشة بيضاء.
-  const ready = (fontsLoaded || !!fontError) && status !== "loading" && themeLoaded;
+  const ready =
+    (fontsLoaded || !!fontError) && status !== "loading" && themeLoaded;
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
@@ -70,7 +71,9 @@ export default function RootLayout() {
             }}
           >
             <View style={styles.rtl}>
-              <LockGate active={status === "signedIn" || status === "planBlocked"}>
+              <LockGate
+                active={status === "signedIn" || status === "planBlocked"}
+              >
                 <RootStack />
               </LockGate>
             </View>
@@ -99,16 +102,34 @@ function RootStack() {
         <Stack.Screen name="account" options={{ title: "حسابي" }} />
         <Stack.Screen name="branch/[id]" options={{ title: "الفرع" }} />
         <Stack.Screen name="transfer/[id]" options={{ title: "التحويل" }} />
-        <Stack.Screen name="alerts-settings" options={{ title: "إعدادات التنبيهات" }} />
-        <Stack.Screen name="receipts" options={{ title: "الإيصالات الإلكترونية" }} />
+        <Stack.Screen
+          name="alerts-settings"
+          options={{ title: "إعدادات التنبيهات" }}
+        />
+        <Stack.Screen
+          name="receipts"
+          options={{ title: "الإيصالات الإلكترونية" }}
+        />
         <Stack.Screen name="security/staff" options={{ title: "الموظفون" }} />
-        <Stack.Screen name="security/devices" options={{ title: "أجهزة الفروع" }} />
-        <Stack.Screen name="security/sessions" options={{ title: "جلسات الهاتف" }} />
+        <Stack.Screen
+          name="security/devices"
+          options={{ title: "أجهزة الفروع" }}
+        />
+        <Stack.Screen
+          name="security/sessions"
+          options={{ title: "جلسات الهاتف" }}
+        />
         <Stack.Screen name="stock" options={{ title: "المخزون والنواقص" }} />
         <Stack.Screen name="shifts" options={{ title: "الورديات" }} />
-        <Stack.Screen name="sensitive" options={{ title: "العمليات الحساسة" }} />
+        <Stack.Screen
+          name="sensitive"
+          options={{ title: "العمليات الحساسة" }}
+        />
         <Stack.Screen name="top-sellers" options={{ title: "الأكثر مبيعاً" }} />
-        <Stack.Screen name="report-settings" options={{ title: "حدود العمليات الحساسة" }} />
+        <Stack.Screen
+          name="report-settings"
+          options={{ title: "حدود العمليات الحساسة" }}
+        />
         <Stack.Screen name="prices" options={{ title: "أسعار الأصناف" }} />
       </Stack.Protected>
       <Stack.Protected guard={status === "planBlocked"}>

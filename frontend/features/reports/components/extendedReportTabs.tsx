@@ -68,7 +68,9 @@ const pct = (part: number, whole: number) =>
   whole > 0 ? Math.round((part / whole) * 1000) / 10 : 0;
 
 function Stats({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{children}</div>;
+  return (
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{children}</div>
+  );
 }
 
 /** يعرض البيانات بعد التحميل، أو هيكل التحميل/الخطأ. */
@@ -111,7 +113,10 @@ const PURCHASED_COLUMNS: ReportColumn<PurchasedProduct>[] = [
   },
   { header: "التكلفة", cell: (r) => money(r.total) },
   { header: "آخر سعر للوحدة", cell: (r) => money(r.lastCost) },
-  { header: "التغيّر في الفترة", cell: (r) => <PriceChange value={r.changePct} /> },
+  {
+    header: "التغيّر في الفترة",
+    cell: (r) => <PriceChange value={r.changePct} />,
+  },
 ];
 
 const PRICE_COLUMNS: ReportColumn<PurchasedProduct>[] = [
@@ -207,7 +212,11 @@ export function PurchasesReportTab({ range }: { range: DateRange }) {
               index={3}
               icon={<IconArrowBackUp />}
               label="مرتجع للموردين"
-              hint={r.discount ? `خصومات الموردين ${formatNumber(r.discount)}` : undefined}
+              hint={
+                r.discount
+                  ? `خصومات الموردين ${formatNumber(r.discount)}`
+                  : undefined
+              }
             >
               <Money amount={r.returned} className="text-lg" />
             </StatTile>
@@ -228,7 +237,11 @@ export function PurchasesReportTab({ range }: { range: DateRange }) {
                     label: s.name,
                     value: s.total,
                     extra: [
-                      { label: "الفواتير", value: s.count, kind: "count" as const },
+                      {
+                        label: "الفواتير",
+                        value: s.count,
+                        kind: "count" as const,
+                      },
                     ],
                   }))}
                 />
@@ -282,7 +295,11 @@ function PromoPeriod({ p }: { p: PromoRow }) {
 }
 
 const PROMO_COLUMNS: ReportColumn<PromoRow>[] = [
-  { header: "العرض", cell: (p) => clip(p.name, "max-w-52"), className: "font-medium" },
+  {
+    header: "العرض",
+    cell: (p) => clip(p.name, "max-w-52"),
+    className: "font-medium",
+  },
   {
     header: "الحالة",
     cell: (p) =>
@@ -299,8 +316,16 @@ const PROMO_COLUMNS: ReportColumn<PromoRow>[] = [
   },
   { header: "المدة", cell: (p) => <PromoPeriod p={p} /> },
   { header: "الخصم في الفترة", cell: (p) => money(p.discount) },
-  { header: "الفواتير", cell: (p) => formatNumber(p.invoices), className: "font-mono" },
-  { header: "الكمية المباعة", cell: (p) => formatQty(p.qty), className: "font-mono" },
+  {
+    header: "الفواتير",
+    cell: (p) => formatNumber(p.invoices),
+    className: "font-mono",
+  },
+  {
+    header: "الكمية المباعة",
+    cell: (p) => formatQty(p.qty),
+    className: "font-mono",
+  },
   { header: "مبيعات أصنافه", cell: (p) => money(p.revenue) },
 ];
 
@@ -365,7 +390,11 @@ export function PromotionsReportTab({ range }: { range: DateRange }) {
                     value: p.discount,
                     extra: [
                       { label: "مبيعات أصنافه", value: p.revenue },
-                      { label: "الفواتير", value: p.invoices, kind: "count" as const },
+                      {
+                        label: "الفواتير",
+                        value: p.invoices,
+                        kind: "count" as const,
+                      },
                     ],
                   }))}
                 />
@@ -443,7 +472,13 @@ export function ReturnsReportTab({ range }: { range: DateRange }) {
                     key: x.key,
                     label: RETURN_REASON_LABEL[x.key as ReturnReason] ?? x.key,
                     value: x.value,
-                    extra: [{ label: "العدد", value: x.count, kind: "count" as const }],
+                    extra: [
+                      {
+                        label: "العدد",
+                        value: x.count,
+                        kind: "count" as const,
+                      },
+                    ],
                   }))}
                 />
               )}
@@ -452,8 +487,16 @@ export function ReturnsReportTab({ range }: { range: DateRange }) {
               title="المرتجع حسب الكاشير"
               rows={r.byCashier}
               columns={[
-                { header: "الكاشير", cell: (c) => c.name, className: "font-medium" },
-                { header: "العمليات", cell: (c) => c.count, className: "font-mono" },
+                {
+                  header: "الكاشير",
+                  cell: (c) => c.name,
+                  className: "font-medium",
+                },
+                {
+                  header: "العمليات",
+                  cell: (c) => c.count,
+                  className: "font-mono",
+                },
                 { header: "القيمة", cell: (c) => money(c.total) },
               ]}
               getKey={(c) => c.userId}
@@ -466,9 +509,21 @@ export function ReturnsReportTab({ range }: { range: DateRange }) {
             title="الأصناف الأكثر رجوعاً"
             rows={r.topProducts}
             columns={[
-              { header: "الصنف", cell: (x) => clip(x.name, "max-w-52"), className: "font-medium" },
-              { header: "الكمية", cell: (x) => `${formatQty(x.qty)} ${x.unit}`, className: "font-mono" },
-              { header: "مرات الرجوع", cell: (x) => x.times, className: "font-mono" },
+              {
+                header: "الصنف",
+                cell: (x) => clip(x.name, "max-w-52"),
+                className: "font-medium",
+              },
+              {
+                header: "الكمية",
+                cell: (x) => `${formatQty(x.qty)} ${x.unit}`,
+                className: "font-mono",
+              },
+              {
+                header: "مرات الرجوع",
+                cell: (x) => x.times,
+                className: "font-mono",
+              },
               { header: "القيمة", cell: (x) => money(x.amount) },
             ]}
             getKey={(x) => x.productId}
@@ -503,14 +558,25 @@ function LoyaltyPanel({ l }: { l: CustomersReport["loyalty"] }) {
     ["نقاط استبدلوها", formatNumber(l.redeemed)],
     ["قيمة خصم الاستبدال", money(l.redeemValue)],
     ["تعديلات يدوية (هدايا/خصم)", formatNumber(l.adjusted)],
-    [`أرصدة العملاء الآن (${l.members} عميل)`, formatNumber(l.outstandingPoints)],
-    ["قيمتها لو استُبدلت (التزام على المحل)", money(l.outstandingValue, "text-warning")],
+    [
+      `أرصدة العملاء الآن (${l.members} عميل)`,
+      formatNumber(l.outstandingPoints),
+    ],
+    [
+      "قيمتها لو استُبدلت (التزام على المحل)",
+      money(l.outstandingValue, "text-warning"),
+    ],
   ];
   return (
-    <ReportPanel title={l.enabled ? "نقاط الولاء" : "نقاط الولاء (متوقفة حالياً)"}>
+    <ReportPanel
+      title={l.enabled ? "نقاط الولاء" : "نقاط الولاء (متوقفة حالياً)"}
+    >
       <dl className="divide-y text-xs">
         {rows.map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between gap-3 py-2">
+          <div
+            key={label}
+            className="flex items-center justify-between gap-3 py-2"
+          >
             <dt>{label}</dt>
             <dd className="font-mono font-semibold">{value}</dd>
           </div>
@@ -521,12 +587,17 @@ function LoyaltyPanel({ l }: { l: CustomersReport["loyalty"] }) {
           <p className="pt-2 text-xs font-medium">أعلى الأرصدة</p>
           <ul className="divide-y text-xs">
             {l.topBalances.map((b) => (
-              <li key={b.id} className="flex items-center justify-between gap-3 py-1.5">
+              <li
+                key={b.id}
+                className="flex items-center justify-between gap-3 py-1.5"
+              >
                 <AppTooltip message={b.name} onlyWhenTruncated>
                   <span className="truncate">{b.name}</span>
                 </AppTooltip>
                 <span className="flex items-center gap-2">
-                  <span className="font-mono">{formatNumber(b.points)} نقطة</span>
+                  <span className="font-mono">
+                    {formatNumber(b.points)} نقطة
+                  </span>
                   {money(b.value, "text-muted-foreground")}
                 </span>
               </li>
@@ -586,11 +657,26 @@ export function CustomersReportTab({ range }: { range: DateRange }) {
                   title="أفضل العملاء في الفترة"
                   rows={r.top}
                   columns={[
-                    { header: "العميل", cell: (c) => clip(c.name, "max-w-44"), className: "font-medium" },
+                    {
+                      header: "العميل",
+                      cell: (c) => clip(c.name, "max-w-44"),
+                      className: "font-medium",
+                    },
                     { header: "صافي المشتريات", cell: (c) => money(c.net) },
-                    { header: "الفواتير", cell: (c) => c.invoices, className: "font-mono" },
-                    { header: "متوسط الفاتورة", cell: (c) => money(c.avgTicket) },
-                    { header: "النقاط", cell: (c) => formatNumber(c.points), className: "font-mono" },
+                    {
+                      header: "الفواتير",
+                      cell: (c) => c.invoices,
+                      className: "font-mono",
+                    },
+                    {
+                      header: "متوسط الفاتورة",
+                      cell: (c) => money(c.avgTicket),
+                    },
+                    {
+                      header: "النقاط",
+                      cell: (c) => formatNumber(c.points),
+                      className: "font-mono",
+                    },
                     {
                       header: "آخر شراء",
                       cell: (c) => (c.lastAt ? formatDayLabel(c.lastAt) : "—"),
@@ -609,7 +695,11 @@ export function CustomersReportTab({ range }: { range: DateRange }) {
               title="عملاء انقطعوا عن الشراء (كلّمهم أو ابعتلهم عرضاً)"
               rows={r.lapsed}
               columns={[
-                { header: "العميل", cell: (c) => c.name, className: "font-medium" },
+                {
+                  header: "العميل",
+                  cell: (c) => c.name,
+                  className: "font-medium",
+                },
                 {
                   header: "التليفون",
                   cell: (c) =>
@@ -621,7 +711,11 @@ export function CustomersReportTab({ range }: { range: DateRange }) {
                       "—"
                     ),
                 },
-                { header: "آخر شراء", cell: (c) => `منذ ${c.days} يوم`, className: "text-warning" },
+                {
+                  header: "آخر شراء",
+                  cell: (c) => `منذ ${c.days} يوم`,
+                  className: "text-warning",
+                },
                 { header: "كل مشترياته", cell: (c) => money(c.lifetime) },
               ]}
               getKey={(c) => c.id}
@@ -645,7 +739,10 @@ const CASHIER_COLUMNS: ReportColumn<CashierRow>[] = [
     header: "خصم يدوي",
     cell: (c) => (
       <span className="inline-flex items-baseline gap-1">
-        {money(c.manualDiscount, c.manualDiscount > 0 ? "text-warning" : undefined)}
+        {money(
+          c.manualDiscount,
+          c.manualDiscount > 0 ? "text-warning" : undefined,
+        )}
         <span className="font-mono text-[10px] text-muted-foreground">
           {pct(c.manualDiscount, c.sales + c.manualDiscount)}%
         </span>
@@ -658,7 +755,9 @@ const CASHIER_COLUMNS: ReportColumn<CashierRow>[] = [
       c.returnsCount ? (
         <span className="inline-flex items-baseline gap-1">
           {money(c.returns, "text-destructive")}
-          <span className="text-[10px] text-muted-foreground">({c.returnsCount})</span>
+          <span className="text-[10px] text-muted-foreground">
+            ({c.returnsCount})
+          </span>
         </span>
       ) : (
         "—"
@@ -689,7 +788,9 @@ export function CashiersReportTab({ range }: { range: DateRange }) {
               index={0}
               icon={<IconClockHour4 />}
               label="الورديات"
-              hint={r.openShifts ? `${r.openShifts} مفتوحة الآن` : "كلها مقفولة"}
+              hint={
+                r.openShifts ? `${r.openShifts} مفتوحة الآن` : "كلها مقفولة"
+              }
             >
               <span className="font-mono">{r.shiftsCount}</span>
             </StatTile>
@@ -709,11 +810,7 @@ export function CashiersReportTab({ range }: { range: DateRange }) {
             >
               <Money amount={r.overage} className="text-lg" />
             </StatTile>
-            <StatTile
-              index={3}
-              icon={<IconUsers />}
-              label="كاشيرية عملوا"
-            >
+            <StatTile index={3} icon={<IconUsers />} label="كاشيرية عملوا">
               <span className="font-mono">{r.cashiers.length}</span>
             </StatTile>
           </Stats>
@@ -731,14 +828,25 @@ export function CashiersReportTab({ range }: { range: DateRange }) {
             title="ورديات بها عجز أو زيادة (الأكبر أولاً)"
             rows={r.differences}
             columns={[
-              { header: "الكاشير", cell: (d) => d.cashierName, className: "font-medium" },
-              { header: "فُتحت", cell: (d) => formatDateTime(d.openedAt), className: "text-muted-foreground" },
+              {
+                header: "الكاشير",
+                cell: (d) => d.cashierName,
+                className: "font-medium",
+              },
+              {
+                header: "فُتحت",
+                cell: (d) => formatDateTime(d.openedAt),
+                className: "text-muted-foreground",
+              },
               { header: "المتوقع في الدرج", cell: (d) => money(d.expected) },
               { header: "المعدود", cell: (d) => money(d.counted) },
               {
                 header: "الفرق",
                 cell: (d) =>
-                  money(d.difference, d.difference < 0 ? "text-destructive" : "text-success"),
+                  money(
+                    d.difference,
+                    d.difference < 0 ? "text-destructive" : "text-success",
+                  ),
               },
             ]}
             getKey={(d) => d.id}
@@ -746,8 +854,9 @@ export function CashiersReportTab({ range }: { range: DateRange }) {
             minWidth="min-w-150"
           />
           <p className="text-[11px] text-muted-foreground">
-            الخصم اليدوي = خصم الكاشير على الأصناف وعلى إجمالي الفاتورة (بدون العروض التلقائية).
-            حد الخصم المسموح للكاشير من الإعدادات ← البيع ← حد الخصم.
+            الخصم اليدوي = خصم الكاشير على الأصناف وعلى إجمالي الفاتورة (بدون
+            العروض التلقائية). حد الخصم المسموح للكاشير من الإعدادات ← البيع ←
+            حد الخصم.
           </p>
         </>
       )}

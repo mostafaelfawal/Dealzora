@@ -139,7 +139,14 @@ export interface ServerErrorBody {
 }
 
 // ================= التحويلات (/mobile/v1/transfers) =================
-export type TransferStatus = "requested" | "rejected" | "withdrawn" | "sent" | "received" | "partial" | "cancelled";
+export type TransferStatus =
+  | "requested"
+  | "rejected"
+  | "withdrawn"
+  | "sent"
+  | "received"
+  | "partial"
+  | "cancelled";
 
 export interface TransferLine {
   id: string;
@@ -157,7 +164,14 @@ export interface TransferLine {
   expiry_date: string | null;
 }
 
-export type CommandStatus = "pending" | "executing" | "done" | "failed" | "superseded" | "expired" | "cancelled";
+export type CommandStatus =
+  | "pending"
+  | "executing"
+  | "done"
+  | "failed"
+  | "superseded"
+  | "expired"
+  | "cancelled";
 
 /** موافقة طُلبت من الهاتف وينفّذها جهاز الفرع. */
 export interface TransferApproval {

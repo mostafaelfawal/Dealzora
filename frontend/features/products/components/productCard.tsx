@@ -63,7 +63,10 @@ export function ProductCard({ product, index, ...actions }: ProductCardProps) {
           </Link>
           <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <IconBarcode className="size-3.5 shrink-0" aria-hidden />
-            <AppTooltip message={product.barcode || "بدون باركود"} onlyWhenTruncated>
+            <AppTooltip
+              message={product.barcode || "بدون باركود"}
+              onlyWhenTruncated
+            >
               <span
                 dir="ltr"
                 className="min-w-0 truncate text-start font-mono text-[11px]"

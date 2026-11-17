@@ -2,7 +2,9 @@
  * اختيار الفترة: اليوم، أمس، آخر 7 أيام، هذا الشهر، مخصص (نفس تعريفات البرنامج المكتبي).
  * المخصص: تاريخ بداية ونهاية (حتى سنة) من منتقي التاريخ الأصلي للنظام.
  */
-import DateTimePicker, { type DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 
@@ -22,7 +24,13 @@ import { useTheme } from "@/theme/ThemeProvider";
 
 import { setCustomRange, setPreset } from "../lib/periodStore";
 
-const PRESETS: PeriodPreset[] = ["today", "yesterday", "week", "month", "custom"];
+const PRESETS: PeriodPreset[] = [
+  "today",
+  "yesterday",
+  "week",
+  "month",
+  "custom",
+];
 
 interface Props {
   preset: PeriodPreset;
@@ -83,8 +91,17 @@ function CustomRangeModal({
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="إغلاق">
-        <Pressable style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Pressable
+        style={styles.backdrop}
+        onPress={onClose}
+        accessibilityLabel="إغلاق"
+      >
+        <Pressable
+          style={[
+            styles.sheet,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <AppText weight="bold" size="lg">
             فترة مخصصة
           </AppText>
@@ -93,12 +110,17 @@ function CustomRangeModal({
               key={which}
               accessibilityRole="button"
               onPress={() => setEditing(which)}
-              style={[styles.field, { borderColor: editing === which ? colors.ring : colors.input }]}
+              style={[
+                styles.field,
+                { borderColor: editing === which ? colors.ring : colors.input },
+              ]}
             >
               <AppText label size="sm" tone="muted">
                 {which === "from" ? "من" : "إلى"}
               </AppText>
-              <AppText label weight="medium">{formatRange({ from: range[which], to: range[which] })}</AppText>
+              <AppText label weight="medium">
+                {formatRange({ from: range[which], to: range[which] })}
+              </AppText>
             </Pressable>
           ))}
           {editing && (
@@ -115,8 +137,17 @@ function CustomRangeModal({
             حتى سنة كاملة
           </AppText>
           <View style={styles.actions}>
-            <Button title="عرض" onPress={() => onApply(range)} style={styles.flex} />
-            <Button title="إلغاء" variant="ghost" onPress={onClose} style={styles.flex} />
+            <Button
+              title="عرض"
+              onPress={() => onApply(range)}
+              style={styles.flex}
+            />
+            <Button
+              title="إلغاء"
+              variant="ghost"
+              onPress={onClose}
+              style={styles.flex}
+            />
           </View>
         </Pressable>
       </Pressable>
@@ -126,9 +157,25 @@ function CustomRangeModal({
 
 const styles = StyleSheet.create({
   wrap: { gap: space.xs },
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: space.lg },
-  sheet: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg, gap: space.md },
-  field: { borderWidth: 1, borderRadius: radius.md, padding: space.md, flexDirection: "row", justifyContent: "space-between" },
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    padding: space.lg,
+  },
+  sheet: {
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: space.lg,
+    gap: space.md,
+  },
+  field: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: space.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   actions: { flexDirection: "row", gap: space.sm },
   flex: { flex: 1 },
 });

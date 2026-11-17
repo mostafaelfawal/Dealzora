@@ -108,7 +108,12 @@ function SecretField({
           className="h-10 font-mono"
         />
         {state !== "unset" && !cleared && (
-          <Button type="button" variant="outline" className="h-10" onClick={onClear}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10"
+            onClick={onClear}
+          >
             مسح
           </Button>
         )}
@@ -161,8 +166,8 @@ function DeviceDialog({
         <DialogHeader className="text-start">
           <DialogTitle>بيانات «{device.name}» في المنظومة</DialogTitle>
           <DialogDescription>
-            من بيانات الجهاز المسجّل على بوابة المنظومة. الأسرار تُحفظ مشفّرة
-            ولا تظهر مرة أخرى.
+            من بيانات الجهاز المسجّل على بوابة المنظومة. الأسرار تُحفظ مشفّرة ولا
+            تظهر مرة أخرى.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -187,7 +192,10 @@ function DeviceDialog({
                 className="h-10 font-mono"
               />
             </FormField>
-            <FormField id="eta-dev-os" label="إصدار نظام التشغيل (POS OS Version)">
+            <FormField
+              id="eta-dev-os"
+              label="إصدار نظام التشغيل (POS OS Version)"
+            >
               <Input
                 id="eta-dev-os"
                 dir="ltr"
@@ -275,7 +283,10 @@ function TestConnection({ deviceId }: { deviceId: string }) {
             ? `${result.message} (${result.environment === "prod" ? "الفعلية" : "التجريبية"})`
             : result.message}
           {result.correlation_id && (
-            <span className="block font-mono text-[10px] text-muted-foreground" dir="ltr">
+            <span
+              className="block font-mono text-[10px] text-muted-foreground"
+              dir="ltr"
+            >
               {result.correlation_id}
             </span>
           )}

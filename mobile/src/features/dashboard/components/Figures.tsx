@@ -22,27 +22,96 @@ import { change, formatChange } from "../lib/insights";
 type Metric = keyof Totals;
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
-const TILES: { key: Metric; label: string; upIsGood: boolean; icon: IconName }[] = [
-  { key: "revenue", label: "المبيعات", upIsGood: true, icon: "bag-handle-outline" },
-  { key: "returns", label: "المرتجعات", upIsGood: false, icon: "return-down-back-outline" },
-  { key: "profit", label: "مجمل الربح", upIsGood: true, icon: "trending-up-outline" },
-  { key: "discounts", label: "الخصومات", upIsGood: false, icon: "pricetag-outline" },
-  { key: "expenses", label: "المصروفات", upIsGood: false, icon: "wallet-outline" },
-  { key: "net_profit", label: "صافي الربح", upIsGood: true, icon: "sparkles-outline" },
+const TILES: {
+  key: Metric;
+  label: string;
+  upIsGood: boolean;
+  icon: IconName;
+}[] = [
+  {
+    key: "revenue",
+    label: "المبيعات",
+    upIsGood: true,
+    icon: "bag-handle-outline",
+  },
+  {
+    key: "returns",
+    label: "المرتجعات",
+    upIsGood: false,
+    icon: "return-down-back-outline",
+  },
+  {
+    key: "profit",
+    label: "مجمل الربح",
+    upIsGood: true,
+    icon: "trending-up-outline",
+  },
+  {
+    key: "discounts",
+    label: "الخصومات",
+    upIsGood: false,
+    icon: "pricetag-outline",
+  },
+  {
+    key: "expenses",
+    label: "المصروفات",
+    upIsGood: false,
+    icon: "wallet-outline",
+  },
+  {
+    key: "net_profit",
+    label: "صافي الربح",
+    upIsGood: true,
+    icon: "sparkles-outline",
+  },
 ];
 
 /** شارة التغيّر: خلفية خفيفة بلون الاتجاه + سهم + نسبة، والوصف بجانبها. */
-export function Delta({ current, previous, upIsGood, label }: { current: number; previous: number; upIsGood: boolean; label?: string }) {
+export function Delta({
+  current,
+  previous,
+  upIsGood,
+  label,
+}: {
+  current: number;
+  previous: number;
+  upIsGood: boolean;
+  label?: string;
+}) {
   const { colors } = useTheme();
   const c = change(current, previous);
   const text = formatChange(c);
-  if (!text) return label ? null : <AppText size="xs" tone="muted">—</AppText>;
-  const good = c.direction === "flat" ? null : (c.direction === "up") === upIsGood;
-  const color = good === null ? colors.mutedForeground : good ? colors.success : colors.destructive;
-  const bg = good === null ? colors.muted : good ? colors.successSoft : colors.destructiveSoft;
-  const icon = c.direction === "up" ? "arrow-up" : c.direction === "down" ? "arrow-down" : "remove";
+  if (!text)
+    return label ? null : (
+      <AppText size="xs" tone="muted">
+        —
+      </AppText>
+    );
+  const good =
+    c.direction === "flat" ? null : (c.direction === "up") === upIsGood;
+  const color =
+    good === null
+      ? colors.mutedForeground
+      : good
+        ? colors.success
+        : colors.destructive;
+  const bg =
+    good === null
+      ? colors.muted
+      : good
+        ? colors.successSoft
+        : colors.destructiveSoft;
+  const icon =
+    c.direction === "up"
+      ? "arrow-up"
+      : c.direction === "down"
+        ? "arrow-down"
+        : "remove";
   return (
-    <View style={styles.delta} accessibilityLabel={`${text}${label ? ` ${label}` : ""}`}>
+    <View
+      style={styles.delta}
+      accessibilityLabel={`${text}${label ? ` ${label}` : ""}`}
+    >
       <View style={[styles.pill, { backgroundColor: bg }]}>
         <Ionicons name={icon} size={11} color={color} />
         <AppText label size="xs" weight="semibold" style={{ color }}>
@@ -65,13 +134,24 @@ interface CompareLabels {
 
 export function compareLabels(span: number, isToday: boolean): CompareLabels {
   return {
-    previous: span === 1 ? (isToday ? "عن أمس" : "عن اليوم السابق") : "عن الفترة السابقة",
+    previous:
+      span === 1
+        ? isToday
+          ? "عن أمس"
+          : "عن اليوم السابق"
+        : "عن الفترة السابقة",
     weekAgo: "عن نفس اليوم الأسبوع الماضي",
   };
 }
 
 /** الرقم الرئيسي: صافي المبيعات للفترة مع المقارنتين. شريط بلون النص في بداية البطاقة يميّزها عن البقية. */
-export function HeroNet({ summary, labels }: { summary: Summary; labels: CompareLabels }) {
+export function HeroNet({
+  summary,
+  labels,
+}: {
+  summary: Summary;
+  labels: CompareLabels;
+}) {
   const { colors } = useTheme();
   const { net } = summary.totals;
   const shown = useCountUp(net);
@@ -83,7 +163,11 @@ export function HeroNet({ summary, labels }: { summary: Summary; labels: Compare
           صافي المبيعات
         </AppText>
         <View style={[styles.countChip, { backgroundColor: colors.muted }]}>
-          <Ionicons name="receipt-outline" size={12} color={colors.mutedForeground} />
+          <Ionicons
+            name="receipt-outline"
+            size={12}
+            color={colors.mutedForeground}
+          />
           <AppText label size="xs" tone="muted" weight="medium">
             {summary.totals.count} فاتورة
           </AppText>
@@ -96,8 +180,20 @@ export function HeroNet({ summary, labels }: { summary: Summary; labels: Compare
         accessibilityLabel={`صافي المبيعات ${formatPiastres(net)}`}
       />
       <View style={styles.deltas}>
-        <Delta current={net} previous={previous.totals.net} upIsGood label={labels.previous} />
-        {week_ago && <Delta current={net} previous={week_ago.totals.net} upIsGood label={labels.weekAgo} />}
+        <Delta
+          current={net}
+          previous={previous.totals.net}
+          upIsGood
+          label={labels.previous}
+        />
+        {week_ago && (
+          <Delta
+            current={net}
+            previous={week_ago.totals.net}
+            upIsGood
+            label={labels.weekAgo}
+          />
+        )}
       </View>
     </Card>
   );
@@ -112,18 +208,36 @@ export function StatTiles({ summary }: { summary: Summary }) {
         <FadeIn key={t.key} index={i} delay={120} style={styles.tileWrap}>
           <Card style={styles.tile}>
             <View style={styles.tileHead}>
-              <AppText size="xs" tone="muted" weight="medium" style={styles.flex} numberOfLines={1}>
+              <AppText
+                size="xs"
+                tone="muted"
+                weight="medium"
+                style={styles.flex}
+                numberOfLines={1}
+              >
                 {t.label}
               </AppText>
-              <Ionicons name={t.icon} size={15} color={colors.mutedForeground} />
+              <Ionicons
+                name={t.icon}
+                size={15}
+                color={colors.mutedForeground}
+              />
             </View>
             <Money
               amount={summary.totals[t.key]}
               weight="bold"
               size="lg"
-              tone={t.key === "net_profit" && summary.totals.net_profit < 0 ? "destructive" : "default"}
+              tone={
+                t.key === "net_profit" && summary.totals.net_profit < 0
+                  ? "destructive"
+                  : "default"
+              }
             />
-            <Delta current={summary.totals[t.key]} previous={prev[t.key]} upIsGood={t.upIsGood} />
+            <Delta
+              current={summary.totals[t.key]}
+              previous={prev[t.key]}
+              upIsGood={t.upIsGood}
+            />
           </Card>
         </FadeIn>
       ))}
@@ -135,11 +249,28 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   hero: { gap: space.xs, borderStartWidth: 3, paddingVertical: space.lg },
   heroHead: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  countChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 2 },
-  heroValue: { fontFamily: fontFamily.bold, fontSize: 38, lineHeight: 54, letterSpacing: -0.5 },
+  countChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  heroValue: {
+    fontFamily: fontFamily.bold,
+    fontSize: 38,
+    lineHeight: 54,
+    letterSpacing: -0.5,
+  },
   deltas: { gap: 6, marginTop: space.xs },
   delta: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  pill: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 6, paddingVertical: 1 },
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   // عمودان على 360px (16 + 16 هوامش، 8 بينهما)
   tileWrap: { flexBasis: "48%", flexGrow: 1 },

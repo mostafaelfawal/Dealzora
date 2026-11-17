@@ -148,7 +148,10 @@ export function ReportPdfButton({
   const [picked, setPicked] = useState<Set<ReportTab>>(
     () => new Set(tabs.map((t) => t.id)),
   );
-  const [job, setJob] = useState<{ tabs: TabOption[]; toastId: string | number } | null>(null);
+  const [job, setJob] = useState<{
+    tabs: TabOption[];
+    toastId: string | number;
+  } | null>(null);
 
   const current = tabs.find((t) => t.id === currentTab);
   const chosen =
@@ -281,9 +284,7 @@ export function ReportPdfButton({
         </DialogContent>
       </Dialog>
 
-      {job && (
-        <PdfStage tabs={job.tabs} period={period} onReady={finish} />
-      )}
+      {job && <PdfStage tabs={job.tabs} period={period} onReady={finish} />}
     </>
   );
 }

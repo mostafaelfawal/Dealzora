@@ -25,7 +25,12 @@ const QUIET_END = ["06:00", "07:00", "08:00", "09:00"];
 
 function minutesLabel(m: number): string {
   if (m < 60) return `${m} دقيقة`;
-  return formatArabicCount(m / 60, { one: "ساعة", two: "ساعتين", few: "ساعات", many: "ساعة" });
+  return formatArabicCount(m / 60, {
+    one: "ساعة",
+    two: "ساعتين",
+    few: "ساعات",
+    many: "ساعة",
+  });
 }
 
 function timeLabel(hhmm: string): string {
@@ -44,12 +49,32 @@ export default function AlertsSettingsRoute() {
     if (p) save.mutate({ ...p, ...patch });
   };
 
-  const toggle = (value: boolean, onChange: (v: boolean) => void, label: string) => (
-    <AppSwitch value={value} onValueChange={onChange} disabled={save.isPending} accessibilityLabel={label} />
+  const toggle = (
+    value: boolean,
+    onChange: (v: boolean) => void,
+    label: string,
+  ) => (
+    <AppSwitch
+      value={value}
+      onValueChange={onChange}
+      disabled={save.isPending}
+      accessibilityLabel={label}
+    />
   );
 
-  const chips = <T extends string | number>(options: T[], current: T, render: (v: T) => string, onPick: (v: T) => void) => (
-    <Chips options={options} value={current} label={render} onChange={onPick} disabled={save.isPending} />
+  const chips = <T extends string | number>(
+    options: T[],
+    current: T,
+    render: (v: T) => string,
+    onPick: (v: T) => void,
+  ) => (
+    <Chips
+      options={options}
+      value={current}
+      label={render}
+      onChange={onPick}
+      disabled={save.isPending}
+    />
   );
 
   return (
@@ -57,43 +82,72 @@ export default function AlertsSettingsRoute() {
       <PushPermissionCard />
 
       {!p && q.isPending && <ListSkeleton count={3} />}
-      {!p && q.isError && <EmptyState icon="alert-circle-outline" title="تعذّر تحميل الإعدادات" description={errorMessage(q.error)} />}
+      {!p && q.isError && (
+        <EmptyState
+          icon="alert-circle-outline"
+          title="تعذّر تحميل الإعدادات"
+          description={errorMessage(q.error)}
+        />
+      )}
       {p && (
         <>
           <Card>
             <ListRow
               icon="swap-horizontal-outline"
               title="طلب تحويل ينتظر موافقتك"
-              trailing={toggle(p.transfer_request.enabled, (v) => update({ transfer_request: { enabled: v } }), "طلبات التحويل")}
+              trailing={toggle(
+                p.transfer_request.enabled,
+                (v) => update({ transfer_request: { enabled: v } }),
+                "طلبات التحويل",
+              )}
             />
             <ListRow
               icon="receipt-outline"
               title="إيصالات إلكترونية مرفوضة"
-              trailing={toggle(p.eta_rejected.enabled, (v) => update({ eta_rejected: { enabled: v } }), "الإيصالات المرفوضة")}
+              trailing={toggle(
+                p.eta_rejected.enabled,
+                (v) => update({ eta_rejected: { enabled: v } }),
+                "الإيصالات المرفوضة",
+              )}
             />
             <ListRow
               icon="trending-down-outline"
               title="مبيعات أقل كثيراً من المعتاد"
               subtitle="لأمس مقارنة بنفس اليوم في الأسابيع السابقة"
-              trailing={toggle(p.low_sales.enabled, (v) => update({ low_sales: { enabled: v } }), "المبيعات الأقل من المعتاد")}
+              trailing={toggle(
+                p.low_sales.enabled,
+                (v) => update({ low_sales: { enabled: v } }),
+                "المبيعات الأقل من المعتاد",
+              )}
             />
             <ListRow
               icon="shield-outline"
               title="عمليات حساسة"
               subtitle="خصم أو مرتجع فوق الحد، ومرتجع فاتورة كاملة"
-              trailing={toggle(p.sensitive_op.enabled, (v) => update({ sensitive_op: { enabled: v } }), "العمليات الحساسة")}
+              trailing={toggle(
+                p.sensitive_op.enabled,
+                (v) => update({ sensitive_op: { enabled: v } }),
+                "العمليات الحساسة",
+              )}
             />
             <ListRow
               icon="cash-outline"
               title="فرق نقدية كبير في وردية"
-              trailing={toggle(p.cash_diff.enabled, (v) => update({ cash_diff: { enabled: v } }), "فروق النقدية")}
+              trailing={toggle(
+                p.cash_diff.enabled,
+                (v) => update({ cash_diff: { enabled: v } }),
+                "فروق النقدية",
+              )}
             />
             <ListRow
               icon="cloud-offline-outline"
               title="فرع غير متصل"
               trailing={toggle(
                 p.branch_offline.enabled,
-                (v) => update({ branch_offline: { ...p.branch_offline, enabled: v } }),
+                (v) =>
+                  update({
+                    branch_offline: { ...p.branch_offline, enabled: v },
+                  }),
                 "الفرع غير المتصل",
               )}
             />
@@ -102,8 +156,14 @@ export default function AlertsSettingsRoute() {
                 <AppText size="xs" tone="muted">
                   نبّهني لو انقطع الفرع أكثر من:
                 </AppText>
-                {chips(OFFLINE_MINUTES, p.branch_offline.minutes, minutesLabel, (m) =>
-                  update({ branch_offline: { ...p.branch_offline, minutes: m } }),
+                {chips(
+                  OFFLINE_MINUTES,
+                  p.branch_offline.minutes,
+                  minutesLabel,
+                  (m) =>
+                    update({
+                      branch_offline: { ...p.branch_offline, minutes: m },
+                    }),
                 )}
               </View>
             )}
@@ -114,25 +174,33 @@ export default function AlertsSettingsRoute() {
               icon="moon-outline"
               title="ساعات الهدوء"
               subtitle="لا إشعارات على الهاتف خلالها، وتصلك مجمّعة بعدها"
-              trailing={toggle(p.quiet.enabled, (v) => update({ quiet: { ...p.quiet, enabled: v } }), "ساعات الهدوء")}
+              trailing={toggle(
+                p.quiet.enabled,
+                (v) => update({ quiet: { ...p.quiet, enabled: v } }),
+                "ساعات الهدوء",
+              )}
             />
             {p.quiet.enabled && (
               <View style={styles.sub}>
                 <AppText size="xs" tone="muted">
                   من
                 </AppText>
-                {chips(QUIET_START, p.quiet.start, timeLabel, (v) => update({ quiet: { ...p.quiet, start: v } }))}
+                {chips(QUIET_START, p.quiet.start, timeLabel, (v) =>
+                  update({ quiet: { ...p.quiet, start: v } }),
+                )}
                 <AppText size="xs" tone="muted">
                   إلى
                 </AppText>
-                {chips(QUIET_END, p.quiet.end, timeLabel, (v) => update({ quiet: { ...p.quiet, end: v } }))}
+                {chips(QUIET_END, p.quiet.end, timeLabel, (v) =>
+                  update({ quiet: { ...p.quiet, end: v } }),
+                )}
               </View>
             )}
           </Card>
 
           <AppText size="xs" tone="muted">
-            الإعدادات لحسابك على كل هواتفك. الإشعار يظهر على شاشة القفل، لذلك لا يحوي مبالغ أو تفاصيل: افتح التطبيق
-            لرؤيتها.
+            الإعدادات لحسابك على كل هواتفك. الإشعار يظهر على شاشة القفل، لذلك لا
+            يحوي مبالغ أو تفاصيل: افتح التطبيق لرؤيتها.
           </AppText>
         </>
       )}

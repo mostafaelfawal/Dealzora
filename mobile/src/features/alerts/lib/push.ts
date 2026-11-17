@@ -20,11 +20,13 @@ import { api } from "@/api/instance";
 
 export const ALERTS_CHANNEL = "alerts";
 
-export type PushState = "enabled" | "local" | "needs_permission" | "denied" | "error";
+export type PushState =
+  "enabled" | "local" | "needs_permission" | "denied" | "error";
 
 export const PUSH_STATE_TEXT: Record<PushState, string> = {
   enabled: "الإشعارات مفعّلة: تصلك التنبيهات حتى والتطبيق مغلق",
-  local: "الإشعارات مفعّلة والتطبيق مفتوح. لتصلك والتطبيق مغلق ثبّت نسخة التطبيق الكاملة",
+  local:
+    "الإشعارات مفعّلة والتطبيق مفتوح. لتصلك والتطبيق مغلق ثبّت نسخة التطبيق الكاملة",
   needs_permission: "الإشعارات غير مفعّلة على هذا الهاتف",
   denied: "الإشعارات مرفوضة لهذا التطبيق. فعّلها من إعدادات الهاتف",
   error: "تعذّر تفعيل الإشعارات الآن. حاول لاحقاً",
@@ -65,13 +67,16 @@ async function ensureChannel(): Promise<void> {
 
 function projectId(): string | null {
   const id =
-    (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)?.eas?.projectId ??
-    Constants.easConfig?.projectId;
+    (
+      Constants.expoConfig?.extra as
+        { eas?: { projectId?: string } } | undefined
+    )?.eas?.projectId ?? Constants.easConfig?.projectId;
   return id || null;
 }
 
 /** Expo Go (تطبيق المتجر للتجربة): push البعيد غير مدعوم فيه على أندرويد. */
-const isExpoGo = () => Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const isExpoGo = () =>
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 /** فرق توقيت الهاتف عن UTC بالدقائق (مصر +120، ويتغير مع التوقيت الصيفي). */
 export const utcOffsetMinutes = () => -new Date().getTimezoneOffset();
@@ -80,20 +85,31 @@ export const utcOffsetMinutes = () => -new Date().getTimezoneOffset();
  * يحدد حالة الإشعارات ويسجّل push لو متاح. ask=false (عند فتح التطبيق): لا تظهر نافذة الإذن أبداً.
  * ask=true (زر «تفعيل الإشعارات»): يطلب الإذن من النظام.
  */
-export async function registerForPush({ ask }: { ask: boolean }): Promise<PushState> {
+export async function registerForPush({
+  ask,
+}: {
+  ask: boolean;
+}): Promise<PushState> {
   try {
     await ensureChannel();
     let perm = await Notifications.getPermissionsAsync();
     // عند الضغط نطلب دائماً: canAskAgain قبل أول طلب قد يكون false على أندرويد (لا يفرّق بين «لم يُسأل» و«رفض نهائياً»)،
     // والنظام نفسه لا يُظهر النافذة لو الرفض نهائي فعلاً.
-    if (perm.status !== "granted" && ask) perm = await Notifications.requestPermissionsAsync();
-    if (perm.status !== "granted") return !ask || perm.canAskAgain ? "needs_permission" : "denied";
+    if (perm.status !== "granted" && ask)
+      perm = await Notifications.requestPermissionsAsync();
+    if (perm.status !== "granted")
+      return !ask || perm.canAskAgain ? "needs_permission" : "denied";
 
     const id = projectId();
     if (!Device.isDevice || isExpoGo() || !id) return "local";
     try {
-      const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: id });
-      await api.request("/push-token", { method: "PUT", body: { token, utc_offset_minutes: utcOffsetMinutes() } });
+      const { data: token } = await Notifications.getExpoPushTokenAsync({
+        projectId: id,
+      });
+      await api.request("/push-token", {
+        method: "PUT",
+        body: { token, utc_offset_minutes: utcOffsetMinutes() },
+      });
       return "enabled";
     } catch {
       return "local"; // push غير متاح (مثلاً Firebase غير مُعدّ): الإشعارات المحلية تعمل بدلاً منه

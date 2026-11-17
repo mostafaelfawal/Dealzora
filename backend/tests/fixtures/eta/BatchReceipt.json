@@ -55,28 +55,28 @@
           "quantity": 7.0,
           "unitPrice": 13.5,
           "netSale": 92.988,
-          "totalSale": 94.50,
+          "totalSale": 94.5,
           "total": 96.95192,
           "commercialDiscountData": [
             {
-                "amount": 0.512, 
-                "description": "XYZ"
+              "amount": 0.512,
+              "description": "XYZ"
             },
             {
-              "amount": 1.00, 
+              "amount": 1.0,
               "description": "XYZABC"
-          }
-       ],
-       "itemDiscountData": [
-           {
-               "amount": 2.8,
-               "description":"ABC"
-           },
-           {
-               "amount": 1.1,
-               "description": "XYZ"
-           }
-       ],
+            }
+          ],
+          "itemDiscountData": [
+            {
+              "amount": 2.8,
+              "description": "ABC"
+            },
+            {
+              "amount": 1.1,
+              "description": "XYZ"
+            }
+          ],
           "valueDifference": -5.0,
           "taxableItems": [
             {
@@ -102,28 +102,28 @@
           "quantity": 89,
           "unitPrice": 150.987,
           "netSale": 13303.46457,
-          "totalSale": 13437.84300,
+          "totalSale": 13437.843,
           "total": 14762.15667,
           "commercialDiscountData": [
             {
-                "amount": 34.37843, 
-                "description": "XYZ"
+              "amount": 34.37843,
+              "description": "XYZ"
             },
             {
-              "amount": 100.00, 
+              "amount": 100.0,
               "description": "XYZABC"
-          }
-       ],
-       "itemDiscountData": [
-           {
-               "amount": 2.0,
-               "description":"ABC"
-           },
-           {
-               "amount": 3.7,
-               "description": "XYZ"
-           }
-       ],
+            }
+          ],
+          "itemDiscountData": [
+            {
+              "amount": 2.0,
+              "description": "ABC"
+            },
+            {
+              "amount": 3.7,
+              "description": "XYZ"
+            }
+          ],
           "valueDifference": 6.0,
           "taxableItems": [
             {
@@ -146,10 +146,10 @@
       "totalItemsDiscount": 9.6,
       "extraReceiptDiscountData": [
         {
-            "amount": 25.49,
-            "description": "ABC"
+          "amount": 25.49,
+          "description": "ABC"
         }
-     ],
+      ],
       "netAmount": 13396.45257,
       "feesAmount": 10.065,
       "totalAmount": 14808.12859,
@@ -176,5 +176,5 @@
       }
     }
   ],
-  "signatures": [ ]
+  "signatures": []
 }

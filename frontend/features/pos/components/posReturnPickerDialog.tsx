@@ -86,7 +86,10 @@ function InvoiceItems() {
                   </Badge>
                 )}
               </span>
-              <AppTooltip message={inv.lines.map((l) => l.name).join("، ")} onlyWhenTruncated>
+              <AppTooltip
+                message={inv.lines.map((l) => l.name).join("، ")}
+                onlyWhenTruncated
+              >
                 <span className="block truncate text-xs text-muted-foreground">
                   {inv.lines.map((l) => l.name).join("، ")}
                 </span>

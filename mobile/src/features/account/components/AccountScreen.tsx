@@ -30,21 +30,25 @@ export function AccountScreen() {
   const [busy, setBusy] = useState<"one" | "all" | null>(null);
 
   const confirmLogout = () =>
-    Alert.alert("تسجيل الخروج", "سيتم الخروج من هذا الهاتف فقط. ستحتاج كود ربط جديد للدخول مرة أخرى.", [
-      { text: "إلغاء", style: "cancel" },
-      {
-        text: "تسجيل الخروج",
-        style: "destructive",
-        onPress: async () => {
-          setBusy("one");
-          try {
-            await signOut();
-          } finally {
-            setBusy(null);
-          }
+    Alert.alert(
+      "تسجيل الخروج",
+      "سيتم الخروج من هذا الهاتف فقط. ستحتاج كود ربط جديد للدخول مرة أخرى.",
+      [
+        { text: "إلغاء", style: "cancel" },
+        {
+          text: "تسجيل الخروج",
+          style: "destructive",
+          onPress: async () => {
+            setBusy("one");
+            try {
+              await signOut();
+            } finally {
+              setBusy(null);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
 
   const confirmLogoutAll = () =>
     Alert.alert(
@@ -70,7 +74,10 @@ export function AccountScreen() {
     );
 
   return (
-    <Screen onRefresh={() => void sessions.refetch()} refreshing={sessions.isRefetching}>
+    <Screen
+      onRefresh={() => void sessions.refetch()}
+      refreshing={sessions.isRefetching}
+    >
       <Card>
         <AppText weight="bold" size="lg">
           {user?.username ?? "—"}
@@ -88,8 +95,13 @@ export function AccountScreen() {
         {sessions.data?.map((s) => (
           <ListRow
             key={s.id}
-            icon={PLATFORM_ICON[s.platform as keyof typeof PLATFORM_ICON] ?? "phone-portrait-outline"}
-            title={s.is_current ? `${s.device_name} (هذا الهاتف)` : s.device_name}
+            icon={
+              PLATFORM_ICON[s.platform as keyof typeof PLATFORM_ICON] ??
+              "phone-portrait-outline"
+            }
+            title={
+              s.is_current ? `${s.device_name} (هذا الهاتف)` : s.device_name
+            }
             subtitle={`آخر استخدام: ${formatTimeAgo(s.last_used_at ?? s.created_at)}`}
           />
         ))}

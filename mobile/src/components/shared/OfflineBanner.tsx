@@ -18,9 +18,16 @@ export function OfflineBanner() {
       <View
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
-        style={[styles.bar, { backgroundColor: colors.warningSoft, borderColor: colors.warning }]}
+        style={[
+          styles.bar,
+          { backgroundColor: colors.warningSoft, borderColor: colors.warning },
+        ]}
       >
-        <Ionicons name="cloud-offline-outline" size={18} color={colors.warning} />
+        <Ionicons
+          name="cloud-offline-outline"
+          size={18}
+          color={colors.warning}
+        />
         <View style={styles.text}>
           <AppText size="sm" weight="semibold" tone="warning">
             لا يوجد اتصال بالإنترنت

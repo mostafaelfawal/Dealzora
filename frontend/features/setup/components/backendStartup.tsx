@@ -125,7 +125,10 @@ export function BackendStartup({ failed }: { failed: boolean }) {
               />
               <span>
                 أول تشغيل قد يستغرق حتى دقيقة بينما يجهّز البرنامج قاعدة بياناتك
-                المشفّرة. <strong className="font-medium text-foreground">لا تغلق النافذة.</strong>
+                المشفّرة.{" "}
+                <strong className="font-medium text-foreground">
+                  لا تغلق النافذة.
+                </strong>
               </span>
             </div>
           )}

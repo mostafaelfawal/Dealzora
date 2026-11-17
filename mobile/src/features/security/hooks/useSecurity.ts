@@ -26,18 +26,25 @@ export function useIsOwner(): boolean {
   return useAuth().user?.role === "owner";
 }
 
-const fail = (title: string) => (e: unknown) => Alert.alert(title, errorMessage(e));
+const fail = (title: string) => (e: unknown) =>
+  Alert.alert(title, errorMessage(e));
 
 export function useStaff() {
   const owner = useIsOwner();
-  return useQuery({ queryKey: securityKeys.staff, queryFn: ({ signal }) => fetchStaff(signal), enabled: owner });
+  return useQuery({
+    queryKey: securityKeys.staff,
+    queryFn: ({ signal }) => fetchStaff(signal),
+    enabled: owner,
+  });
 }
 
 export function useSetStaffActive() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { id: string; active: boolean }) => setStaffActive(v.id, v.active),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: securityKeys.staff }),
+    mutationFn: (v: { id: string; active: boolean }) =>
+      setStaffActive(v.id, v.active),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: securityKeys.staff }),
     onError: fail("تعذّر تغيير حالة الموظف"),
   });
 }
@@ -45,32 +52,46 @@ export function useSetStaffActive() {
 export function useDevices() {
   const owner = useIsOwner();
   const live = useLiveRefresh(true);
-  return useQuery({ queryKey: securityKeys.devices, queryFn: ({ signal }) => fetchDevices(signal), enabled: owner, ...live });
+  return useQuery({
+    queryKey: securityKeys.devices,
+    queryFn: ({ signal }) => fetchDevices(signal),
+    enabled: owner,
+    ...live,
+  });
 }
 
 export function useRevokeDevice() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: revokeDevice,
-    onSuccess: () => void qc.invalidateQueries({ queryKey: securityKeys.devices }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: securityKeys.devices }),
     onError: fail("تعذّر إلغاء ربط الجهاز"),
   });
 }
 
 export function usePairingCode() {
-  return useMutation({ mutationFn: createPairingCode, onError: fail("تعذّر إصدار كود الربط") });
+  return useMutation({
+    mutationFn: createPairingCode,
+    onError: fail("تعذّر إصدار كود الربط"),
+  });
 }
 
 export function useShopSessions() {
   const owner = useIsOwner();
-  return useQuery({ queryKey: securityKeys.sessions, queryFn: ({ signal }) => fetchShopSessions(signal), enabled: owner });
+  return useQuery({
+    queryKey: securityKeys.sessions,
+    queryFn: ({ signal }) => fetchShopSessions(signal),
+    enabled: owner,
+  });
 }
 
 export function useRevokeShopSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: revokeShopSession,
-    onSuccess: () => void qc.invalidateQueries({ queryKey: securityKeys.sessions }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: securityKeys.sessions }),
     onError: fail("تعذّر إلغاء الجلسة"),
   });
 }

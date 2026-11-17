@@ -60,7 +60,9 @@ export const fetchEtaReadiness = async () =>
 
 /** بعد استعادة نسخة قديمة: السلسلة تكمل من آخر إيصال صدر فعلاً (المرساة). */
 export const adoptChainAnchor = async (deviceId: string) => {
-  await api.post(`/e-receipt/chains/${encodeURIComponent(deviceId)}/adopt-anchor`);
+  await api.post(
+    `/e-receipt/chains/${encodeURIComponent(deviceId)}/adopt-anchor`,
+  );
 };
 
 /* ---------- الاتصال بالمنظومة ---------- */
@@ -93,8 +95,11 @@ export const fetchEtaCodes = async (table: CodeTableName) =>
 /* ---------- متابعة الإيصالات ---------- */
 
 export const fetchReceipts = async (f: ReceiptFiltersQuery) =>
-  (await api.get<ReceiptList>("/e-receipt/receipts", { params: cleanParams({ ...f }) }))
-    .data;
+  (
+    await api.get<ReceiptList>("/e-receipt/receipts", {
+      params: cleanParams({ ...f }),
+    })
+  ).data;
 
 export const resendReceipts = async (
   items: { kind: ReceiptItem["kind"]; id: string }[],

@@ -14,10 +14,15 @@ import { usePeriod } from "@/features/dashboard/lib/periodStore";
 import { useNow } from "@/hooks/useNow";
 import { space } from "@/theme/colors";
 
-const todayFormat = new Intl.DateTimeFormat("ar-EG-u-nu-latn", { weekday: "long", day: "numeric", month: "long" });
+const todayFormat = new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
 
 /** صباح الخير حتى 12 ظهراً، ثم مساء الخير. */
-const greeting = (now: number) => (new Date(now).getHours() < 12 ? "صباح الخير" : "مساء الخير");
+const greeting = (now: number) =>
+  new Date(now).getHours() < 12 ? "صباح الخير" : "مساء الخير";
 
 export default function HomeRoute() {
   const { user } = useAuth();
@@ -31,13 +36,21 @@ export default function HomeRoute() {
   };
 
   return (
-    <Screen onRefresh={refresh} refreshing={summary.isRefetching && !summary.isPlaceholderData}>
+    <Screen
+      onRefresh={refresh}
+      refreshing={summary.isRefetching && !summary.isPlaceholderData}
+    >
       <FadeIn style={styles.top}>
         <View style={styles.hello}>
           <AppText size="xs" tone="muted" weight="medium">
             {todayFormat.format(now)}
           </AppText>
-          <AppText weight="bold" size="xxl" numberOfLines={1} style={styles.title}>
+          <AppText
+            weight="bold"
+            size="xxl"
+            numberOfLines={1}
+            style={styles.title}
+          >
             {greeting(now)}، {user?.username ?? ""}
           </AppText>
           {user && (
@@ -48,14 +61,24 @@ export default function HomeRoute() {
         </View>
         <BrandLogo width={88} style={styles.logo} />
       </FadeIn>
-      <DashboardBody query={summary} preset={preset} range={range} showRanking />
+      <DashboardBody
+        query={summary}
+        preset={preset}
+        range={range}
+        showRanking
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   // الترحيب في بداية السطر والشعار في نهايته
-  top: { flexDirection: "row", alignItems: "center", gap: space.md, marginBottom: space.sm },
+  top: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    marginBottom: space.sm,
+  },
   hello: { flex: 1 },
   title: { lineHeight: 38 },
   logo: { alignSelf: "auto" },

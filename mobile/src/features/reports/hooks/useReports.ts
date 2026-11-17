@@ -1,4 +1,9 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { Alert } from "react-native";
 
 import { errorMessage } from "@/api/errors";
@@ -20,15 +25,26 @@ import {
 /** الفروع ترفع ملخصاتها كل 5 دقائق تقريباً: تحديث تلقائي هادئ والشاشة ظاهرة فقط. */
 function useReportRefresh(live: boolean) {
   const r = useLiveRefresh(live);
-  return { ...r, refetchInterval: r.refetchInterval === false ? (false as const) : 120_000 };
+  return {
+    ...r,
+    refetchInterval: r.refetchInterval === false ? (false as const) : 120_000,
+  };
 }
 
 export function useShortages() {
-  return useQuery({ queryKey: ["reports", "shortages"], queryFn: ({ signal }) => fetchShortages(signal), ...useReportRefresh(true) });
+  return useQuery({
+    queryKey: ["reports", "shortages"],
+    queryFn: ({ signal }) => fetchShortages(signal),
+    ...useReportRefresh(true),
+  });
 }
 
 export function useExpiring() {
-  return useQuery({ queryKey: ["reports", "expiring"], queryFn: ({ signal }) => fetchExpiring(signal), ...useReportRefresh(true) });
+  return useQuery({
+    queryKey: ["reports", "expiring"],
+    queryFn: ({ signal }) => fetchExpiring(signal),
+    ...useReportRefresh(true),
+  });
 }
 
 export function useShifts(range: DateRange) {
@@ -68,7 +84,11 @@ export function useRequestTransfer() {
 }
 
 export function useReportConfig(enabled: boolean) {
-  return useQuery({ queryKey: ["reports", "config"], queryFn: ({ signal }) => fetchReportConfig(signal), enabled });
+  return useQuery({
+    queryKey: ["reports", "config"],
+    queryFn: ({ signal }) => fetchReportConfig(signal),
+    enabled,
+  });
 }
 
 export function useSaveReportConfig() {

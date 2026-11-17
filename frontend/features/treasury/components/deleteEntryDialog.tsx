@@ -51,7 +51,10 @@ export function DeleteEntryDialog({
               entry && (
                 <>
                   <span className="flex items-baseline gap-2">
-                    <AppTooltip message={entry.note || "بدون ملاحظة"} onlyWhenTruncated>
+                    <AppTooltip
+                      message={entry.note || "بدون ملاحظة"}
+                      onlyWhenTruncated
+                    >
                       <span className="min-w-0 truncate">
                         {entry.note || "بدون ملاحظة"}
                       </span>
@@ -63,8 +66,8 @@ export function DeleteEntryDialog({
                     />
                   </span>
                   <span className="block">
-                    سيتغيّر رصيد الخزنة بعكس هذه الحركة، ويبقى الحذف مسجّلاً في
-                    سجل العمليات.
+                    سيتغيّر رصيد الخزنة بعكس هذه الحركة، ويبقى الحذف مسجّلاً في سجل
+                    العمليات.
                   </span>
                 </>
               )
