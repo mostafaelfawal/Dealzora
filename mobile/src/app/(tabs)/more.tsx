@@ -2,7 +2,7 @@
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Platform, StyleSheet, View } from "react-native";
 
 import { AppSwitch } from "@/components/shared/AppSwitch";
 import { AppText } from "@/components/shared/AppText";
@@ -183,12 +183,45 @@ export default function MoreRoute() {
       <FadeIn index={4}>
         <Card>
           <ListRow
+            icon="keypad-outline"
+            title="القفل برمز سري"
+            subtitle={
+              lock.pinSet
+                ? "مفعّل: يُطلب عند فتح التطبيق"
+                : "على أي هاتف، وفي نسخة الويب على الآيفون"
+            }
+            trailing={
+              <AppSwitch
+                value={lock.pinSet}
+                onValueChange={(on) =>
+                  router.push({
+                    pathname: "/pin",
+                    params: { mode: on ? "set" : "remove" },
+                  })
+                }
+                disabled={lock.loading}
+                accessibilityLabel="القفل برمز سري"
+              />
+            }
+          />
+          {lock.pinSet && (
+            <ListRow
+              icon="create-outline"
+              title="تغيير الرمز السري"
+              onPress={() =>
+                router.push({ pathname: "/pin", params: { mode: "change" } })
+              }
+            />
+          )}
+          <ListRow
             icon="finger-print-outline"
             title={`القفل بـ${lock.label}`}
             subtitle={
               lock.available
                 ? "عند فتح التطبيق وبعد دقيقة في الخلفية"
-                : "سجّل بصمة أو وجهاً في إعدادات الهاتف لتفعيله"
+                : Platform.OS === "web"
+                  ? "غير متاح في نسخة الويب: استخدم الرمز السري"
+                  : "سجّل بصمة أو وجهاً في إعدادات الهاتف لتفعيله"
             }
             trailing={
               <AppSwitch

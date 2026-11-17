@@ -403,6 +403,8 @@ def test_recap_daily_and_weekly_after_user_hour(client, ctx):
     now = datetime.now(UTC)
     offset = _offset_for_hour(now, 22)
     set_prefs(client, owner, offset=offset, recap={"mode": "both", "hour": 22})
+    # المدير «أسبوعي فقط» بنفس التوقيت: لا ملخص يومي له أبداً (والأسبوعي يوم الجمعة فقط).
+    set_prefs(client, mgr, offset=offset, recap={"mode": "week", "hour": 22})
     local_day = (now + timedelta(minutes=offset)).date()
     # أسبوع كامل حتى «اليوم» المحلي: لو اليوم جمعة يصل ملخص الأسبوع أيضاً.
     days = [{"day": (local_day - timedelta(days=d)).isoformat(), "data": day_data(50_000)} for d in range(7)]
@@ -419,10 +421,8 @@ def test_recap_daily_and_weekly_after_user_hour(client, ctx):
     assert day_row.route == f"/recap/day/{local_day.isoformat()}"
     assert not re.search(r"\d", f"{day_row.title} {day_row.body}")  # لا أرقام على شاشة القفل
 
-    # الإيقاف أو «أسبوعي فقط» في غير الجمعة: لا ملخص يومي.
-    set_prefs(client, mgr, offset=offset, recap={"mode": "week"})
-    tick(push, now)
-    assert [r for r in rows("b.mgr") if r.kind == "recap" and r.dedup_key.startswith("recap:day")] == []
+    mgr_recaps = [r.dedup_key for r in rows("b.mgr") if r.kind == "recap"]
+    assert mgr_recaps == ([f"recap:week:{local_day.isoformat()}"] if local_day.weekday() == 4 else [])
 
 
 def test_recap_waits_for_hour_and_needs_sales(client, ctx):

@@ -5,6 +5,7 @@
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 
 import { setupNotificationHandler } from "../lib/push";
 import { syncPush } from "../lib/pushStore";
@@ -23,6 +24,7 @@ export function useNotificationRouting(signedIn: boolean): void {
   useEffect(() => {
     if (!signedIn) return;
     void syncPush();
+    if (Platform.OS === "web") return; // لا إشعارات في نسخة الويب
     open(Notifications.getLastNotificationResponse());
     const sub = Notifications.addNotificationResponseReceivedListener(open);
     return () => sub.remove();

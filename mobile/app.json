@@ -94,6 +94,11 @@
         "projectId": "3795e361-7ab4-4893-94b7-7b5a3b416854"
       }
     },
-    "owner": "mostafa_hamdi_elfawal"
+    "owner": "mostafa_hamdi_elfawal",
+    "web": {
+      "output": "single",
+      "bundler": "metro",
+      "favicon": "./assets/brand/logo.png"
+    }
   }
 }

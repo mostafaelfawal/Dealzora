@@ -22,7 +22,26 @@ export function PushPermissionCard({ compact = false }: { compact?: boolean }) {
   const [busy, setBusy] = useState(false);
 
   const on = state === "enabled" || state === "local";
-  if (compact && (on || state === null)) return null;
+  if (compact && (on || state === null || state === "unsupported")) return null;
+
+  if (state === "unsupported")
+    return (
+      <Card>
+        <View style={styles.head}>
+          <Ionicons
+            name="globe-outline"
+            size={22}
+            color={colors.mutedForeground}
+          />
+          <AppText weight="semibold" style={styles.flex}>
+            نسخة الويب
+          </AppText>
+        </View>
+        <AppText size="sm" tone="muted">
+          {PUSH_STATE_TEXT.unsupported}
+        </AppText>
+      </Card>
+    );
 
   const enable = async () => {
     setBusy(true);

@@ -2,12 +2,10 @@
  * اختيار الفترة: اليوم، أمس، آخر 7 أيام، هذا الشهر، مخصص (نفس تعريفات البرنامج المكتبي).
  * المخصص: تاريخ بداية ونهاية (حتى سنة) من منتقي التاريخ الأصلي للنظام.
  */
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 
+import { DateField } from "@/components/shared/DateField";
 import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
 import { Chips } from "@/components/shared/Chips";
@@ -80,9 +78,9 @@ function CustomRangeModal({
   const [editing, setEditing] = useState<"from" | "to" | null>(null);
   const today = new Date();
 
-  const onPick = (e: DateTimePickerEvent, date?: Date) => {
+  const onPick = (date: Date | null) => {
     if (Platform.OS === "android") setEditing(null); // نافذة أندرويد تُغلق بعد الاختيار
-    if (e.type !== "set" || !date) return;
+    if (!date) return;
     if (editing === "from") setFrom(date);
     else setTo(date);
   };
@@ -124,13 +122,11 @@ function CustomRangeModal({
             </Pressable>
           ))}
           {editing && (
-            <DateTimePicker
+            <DateField
+              key={editing}
               value={editing === "from" ? from : to}
-              mode="date"
-              display={Platform.OS === "ios" ? "inline" : "default"}
               maximumDate={today}
-              onChange={onPick}
-              locale="ar-EG"
+              onPick={onPick}
             />
           )}
           <AppText size="xs" tone="muted">

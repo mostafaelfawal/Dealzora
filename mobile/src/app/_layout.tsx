@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import "@/lib/webAlert";
 import { useNotificationRouting } from "@/features/alerts/hooks/useNotificationRouting";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { bootstrapSession } from "@/features/auth/lib/session";
@@ -131,6 +132,7 @@ function RootStack() {
           options={{ title: "حدود العمليات الحساسة" }}
         />
         <Stack.Screen name="prices" options={{ title: "أسعار الأصناف" }} />
+        <Stack.Screen name="pin" options={{ title: "الرمز السري" }} />
         <Stack.Screen
           name="recap/[period]/[date]"
           options={{

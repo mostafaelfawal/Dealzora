@@ -5,6 +5,10 @@
  * ملاحظة: Face ID لا يعمل داخل Expo Go على iPhone (يحتاج development build)، والبصمة على أندرويد تعمل.
  */
 import * as LocalAuthentication from "expo-local-authentication";
+import { Platform } from "react-native";
+
+/** نسخة الويب (PWA): لا بصمة في المتصفح، والقفل بالرمز السري فقط. */
+const WEB = Platform.OS === "web";
 
 export interface BiometricInfo {
   /** يوجد عتاد ومسجّل عليه بصمة/وجه. */
@@ -13,6 +17,7 @@ export interface BiometricInfo {
 }
 
 export async function getBiometricInfo(): Promise<BiometricInfo> {
+  if (WEB) return { available: false, label: "البصمة" };
   try {
     const [hardware, enrolled, types] = await Promise.all([
       LocalAuthentication.hasHardwareAsync(),
@@ -38,6 +43,7 @@ export async function getBiometricInfo(): Promise<BiometricInfo> {
 }
 
 export async function authenticate(promptMessage: string): Promise<boolean> {
+  if (WEB) return false;
   try {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage,

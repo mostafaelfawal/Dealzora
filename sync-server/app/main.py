@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
@@ -65,6 +66,15 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     register_error_handlers(app)
+    if settings.cors_origins:
+        # نسخة الويب (PWA) فقط: مسارات الهاتف بتوكن في الـ header (لا cookies، فلا credentials).
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[o.rstrip("/") for o in settings.cors_origins],
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
+            allow_headers=["Authorization", "Content-Type"],
+            max_age=600,
+        )
     log = logging.getLogger("sync")
 
     @app.middleware("http")

@@ -5,6 +5,7 @@
 import { getAuthState, setAuthState } from "@/features/auth/lib/authStore";
 import { secureTokenStore } from "@/features/auth/lib/tokenStorage";
 import { clearUser, saveUser } from "@/features/auth/lib/userCache";
+import { clearPin } from "@/features/lock/lib/pin";
 import { clearCachedData } from "@/lib/queryClient";
 import { getServerUrl } from "@/lib/serverUrl";
 
@@ -14,7 +15,8 @@ import type { MobileUser } from "./types";
 
 /** مسح كل بيانات الحساب المحلية (التوكنات يمسحها العميل نفسه). */
 export async function clearLocalAccountData(): Promise<void> {
-  await Promise.all([clearCachedData(), clearUser()]);
+  // الرمز السري مرتبط بالحساب: مستخدم جديد على نفس الهاتف لا يُقفل برمز غيره.
+  await Promise.all([clearCachedData(), clearUser(), clearPin()]);
 }
 
 export function applyUser(user: MobileUser): void {

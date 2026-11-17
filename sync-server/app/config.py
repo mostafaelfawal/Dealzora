@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # IPs المسموح لها بلوحة الإدارة (فارغ = أي IP). مثال: 41.33.10.5,127.0.0.1
     admin_allowed_ips: Annotated[list[str], NoDecode] = []
     token_ttl_minutes: int = Field(30, ge=5, le=24 * 60)
+    # نطاقات نسخة الويب من تطبيق الهاتف (PWA) المسموح لها باستدعاء /mobile/v1 من المتصفح.
+    # فارغ = لا CORS (تطبيق أندرويد وأجهزة الفروع لا تحتاجه). مثال: https://app.dealzora.com
+    cors_origins: Annotated[list[str], NoDecode] = []
 
     # الحماية من التخمين والإغراق: أقصى طلبات /auth لكل IP في الدقيقة، وأقصى حجم طلب.
     auth_rate_per_min: int = Field(20, ge=1)
@@ -91,7 +94,7 @@ class Settings(BaseSettings):
             raise ValueError("يجب أن يكون 32 حرفاً على الأقل (openssl rand -hex 32)")
         return value
 
-    @field_validator("admin_allowed_ips", "register_plans", "mobile_plans", mode="before")
+    @field_validator("admin_allowed_ips", "register_plans", "mobile_plans", "cors_origins", mode="before")
     @classmethod
     def _ips(cls, value: object) -> object:
         if isinstance(value, str):

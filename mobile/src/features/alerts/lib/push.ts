@@ -7,6 +7,7 @@
  *                    (localNotify). تعمل في Expo Go، لكن والتطبيق مفتوح أو في الخلفية لوقت قصير فقط.
  *   needs_permission لم يوافق المستخدم بعد ويمكن سؤاله (زر «تفعيل الإشعارات» بعد شرح، لا نافذة مفاجئة).
  *   denied           رفض نهائياً: التفعيل من إعدادات الهاتف فقط (زر يفتحها).
+ *   unsupported      نسخة الويب (PWA): لا إشعارات Expo في المتصفح، والتنبيهات تظهر داخل التطبيق فقط.
  *
  * الـ token لا يُطبع ولا يُحفظ محلياً: يذهب للخادم فقط، والخادم يمسحه مع الخروج.
  */
@@ -20,8 +21,10 @@ import { api } from "@/api/instance";
 
 export const ALERTS_CHANNEL = "alerts";
 
+const WEB = Platform.OS === "web";
+
 export type PushState =
-  "enabled" | "local" | "needs_permission" | "denied" | "error";
+  "enabled" | "local" | "needs_permission" | "denied" | "error" | "unsupported";
 
 export const PUSH_STATE_TEXT: Record<PushState, string> = {
   enabled: "الإشعارات مفعّلة: تصلك التنبيهات حتى والتطبيق مغلق",
@@ -30,13 +33,15 @@ export const PUSH_STATE_TEXT: Record<PushState, string> = {
   needs_permission: "الإشعارات غير مفعّلة على هذا الهاتف",
   denied: "الإشعارات مرفوضة لهذا التطبيق. فعّلها من إعدادات الهاتف",
   error: "تعذّر تفعيل الإشعارات الآن. حاول لاحقاً",
+  unsupported:
+    "نسخة الويب لا تستقبل إشعارات على الهاتف: التنبيهات تظهر هنا داخل التطبيق. للإشعارات ثبّت تطبيق أندرويد",
 };
 
 let handlerSet = false;
 
 /** عرض الإشعار حتى والتطبيق مفتوح (مرة واحدة عند الإقلاع). */
 export function setupNotificationHandler(): void {
-  if (handlerSet) return;
+  if (handlerSet || WEB) return;
   handlerSet = true;
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -90,6 +95,7 @@ export async function registerForPush({
 }: {
   ask: boolean;
 }): Promise<PushState> {
+  if (WEB) return "unsupported";
   try {
     await ensureChannel();
     let perm = await Notifications.getPermissionsAsync();
@@ -121,6 +127,7 @@ export async function registerForPush({
 
 /** إشعار تجريبي فوري في شريط الهاتف (للتأكد من الإذن والصوت). */
 export async function sendTestNotification(): Promise<void> {
+  if (WEB) throw new Error("unsupported");
   await ensureChannel();
   await Notifications.scheduleNotificationAsync({
     content: {

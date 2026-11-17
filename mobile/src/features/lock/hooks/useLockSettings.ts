@@ -11,18 +11,24 @@ import {
   setLockEnabled,
   subscribeLock,
 } from "../lib/lockStore";
+import { getPinSet, loadPinSet, subscribePin } from "../lib/pin";
 
-/** حالة القفل وتغييرها (التغيير في الاتجاهين يتطلب البصمة: يثبت أن صاحب الهاتف هو من يغيّر). */
+/**
+ * حالة القفل: بالبصمة (لو الهاتف يدعمها) و/أو برمز سري (أي هاتف، ونسخة الويب).
+ * تغيير البصمة يتطلب البصمة، وتغيير الرمز يتطلب الرمز الحالي (شاشة /pin).
+ */
 export function useLockSettings() {
   const enabled = useSyncExternalStore(
     subscribeLock,
     getLockEnabled,
     getLockEnabled,
   );
+  const pinSet = useSyncExternalStore(subscribePin, getPinSet, getPinSet);
   const [info, setInfo] = useState<BiometricInfo | null>(null);
 
   useEffect(() => {
     void loadLockEnabled();
+    void loadPinSet();
     void getBiometricInfo().then(setInfo);
   }, []);
 
@@ -34,12 +40,17 @@ export function useLockSettings() {
     return ok;
   }, []);
 
+  const biometric = !!enabled && !!info?.available;
   return {
-    /** مفعّل فعلياً = الإعداد + الهاتف يدعمه. */
-    enabled: !!enabled && !!info?.available,
+    /** البصمة مفعّلة فعلياً = الإعداد + الهاتف يدعمها. */
+    enabled: biometric,
+    /** يوجد رمز سري. */
+    pinSet: !!pinSet,
+    /** القفل يعمل بأي طريقة. */
+    guarded: biometric || !!pinSet,
     available: info?.available ?? false,
     label: info?.label ?? "البصمة",
-    loading: enabled === null || info === null,
+    loading: enabled === null || pinSet === null || info === null,
     toggle,
   };
 }
