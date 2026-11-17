@@ -100,7 +100,7 @@ export function TopProductsCard({ products }: { products: NamedValue[] }) {
       index={5}
       title="الأصناف الأعلى ربحاً"
       subtitle="الربح بعد المرتجع — ركّز عليها في العرض والتوفر"
-      href="/admin/reports"
+      href="/admin/reports?tab=products"
     >
       {products.length === 0 ? (
         <ChartEmpty text="لا توجد مبيعات" />

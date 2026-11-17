@@ -8,22 +8,35 @@ import { extractErrorMessage } from "@/lib/errors";
 
 /** أنماط الجداول المشتركة بين كل التقارير. */
 export const reportTh =
-  "h-9 px-3 text-start text-xs font-normal text-muted-foreground";
-export const reportTd = "h-10 px-3 text-xs";
+  "h-9 px-3 text-start text-xs font-medium whitespace-nowrap text-muted-foreground";
+export const reportTd = "h-10 px-3 text-xs tabular-nums";
+/** صف جدول: خلفية عند المرور تساعد العين تتبع السطر لآخره. */
+export const reportTr =
+  "border-b transition-colors last:border-0 hover:bg-muted/40";
 
 export function ReportPanel({
   title,
   children,
   action,
+  count,
 }: {
   title: string;
   children: ReactNode;
   action?: ReactNode;
+  /** عدد الصفوف بجانب العنوان. */
+  count?: number;
 }) {
   return (
     <section className="space-y-3 border bg-card p-3">
-      <header className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">{title}</h2>
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          {title}
+          {count !== undefined && count > 0 && (
+            <span className="bg-muted px-1.5 py-0.5 font-mono text-[10px] font-normal text-muted-foreground tabular-nums">
+              {count}
+            </span>
+          )}
+        </h2>
         {action}
       </header>
       {children}
@@ -63,7 +76,7 @@ export function ReportLoading({
 
 export function ReportTableHead({ columns }: { columns: string[] }) {
   return (
-    <thead className="border-b">
+    <thead className="border-b bg-muted/50">
       <tr>
         {columns.map((col) => (
           <th key={col} className={reportTh}>
@@ -107,9 +120,9 @@ export function ReportTable<T>({
   minWidth?: string;
 }) {
   return (
-    <ReportPanel title={title} action={action}>
+    <ReportPanel title={title} action={action} count={rows.length}>
       {rows.length === 0 ? (
-        <p className="py-6 text-center text-xs text-muted-foreground">
+        <p className="border border-dashed py-6 text-center text-xs text-muted-foreground">
           {empty}
         </p>
       ) : (
@@ -118,9 +131,12 @@ export function ReportTable<T>({
             <ReportTableHead columns={columns.map((c) => c.header)} />
             <tbody>
               {rows.map((row) => (
-                <tr key={getKey(row)} className="border-b last:border-0">
+                <tr key={getKey(row)} className={reportTr}>
                   {columns.map((c) => (
-                    <td key={c.header} className={`${reportTd} ${c.className ?? ""}`}>
+                    <td
+                      key={c.header}
+                      className={`${reportTd} ${c.className ?? ""}`}
+                    >
                       {c.cell(row)}
                     </td>
                   ))}

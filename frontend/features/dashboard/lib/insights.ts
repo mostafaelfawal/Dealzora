@@ -88,7 +88,7 @@ export function buildInsights(o: Overview, max = 6): Insight[] {
     out.push({
       tone: "bad",
       text: `${o.health.overdueCustomers} عميل متأخر بمبلغ ${formatMoneyText(o.health.overdueDebt)}.`,
-      href: "/admin/reports",
+      href: "/admin/reports?tab=debts",
     });
 
   const best = [...o.trend].sort((a, b) => b.net - a.net)[0];

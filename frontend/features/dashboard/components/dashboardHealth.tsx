@@ -78,7 +78,7 @@ function healthRows(
             label: `متأخرة (${h.overdueCustomers} عميل)`,
             value: money(h.overdueDebt),
             tone: h.overdueDebt ? ("bad" as const) : undefined,
-            href: "/admin/reports",
+            href: "/admin/reports?tab=debts",
           },
         ]
       : []),

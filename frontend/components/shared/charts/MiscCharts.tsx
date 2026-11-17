@@ -166,95 +166,103 @@ export function Donut({
   const animation = useChartAnimation();
   const total = slices.reduce((s, x) => s + x.value, 0);
   const pct = (v: number) => (total > 0 ? Math.round((v / total) * 100) : 0);
+  // التخطيط حسب عرض البطاقة لا الشاشة (@container): البطاقة قد تكون ثلث شاشة عريضة،
+  // فلو جاورنا الدائرة والقائمة حسب الشاشة تفيض القائمة خارج البطاقة.
   return (
-    <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
-      <div
-        className="relative shrink-0"
-        style={{ width: height, height }}
-        dir="ltr"
-      >
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={
-                total > 0
+    <div className="@container w-full min-w-0">
+      <div className="flex flex-col items-center gap-3 @md:flex-row @md:items-center">
+        <div
+          className="relative max-w-full shrink-0"
+          style={{ width: height, height }}
+          dir="ltr"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={
+                  total > 0
+                    ? slices
+                    : [{ key: "empty", label: "", value: 1, color: CHART.grid }]
+                }
+                dataKey="value"
+                nameKey="label"
+                innerRadius="68%"
+                outerRadius="100%"
+                paddingAngle={
+                  total > 0 && slices.filter((s) => s.value > 0).length > 1
+                    ? 2
+                    : 0
+                }
+                stroke={CHART.surface}
+                strokeWidth={2}
+                startAngle={90}
+                endAngle={-270}
+                {...animation}
+              >
+                {(total > 0
                   ? slices
-                  : [{ key: "empty", label: "", value: 1, color: CHART.grid }]
-              }
-              dataKey="value"
-              nameKey="label"
-              innerRadius="68%"
-              outerRadius="100%"
-              paddingAngle={
-                total > 0 && slices.filter((s) => s.value > 0).length > 1
-                  ? 2
-                  : 0
-              }
-              stroke={CHART.surface}
-              strokeWidth={2}
-              startAngle={90}
-              endAngle={-270}
-              {...animation}
-            >
-              {(total > 0 ? slices : [{ key: "empty", color: CHART.grid }]).map(
-                (s) => (
+                  : [{ key: "empty", color: CHART.grid }]
+                ).map((s) => (
                   <Cell key={s.key} fill={s.color} />
-                ),
+                ))}
+              </Pie>
+              {total > 0 && (
+                <Tooltip
+                  wrapperStyle={{ zIndex: 20 }}
+                  content={({ active, payload }) => {
+                    const p =
+                      active && payload?.[0]
+                        ? (payload[0].payload as DonutSlice)
+                        : null;
+                    if (!p) return null;
+                    return (
+                      <ChartTooltipBox
+                        title={`${p.label} · ${pct(p.value)}%`}
+                        rows={[
+                          { label: p.label, value: p.value, color: p.color },
+                        ]}
+                      />
+                    );
+                  }}
+                />
               )}
-            </Pie>
-            {total > 0 && (
-              <Tooltip
-                wrapperStyle={{ zIndex: 20 }}
-                content={({ active, payload }) => {
-                  const p =
-                    active && payload?.[0]
-                      ? (payload[0].payload as DonutSlice)
-                      : null;
-                  if (!p) return null;
-                  return (
-                    <ChartTooltipBox
-                      title={`${p.label} · ${pct(p.value)}%`}
-                      rows={[
-                        { label: p.label, value: p.value, color: p.color },
-                      ]}
-                    />
-                  );
-                }}
-              />
-            )}
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center text-center">
-          <span className="text-[10px] text-muted-foreground">
-            {centerLabel}
-          </span>
-          <span dir="ltr" className="font-mono text-base font-semibold">
-            {centerValue}
-          </span>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center text-center">
+            <span className="text-[10px] text-muted-foreground">
+              {centerLabel}
+            </span>
+            <span dir="ltr" className="font-mono text-base font-semibold">
+              {centerValue}
+            </span>
+          </div>
         </div>
+        <ul className="w-full min-w-0 space-y-2 text-xs @md:flex-1">
+          {slices.map((s) => (
+            <li
+              key={s.key}
+              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <span
+                  aria-hidden
+                  className="size-2.5 shrink-0 rounded-xs"
+                  style={{ background: s.color }}
+                />
+                <span className="truncate">{s.label}</span>
+              </span>
+              <span className="shrink-0 text-end">
+                <span dir="ltr" className="font-mono font-semibold">
+                  {formatFull(s.value)}
+                </span>
+                <span className="ms-1.5 text-muted-foreground">
+                  {pct(s.value)}%
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="w-full space-y-2 text-xs">
-        {slices.map((s) => (
-          <li key={s.key} className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="size-2.5 rounded-xs"
-                style={{ background: s.color }}
-              />
-              {s.label}
-            </span>
-            <span className="text-end">
-              <span dir="ltr" className="font-mono font-semibold">
-                {formatFull(s.value)}
-              </span>
-              <span className="ms-1.5 text-muted-foreground">
-                {pct(s.value)}%
-              </span>
-            </span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

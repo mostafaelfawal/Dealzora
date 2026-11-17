@@ -1,3 +1,18 @@
+import {
+  IconAlertTriangle,
+  IconBuildingStore,
+  IconCash,
+  IconChartLine,
+  IconDiscount,
+  IconPackage,
+  IconReceiptRefund,
+  IconScale,
+  IconTruckDelivery,
+  IconUserDollar,
+  IconUsers,
+  type Icon,
+} from "@tabler/icons-react";
+
 import type { PlanFeature } from "@/lib/plan";
 
 import type {
@@ -7,22 +22,102 @@ import type {
   SalesMetric,
 } from "../types/report";
 
-/** feature: التبويب يظهر فقط لو الميزة في خطة المحل (الـ backend يرفضه على أي حال). */
-export const REPORT_TABS: {
+export type ReportGroup = "selling" | "goods" | "people" | "money";
+
+/** مجموعات التقارير بالسؤال الذي يدور في ذهن التاجر، بترتيب الأهمية. */
+export const REPORT_GROUPS: { id: ReportGroup; label: string }[] = [
+  { id: "selling", label: "البيع" },
+  { id: "goods", label: "البضاعة" },
+  { id: "people", label: "العملاء والموظفون" },
+  { id: "money", label: "الأموال" },
+];
+
+export interface ReportTabOption {
   id: ReportTab;
   label: string;
+  /** السؤال الذي يجيب عنه التقرير (يظهر تحت اسمه في القائمة وفي رأسه). */
+  hint: string;
+  group: ReportGroup;
+  icon: Icon;
+  /** التبويب يظهر فقط لو الميزة في خطة المحل (الـ backend يرفضه على أي حال). */
   feature?: PlanFeature;
-}[] = [
-  { id: "sales", label: "المبيعات والأرباح" },
-  { id: "products", label: "الأصناف والأقسام" },
-  { id: "purchases", label: "المشتريات", feature: "suppliers" },
-  { id: "promotions", label: "العروض", feature: "promotions" },
-  { id: "returns", label: "المرتجعات" },
-  { id: "customers", label: "العملاء والنقاط", feature: "customers" },
-  { id: "cashiers", label: "الكاشيرية والورديات" },
-  { id: "stock", label: "النواقص والراكد" },
-  { id: "debts", label: "المديونيات", feature: "full_reports" },
-  { id: "treasury", label: "الخزنة" },
+}
+
+export const REPORT_TABS: ReportTabOption[] = [
+  {
+    id: "sales",
+    label: "المبيعات والأرباح",
+    hint: "كم بعت وكم كسبت؟",
+    group: "selling",
+    icon: IconChartLine,
+  },
+  {
+    id: "products",
+    label: "الأصناف والأقسام",
+    hint: "ما الأصناف الأكثر مبيعاً وربحاً؟",
+    group: "selling",
+    icon: IconPackage,
+  },
+  {
+    id: "promotions",
+    label: "العروض",
+    hint: "هل حققت العروض مبيعات؟",
+    group: "selling",
+    icon: IconDiscount,
+    feature: "promotions",
+  },
+  {
+    id: "returns",
+    label: "المرتجعات",
+    hint: "ما الذي يُرتجع، ولماذا؟",
+    group: "selling",
+    icon: IconReceiptRefund,
+  },
+  {
+    id: "stock",
+    label: "النواقص والراكد",
+    hint: "ماذا أطلب، وما الراكد؟",
+    group: "goods",
+    icon: IconAlertTriangle,
+  },
+  {
+    id: "purchases",
+    label: "المشتريات",
+    hint: "بكم اشتريت، وممّن؟",
+    group: "goods",
+    icon: IconTruckDelivery,
+    feature: "suppliers",
+  },
+  {
+    id: "customers",
+    label: "العملاء والنقاط",
+    hint: "مَن أهم عملائك؟",
+    group: "people",
+    icon: IconUsers,
+    feature: "customers",
+  },
+  {
+    id: "cashiers",
+    label: "الكاشيرية والورديات",
+    hint: "ما أداء كل كاشير في ورديته؟",
+    group: "people",
+    icon: IconUserDollar,
+  },
+  {
+    id: "treasury",
+    label: "الخزنة",
+    hint: "كيف دخلت الأموال وخرجت؟",
+    group: "money",
+    icon: IconCash,
+  },
+  {
+    id: "debts",
+    label: "المديونيات",
+    hint: "كم لك، وكم عليك؟",
+    group: "money",
+    icon: IconScale,
+    feature: "full_reports",
+  },
 ];
 
 /** التبويبات التي تعتمد على الفترة (الباقي لقطة "الآن"). */
@@ -49,7 +144,13 @@ export const PROMO_STATUS_LABEL: Record<PromoStatus, string> = {
 export const ALL_CATEGORIES = "__all__";
 
 /** تبويب يظهر للمالك على الجهاز الرئيسي المربوط بسيرفر الفروع فقط. */
-export const BRANCHES_TAB = { id: "branches" as const, label: "كل الفروع" };
+export const BRANCHES_TAB: ReportTabOption = {
+  id: "branches",
+  label: "كل الفروع",
+  hint: "كيف تتقارن الفروع فيما بينها؟",
+  group: "money",
+  icon: IconBuildingStore,
+};
 
 export const PRODUCT_RANKS: {
   id: ProductRank;

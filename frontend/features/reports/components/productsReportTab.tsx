@@ -25,10 +25,18 @@ import {
   ReportPanel,
   ReportTableHead,
   reportTd as td,
+  reportTr,
 } from "./reportPanel";
 
 const COLUMNS = ["الصنف", "الكمية", "الإيراد", "الربح", "الرصيد"];
-const CATEGORY_COLUMNS = ["القسم", "أصناف بيعت", "الإيراد", "الربح", "الهامش", "الحصة"];
+const CATEGORY_COLUMNS = [
+  "القسم",
+  "أصناف بيعت",
+  "الإيراد",
+  "الربح",
+  "الهامش",
+  "الحصة",
+];
 
 function ProductsTable({ rows }: { rows: ProductRow[] }) {
   return (
@@ -38,7 +46,7 @@ function ProductsTable({ rows }: { rows: ProductRow[] }) {
           <ReportTableHead columns={COLUMNS} />
           <tbody>
             {rows.map((r) => (
-              <tr key={r.productId} className="border-b last:border-0">
+              <tr key={r.productId} className={reportTr}>
                 <AppTooltip message={r.name} onlyWhenTruncated>
                   <td className={cn(td, "max-w-40 truncate")}>{r.name}</td>
                 </AppTooltip>
@@ -87,7 +95,9 @@ function CategoriesTable({
             {categories.map((c) => (
               <tr
                 key={c.id}
-                onClick={() => onSelect(selected === c.id ? ALL_CATEGORIES : c.id)}
+                onClick={() =>
+                  onSelect(selected === c.id ? ALL_CATEGORIES : c.id)
+                }
                 className={cn(
                   "cursor-pointer border-b last:border-0 hover:bg-muted/40",
                   selected === c.id && "bg-primary/5",

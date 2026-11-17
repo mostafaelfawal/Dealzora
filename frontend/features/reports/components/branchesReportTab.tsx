@@ -38,6 +38,7 @@ import {
   ReportPanel,
   ReportTableHead,
   reportTd as td,
+  reportTr,
 } from "./reportPanel";
 
 type Metric = "net" | "profit" | "netProfit" | "count";
@@ -271,7 +272,9 @@ function BranchesTable({ r }: { r: CombinedReport }) {
 /** حالة الإيصال الإلكتروني لكل فرع (أعداد فقط؛ التفاصيل من شاشة الإيصالات على جهاز الفرع نفسه). */
 function EReceiptsByBranch({ r }: { r: CombinedReport }) {
   const allowed = useFeature("e_receipt");
-  const any = r.branches.some((b) => b.etaWaiting + b.etaAccepted + b.etaRejected > 0);
+  const any = r.branches.some(
+    (b) => b.etaWaiting + b.etaAccepted + b.etaRejected > 0,
+  );
   if (!allowed || !any) return null;
   return (
     <section className="space-y-2 border bg-card p-4">
@@ -288,11 +291,18 @@ function EReceiptsByBranch({ r }: { r: CombinedReport }) {
           </thead>
           <tbody>
             {r.branches.map((b) => (
-              <tr key={b.id} className="border-b last:border-0">
+              <tr key={b.id} className={reportTr}>
                 <td className="py-1.5">{b.name}</td>
                 <td className="font-mono">{formatNumber(b.etaWaiting)}</td>
-                <td className="font-mono text-success">{formatNumber(b.etaAccepted)}</td>
-                <td className={cn("font-mono", b.etaRejected > 0 && "text-destructive")}>
+                <td className="font-mono text-success">
+                  {formatNumber(b.etaAccepted)}
+                </td>
+                <td
+                  className={cn(
+                    "font-mono",
+                    b.etaRejected > 0 && "text-destructive",
+                  )}
+                >
                   {formatNumber(b.etaRejected)}
                 </td>
               </tr>
@@ -301,7 +311,8 @@ function EReceiptsByBranch({ r }: { r: CombinedReport }) {
         </table>
       </div>
       <p className="text-[11px] text-muted-foreground">
-        كل فرع يرسل إيصالاته بنفسه. لمتابعة إيصال بعينه افتح شاشة «الإيصالات الإلكترونية» على جهاز ذلك الفرع.
+        كل فرع يرسل إيصالاته بنفسه. لمتابعة إيصال بعينه افتح شاشة «الإيصالات
+        الإلكترونية» على جهاز ذلك الفرع.
       </p>
     </section>
   );

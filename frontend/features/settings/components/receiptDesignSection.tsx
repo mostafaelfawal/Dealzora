@@ -526,7 +526,11 @@ function ReceiptPreview({
       </div>
 
       <Dialog open={zoomed} onOpenChange={setZoomed}>
-        <DialogContent className="max-h-[92vh] w-auto max-w-[calc(100%-2rem)] overflow-y-auto bg-muted p-6 sm:max-w-[calc(100%-2rem)]">
+        <DialogContent
+          // عرض صريح: w-auto مع left-1/2 في RTL يضيّق النافذة فتفيض الفاتورة يساراً وتنقص.
+          style={{ width: pageWidth * zoomScale + 64 }}
+          className="max-h-[92vh] max-w-[calc(100%-2rem)] overflow-y-auto bg-muted p-6 sm:max-w-[calc(100%-2rem)]"
+        >
           <DialogTitle className="sr-only">معاينة الفاتورة مكبّرة</DialogTitle>
           <button
             type="button"

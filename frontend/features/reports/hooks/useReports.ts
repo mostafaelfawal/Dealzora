@@ -17,10 +17,11 @@ import { REPORT_LIMITS } from "../config/reportOptions";
 import { reportKeys } from "../config/reportQueryKeys";
 import type { ProductRank } from "../types/report";
 
-export function useSalesReport(range: DateRange) {
+export function useSalesReport(range: DateRange, enabled = true) {
   return useQuery({
     queryKey: reportKeys.sales(range),
     queryFn: () => fetchSalesReport(range),
+    enabled,
   });
 }
 

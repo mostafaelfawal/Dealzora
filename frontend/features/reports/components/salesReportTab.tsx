@@ -1,8 +1,12 @@
 "use client";
 
 import {
+  IconArrowDownRight,
+  IconArrowUpRight,
+  IconBulb,
   IconCash,
   IconCoin,
+  IconMinus,
   IconReceipt,
   IconWallet,
 } from "@tabler/icons-react";
@@ -23,12 +27,14 @@ import { useFeature } from "@/lib/plan";
 import { useTaxConfig } from "@/lib/tax";
 import { EReceiptReportPanel } from "@/features/eta/components/eReceiptWidgets";
 import { cn } from "@/lib/utils";
+import { changePct } from "@/features/dashboard/lib/insights";
 
 import { SALES_METRICS } from "../config/reportOptions";
 import { useSalesReport } from "../hooks/useReports";
 import {
   activeDaysDesc,
   marginPct,
+  previousRange,
   salesTrendSeries,
 } from "../lib/reportSeries";
 import type { SalesMetric, SalesReport } from "../types/report";
@@ -37,6 +43,7 @@ import {
   ReportPanel,
   ReportTableHead,
   reportTd as td,
+  reportTr as tr,
 } from "./reportPanel";
 
 const DAY_COLUMNS = [
@@ -61,7 +68,38 @@ const Cell = ({
   </td>
 );
 
-function SalesStats({ r }: { r: SalesReport }) {
+/** تغيّر الرقم عن الفترة السابقة بنفس الطول: سهم + نسبة، واللون مساعد فقط. */
+function Change({
+  current,
+  previous,
+  inverse = false,
+}: {
+  current: number;
+  previous?: number;
+  inverse?: boolean;
+}) {
+  if (previous === undefined) return null;
+  const pct = changePct(current, previous);
+  if (pct === null) return null;
+  const good = pct === 0 ? null : inverse ? pct < 0 : pct > 0;
+  const Arrow =
+    pct === 0 ? IconMinus : pct > 0 ? IconArrowUpRight : IconArrowDownRight;
+  return (
+    <span
+      className={cn(
+        "me-1 inline-flex items-center gap-0.5 font-medium",
+        good === null ? "" : good ? "text-success" : "text-destructive",
+      )}
+    >
+      <Arrow aria-hidden className="size-3" />
+      {Math.abs(pct)}%
+    </span>
+  );
+}
+
+const VS = "عن الفترة السابقة";
+
+function SalesStats({ r, prev }: { r: SalesReport; prev?: SalesReport }) {
   // بدون المصروفات في الخطة: لا نعرض أصفاراً بلا معنى (إلا لو فيه مصروفات من قبل).
   const hasExpenses = useFeature("expenses") || r.expenses > 0;
   return (
@@ -70,7 +108,16 @@ function SalesStats({ r }: { r: SalesReport }) {
         index={0}
         icon={<IconReceipt />}
         label="صافي المبيعات"
-        hint={`${r.count} فاتورة · خصومات ${formatNumber(r.discounts)}`}
+        hint={
+          prev ? (
+            <>
+              <Change current={r.net} previous={prev.net} />
+              {VS}
+            </>
+          ) : (
+            `${r.count} فاتورة · خصومات ${formatNumber(r.discounts)}`
+          )
+        }
       >
         <Money amount={r.net} className="text-lg" />
       </StatTile>
@@ -79,7 +126,12 @@ function SalesStats({ r }: { r: SalesReport }) {
         icon={<IconCoin />}
         label="مجمل الربح"
         tone="success"
-        hint={`هامش ${marginPct(r.profit, r.net)}%`}
+        hint={
+          <>
+            <Change current={r.profit} previous={prev?.profit} />
+            هامش {marginPct(r.profit, r.net)}%
+          </>
+        }
       >
         <Money amount={r.profit} className="text-lg" />
       </StatTile>
@@ -90,6 +142,18 @@ function SalesStats({ r }: { r: SalesReport }) {
             icon={<IconCash />}
             label="المصروفات"
             tone="warning"
+            hint={
+              prev && prev.expenses > 0 ? (
+                <>
+                  <Change
+                    current={r.expenses}
+                    previous={prev.expenses}
+                    inverse
+                  />
+                  {VS}
+                </>
+              ) : undefined
+            }
           >
             <Money amount={r.expenses} className="text-lg" />
           </StatTile>
@@ -98,6 +162,14 @@ function SalesStats({ r }: { r: SalesReport }) {
             icon={<IconWallet />}
             label="صافي الربح بعد المصروفات"
             tone={r.netProfit < 0 ? "danger" : "success"}
+            hint={
+              prev && prev.netProfit !== 0 ? (
+                <>
+                  <Change current={r.netProfit} previous={prev.netProfit} />
+                  {VS}
+                </>
+              ) : undefined
+            }
           >
             <Money
               amount={r.netProfit}
@@ -125,6 +197,74 @@ function SalesStats({ r }: { r: SalesReport }) {
           </StatTile>
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * الخلاصة بكلام بسيط قبل الأرقام: كم بعت، وكم كسبت، وأفضل يوم، ومقارنة بالفترة السابقة.
+ * يقرأ التاجر جملة واحدة فيفهم، والتفاصيل تحتها لمن يريد.
+ */
+function SalesSummary({ r, prev }: { r: SalesReport; prev?: SalesReport }) {
+  if (r.count === 0 && r.returns === 0) {
+    return (
+      <p className="border border-dashed bg-card p-3 text-sm text-muted-foreground">
+        لا توجد مبيعات في هذه الفترة. جرّب فترة أطول من قائمة الفترة.
+      </p>
+    );
+  }
+  const best =
+    r.days.length > 1 ? [...r.days].sort((a, b) => b.net - a.net)[0] : null;
+  const pct = prev ? changePct(r.net, prev.net) : null;
+  return (
+    <div className="flex items-start gap-3 border border-primary/20 bg-primary/5 p-3">
+      <IconBulb aria-hidden className="mt-0.5 size-5 shrink-0 text-primary" />
+      <p className="text-sm leading-7">
+        بعت بـ <Money amount={r.net} className="text-sm font-bold" /> في{" "}
+        <b>
+          <Num>{r.count}</Num>
+        </b>{" "}
+        فاتورة، وكسبت{" "}
+        <Money
+          amount={r.profit}
+          className={cn(
+            "text-sm font-bold",
+            r.profit < 0 ? "text-destructive" : "text-success",
+          )}
+        />{" "}
+        ربح (هامش <Num>{marginPct(r.profit, r.net)}</Num>%).
+        {r.expenses > 0 && (
+          <>
+            {" "}
+            بعد المصروفات يتبقى{" "}
+            <Money
+              amount={r.netProfit}
+              className={cn(
+                "text-sm font-bold",
+                r.netProfit < 0 && "text-destructive",
+              )}
+            />
+            .
+          </>
+        )}
+        {best && best.net > 0 && (
+          <>
+            {" "}
+            أفضل يوم: <b>{formatDayLabel(best.day)}</b> بـ{" "}
+            <Money amount={best.net} className="text-sm" />.
+          </>
+        )}
+        {pct !== null && pct !== 0 && (
+          <>
+            {" "}
+            المبيعات{" "}
+            <b className={pct > 0 ? "text-success" : "text-destructive"}>
+              {pct > 0 ? "ارتفعت" : "انخفضت"} <Num>{Math.abs(pct)}</Num>%
+            </b>{" "}
+            عن الفترة السابقة.
+          </>
+        )}
+      </p>
     </div>
   );
 }
@@ -324,13 +464,13 @@ function TaxSummary({ r }: { r: SalesReport }) {
 
 function SalesDaysTable({ r }: { r: SalesReport }) {
   return (
-    <ReportPanel title="تفاصيل الأيام">
+    <ReportPanel title="تفاصيل الأيام" count={activeDaysDesc(r.days).length}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-160">
           <ReportTableHead columns={DAY_COLUMNS} />
           <tbody>
             {activeDaysDesc(r.days).map((d) => (
-              <tr key={d.day} className="border-b last:border-0">
+              <tr key={d.day} className={tr}>
                 <td className={td}>{formatDayLabel(d.day)}</td>
                 <td className={cn(td, "font-mono")}>{d.count}</td>
                 <Cell amount={d.revenue} />
@@ -381,13 +521,18 @@ function SalesDaysTable({ r }: { r: SalesReport }) {
 
 export function SalesReportTab({ range }: { range: DateRange }) {
   const q = useSalesReport(range);
+  // المقارنة تحتاج تقارير كاملة (بَسطة محدودة بآخر 7 أيام فقط).
+  const canCompare = useFeature("full_reports");
+  const prevQ = useSalesReport(previousRange(range), canCompare);
   if (!q.data)
     return <ReportLoading error={q.error} onRetry={() => q.refetch()} />;
   const r = q.data;
+  const prev = prevQ.data;
 
   return (
     <div className="space-y-4">
-      <SalesStats r={r} />
+      <SalesSummary r={r} prev={prev} />
+      <SalesStats r={r} prev={prev} />
       <div className="grid gap-4 lg:grid-cols-3">
         <SalesTrendCard r={r} />
         <PaymentSplitCard r={r} />

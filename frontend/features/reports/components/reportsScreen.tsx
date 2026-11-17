@@ -1,6 +1,7 @@
 "use client";
 
 import { IconFileSpreadsheet, IconLoader2 } from "@tabler/icons-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
 
@@ -10,7 +11,6 @@ import {
   periodOf,
   type PeriodValue,
 } from "@/components/shared/PeriodPicker";
-import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
 import { Button } from "@/components/ui/button";
 
 import { isOwner } from "@/config/roles";
@@ -24,6 +24,7 @@ import {
 } from "../config/reportOptions";
 import type { ReportTab } from "../types/report";
 import { exportReportTables } from "../lib/reportExcel";
+import { ReportNav } from "./reportNav";
 import { ReportPdfButton } from "./reportPdf";
 import { ReportTabContent } from "./reportTabContent";
 import { PlanLock, UpgradeNotice } from "@/components/shared/PlanGate";
@@ -96,9 +97,22 @@ function ExportButton({
   );
 }
 
-/** التقارير: فترة واحدة تتحكم في كل التبويبات، وكل رقم له جدول تحته. */
+const isReportTab = (v: string | null): v is ReportTab =>
+  v !== null && [...REPORT_TABS, BRANCHES_TAB].some((t) => t.id === v);
+
+/**
+ * التقارير: قائمة مجمّعة بالسؤال، ورأس للتقرير المفتوح بفترته، وفترة واحدة لكل التقارير.
+ * التقرير المفتوح في الرابط (?tab=) فيبقى بعد التحديث، وتفتحه روابط لوحة التحكم مباشرة.
+ */
 export function ReportsScreen() {
-  const [selected, setTab] = useState<ReportTab>("sales");
+  const router = useRouter();
+  const pathname = usePathname();
+  const tabParam = useSearchParams().get("tab");
+  const selected: ReportTab = isReportTab(tabParam) ? tabParam : "sales";
+  const setTab = (next: ReportTab) =>
+    router.replace(next === "sales" ? pathname : `${pathname}?tab=${next}`, {
+      scroll: false,
+    });
   const contentRef = useRef<HTMLDivElement>(null);
   // التقرير المجمّع: للمالك على الجهاز الرئيسي المربوط بسيرفر الفروع.
   const branch = useBranchStatus();
@@ -111,8 +125,8 @@ export function ReportsScreen() {
     (t) => !t.feature || !plan || plan.features.includes(t.feature),
   );
   const tabs = showBranches ? [...planTabs, BRANCHES_TAB] : planTabs;
-  const tab = tabs.some((t) => t.id === selected) ? selected : "sales";
-  const tabLabel = tabs.find((t) => t.id === tab)?.label ?? "";
+  const current = tabs.find((t) => t.id === selected) ?? tabs[0];
+  const tab = current.id;
   // بَسطة: آخر 7 أيام فقط، فنبدأ بـ «أسبوع» بدل «شهر».
   const [period, setPeriod] = useState<PeriodValue>(
     periodOf(plan?.isFree ? "week" : "month"),
@@ -127,21 +141,25 @@ export function ReportsScreen() {
     (t === "debts" ||
       (PERIOD_TABS.has(t) && cutoff !== null && period.range.from < cutoff));
   const outOfPlan = isOutOfPlan(tab);
-  const periodLabel = `الفترة من ${formatDate(parseIsoDay(period.range.from))} إلى ${formatDate(parseIsoDay(period.range.to))}`;
+  const from = formatDate(parseIsoDay(period.range.from));
+  const to = formatDate(parseIsoDay(period.range.to));
+  const periodLabel = `الفترة من ${from} إلى ${to}`;
   // الـ PDF: الأقسام المتاحة في الخطة لهذه الفترة فقط.
   const pdfTabs = tabs.filter((t) => !isOutOfPlan(t.id));
+  const usesPeriod = PERIOD_TABS.has(tab);
+  const Icon = current.icon;
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
       <PageHeader
         title="التقارير"
-        description="المبيعات والأرباح والخصومات، الأصناف والأقسام، المشتريات، العروض، المرتجعات، العملاء والنقاط، الكاشيرية والورديات، المخزون، المديونيات، والخزنة."
+        description="اختر سؤالك من القائمة وحدّد الفترة، فتتحدّث الأرقام فوراً، وتحت كل رقم تفاصيله."
         actions={
           <div className="flex gap-2">
             <ExportButton
               contentRef={contentRef}
-              title={tabLabel}
-              periodLabel={periodLabel}
+              title={current.label}
+              periodLabel={usesPeriod ? periodLabel : "الوضع الحالي"}
             />
             <ReportPdfButton
               tabs={pdfTabs}
@@ -152,24 +170,54 @@ export function ReportsScreen() {
           </div>
         }
       />
-      <SegmentedTabs
-        label="التقرير"
-        items={tabs}
-        value={tab}
-        onChange={setTab}
-        className="flex-wrap"
-      />
-      {PERIOD_TABS.has(tab) && (
-        <div className="flex justify-end">
-          <PeriodPicker value={period} onChange={setPeriod} />
+
+      <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+        <aside className="lg:sticky lg:top-4">
+          <ReportNav tabs={tabs} value={tab} onChange={setTab} />
+        </aside>
+
+        <div className="min-w-0 space-y-4">
+          <section
+            aria-label="التقرير المفتوح"
+            className="flex flex-wrap items-center gap-3 border bg-card p-3"
+          >
+            <span
+              aria-hidden
+              className="flex size-10 shrink-0 items-center justify-center bg-primary/10 text-primary"
+            >
+              <Icon className="size-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-bold">{current.label}</h2>
+              <p className="text-xs text-muted-foreground">
+                {usesPeriod ? (
+                  <>
+                    من <b className="font-medium text-foreground">{from}</b> إلى{" "}
+                    <b className="font-medium text-foreground">{to}</b>
+                  </>
+                ) : (
+                  "الوضع الحالي للمحل الآن، ولا يتأثر بالفترة"
+                )}
+              </p>
+            </div>
+            {usesPeriod ? (
+              <PeriodPicker value={period} onChange={setPeriod} />
+            ) : (
+              <span className="inline-flex items-center gap-1.5 border px-2 py-1 text-[11px] text-muted-foreground">
+                <span aria-hidden className="size-1.5 bg-success" />
+                لقطة الآن
+              </span>
+            )}
+          </section>
+
+          <div ref={contentRef}>
+            {outOfPlan ? (
+              <UpgradeNotice feature="full_reports" />
+            ) : (
+              <ReportTabContent tab={tab} period={period} />
+            )}
+          </div>
         </div>
-      )}
-      <div ref={contentRef}>
-        {outOfPlan ? (
-          <UpgradeNotice feature="full_reports" className="mt-4" />
-        ) : (
-          <ReportTabContent tab={tab} period={period} />
-        )}
       </div>
     </div>
   );

@@ -291,7 +291,7 @@ function renderA4(m: ReceiptModel, o: RenderOptions): string {
     </div>
   </header>
 
-  ${info.length ? `<section class="info">${info.map((r) => `<div><span>${esc(r.label)}</span><b>${esc(r.value)}</b></div>`).join("")}</section>` : ""}
+  ${info.length ? `<section class="info">${info.map((r) => `<div><span>${esc(r.label)}:</span> <b>${esc(r.value)}</b></div>`).join("")}</section>` : ""}
 
   <table class="items">
     <thead><tr>
@@ -344,7 +344,8 @@ function renderA4(m: ReceiptModel, o: RenderOptions): string {
   .meta th { text-align: right; color: #555; font-weight: 400; padding: 1px 0 1px 10px; }
   .meta td { text-align: right; font-weight: 700; }
   .info { display: flex; flex-wrap: wrap; gap: 6px 28px; margin: 12px 0 0; padding: 8px 12px; background: #f5f5f5; }
-  .info span { color: #555; margin-left: 6px; }
+  .info div { display: inline-flex; align-items: baseline; gap: 6px; }
+  .info span { color: #555; }
   .items { width: 100%; border-collapse: collapse; margin-top: 14px; }
   .items thead { display: table-header-group; }
   .items th { background: ${accent}; color: #fff; font-weight: 600; padding: 7px 8px; text-align: right; font-size: 11.5px; }

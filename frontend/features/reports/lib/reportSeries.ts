@@ -1,7 +1,15 @@
 import { CHART } from "@/components/shared/charts/chartTheme";
 import { KIND_LABEL } from "@/features/treasury/config/treasuryOptions";
 import type { CashKind } from "@/features/treasury/types/treasury";
-import { formatDate, formatShortDate, formatWeekday } from "@/lib/dates";
+import {
+  addDays,
+  formatDate,
+  formatShortDate,
+  formatWeekday,
+  parseIsoDay,
+  toIsoDay,
+  type DateRange,
+} from "@/lib/dates";
 
 import { REPORT_LIMITS, SHORT_DATE_THRESHOLD } from "../config/reportOptions";
 import type {
@@ -14,6 +22,18 @@ import type {
 } from "../types/report";
 
 /** تحويلات بيانات التقارير إلى صيغ جاهزة للرسوم والجداول. دوال نقية بلا React. */
+
+/** الفترة السابقة بنفس عدد الأيام (1–17 نوفمبر ← 15–31 أكتوبر) للمقارنة. */
+export function previousRange(range: DateRange): DateRange {
+  const from = new Date(parseIsoDay(range.from));
+  // round: يوم التوقيت الصيفي 23 أو 25 ساعة.
+  const len =
+    Math.round((parseIsoDay(range.to) - from.getTime()) / 86_400_000) + 1;
+  return {
+    from: toIsoDay(addDays(from, -len)),
+    to: toIsoDay(addDays(from, -1)),
+  };
+}
 
 export const marginPct = (profit: number, net: number) =>
   net > 0 ? Math.round((profit / net) * 100) : 0;

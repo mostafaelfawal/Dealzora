@@ -88,8 +88,10 @@ pub fn reveal_download(app: AppHandle, path: String) -> Result<(), String> {
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         // canonicalize يضيف بادئة \\?\ التي لا يفهمها explorer.
         let display = file.to_string_lossy().trim_start_matches(r"\\?\").to_string();
+        // raw_arg: explorer يحتاج /select,"مسار" حرفياً. .arg() يضع التنصيص حول الكل
+        // ("/select,C:\…") فلو في الاسم مسافة يتجاهله explorer ويفتح Documents.
         std::process::Command::new("explorer")
-            .arg(format!("/select,{display}"))
+            .raw_arg(format!("/select,\"{display}\""))
             .creation_flags(CREATE_NO_WINDOW)
             .spawn()
             .map_err(|e| e.to_string())?;
