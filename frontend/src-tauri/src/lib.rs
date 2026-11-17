@@ -338,6 +338,8 @@ const ALLOWED_EXTERNAL_PREFIXES: &[&str] = &[
     "https://www.youtube.com/",
     "https://www.tiktok.com/",
     "https://x.com/",
+    // «معرفة سعر المنتج» في نموذج الصنف: بحث جوجل فقط.
+    "https://www.google.com/search?",
 ];
 
 /// يفتح رابطاً خارجياً (من القائمة البيضاء) أو رقم تليفون tel: في البرنامج الافتراضي.

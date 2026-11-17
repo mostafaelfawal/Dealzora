@@ -17,12 +17,7 @@ import {
 import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  formatRate,
-  TAX_TYPE_LABEL,
-  TAX_TYPES,
-  useTaxConfig,
-} from "@/lib/tax";
+import { formatRate, TAX_TYPE_LABEL, TAX_TYPES, useTaxConfig } from "@/lib/tax";
 import { upgradeMessage, useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +32,7 @@ import {
 } from "../lib/productCalc";
 import { focusById } from "../lib/productFormFocus";
 import { ProductMarginBadge } from "./productMarginBadge";
+import { ProductPriceLookup } from "./productPriceLookup";
 
 const PRICE_INPUT = {
   dir: "ltr",
@@ -308,8 +304,8 @@ function EtaSection() {
         />
       </FormField>
       <p className="text-xs text-muted-foreground">
-        وحدة القياس تُربط مرة واحدة لكل الأصناف من الإعدادات ← الإيصال
-        الإلكتروني ← وحدات القياس.
+        وحدة القياس تُربط مرة واحدة لكل الأصناف من الإعدادات ← الإيصال الإلكتروني
+        ← وحدات القياس.
       </p>
     </CollapsibleSection>
   );
@@ -346,7 +342,12 @@ export function ProductFormPricing() {
       <FormSection
         title="الأسعار"
         description={`لكل ${unitName}`}
-        action={hasMargin && <ProductMarginBadge cost={cost} sale={sale} />}
+        action={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {hasMargin && <ProductMarginBadge cost={cost} sale={sale} />}
+            <ProductPriceLookup />
+          </div>
+        }
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
