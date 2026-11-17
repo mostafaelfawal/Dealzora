@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Promotion } from "../types/promotion";
-import PromotionForm from "./PromotionForm";
+import PromotionForm from "./promotionForm";
 
 export function PromotionFormDialog({
   open,
