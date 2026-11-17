@@ -90,8 +90,11 @@ pub async fn install_update(
 
     crate::app_log(&format!("installing update {}", update.version));
     crate::stop_backend(&app);
+    // بدون هذا يقتل الـ Job المُثبّتَ لحظة خروج البرنامج، فتبقى النسخة القديمة كما هي.
+    crate::set_kill_children_on_exit(false);
     if let Err(e) = update.install(bytes) {
         crate::app_log(&format!("update install failed: {e}"));
+        crate::set_kill_children_on_exit(true);
         crate::restart_backend(&app);
         return Err(e.to_string());
     }

@@ -160,6 +160,10 @@ fn activate_license(app: AppHandle, key: String) -> Result<license::Status, Stri
 /// يضع عملية التطبيق في Job عليه KILL_ON_JOB_CLOSE: كل عملية نشغّلها بعد كده (الـ backend
 /// وأي عمليات فرعية له، حتى bootloader بتاع PyInstaller) تموت أوتوماتيك لما التطبيق يموت،
 /// سواء قفل عادي أو crash أو إنهاء من Task Manager.
+/// الـ Job محفوظ في static (لا يُعمل له drop أبداً): لو أُغلق الـ handle يُقتل كل ما بداخله فوراً.
+#[cfg(all(windows, not(debug_assertions)))]
+static APP_JOB: std::sync::OnceLock<win32job::Job> = std::sync::OnceLock::new();
+
 #[cfg(all(windows, not(debug_assertions)))]
 fn bind_children_to_app_lifetime() {
     use win32job::Job;
@@ -175,13 +179,36 @@ fn bind_children_to_app_lifetime() {
         return;
     }
     if job.assign_current_process().is_ok() {
-        // لازم الـ handle يفضل مفتوح لحد ما العملية تموت. لو اتعمله drop الـ Job هيقفل ويقتل كل حاجة فوراً.
-        std::mem::forget(job);
+        let _ = APP_JOB.set(job);
     }
 }
 
 #[cfg(not(all(windows, not(debug_assertions))))]
 fn bind_children_to_app_lifetime() {}
+
+/// مُثبّت التحديث يُشغَّل من داخل البرنامج فيرث الـ Job، ثم يُغلق البرنامج نفسه فوراً.
+/// لو بقي KILL_ON_JOB_CLOSE مفعّلاً سيُقتل المُثبّت مع البرنامج قبل أن يستبدل أي ملف،
+/// فنلغيه قبل تشغيل المُثبّت مباشرة (الـ backend متوقف بالفعل في هذه اللحظة).
+/// `enabled = true` يعيده كما كان لو فشل تشغيل المُثبّت.
+#[cfg(all(windows, not(debug_assertions)))]
+fn set_kill_children_on_exit(enabled: bool) {
+    let Some(job) = APP_JOB.get() else {
+        return;
+    };
+    let Ok(mut info) = job.query_extended_limit_info() else {
+        return;
+    };
+    info.clear_limits();
+    if enabled {
+        info.limit_kill_on_job_close();
+    }
+    if let Err(e) = job.set_extended_limit_info(&mut info) {
+        app_log(&format!("job limits update failed: {e:?}"));
+    }
+}
+
+#[cfg(not(all(windows, not(debug_assertions))))]
+fn set_kill_children_on_exit(_: bool) {}
 
 #[cfg(not(debug_assertions))]
 fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {

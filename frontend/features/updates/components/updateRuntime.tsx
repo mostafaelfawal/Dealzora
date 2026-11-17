@@ -1,6 +1,11 @@
 "use client";
 
-import { IconDownload, IconLoader2, IconRefresh } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconDownload,
+  IconLoader2,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -77,7 +82,76 @@ export function UpdateRuntime() {
     return () => window.removeEventListener(OPEN_EVENT, show);
   }, []);
 
-  return <UpdateDialog state={state} open={open} onOpenChange={setOpen} />;
+  return (
+    <>
+      <UpdateDialog state={state} open={open} onOpenChange={setOpen} />
+      {!open && (
+        <UpdateProgressCard state={state} onOpen={() => setOpen(true)} />
+      )}
+    </>
+  );
+}
+
+/**
+ * بطاقة صغيرة في زاوية الشاشة أثناء التنزيل/التثبيت: المستخدم يكمل البيع والتحديث
+ * يعمل في الخلفية. الضغط عليها يفتح نافذة التحديث بالتفاصيل.
+ */
+function UpdateProgressCard({
+  state,
+  onOpen,
+}: {
+  state: UpdateState;
+  onOpen: () => void;
+}) {
+  if (
+    state.status !== "downloading" &&
+    state.status !== "installing" &&
+    !(state.status === "error" && state.update)
+  )
+    return null;
+
+  const failed = state.status === "error";
+  const ratio =
+    state.status === "downloading"
+      ? state.total
+        ? state.downloaded / state.total
+        : 0.05
+      : 1;
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-live="polite"
+      className="fixed bottom-4 left-4 z-50 w-64 space-y-2 border bg-background/95 p-3 text-start shadow-lg backdrop-blur transition-colors hover:bg-muted/60"
+    >
+      <p className="flex items-center gap-2 text-xs font-semibold">
+        {failed ? (
+          <IconAlertTriangle className="size-4 shrink-0 text-destructive" />
+        ) : (
+          <IconLoader2 className="size-4 shrink-0 animate-spin text-primary" />
+        )}
+        <span className="truncate">
+          {failed
+            ? "تعذّر التحديث، اضغط للمحاولة مرة أخرى"
+            : state.status === "installing"
+              ? "جارٍ التثبيت… سيُعاد فتح البرنامج"
+              : `جارٍ تنزيل الإصدار ${state.update.version}`}
+        </span>
+      </p>
+      {!failed && <ProgressBar value={ratio} className="h-1.5" />}
+      {state.status === "downloading" && (
+        <p
+          dir="ltr"
+          className="text-end font-mono text-[11px] text-muted-foreground tabular-nums"
+        >
+          {formatBytes(state.downloaded)}
+          {state.total ? ` / ${formatBytes(state.total)}` : ""}
+          {state.total ? ` · ${Math.round(ratio * 100)}%` : ""}
+        </p>
+      )}
+    </button>
+  );
 }
 
 const OPEN_EVENT = "dealzora:open-update";
@@ -106,12 +180,9 @@ function UpdateDialog({
   if (!update) return null;
 
   return (
-    <Dialog
-      open={open}
-      // أثناء التحميل/التثبيت لا نقفل النافذة: المستخدم يرى ما يحدث.
-      onOpenChange={(next) => !busy && onOpenChange(next)}
-    >
-      <DialogContent showCloseButton={!busy} className="sm:max-w-md">
+    // إغلاق النافذة لا يوقف التحديث: التقدم يظهر في بطاقة صغيرة بزاوية الشاشة.
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <IconRefresh className="size-5 text-primary" />
@@ -174,14 +245,16 @@ function UpdateDialog({
         )}
 
         <DialogFooter>
-          {!busy && (
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              لاحقاً
-            </Button>
-          )}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {busy ? "إخفاء" : "لاحقاً"}
+          </Button>
           <Button
             disabled={busy}
-            onClick={() => void installUpdate()}
+            onClick={() => {
+              // نغلق النافذة فوراً ليكمل المستخدم عمله، والتقدم يظهر في الزاوية.
+              onOpenChange(false);
+              void installUpdate();
+            }}
             className="gap-2"
           >
             {busy ? (
