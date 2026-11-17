@@ -3,6 +3,7 @@
 import {
   IconAlertTriangle,
   IconDownload,
+  IconGripVertical,
   IconLoader2,
   IconRefresh,
 } from "@tabler/icons-react";
@@ -10,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ProgressBar } from "@/components/shared/motion";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -110,6 +112,114 @@ function UpdateProgressCard({
   )
     return null;
 
+  return <DraggableProgressCard state={state} onOpen={onOpen} />;
+}
+
+/** موضع البطاقة (أعلى/يسار بالبكسل) يُحفظ لهذا الجهاز ليبقى حيث تركه المستخدم. */
+const POSITION_KEY = "dealzora:update-card-position";
+const EDGE = 8; // أقل مسافة بين البطاقة وحافة النافذة
+const DRAG_THRESHOLD = 4; // حركة أقل من هذا تُعدّ ضغطة لا سحباً
+
+type Point = { x: number; y: number };
+
+function loadPosition(): Point | null {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY);
+    const p = raw ? (JSON.parse(raw) as Point) : null;
+    return p && Number.isFinite(p.x) && Number.isFinite(p.y) ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePosition(p: Point) {
+  try {
+    localStorage.setItem(POSITION_KEY, JSON.stringify(p));
+  } catch {
+    // التخزين غير متاح: البطاقة تعود لمكانها الافتراضي في المرة القادمة.
+  }
+}
+
+/** يُبقي البطاقة كاملة داخل النافذة. */
+function clamp(p: Point, el: HTMLElement): Point {
+  const maxX = window.innerWidth - el.offsetWidth - EDGE;
+  const maxY = window.innerHeight - el.offsetHeight - EDGE;
+  return {
+    x: Math.min(Math.max(EDGE, p.x), Math.max(EDGE, maxX)),
+    y: Math.min(Math.max(EDGE, p.y), Math.max(EDGE, maxY)),
+  };
+}
+
+function DraggableProgressCard({
+  state,
+  onOpen,
+}: {
+  state: Extract<
+    UpdateState,
+    { status: "downloading" | "installing" | "error" }
+  >;
+  onOpen: () => void;
+}) {
+  const ref = useRef<HTMLButtonElement>(null);
+  // null = المكان الافتراضي (أسفل اليسار) حتى يحرّكها المستخدم.
+  const [pos, setPos] = useState<Point | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{
+    start: Point;
+    origin: Point;
+    moved: boolean;
+  } | null>(null);
+  const justDragged = useRef(false);
+
+  // استرجاع الموضع المحفوظ بعد التركيب (البطاقة لها مقاس فعلي الآن)، ومتابعة تغيّر حجم النافذة.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const saved = loadPosition();
+    if (saved) setPos(clamp(saved, el));
+    const onResize = () =>
+      setPos((p) => (p && ref.current ? clamp(p, ref.current) : p));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    drag.current = {
+      start: { x: e.clientX, y: e.clientY },
+      origin: { x: rect.left, y: rect.top },
+      moved: false,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.start.x;
+    const dy = e.clientY - d.start.y;
+    if (!d.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+    if (!d.moved) {
+      d.moved = true;
+      setDragging(true);
+    }
+    setPos(clamp({ x: d.origin.x + dx, y: d.origin.y + dy }, e.currentTarget));
+  };
+
+  const endDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    drag.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId))
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    if (!d?.moved) return;
+    setDragging(false);
+    // السحب ينتهي بحدث click: نتجاهله حتى لا تُفتح النافذة.
+    justDragged.current = true;
+    const rect = e.currentTarget.getBoundingClientRect();
+    savePosition({ x: rect.left, y: rect.top });
+  };
+
   const failed = state.status === "error";
   const ratio =
     state.status === "downloading"
@@ -120,12 +230,35 @@ function UpdateProgressCard({
 
   return (
     <button
+      ref={ref}
       type="button"
-      onClick={onOpen}
+      onClick={() => {
+        if (justDragged.current) {
+          justDragged.current = false;
+          return;
+        }
+        onOpen();
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       aria-live="polite"
-      className="fixed bottom-4 left-4 z-50 w-64 space-y-2 border bg-background/95 p-3 text-start shadow-lg backdrop-blur transition-colors hover:bg-muted/60"
+      title="اسحب لتحريك البطاقة، أو اضغط لعرض التفاصيل"
+      style={pos ? { left: pos.x, top: pos.y } : undefined}
+      className={cn(
+        "fixed z-50 w-64 touch-none space-y-2 border bg-background/95 p-3 text-start shadow-lg backdrop-blur select-none",
+        pos ? "" : "bottom-4 left-4",
+        dragging
+          ? "cursor-grabbing shadow-2xl ring-1 ring-primary/40"
+          : "cursor-grab transition-colors hover:bg-muted/60",
+      )}
     >
       <p className="flex items-center gap-2 text-xs font-semibold">
+        <IconGripVertical
+          aria-hidden
+          className="size-3.5 shrink-0 text-muted-foreground"
+        />
         {failed ? (
           <IconAlertTriangle className="size-4 shrink-0 text-destructive" />
         ) : (
