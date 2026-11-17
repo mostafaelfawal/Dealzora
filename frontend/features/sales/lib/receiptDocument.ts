@@ -64,7 +64,7 @@ export interface RenderOptions {
   paperMm: PaperWidth;
   config: ReceiptConfig;
   shopName: string;
-  /** خطة «بَسطة» المجانية: سطر «بواسطة Dealzora» صغير في الآخر. */
+  /** خطة «بَسطة» المجانية: سطر Dealzora في الآخر إجباري (لا يُخفى بإعداد الفاتورة). */
   freePlan: boolean;
 }
 
@@ -72,7 +72,10 @@ export const esc = (text: string) =>
   text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 export const money = (n: number) => formatNumber(n);
 
-const FREE_FOOTER = "بواسطة Dealzora";
+export const BRANDING_LINE = "Dealzora لإدارة الأنشطة التجارية";
+
+/** سطر Dealzora: إجباري في المجانية، واختياري (من تصميم الفاتورة) في الخطط المدفوعة. */
+const showBranding = (o: RenderOptions) => o.freePlan || o.config.showBranding;
 
 export function renderReceipt(
   model: ReceiptModel,
@@ -187,7 +190,7 @@ function renderThermal(m: ReceiptModel, o: RenderOptions): string {
   ${m.eta ? eReceiptBlockHtml(m.eta, o.paperMm, m.kind) : ""}
   ${barcode ? `<hr>${barcode}` : ""}
   ${c.footer ? `${barcode ? "" : "<hr>"}<div class="center foot">${esc(c.footer)}</div>` : ""}
-  ${o.freePlan ? `<div class="center muted" style="margin-top:2px">${FREE_FOOTER}</div>` : ""}`;
+  ${showBranding(o) ? `<div class="center muted" style="margin-top:2px">${BRANDING_LINE}</div>` : ""}`;
 
   const paper = o.paperMm;
   return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
@@ -318,7 +321,7 @@ function renderA4(m: ReceiptModel, o: RenderOptions): string {
   ${c.terms ? `<section class="terms"><b>الشروط والأحكام</b><div>${esc(c.terms)}</div></section>` : ""}
   <footer class="foot">
     ${c.footer ? `<div>${esc(c.footer)}</div>` : ""}
-    ${o.freePlan ? `<div class="by">${FREE_FOOTER}</div>` : ""}
+    ${showBranding(o) ? `<div class="by">${BRANDING_LINE}</div>` : ""}
   </footer>`;
 
   return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">

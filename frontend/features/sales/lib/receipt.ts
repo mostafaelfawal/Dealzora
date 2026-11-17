@@ -20,6 +20,7 @@ import { RETURN_REASON_LABEL } from "../config/saleOptions";
 import { fetchReturn, fetchSale } from "../api/sales.api";
 import type { Sale, SaleReturn } from "../types/sale";
 import {
+  BRANDING_LINE,
   esc,
   money,
   renderReceipt,
@@ -330,6 +331,7 @@ export function buildWhatsappText(sale: Sale, shopName: string): string {
       : null,
     "",
     FOOTER,
+    getReceiptConfig().showBranding ? BRANDING_LINE : null,
   ]
     .filter((l) => l !== null)
     .join("\n");

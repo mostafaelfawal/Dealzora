@@ -22,6 +22,8 @@ export interface ReceiptConfig {
   showBarcode: boolean;
   /** الإيصال الحراري المختصر (يوفّر الورق). */
   compact: boolean;
+  /** سطر «Dealzora» آخر الفاتورة. «بَسطة» المجانية تطبعه دائماً، والخطط المدفوعة تختار. */
+  showBranding: boolean;
   footer: string;
   /** شروط الاستبدال (A4 فقط). */
   terms: string;
@@ -42,6 +44,7 @@ export const DEFAULT_RECEIPT: ReceiptConfig = {
   showPaymentDetails: true,
   showBarcode: true,
   compact: true,
+  showBranding: false,
   footer: "شكراً لزيارتكم",
   terms: "",
   fontSize: "normal",
@@ -104,6 +107,7 @@ export interface ReceiptDto {
   show_payment_details: boolean;
   show_barcode?: boolean;
   compact?: boolean;
+  show_branding?: boolean;
   footer: string;
   terms: string;
   font_size: ReceiptFontSize;
@@ -124,6 +128,7 @@ export const fromReceiptDto = (d: ReceiptDto | undefined): ReceiptConfig =>
         showPaymentDetails: d.show_payment_details,
         showBarcode: d.show_barcode ?? true,
         compact: d.compact ?? true,
+        showBranding: d.show_branding ?? false,
         footer: d.footer,
         terms: d.terms,
         fontSize: d.font_size,
@@ -143,6 +148,7 @@ export const toReceiptDto = (c: ReceiptConfig): ReceiptDto => ({
   show_payment_details: c.showPaymentDetails,
   show_barcode: c.showBarcode,
   compact: c.compact,
+  show_branding: c.showBranding,
   footer: c.footer,
   terms: c.terms,
   font_size: c.fontSize,

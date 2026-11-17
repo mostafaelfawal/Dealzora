@@ -39,6 +39,9 @@ class ReceiptConfig(BaseModel):
     show_barcode: bool = True
     # الإيصال الحراري المختصر: البيانات في سطور أقل، والصنف البسيط في سطر واحد.
     compact: bool = True
+    # سطر «Dealzora لإدارة الأنشطة التجارية» آخر الفاتورة. خطة «بَسطة» المجانية تطبعه
+    # دائماً مهما كانت القيمة (الواجهة تفرضه)، والخطط المدفوعة تختار.
+    show_branding: bool = False
 
     # ---- أسفل الفاتورة ----
     footer: str = Field(DEFAULT_FOOTER, max_length=300)

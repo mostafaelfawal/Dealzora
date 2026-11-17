@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { buildReceiptHtml } from "@/features/sales/lib/receipt";
+import { BRANDING_LINE } from "@/features/sales/lib/receiptDocument";
+import { usePlan } from "@/lib/plan";
 import { usePrinterPrefs, type PrinterKind } from "@/lib/printerPrefs";
 import {
   ACCENT_COLORS,
@@ -51,6 +53,7 @@ export function ReceiptDesignSection() {
   const save = useSaveReceiptConfig();
   const shopName = useShopName().data ?? "اسم المحل";
   const prefs = usePrinterPrefs();
+  const freePlan = Boolean(usePlan().data?.isFree);
   const [draft, setDraft] = useState<ReceiptConfig | null>(null);
   const [preview, setPreview] = useState<PrinterKind>(prefs.kind);
 
@@ -139,6 +142,19 @@ export function ReceiptDesignSection() {
             description="امسحه بقارئ الباركود في بحث الفواتير أو المرتجع فتظهر الفاتورة فوراً."
             checked={cfg.showBarcode}
             onChange={(showBarcode) => set({ showBarcode })}
+          />
+          <SwitchRow
+            id="rc-branding"
+            title={`سطر «${BRANDING_LINE}»`}
+            description={
+              freePlan
+                ? "يظهر دائماً في خطة «بَسطة» المجانية، ويمكن إخفاؤه عند الاشتراك في أي خطة مدفوعة."
+                : "سطر صغير في آخر الفاتورة. يمكنك إظهاره أو إخفاؤه."
+            }
+            // المجانية: السطر إجباري فالمفتاح مفعّل ومقفول مهما كانت القيمة المحفوظة.
+            checked={freePlan || cfg.showBranding}
+            disabled={freePlan}
+            onChange={(showBranding) => set({ showBranding })}
           />
         </SettingGroup>
 
@@ -519,7 +535,7 @@ function ReceiptPreview({
             {/* الـ iframe يبتلع الماوس: طبقة شفافة فوقه تُظهر مؤشر العدسة وتستقبل الضغط */}
             <span
               aria-hidden
-              className="absolute inset-0 transition-colors group-hover:bg-foreground/[0.03]"
+              className="absolute inset-0 transition-colors group-hover:bg-foreground/3"
             />
           </button>
         </AppTooltip>
