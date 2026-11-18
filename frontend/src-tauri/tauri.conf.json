@@ -30,6 +30,7 @@
       "binaries/dealzora-backend"
     ],
     "active": true,
+    "copyright": "© 2026 Dealzora",
     "targets": [
       "nsis"
     ],
@@ -43,6 +44,12 @@
     "windows": {
       "nsis": {
         "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "sidebarImage": "windows/sidebar.bmp",
+        "headerImage": "windows/header.bmp",
+        "uninstallerHeaderImage": "windows/header.bmp",
+        "languages": ["Arabic", "English"],
+        "displayLanguageSelector": false,
         "installerHooks": "./windows/installer-hooks.nsh"
       }
     },
