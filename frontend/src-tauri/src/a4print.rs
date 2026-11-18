@@ -7,11 +7,13 @@
 //!
 //! يحتاج WebView2 Runtime 1.0.1518 أو أحدث (2023). الأقدم: نرجع خطأ والواجهة تفتح نافذة الطباعة.
 
+#[cfg(windows)]
 use std::time::Duration;
 
 use tauri::AppHandle;
 
-/// أقصى مدة للتحميل + إرسال المهمة للطابعة.
+/// أقصى مدة للتحميل + إرسال المهمة للطابعة (ويندوز فقط: WebView2).
+#[cfg(windows)]
 const TIMEOUT: Duration = Duration::from_secs(45);
 const MAX_HTML_BYTES: usize = 20 * 1024 * 1024;
 

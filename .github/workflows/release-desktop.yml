@@ -229,6 +229,42 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # Tauri يعتبر المتغير الفارغ موجوداً فيحاول استيراد شهادة فارغة ويفشل
+      # ("SecKeychainItemImport: Unable to decode the provided data"). GitHub يمرر السر غير
+      # المعرَّف كنص فارغ، فلا نمرر متغيرات Apple إلا كاملة؛ وإلا يبقى التوقيع المحلي ad-hoc
+      # (signingIdentity "-" في tauri.macos.conf.json).
+      - name: Apple signing (only if configured)
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          export_vars() {
+            for name in "$@"; do
+              delim="EOF_$(openssl rand -hex 8)"
+              { echo "$name<<$delim"; printf '%s\n' "${!name}"; echo "$delim"; } >> "$GITHUB_ENV"
+            done
+          }
+          if [ -n "$APPLE_CERTIFICATE" ] && [ -n "$APPLE_SIGNING_IDENTITY" ]; then
+            export_vars APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY
+            echo "توقيع Apple: مفعّل"
+            if [ -n "$APPLE_ID" ] && [ -n "$APPLE_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
+              export_vars APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID
+              echo "توثيق Apple (notarization): مفعّل"
+            elif [ -n "$APPLE_ID$APPLE_PASSWORD$APPLE_TEAM_ID" ]; then
+              echo "::warning::أسرار التوثيق ناقصة (يلزم APPLE_ID و APPLE_PASSWORD و APPLE_TEAM_ID معاً): التوثيق متوقف."
+            fi
+          else
+            if [ -n "$APPLE_CERTIFICATE$APPLE_SIGNING_IDENTITY" ]; then
+              echo "::warning::أسرار التوقيع ناقصة (يلزم APPLE_CERTIFICATE و APPLE_SIGNING_IDENTITY معاً): نستخدم التوقيع المحلي ad-hoc."
+            fi
+            echo "توقيع Apple غير مُعدّ: توقيع محلي ad-hoc (يظهر تحذير Gatekeeper عند أول فتح)."
+          fi
+
       - name: Build, sign and upload
         uses: tauri-apps/tauri-action@v0
         env:
@@ -239,13 +275,7 @@ jobs:
           DEALZORA_VENDOR_PUBKEY: ${{ secrets.DEALZORA_VENDOR_PUBKEY }}
           DEALZORA_DB_SECRET: ${{ secrets.DEALZORA_DB_SECRET }}
           NEXT_PUBLIC_SYNC_URL: ${{ vars.NEXT_PUBLIC_SYNC_URL }}
-          # توقيع وتوثيق Apple (يُتجاهل على باقي الأنظمة، ويُتخطى لو الأسرار فارغة)
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # متغيرات Apple (إن وُجدت) تأتي من الخطوة السابقة عبر GITHUB_ENV، لا تُكتب هنا.
         with:
           projectPath: frontend
           releaseId: ${{ needs.prepare.outputs.release_id }}
