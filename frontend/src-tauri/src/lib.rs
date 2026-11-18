@@ -396,6 +396,14 @@ const ALLOWED_EXTERNAL_PREFIXES: &[&str] = &[
 const STORE_PUBLIC_URL: Option<&str> = option_env!("DEALZORA_STORE_URL");
 
 fn store_url_allowed(url: &str) -> bool {
+    // نسخة التطوير فقط: واجهة المتجر على الجهاز نفسه (npm run dev في storefront).
+    if cfg!(debug_assertions)
+        && ["http://localhost:", "http://127.0.0.1:"]
+            .iter()
+            .any(|p| url.starts_with(p))
+    {
+        return true;
+    }
     match STORE_PUBLIC_URL {
         Some(base) if base.starts_with("https://") => {
             let base = base.trim_end_matches('/');

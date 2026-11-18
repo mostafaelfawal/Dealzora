@@ -21,9 +21,20 @@ export function StoreLinkBar({ store }: { store: StoreSettings }) {
   };
   const open = () => {
     if (!url) return;
-    openExternal(url).catch(() =>
-      toast.error("تعذّر فتح المتصفح. انسخ الرابط وافتحه يدوياً"),
-    );
+    // البرنامج يفتح روابط من قائمة بيضاء فقط (عنوان المتجر يُضبط وقت بناء البرنامج):
+    // لو لم يُسمح بالرابط ننسخه بدل رسالة خطأ بلا حل.
+    openExternal(url).catch(() => {
+      void navigator.clipboard
+        ?.writeText(url)
+        .then(() =>
+          toast.info("نُسخ رابط المتجر", {
+            description: "الصقه في المتصفح لفتح المتجر.",
+          }),
+        )
+        .catch(() =>
+          toast.error("تعذّر فتح المتصفح. انسخ الرابط وافتحه يدوياً"),
+        );
+    });
   };
 
   return (
