@@ -30,6 +30,15 @@ export interface PosUiState {
   /** فتحنا اختيار العميل من داخل الدفع، فنرجع للدفع بعد الإغلاق. */
   reopenPayment: boolean;
   mobileView: MobileView;
+  /** آخر بيع آجل: عرض «قسّط هذه الفاتورة» (للمدير مع ميزة التقسيط). */
+  installmentOffer: InstallmentOffer | null;
+}
+
+export interface InstallmentOffer {
+  customerId: string;
+  customerName: string;
+  amount: number;
+  saleNumber: number;
 }
 
 const initialState: PosUiState = {
@@ -43,6 +52,7 @@ const initialState: PosUiState = {
   paymentMethod: "cash",
   reopenPayment: false,
   mobileView: "products",
+  installmentOffer: null,
 };
 
 function clearEntry(state: PosUiState) {
@@ -102,6 +112,9 @@ const posUiSlice = createSlice({
       state.paymentMethod = action.payload;
       state.reopenPayment = true;
       state.dialog = "customer";
+    },
+    offerInstallment(state, action: PayloadAction<InstallmentOffer | null>) {
+      state.installmentOffer = action.payload;
     },
     /** إغلاق اختيار العميل: نرجع للدفع لو جينا منه. */
     closeCustomerDialog(state) {

@@ -2,8 +2,11 @@
 
 - الخطة لا تملك ديناً منفصلاً: الدين دائماً في رصيد العميل (customers.balance)، والخطة جدول لسداده.
   فتحصيل قسط = «دفعة» في كشف العميل + نقدية داخلة للخزنة + زيادة المدفوع على الخطة.
-- تقسيط دين مسجّل (بيع آجل سابق) لا يغيّر الرصيد، ولا يتجاوز الدين غير المقسّط بعد.
-- تقسيط بيع/دين جديد يقيّد الأصل على العميل الآن. ولا زيادة على الأقساط إطلاقاً (الزيادة مقابل الأجل ربا).
+- التقسيط دائماً لدين مسجّل (فاتورة آجلة من الكاشير)، فلا يغيّر الرصيد ولا يتجاوز الدين غير المقسّط.
+  البيع بالتقسيط = بيع آجل عادي (مخزون + فاتورة + ضريبة + إيصال) ثم تقسيط مديونيته.
+- لا زيادة على الأقساط إطلاقاً (الزيادة مقابل الأجل ربا).
+- أي نقص في الدين من خارج الخطة (تحصيل من صفحة العميل، مرتجع، باقٍ محفوظ) يُحسب على الخطط
+  الجارية من الأقدم (absorb_outside_credit)، فلا يزيد المتبقي على الخطط عن دين العميل أبداً.
 - الإلغاء يوقف الجدول فقط: المتبقي يبقى ديناً عادياً على العميل.
 """
 
@@ -107,12 +110,11 @@ class InstallmentService(EntityService):
         if not customer.is_active:
             raise self._err(BadRequestError, InstallmentError.CUSTOMER_INACTIVE)
 
-        if not data.adds_debt:
-            unscheduled = customer.balance - self.repo.scheduled_remaining(customer.id)
-            if data.principal > unscheduled:
-                raise self._err(
-                    BadRequestError, InstallmentError.EXCEEDS_DEBT, available=max(unscheduled, 0)
-                )
+        unscheduled = customer.balance - self.repo.scheduled_remaining(customer.id)
+        if data.principal > unscheduled:
+            raise self._err(
+                BadRequestError, InstallmentError.EXCEEDS_DEBT, available=max(unscheduled, 0)
+            )
 
         financed = data.principal - data.down_payment
         total = financed  # لا زيادة على الأقساط: الزيادة مقابل الأجل ربا محرّم
@@ -138,15 +140,6 @@ class InstallmentService(EntityService):
         self.repo.add(plan)
         self.repo.flush()
 
-        if data.adds_debt:
-            self.customers.post_entry(
-                customer,
-                LedgerType.INSTALLMENT,
-                debit=data.principal,
-                note=f"تقسيط: {data.title}",
-                ref_type=REF_TYPE_PLAN,
-                ref_id=plan.id,
-            )
         if data.down_payment > 0:
             self._collect(
                 customer,
@@ -215,6 +208,36 @@ class InstallmentService(EntityService):
         self._commit()
         return self._to_detail(plan, self.customers.get_for_update(plan.customer_id))
 
+    # ================= واجهة للموديولات الأخرى (بدون commit) =================
+    def absorb_outside_credit(self, customer: Customer) -> None:
+        """دين العميل نقص من خارج الخطط: يُحسب الفرق على خططه الجارية من الأقدم.
+
+        القاعدة: المتبقي على الخطط ≤ دين العميل دائماً. الدين غير المقسّط يُسدَّد أولاً،
+        وما زاد عنه يُعدّ سداداً للخطط (وتكتمل الخطة إن سُدّدت كلها).
+        """
+        excess = self.repo.scheduled_remaining(customer.id) - max(customer.balance, 0)
+        if excess <= 0:
+            return
+        for plan in self.repo.active_for_customer(customer.id):
+            take = min(excess, plan.total - plan.paid_amount)
+            if take <= 0:
+                continue
+            base_version = plan.version
+            plan.paid_amount += take
+            if plan.paid_amount >= plan.total:
+                plan.status = PlanStatus.COMPLETED.value
+            plan.mark_modified()
+            self._audit(
+                plan,
+                "installment_settle",
+                {"amount": take, "paid_amount": plan.paid_amount, "status": plan.status},
+            )
+            self._enqueue(plan, base_version=base_version)
+            excess -= take
+            if excess <= 0:
+                break
+        self.repo.flush()
+
     # ================= داخلي =================
     def _get_or_404(self, plan_id: str) -> InstallmentPlan:
         plan = self.repo.get(plan_id)
@@ -263,6 +286,7 @@ class InstallmentService(EntityService):
 
     def _to_detail(self, plan: InstallmentPlan, customer: Customer) -> PlanDetailOut:
         rows = self._schedule(plan)
+        payments = self.repo.payments(plan.id)
         return self._build_out(
             PlanDetailOut,
             plan,
@@ -271,8 +295,10 @@ class InstallmentService(EntityService):
             schedule=[_due_out(r) for r in rows],
             payments=[
                 PlanPaymentOut(id=e.id, amount=e.credit, note=e.note, created_at=e.created_at)
-                for e in self.repo.payments(plan.id)
+                for e in payments
             ],
+            # ما سُدّد من خارج شاشة التقسيط (صفحة العميل، مرتجع...) وحُسب على الخطة.
+            settled_outside=max(plan.paid_amount - sum(e.credit for e in payments), 0),
         )
 
     def _build_out(

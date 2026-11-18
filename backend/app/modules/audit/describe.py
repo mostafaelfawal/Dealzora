@@ -133,6 +133,7 @@ ACTION_LABELS: dict[str, str] = {
     "receive": "استلام طلب شراء",
     "installment_pay": "تحصيل قسط",
     "installment_cancel": "إلغاء خطة تقسيط",
+    "installment_settle": "سداد قسط من خارج التقسيط",
     "login": "تسجيل دخول",
     "login_failed": "محاولة دخول فاشلة",
     "logout": "تسجيل خروج",
@@ -606,6 +607,11 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
             return f"حصّل قسطاً بقيمة {fmt.money(c.get('amount'))} من خطة التقسيط{_quoted(name)}"
         if a == "installment_cancel":
             return f"ألغى خطة التقسيط{_quoted(name)}"
+        if a == "installment_settle":
+            return (
+                f"حُسب {fmt.money(c.get('amount'))} على خطة التقسيط{_quoted(name)}"
+                " من سداد خارجها (تحصيل أو مرتجع)"
+            )
     if r.entity == "shop" and a == "rename":
         return f"غيّر اسم المحل إلى «{c.get('name', {}).get('to', '')}»" if _is_diff(c.get("name")) else "غيّر اسم المحل"
 

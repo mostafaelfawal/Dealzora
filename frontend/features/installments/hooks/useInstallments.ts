@@ -25,10 +25,13 @@ export const installmentKeys = {
 export const usePlans = () =>
   useQuery({ queryKey: installmentKeys.list(), queryFn: () => fetchPlans() });
 
-export const usePlansSummary = () =>
+export const usePlansSummary = (opts: { enabled?: boolean } = {}) =>
   useQuery({
     queryKey: installmentKeys.summary(),
     queryFn: fetchPlansSummary,
+    enabled: opts.enabled ?? true,
+    // التأخر يتغيّر بمرور الأيام لا بالبيانات فقط: إعادة فحص كل نصف ساعة.
+    refetchInterval: 30 * 60_000,
   });
 
 export const usePlan = (id: string | null) =>

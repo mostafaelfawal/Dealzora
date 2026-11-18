@@ -49,6 +49,7 @@ class CustomerError(StrEnum):
     HAS_CREDIT = "customer_has_credit"
     NO_CREDIT = "customer_no_credit"
     AMOUNT_EXCEEDS_CREDIT = "payout_exceeds_credit"
+    HAS_ACTIVE_PLAN = "customer_has_active_installment_plan"
 
 
 ERROR_MESSAGES: dict[CustomerError, str] = {
@@ -61,4 +62,5 @@ ERROR_MESSAGES: dict[CustomerError, str] = {
     CustomerError.HAS_CREDIT: "لا يمكن حذف عميل له رصيد لدى المحل. اصرف له رصيده أولاً",
     CustomerError.NO_CREDIT: "هذا العميل ليس له رصيد لدى المحل",
     CustomerError.AMOUNT_EXCEEDS_CREDIT: "المبلغ أكبر من رصيد العميل لدى المحل",
+    CustomerError.HAS_ACTIVE_PLAN: "لا يمكن حذف عميل له خطة تقسيط جارية. ألغِ الخطة أولاً",
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import {
   IconAlarm,
   IconCalendarDollar,
@@ -195,8 +196,10 @@ export function InstallmentsScreen() {
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [paying, setPaying] = useState<InstallmentPlan | null>(null);
-  const [filter, setFilter] = useState<PlanFilter>("active");
-  const [search, setSearch] = useState("");
+  // ?q= من «خطط التقسيط» في صفحة العملاء: نعرض خطط العميل بكل حالاتها.
+  const initialQ = useSearchParams().get("q") ?? "";
+  const [filter, setFilter] = useState<PlanFilter>(initialQ ? "all" : "active");
+  const [search, setSearch] = useState(initialQ);
 
   const items = useMemo(() => query.data ?? [], [query.data]);
   const today = todayIso();
@@ -334,9 +337,9 @@ export function InstallmentsScreen() {
             {items.length ? "لا خطط هنا" : "لا توجد خطط تقسيط بعد"}
           </p>
           <p className="max-w-md text-sm text-muted-foreground">
-            بِع ثلاجة بمقدّم 20% والباقي على 10 أشهر، أو قسّط مديونية عميل متراكمة
-            على أقساط أسبوعية، وتظهر الأقساط المتأخرة والمستحقة هذا الأسبوع في
-            أعلى الصفحة.
+            بِع ثلاجة آجلاً من الكاشير ثم قسّط فاتورتها على 10 أشهر، أو قسّط
+            مديونية عميل متراكمة على أقساط أسبوعية. وتظهر الأقساط المتأخرة
+            والمستحقة هذا الأسبوع في أعلى الصفحة.
           </p>
           {!items.length && (
             <Button onClick={() => setCreating(true)} className="gap-2">

@@ -24,6 +24,7 @@ import { IconInvoice } from "@tabler/icons-react";
 import { PosReturnPickerDialog } from "./posReturnPickerDialog";
 import { PosReturnDialog } from "./posReturnDialog";
 import { PosExchangeDialog } from "./posExchangeDialog";
+import { PosInstallmentOffer } from "./posInstallmentOffer";
 import { usePosCatalog } from "../hooks/usePosCatalog";
 
 /** شريط الإجمالي السفلي على الموبايل (من شاشة الأصناف إلى الفاتورة). */
@@ -88,6 +89,7 @@ export function PosWorkspace() {
       <PosReturnPickerDialog />
       <PosReturnDialog />
       <PosExchangeDialog />
+      <PosInstallmentOffer />
     </div>
   );
 }

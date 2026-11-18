@@ -6,7 +6,6 @@ import {
   IconFileInvoice,
   IconLoader2,
   IconSearch,
-  IconShoppingBag,
   IconX,
 } from "@tabler/icons-react";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
@@ -45,16 +44,13 @@ import {
   isoDate,
 } from "../lib/installmentText";
 import type { Frequency } from "../types/installment";
-import { ProductTitleInput } from "./productTitleInput";
 import { RibaNoticeButton } from "./ribaNoticeDialog";
 
-type Mode = "existing" | "new";
-
 interface Draft {
-  mode: Mode;
   customerId: string;
   title: string;
-  principal: string;
+  /** null = لم يكتبه التاجر بعد: يُعرض دين العميل غير المقسّط كاملاً. */
+  principal: string | null;
   downPayment: string;
   count: string;
   frequency: Frequency;
@@ -62,20 +58,12 @@ interface Draft {
   note: string;
 }
 
-const MODES: { id: Mode; label: string; hint: string; icon: ReactNode }[] = [
-  {
-    id: "existing",
-    label: "تقسيط مديونية حالية",
-    hint: "دين مسجّل على العميل من فواتير آجلة",
-    icon: <IconFileInvoice />,
-  },
-  {
-    id: "new",
-    label: "بيع جديد بالتقسيط",
-    hint: "يُضاف المبلغ لحساب العميل الآن",
-    icon: <IconShoppingBag />,
-  },
-];
+/** تعبئة مسبقة (من الكاشير بعد بيع آجل، أو من صفحة العميل). */
+export interface PlanPrefill {
+  customerId?: string | null;
+  title?: string;
+  amount?: number;
+}
 
 const num = (text: string) => parseNumberInput(normalizeDigits(text));
 const money = (text: string) => {
@@ -256,11 +244,13 @@ function CustomerPicker({
 }
 
 function PlanForm({
-  initialCustomerId,
+  prefill,
   onDone,
+  onCreated,
 }: {
-  initialCustomerId: string | null;
+  prefill: PlanPrefill;
   onDone: () => void;
+  onCreated: () => void;
 }) {
   const create = useCreatePlan();
   const customersQuery = useGetCustomers();
@@ -271,10 +261,9 @@ function PlanForm({
   );
 
   const [d, setD] = useState<Draft>({
-    mode: "existing",
-    customerId: initialCustomerId ?? "",
-    title: "",
-    principal: "",
+    customerId: prefill.customerId ?? "",
+    title: prefill.title ?? "",
+    principal: prefill.amount ? String(prefill.amount) : null,
     downPayment: "",
     count: "6",
     frequency: "monthly",
@@ -298,7 +287,9 @@ function PlanForm({
       0,
     );
 
-  const principal = money(d.principal);
+  const principalText =
+    d.principal ?? (customer ? String(unscheduled(customer)) : "");
+  const principal = money(principalText);
   const down = d.downPayment.trim() ? money(d.downPayment) : 0;
   const count = num(d.count);
   const preview = previewPlan({
@@ -312,7 +303,9 @@ function PlanForm({
   let error: string | null = null;
   if (!customer) error = "اختر العميل";
   else if (!(principal > 0)) error = "اكتب مبلغ التقسيط";
-  else if (d.mode === "existing" && principal > unscheduled(customer))
+  else if (unscheduled(customer) <= 0)
+    error = "لا توجد على العميل مديونية غير مقسّطة. بِع له آجلاً من الكاشير أولاً";
+  else if (principal > unscheduled(customer))
     error = `المبلغ أكبر من مديونيته غير المقسّطة (${formatMoneyText(unscheduled(customer))})`;
   else if (!Number.isFinite(down) || down < 0) error = "المقدّم غير صحيح";
   else if (down > principal) error = "المقدّم أكبر من مبلغ التقسيط";
@@ -321,17 +314,11 @@ function PlanForm({
   else if (!d.startDate) error = "اختر موعد أول قسط";
   else if (preview.total <= 0) error = "لا يتبقى مبلغ للتقسيط بعد المقدّم";
 
-  const defaultTitle = d.mode === "existing" ? "تقسيط مديونية" : "";
+  const defaultTitle = "تقسيط مديونية";
 
   function pickCustomer(c: Customer | null) {
-    patch({
-      customerId: c?.id ?? "",
-      // تقسيط الدين الحالي: المبلغ يُعبّأ بغير المقسّط كاملاً.
-      principal:
-        c && d.mode === "existing" && unscheduled(c) > 0
-          ? String(unscheduled(c))
-          : d.principal,
-    });
+    // المبلغ يُعاد لغير المقسّط من دين العميل الجديد.
+    patch({ customerId: c?.id ?? "", principal: null });
   }
 
   function submit(event: FormEvent) {
@@ -339,10 +326,6 @@ function PlanForm({
     setSubmitted(true);
     if (error || !customer) return;
     const title = d.title.trim() || defaultTitle;
-    if (!title) {
-      setSubmitted(true);
-      return;
-    }
     create.mutate(
       {
         customerId: customer.id,
@@ -352,40 +335,23 @@ function PlanForm({
         installmentsCount: count,
         frequency: d.frequency,
         startDate: d.startDate,
-        addsDebt: d.mode === "new",
         note: d.note,
       },
-      { onSuccess: onDone },
+      { onSuccess: onCreated },
     );
   }
 
-  const titleMissing = submitted && !d.title.trim() && !defaultTitle;
-
   return (
     <form onSubmit={submit} className="space-y-5">
-      {/* 1) نوع التقسيط */}
-      <div className="grid grid-cols-2 gap-2">
-        {MODES.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            aria-pressed={d.mode === m.id}
-            onClick={() => patch({ mode: m.id })}
-            className={cn(
-              "flex flex-col items-center gap-1 border p-3 text-center transition-colors [&_svg]:size-6",
-              d.mode === m.id
-                ? "border-primary bg-primary/5 text-primary"
-                : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            {m.icon}
-            <span className="text-sm font-medium text-foreground">
-              {m.label}
-            </span>
-            <span className="hidden text-[11px] sm:block">{m.hint}</span>
-          </button>
-        ))}
-      </div>
+      {/* 1) كيف يُباع بالتقسيط */}
+      <p className="flex gap-2 border bg-muted/40 p-3 text-xs text-muted-foreground">
+        <IconFileInvoice className="size-4 shrink-0 text-primary" />
+        <span>
+          يُقسَّط دين مسجّل على العميل. لبيع جديد بالتقسيط: بِع من الكاشير
+          بالدفع الآجل (فيُخصم المخزون وتصدر الفاتورة)، ثم اضغط «قسّط هذه
+          الفاتورة» بعد إتمام البيع.
+        </span>
+      </p>
 
       {/* 2) العميل والعنوان */}
       <div className="space-y-2">
@@ -400,46 +366,30 @@ function PlanForm({
       </div>
 
       <Field
-        label={d.mode === "new" ? "ماذا اشترى؟" : "عنوان الخطة (اختياري)"}
-        hint={titleMissing ? undefined : "يظهر في كشف حساب العميل وفي القائمة."}
+        label="عنوان الخطة (اختياري)"
+        hint="يظهر في القائمة وفي ملاحظات كشف حساب العميل. مثال: ثلاجة 16 قدم."
       >
-        {d.mode === "new" ? (
-          <ProductTitleInput
-            value={d.title}
-            onChange={(title) => patch({ title })}
-            onPick={(p) =>
-              patch({ title: p.name, principal: String(p.salePrice) })
-            }
-            placeholder="ابحث عن صنف أو اكتب ما اشتراه: ثلاجة 16 قدم"
-            invalid={titleMissing}
-          />
-        ) : (
-          <Input
-            value={d.title}
-            onChange={(e) => patch({ title: e.target.value })}
-            placeholder={defaultTitle}
-            maxLength={80}
-            className="h-10"
-            aria-invalid={titleMissing || undefined}
-          />
-        )}
-        {titleMissing && (
-          <p className="text-xs text-destructive">اكتب ما اشتراه العميل</p>
-        )}
+        <Input
+          value={d.title}
+          onChange={(e) => patch({ title: e.target.value })}
+          placeholder={defaultTitle}
+          maxLength={80}
+          className="h-10"
+        />
       </Field>
 
       {/* 3) المبالغ */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label={d.mode === "new" ? "سعر البيع" : "المبلغ المقسَّط"}
+          label="المبلغ المقسَّط"
           hint={
-            d.mode === "existing" && customer
+            customer
               ? `الحد الأقصى: ${formatMoneyText(unscheduled(customer))}`
               : undefined
           }
         >
           <MoneyInput
-            value={d.principal}
+            value={principalText}
             onChange={(principal) => patch({ principal })}
             label="مبلغ التقسيط"
             placeholder="0"
@@ -590,13 +540,15 @@ function PlanForm({
 
 export function InstallmentFormDialog({
   open,
-  customerId = null,
+  prefill = {},
   onClose,
+  onCreated,
 }: {
   open: boolean;
-  /** عميل مختار مسبقاً (مثلاً من صفحة العملاء). */
-  customerId?: string | null;
+  /** عميل/مبلغ/عنوان مختار مسبقاً (من صفحة العميل أو بعد بيع آجل في الكاشير). */
+  prefill?: PlanPrefill;
   onClose: () => void;
+  onCreated?: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
@@ -604,11 +556,17 @@ export function InstallmentFormDialog({
         <DialogHeader className="text-start">
           <DialogTitle>خطة تقسيط جديدة</DialogTitle>
           <DialogDescription>
-            قسّط مديونية العميل أو بيعاً جديداً على أقساط شهرية أو أسبوعية، ويُسجَّل
+            قسّط مديونية العميل على أقساط شهرية أو أسبوعية بلا فائدة، ويُسجَّل
             كل قسط في كشف حسابه وفي الخزنة.
           </DialogDescription>
         </DialogHeader>
-        {open && <PlanForm initialCustomerId={customerId} onDone={onClose} />}
+        {open && (
+          <PlanForm
+            prefill={prefill}
+            onDone={onClose}
+            onCreated={onCreated ?? onClose}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

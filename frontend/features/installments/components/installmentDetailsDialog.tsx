@@ -135,6 +135,15 @@ export function InstallmentDetailsDialog({
                     />
                   </span>
                 )}
+                {plan.settledOutside > 0 && (
+                  <span>
+                    سُدّد من خارج التقسيط (تحصيل أو مرتجع){" "}
+                    <Money
+                      amount={plan.settledOutside}
+                      className="text-foreground"
+                    />
+                  </span>
+                )}
                 {plan.note && <span>ملاحظة: {plan.note}</span>}
               </p>
             </dl>

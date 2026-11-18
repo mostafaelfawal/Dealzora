@@ -52,6 +52,8 @@ export interface PlanPayment {
 export interface InstallmentPlanDetail extends InstallmentPlan {
   schedule: DueRow[];
   payments: PlanPayment[];
+  /** سُدّد من خارج شاشة التقسيط (تحصيل من صفحة العميل، مرتجع) وحُسب على الخطة. */
+  settledOutside: number;
 }
 
 export interface InstallmentsSummary {
@@ -74,7 +76,5 @@ export interface PlanInput {
   installmentsCount: number;
   frequency: Frequency;
   startDate: string;
-  /** true = بيع/دين جديد يُضاف لحساب العميل. false = تقسيط مديونيته الحالية. */
-  addsDebt: boolean;
   note: string;
 }

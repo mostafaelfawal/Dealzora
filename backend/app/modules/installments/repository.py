@@ -49,6 +49,27 @@ class InstallmentRepository:
             stmt = stmt.where(InstallmentPlan.id != exclude_plan_id)
         return int(self.session.scalar(stmt) or 0)
 
+    def active_for_customer(self, customer_id: str) -> list[InstallmentPlan]:
+        """خطط العميل الجارية من الأقدم (السداد من خارجها يُحسب عليها بهذا الترتيب)."""
+        stmt = (
+            select(InstallmentPlan)
+            .where(
+                InstallmentPlan.customer_id == customer_id,
+                InstallmentPlan.status == PlanStatus.ACTIVE.value,
+                InstallmentPlan.deleted_at.is_(None),
+            )
+            .order_by(InstallmentPlan.created_at, InstallmentPlan.id)
+        )
+        return list(self.session.scalars(stmt).all())
+
+    def has_active(self, customer_id: str) -> bool:
+        stmt = select(InstallmentPlan.id).where(
+            InstallmentPlan.customer_id == customer_id,
+            InstallmentPlan.status == PlanStatus.ACTIVE.value,
+            InstallmentPlan.deleted_at.is_(None),
+        )
+        return self.session.scalars(stmt.limit(1)).first() is not None
+
     def payments(self, plan_id: str) -> list[CustomerLedgerEntry]:
         """دفعات الأقساط = حركات «دفعة» في كشف العميل مرجعها الخطة (بلا المقدّم)."""
         stmt = (

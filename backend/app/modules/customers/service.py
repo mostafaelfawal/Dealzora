@@ -45,6 +45,9 @@ from .schema import (
 )
 from .types import CustomerFilters, CustomerSort, LedgerType
 
+# حركات التقسيط نفسها (القسط والمقدّم) تحدّث خطتها بنفسها، فلا تُحسب عليها مرة أخرى.
+_INSTALLMENT_REFS = frozenset({"installment_plan", "installment_down"})
+
 
 class CustomerService(EntityService):
     entity = ENTITY_CUSTOMER
@@ -163,6 +166,10 @@ class CustomerService(EntityService):
             raise self._err(ConflictError, CustomerError.HAS_BALANCE, balance=customer.balance)
         if customer.balance < 0:
             raise self._err(ConflictError, CustomerError.HAS_CREDIT, balance=-customer.balance)
+        from app.modules.installments.repository import InstallmentRepository  # متأخر: تفادي الدوران
+
+        if InstallmentRepository(self.session).has_active(customer.id):
+            raise self._err(ConflictError, CustomerError.HAS_ACTIVE_PLAN)
         self._soft_delete(
             customer, base_version, {"name": customer.name, "balance": customer.balance}
         )
@@ -342,6 +349,11 @@ class CustomerService(EntityService):
         if entry_type is LedgerType.PAYMENT:
             customer.last_payment_at = utcnow()
         self.repo.add_entry(entry)
+        if credit > 0 and ref_type not in _INSTALLMENT_REFS:
+            # نقص الدين من خارج التقسيط (تحصيل، مرتجع، باقٍ محفوظ): يُحسب على خططه الجارية.
+            from app.modules.installments.service import InstallmentService  # متأخر: تفادي الدوران
+
+            InstallmentService(self.session, self.actor).absorb_outside_credit(customer)
         self._enqueue_event(
             ENTITY_LEDGER_ENTRY,
             entry.id,

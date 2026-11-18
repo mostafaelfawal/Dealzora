@@ -546,6 +546,19 @@ export const confirmPayment =
       const sale = await createSale(input);
       dispatch(recordSaved(sale));
       dispatch(cartActions.completeInvoice(sale.number));
+      // بيع آجل لعميل: عرض «قسّط هذه الفاتورة» (البيع بالتقسيط = بيع آجل ثم تقسيط دينه).
+      dispatch(
+        posUiActions.offerInstallment(
+          sale.creditAmount > 0 && sale.customerId
+            ? {
+                customerId: sale.customerId,
+                customerName: sale.customerName ?? "العميل",
+                amount: sale.creditAmount,
+                saleNumber: sale.number,
+              }
+            : null,
+        ),
+      );
 
       const name = await shopName();
       if (result.print) void printReceipt(sale, name, { openDrawer: true });

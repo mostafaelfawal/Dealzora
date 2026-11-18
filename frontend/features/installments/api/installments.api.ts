@@ -54,6 +54,7 @@ interface PlanDetailDto extends PlanDto {
     note: string | null;
     created_at: string;
   }[];
+  settled_outside: number;
 }
 
 interface SummaryDto {
@@ -109,6 +110,7 @@ const toDetail = (d: PlanDetailDto): InstallmentPlanDetail => ({
     note: p.note,
     createdAt: toMs(p.created_at),
   })),
+  settledOutside: toPounds(d.settled_outside),
 });
 
 const toBody = (i: PlanInput) => ({
@@ -119,7 +121,6 @@ const toBody = (i: PlanInput) => ({
   installments_count: i.installmentsCount,
   frequency: i.frequency,
   start_date: i.startDate,
-  adds_debt: i.addsDebt,
   note: i.note.trim() || null,
 });
 

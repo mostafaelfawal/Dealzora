@@ -146,11 +146,21 @@ class InstallmentServiceTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             PlanCreate.model_validate(body | {"note": "x" * 201})
 
-    def test_new_sale_with_down_payment(self):
-        cid = self._customer("01000000001")
+    def test_adds_debt_is_gone(self):
+        from pydantic import ValidationError
+
+        from app.modules.installments.schema import PlanCreate
+
+        with self.assertRaises(ValidationError):  # البيع بالتقسيط يمر بالكاشير (بيع آجل) لا هنا
+            PlanCreate.model_validate({"customer_id": "c", "title": "ثلاجة", "principal": 100,
+                                       "installments_count": 2, "start_date": "2026-01-01",
+                                       "adds_debt": True})  # fmt: skip
+
+    def test_debt_with_down_payment(self):
+        cid = self._customer("01000000001", opening=120_000)
         cash = self._treasury()
-        # 1200 أصل، 200 مقدّم = 1000 على 4 أقساط (بلا أي زيادة).
-        plan = self._create(cid, adds_debt=True, down_payment=20_000)
+        # 1200 دين، 200 مقدّم = 1000 على 4 أقساط (بلا أي زيادة).
+        plan = self._create(cid, down_payment=20_000)
         self.assertEqual((plan.total, plan.installment_amount), (100_000, 25_000))
         self.assertEqual(self._balance(cid), 100_000)
         self.assertEqual(self._treasury() - cash, 20_000)  # المقدّم دخل الخزنة
@@ -183,9 +193,9 @@ class InstallmentServiceTests(unittest.TestCase):
         from app.modules.installments.service import InstallmentService
         from app.modules.installments.types import PlanFilter
 
-        cid = self._customer("01000000003")
+        cid = self._customer("01000000003", opening=60_000)
         start = date.today() - timedelta(days=40)
-        plan = self._create(cid, adds_debt=True, principal=60_000, installments_count=3, start_date=start.isoformat())
+        plan = self._create(cid, principal=60_000, installments_count=3, start_date=start.isoformat())
         self.assertEqual((plan.overdue_count, plan.overdue_amount), (2, 40_000))
         with self.session() as s:
             svc = InstallmentService(s, OWNER)
@@ -194,6 +204,58 @@ class InstallmentServiceTests(unittest.TestCase):
             cancelled = svc.cancel(plan.id, plan.version)
         self.assertEqual((cancelled.status.value, cancelled.overdue_count), ("cancelled", 0))
         self.assertEqual(self._balance(cid), 60_000)  # الإلغاء لا يمسح الدين
+
+    def _collect_outside(self, customer_id: str, amount: int) -> None:
+        """«تحصيل دفعة» من صفحة العملاء (خارج شاشة التقسيط)."""
+        from app.modules.customers.schema import PaymentIn
+        from app.modules.customers.service import CustomerService
+
+        with self.session() as s:
+            CustomerService(s, OWNER).collect_payment(customer_id, PaymentIn(amount=amount))
+
+    def _get(self, plan_id: str):
+        from app.modules.installments.service import InstallmentService
+
+        with self.session() as s:
+            return InstallmentService(s, OWNER).get_plan(plan_id)
+
+    def test_outside_payment_counts_on_plan(self):
+        # دين 1500: 1000 مقسّط + 500 غير مقسّط.
+        cid = self._customer("01000000004", opening=150_000)
+        plan = self._create(cid, principal=100_000, installments_count=4)
+
+        self._collect_outside(cid, 40_000)  # يغطي جزءاً من غير المقسّط فقط
+        self.assertEqual(self._get(plan.id).remaining, 100_000)
+
+        self._collect_outside(cid, 30_000)  # الدين 800 < المقسّط 1000: الفرق 200 على الخطة
+        plan = self._get(plan.id)
+        self.assertEqual((plan.remaining, plan.settled_outside, plan.paid_count), (80_000, 20_000, 0))
+
+        plan = self._pay(plan.id, 80_000)  # القسط الباقي يُحصَّل كاملاً بلا رفض
+        self.assertEqual((plan.status.value, plan.remaining, self._balance(cid)), ("completed", 0, 0))
+
+    def test_outside_payment_completes_oldest_plan_first(self):
+        cid = self._customer("01000000005", opening=100_000)
+        first = self._create(cid, principal=40_000, installments_count=2)
+        second = self._create(cid, principal=60_000, installments_count=3)
+        self._collect_outside(cid, 50_000)  # الدين 500 والمقسّط 1000: 500 على الأقدم ثم التالي
+        first, second = self._get(first.id), self._get(second.id)
+        self.assertEqual((first.status.value, first.remaining), ("completed", 0))
+        self.assertEqual((second.status.value, second.remaining), ("active", 50_000))
+
+    def test_customer_with_active_plan_cannot_be_deleted(self):
+        from app.modules.customers.model import Customer
+        from app.modules.customers.service import CustomerService
+
+        cid = self._customer("01000000006", opening=30_000)
+        plan = self._create(cid, principal=30_000, installments_count=3)
+        with self.session() as s:  # رصيد صفر يدوياً: يتخطى فحص الدين ليصل لفحص الخطة
+            c = s.get(Customer, cid)
+            c.balance = 0
+            s.commit()
+            with self.assertRaises(AppError):
+                CustomerService(s, OWNER).delete_customer(cid, c.version)
+        self.assertEqual(self._get(plan.id).status.value, "active")
 
     def test_plan_gated_to_pro(self):
         from app.core.plan import Feature, has_feature

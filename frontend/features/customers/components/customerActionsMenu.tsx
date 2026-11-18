@@ -1,8 +1,10 @@
 "use client";
 
 import {
+  IconCalendarDollar,
   IconCash,
   IconDots,
+  IconListDetails,
   IconEye,
   IconEyeOff,
   IconFileText,
@@ -10,6 +12,7 @@ import {
   IconPencil,
   IconTrash,
 } from "@tabler/icons-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +31,8 @@ export interface CustomerActions {
   onStatement: (id: string) => void;
   onLoyalty: (id: string) => void;
   onCollect: (id: string) => void;
+  /** تقسيط مديونيته (خطة «سوق»). */
+  onInstallment: (id: string) => void;
   onToggleActive: (id: string) => void;
   onRemove: (id: string) => void;
 }
@@ -39,11 +44,13 @@ export function CustomerActionsMenu({
   onStatement,
   onLoyalty,
   onCollect,
+  onInstallment,
   onToggleActive,
   onRemove,
 }: { customer: Customer } & CustomerActions) {
-  // نقاط الولاء من خطة «سوق»
+  // نقاط الولاء والتقسيط من خطة «سوق»
   const loyalty = useFeature("loyalty");
+  const installments = useFeature("installments");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -71,6 +78,27 @@ export function CustomerActionsMenu({
           <IconCash />
           {customer.balance < 0 ? "صرف رصيده نقداً" : "تحصيل دفعة"}
         </DropdownMenuItem>
+        {installments && (
+          <>
+            <DropdownMenuItem
+              disabled={customer.balance <= 0 || !customer.isActive}
+              onClick={() => onInstallment(customer.id)}
+            >
+              <IconCalendarDollar />
+              قسّط مديونيته
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <Link
+                  href={`/admin/installments?q=${encodeURIComponent(customer.name)}`}
+                />
+              }
+            >
+              <IconListDetails />
+              خطط التقسيط
+            </DropdownMenuItem>
+          </>
+        )}
         {loyalty && (
           <DropdownMenuItem onClick={() => onLoyalty(customer.id)}>
             <IconGift />

@@ -48,9 +48,9 @@ class PlanCreate(BaseModel):
     down_payment: int = Field(0, ge=0, le=MAX_MONEY)
     installments_count: int = Field(ge=MIN_INSTALLMENTS, le=MAX_INSTALLMENTS)
     frequency: Frequency = Frequency.MONTHLY
+    # يُقسَّط دائماً دين مسجّل على العميل (فاتورة آجلة من الكاشير أو رصيد افتتاحي)،
+    # فالبيع نفسه يمر بالمبيعات: المخزون والفاتورة والضريبة والإيصال الإلكتروني.
     start_date: date
-    # True = بيع/دين جديد يُضاف لحساب العميل الآن. False = تقسيط مديونية مسجّلة بالفعل (بيع آجل).
-    adds_debt: bool = False
     note: Note = None
 
     @model_validator(mode="after")
@@ -120,6 +120,7 @@ class PlanPaymentOut(BaseModel):
 class PlanDetailOut(PlanOut):
     schedule: list[DueOut]
     payments: list[PlanPaymentOut]
+    settled_outside: int = 0  # سُدّد من خارج شاشة التقسيط (تحصيل من صفحة العميل، مرتجع)
 
 
 class PlansSummaryOut(BaseModel):

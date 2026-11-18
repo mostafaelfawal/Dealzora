@@ -30,13 +30,17 @@ import { CustomersStats } from "./customersStats";
 import { CustomersTable } from "./customersTable";
 import { CustomersToolbar } from "./customersToolbar";
 import { DeleteCustomerDialog } from "./deleteCustomerDialog";
+import { InstallmentFormDialog } from "@/features/installments/components/installmentFormDialog";
 import { AppTableBulkActions } from "@/components/shared/AppTable/types";
 import { Customer } from "../types/customer";
 
 /** نافذة واحدة مفتوحة في كل مرة: فلا تتراكم النوافذ فوق بعضها. */
 type DialogState =
   | { type: "form"; id: string | null }
-  | { type: "statement" | "collect" | "delete" | "loyalty"; id: string }
+  | {
+      type: "statement" | "collect" | "delete" | "loyalty" | "installment";
+      id: string;
+    }
   | null;
 
 /** صفحة إدارة العملاء: إحصائيات سريعة + بحث وفلاتر + بطاقات أو جدول + كشف حساب وتحصيل. */
@@ -105,6 +109,7 @@ export function CustomersScreen() {
     onStatement: (id: string) => setDialog({ type: "statement", id }),
     onLoyalty: (id: string) => setDialog({ type: "loyalty", id }),
     onCollect: (id: string) => setDialog({ type: "collect", id }),
+    onInstallment: (id: string) => setDialog({ type: "installment", id }),
     onToggleActive: (id: string) => {
       const customer = list.all.find((c) => c.id === id);
       if (customer) toggle.mutate({ id, version: customer.version });
@@ -284,6 +289,11 @@ export function CustomersScreen() {
       />
       <CollectPaymentDialog
         customer={dialog?.type === "collect" ? target : null}
+        onClose={close}
+      />
+      <InstallmentFormDialog
+        open={dialog?.type === "installment"}
+        prefill={{ customerId: dialog?.type === "installment" ? dialog.id : null }}
         onClose={close}
       />
       <DeleteCustomerDialog
