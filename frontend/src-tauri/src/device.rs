@@ -2,7 +2,7 @@
 //! - أساسي (الافتراضي): قاعدة البيانات والـ backend هنا. يمكنه السماح لأجهزة الكاشير بالاتصال عبر الشبكة.
 //! - كاشير: لا قاعدة بيانات محلية؛ يتصل بالـ backend على الجهاز الأساسي بتوكن جهاز من الاقتران.
 //!
-//! الإعداد في %LOCALAPPDATA%\Dealzora\device.json (خاص بالجهاز، ليس في القاعدة لأن جهاز الكاشير بلا قاعدة).
+//! الإعداد في <مجلد البيانات>/device.json (انظر paths.rs) (خاص بالجهاز، ليس في القاعدة لأن جهاز الكاشير بلا قاعدة).
 
 use std::fs;
 use std::path::PathBuf;
@@ -39,7 +39,7 @@ pub struct DeviceConfig {
 }
 
 fn path() -> Option<PathBuf> {
-    std::env::var("LOCALAPPDATA").ok().map(|p| PathBuf::from(p).join("Dealzora").join("device.json"))
+    crate::paths::local_dir().map(|d| d.join("device.json"))
 }
 
 /// إعداد تالف أو مفقود = جهاز أساسي (سلوك البرنامج قبل هذه الميزة).

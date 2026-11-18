@@ -34,6 +34,10 @@ base64 = "0.23.1"
 ed25519-dalek = "3.0.0"
 machine-uid = "0.6.0"
 
+[target."cfg(unix)".dependencies]
+# إيقاف الـ backend بسلام على ماك/لينكس (SIGTERM لمجموعة العمليات).
+libc = "0.2"
+
 [target."cfg(windows)".dependencies]
 # طباعة A4 الصامتة (a4print.rs): نفس إصدارات WebView2 التي يستخدمها Tauri/wry.
 webview2-com = "0.39"

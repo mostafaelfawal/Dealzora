@@ -3,7 +3,7 @@
 //! نستخدم Microsoft Edge الموجود في كل ويندوز 10/11 في الوضع الخفي (headless):
 //! نفس محرك WebView2 الذي يعرض البرنامج، فالعربي والرسوم (SVG) والخطوط تطلع مطابقة،
 //! والـ PDF متجه (نص حقيقي قابل للبحث والنسخ)، ويدعم ‎@page‎ (ترويسة وأرقام صفحات).
-//! لا يحتاج أي مكتبة أو برنامج إضافي.
+//! لا يحتاج أي مكتبة أو برنامج إضافي على ويندوز. على ماك ولينكس يُستخدم أي متصفح Chromium مثبّت.
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -97,6 +97,7 @@ fn run_edge(edge: &Path, profile: &Path, url: &tauri::Url, out: &Path) -> Result
 }
 
 /// مكان msedge.exe: المسارات المعتادة ثم سجل ويندوز (App Paths).
+#[cfg(windows)]
 fn find_edge() -> Option<PathBuf> {
     let rel = r"Microsoft\Edge\Application\msedge.exe";
     let from_env = ["ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA"]
@@ -115,9 +116,39 @@ fn edge_from_registry() -> Option<PathBuf> {
     })
 }
 
-#[cfg(not(windows))]
-fn edge_from_registry() -> Option<PathBuf> {
-    None
+/// ماك/لينكس: أي متصفح مبني على Chromium مثبّت (Edge أو Chrome أو Chromium أو Brave)،
+/// فكلها تدعم نفس خيارات headless و --print-to-pdf.
+#[cfg(target_os = "macos")]
+fn find_edge() -> Option<PathBuf> {
+    const APPS: &[&str] = &[
+        "Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+        "Google Chrome.app/Contents/MacOS/Google Chrome",
+        "Chromium.app/Contents/MacOS/Chromium",
+        "Brave Browser.app/Contents/MacOS/Brave Browser",
+    ];
+    let roots = [Some(PathBuf::from("/Applications")), crate::paths::home().map(|h| h.join("Applications"))];
+    roots
+        .into_iter()
+        .flatten()
+        .flat_map(|root| APPS.iter().map(move |app| root.join(app)))
+        .find(|p| p.is_file())
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn find_edge() -> Option<PathBuf> {
+    const NAMES: &[&str] = &[
+        "microsoft-edge",
+        "microsoft-edge-stable",
+        "google-chrome",
+        "google-chrome-stable",
+        "chromium",
+        "chromium-browser",
+        "brave-browser",
+    ];
+    let path = std::env::var_os("PATH")?;
+    std::env::split_paths(&path)
+        .flat_map(|dir| NAMES.iter().map(move |n| dir.join(n)))
+        .find(|p| p.is_file())
 }
 
 #[cfg(test)]

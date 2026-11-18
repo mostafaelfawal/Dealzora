@@ -40,6 +40,9 @@ def prepare_data_dir(db_path: str) -> None:
             check=False,
             capture_output=True,
         )
+    elif first_time:
+        # ماك/لينكس: مجلد البيانات لصاحبه فقط (rwx------).
+        os.chmod(folder.parent, 0o700)
 
 
 @asynccontextmanager

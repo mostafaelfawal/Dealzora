@@ -1,14 +1,17 @@
-"""نقطة التشغيل: python run_server.py (تطوير) أو dealzora-backend.exe (PyInstaller)."""
+"""نقطة التشغيل: python run_server.py (تطوير) أو dealzora-backend(.exe) المبني بـ PyInstaller."""
 
 import logging
 import os
+import signal
 import sys
+import threading
+import time
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 
 import uvicorn
 
 from app.core.config import get_settings
+from app.core.paths import logs_dir
 
 # المضيف والبورت من الإعدادات (POS_HOST / POS_PORT). الافتراضي 127.0.0.1:8000 (هذا الجهاز فقط).
 HOST = get_settings().host
@@ -22,8 +25,8 @@ FROZEN = getattr(sys, "frozen", False)  # True جوا exe بتاع PyInstaller
 
 def setup_file_logging() -> None:
     """في --noconsole بيكون stdout/stderr = None فنحوّل الـ logging لملف:
-    %LOCALAPPDATA%\\Dealzora\\logs\\backend.log"""
-    log_dir = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "Dealzora" / "logs"
+    <مجلد البيانات>/logs/backend.log (ويندوز: %LOCALAPPDATA%\\Dealzora\\logs، انظر app/core/paths.py)"""
+    log_dir = logs_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
 
     handler = RotatingFileHandler(
@@ -39,9 +42,33 @@ def setup_file_logging() -> None:
         sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
 
+def watch_parent(parent_pid: int | None) -> None:
+    """ماك/لينكس: لا يوجد Job كما في ويندوز، فلو أُغلق البرنامج فجأة (crash أو kill -9)
+    نخرج نحن أيضاً بدل أن نبقى نحجز البورت فيفشل الإقلاع التالي."""
+    if not parent_pid or os.name == "nt":
+        return
+
+    def loop() -> None:
+        while True:
+            time.sleep(2)
+            try:
+                os.kill(parent_pid, 0)  # الإشارة 0: فحص وجود العملية فقط
+            except ProcessLookupError:
+                logging.getLogger("dealzora").warning(
+                    "app process %s exited; stopping backend", parent_pid
+                )
+                os.kill(os.getpid(), signal.SIGTERM)  # إيقاف uvicorn بسلام (يُغلق القاعدة)
+                return
+            except PermissionError:
+                pass  # موجودة لكن لمستخدم آخر: نكمل
+
+    threading.Thread(target=loop, name="parent-watch", daemon=True).start()
+
+
 def main() -> None:
     if FROZEN:
         setup_file_logging()
+        watch_parent(get_settings().parent_pid)
         try:
             from app.main import app  # كائن مباشر: import بالنص مش بيشتغل جوا الـ exe
 

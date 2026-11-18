@@ -1,7 +1,8 @@
 //! طباعة مباشرة بدون نافذة الطباعة: نرسل بايتات خام (ESC/POS) إلى طابعة ويندوز عبر الـ spooler
 //! بنوع البيانات "RAW"، فتصل للطابعة كما هي دون أن يعالجها التعريف.
 //!
-//! يعمل مع أي طابعة حرارية معرّفة في ويندوز (USB أو شبكة أو منفذ COM) بدون أي برنامج إضافي.
+//! يعمل مع أي طابعة حرارية معرّفة في ويندوز (USB أو شبكة أو منفذ COM) بدون أي برنامج إضافي،
+//! وفي ماك ولينكس مع أي طابعة معرّفة في CUPS.
 //! الإيصال نفسه يُرسم في الواجهة كصورة (العربي يطلع كما يظهر على الشاشة) ثم يُحوَّل لأوامر ESC/POS.
 
 use base64::{ engine::general_purpose::STANDARD as B64, Engine };
@@ -186,16 +187,66 @@ mod imp {
     }
 }
 
-#[cfg(not(windows))]
+/// ماك ولينكس: نظام CUPS. lpstat يعرض الطابعات، و lp -o raw يرسل البايتات كما هي
+/// (بدون فلتر التعريف)، وهو مقابل نوع البيانات "RAW" في ويندوز.
+#[cfg(unix)]
 mod imp {
+    use std::io::Write;
+    use std::process::{ Command, Stdio };
+
     use super::PrinterInfo;
 
-    pub fn list() -> Result<Vec<PrinterInfo>, String> {
-        Ok(Vec::new())
+    fn lpstat(arg: &str) -> Option<String> {
+        let out = Command::new("lpstat").arg(arg).stderr(Stdio::null()).output().ok()?;
+        out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
     }
 
-    pub fn print_raw(_printer: &str, _job_name: &str, _bytes: &[u8]) -> Result<(), String> {
-        Err("الطباعة المباشرة متاحة على ويندوز فقط".into())
+    pub fn list() -> Result<Vec<PrinterInfo>, String> {
+        // بدون CUPS (أو بلا طابعات) = قائمة فارغة، مثل ويندوز بلا طابعات.
+        let Some(names) = lpstat("-e") else {
+            return Ok(Vec::new());
+        };
+        // "system default destination: NAME" (والنص قد يكون مترجماً، فنأخذ ما بعد آخر ":").
+        let default = lpstat("-d")
+            .and_then(|s| s.rsplit_once(':').map(|(_, n)| n.trim().to_string()))
+            .filter(|n| !n.is_empty());
+        Ok(
+            names
+                .lines()
+                .map(str::trim)
+                .filter(|n| !n.is_empty())
+                .map(|n| PrinterInfo {
+                    name: n.to_string(),
+                    is_default: default.as_deref() == Some(n),
+                })
+                .collect()
+        )
+    }
+
+    pub fn print_raw(printer: &str, job_name: &str, bytes: &[u8]) -> Result<(), String> {
+        // الاسم يُمرَّر كوسيط منفصل (لا shell)، ونرفض ما يبدأ بـ "-" حتى لا يُفهم كخيار.
+        if printer.is_empty() || printer.starts_with('-') || printer.chars().any(char::is_control) {
+            return Err("اسم الطابعة غير صالح".into());
+        }
+        let title: String = job_name.chars().filter(|c| !c.is_control()).take(100).collect();
+        let mut child = Command::new("lp")
+            // بدون اسم ملف: lp يقرأ المهمة من stdin.
+            .args(["-d", printer, "-o", "raw", "-t", &title])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("تعذّر تشغيل lp (CUPS): {e}"))?;
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(bytes).map_err(|e| e.to_string())?;
+        }
+        let out = child.wait_with_output().map_err(|e| e.to_string())?;
+        if out.status.success() {
+            Ok(())
+        } else {
+            let why = String::from_utf8_lossy(&out.stderr).trim().to_string();
+            Err(if why.is_empty() { "فشل إرسال المهمة للطابعة".into() } else { why })
+        }
     }
 }
 

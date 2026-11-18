@@ -177,11 +177,17 @@ fn unseal(blob: &str) -> Option<Record> {
 // ---------------- التخزين (3 أماكن) ----------------
 fn file_paths() -> Vec<PathBuf> {
     let mut v = vec![];
+    #[cfg(windows)]
     if let Ok(p) = std::env::var("PROGRAMDATA") {
         v.push(PathBuf::from(p).join("Dealzora").join("license.dat"));
     }
-    if let Ok(p) = std::env::var("LOCALAPPDATA") {
-        v.push(PathBuf::from(p).join("Dealzora").join("cache").join("lic.bin"));
+    // ماك ولينكس: نسخة ثانية في ملف مخفي بمجلد المستخدم (بدل سجل ويندوز و ProgramData).
+    #[cfg(unix)]
+    if let Some(h) = crate::paths::home() {
+        v.push(h.join(".dealzora").join("license.dat"));
+    }
+    if let Some(d) = crate::paths::local_dir() {
+        v.push(d.join("cache").join("lic.bin"));
     }
     v
 }

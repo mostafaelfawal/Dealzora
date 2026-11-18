@@ -96,11 +96,30 @@ pub fn reveal_download(app: AppHandle, path: String) -> Result<(), String> {
             .spawn()
             .map_err(|e| e.to_string())?;
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     {
-        std::process::Command::new("xdg-open").arg(&dir).spawn().map_err(|e| e.to_string())?;
+        // Finder يفتح المجلد والملف محدَّد.
+        std::process::Command::new("open").arg("-R").arg(&file).spawn().map_err(|e| e.to_string())?;
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        open_with_system(dir.as_os_str())?;
     }
     Ok(())
+}
+
+/// يفتح رابطاً أو مساراً بالبرنامج الافتراضي في ماك (open) ولينكس (xdg-open).
+#[cfg(not(target_os = "windows"))]
+pub fn open_with_system(target: &std::ffi::OsStr) -> Result<(), String> {
+    let opener = if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+    std::process::Command::new(opener)
+        .arg(target)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
 }
 
 /// فك ترميز encodeURIComponent (الأسماء العربية) بدون مكتبة إضافية.

@@ -72,6 +72,7 @@ dependencies = [
  "ed25519-dalek",
  "hex",
  "hmac",
+ "libc",
  "log",
  "machine-uid",
  "rand",

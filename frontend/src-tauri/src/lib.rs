@@ -3,6 +3,7 @@ mod device;
 mod downloads;
 mod hardware;
 mod license;
+mod paths;
 mod pdf;
 mod printing;
 mod updater;
@@ -79,8 +80,7 @@ fn restart_backend(app: &AppHandle) {
     let state: State<AppState> = app.state();
     let mut slot = state.backend.lock().unwrap();
     if let Some(mut child) = slot.take() {
-        let _ = child.kill();
-        let _ = child.wait();
+        terminate_backend(&mut child);
     }
     *slot = spawn_backend(&state.session_token, &state.permit_secret);
 }
@@ -89,9 +89,48 @@ fn restart_backend(app: &AppHandle) {
 fn stop_backend(app: &AppHandle) {
     let state: State<AppState> = app.state();
     if let Some(mut child) = state.backend.lock().unwrap().take() {
+        terminate_backend(&mut child);
+    }
+}
+
+/// يُنهي عملية الـ backend وينتظر خروجها.
+/// ويندوز: إنهاء مباشر (الـ Job يتكفّل بالعمليات الفرعية).
+/// ماك/لينكس: الـ backend في مجموعة عمليات خاصة به (bootloader بتاع PyInstaller + بايثون)،
+/// فنرسل SIGTERM ليُغلق القاعدة بسلام، ثم SIGKILL للمجموعة كلها (لا يبقى بايثون يتيماً).
+#[cfg(windows)]
+fn terminate_backend(child: &mut Child) {
+    let _ = child.kill();
+    let _ = child.wait();
+}
+
+#[cfg(unix)]
+fn terminate_backend(child: &mut Child) {
+    use std::time::{ Duration, Instant };
+    const GRACE: Duration = Duration::from_secs(5);
+
+    let Ok(pgid) = libc::pid_t::try_from(child.id()) else {
         let _ = child.kill();
         let _ = child.wait();
+        return;
+    };
+    // SIGTERM للـ bootloader وحده: هو يمررها لبايثون. إرسالها للمجموعة يوصلها لبايثون مرتين
+    // فيعتبرها uvicorn «إيقافاً إجبارياً» ويتخطى الإغلاق السليم.
+    // SAFETY: إشارة لعملية أنشأناها نحن ولم ننتظر خروجها بعد (الرقم لم يُعَد استخدامه).
+    unsafe {
+        libc::kill(pgid, libc::SIGTERM);
     }
+    let started = Instant::now();
+    while started.elapsed() < GRACE {
+        if matches!(child.try_wait(), Ok(Some(_))) {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    // SAFETY: كما سبق؛ لو المجموعة انتهت بالفعل تفشل الإشارة بلا أثر.
+    unsafe {
+        libc::kill(-pgid, libc::SIGKILL);
+    }
+    let _ = child.wait();
 }
 
 /// بعد نجاح الاقتران مع الجهاز الأساسي: يتحول هذا الجهاز لكاشير (يتوقف الـ backend المحلي).
@@ -212,9 +251,7 @@ fn set_kill_children_on_exit(_: bool) {}
 
 #[cfg(not(debug_assertions))]
 fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
-    use std::os::windows::process::CommandExt;
     use std::process::Command;
-    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
     let cfg = device::load();
     if cfg.mode == device::Mode::Terminal {
@@ -226,7 +263,7 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
         None
     };
     let exe = match std::env::current_exe() {
-        Ok(p) => p.with_file_name("dealzora-backend.exe"),
+        Ok(p) => p.with_file_name(format!("dealzora-backend{}", std::env::consts::EXE_SUFFIX)),
         Err(e) => return fail(e.to_string()),
     };
     if !exe.is_file() {
@@ -251,8 +288,21 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
         .env("POS_DEVICE_ID", device_id)
         .env("POS_HOST", host)
         .env("POS_PLAN", plan)
-        .env("POS_DEBUG", "false")
-        .creation_flags(CREATE_NO_WINDOW);
+        .env("POS_DEBUG", "false");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        // مجموعة عمليات مستقلة: نوقف الـ bootloader وبايثون معاً (terminate_backend).
+        cmd.process_group(0);
+        // لا يوجد Job على يونكس: الـ backend يراقب هذه العملية ويخرج لو انتهت (حتى بعد crash).
+        cmd.env("POS_PARENT_PID", std::process::id().to_string());
+    }
     if let Some(at) = plan_expires_at {
         cmd.env("POS_PLAN_EXPIRES_AT", at.to_string());
     }
@@ -266,10 +316,10 @@ fn spawn_backend(session_token: &str, permit_secret: &str) -> Option<Child> {
     }
 }
 
-/// سطر في %LOCALAPPDATA%\Dealzora\logs\app.log (تشخيص مشاكل التشغيل عند العميل).
+/// سطر في <مجلد البيانات>/logs/app.log (تشخيص مشاكل التشغيل عند العميل، انظر paths.rs).
 fn app_log(msg: &str) {
     use std::io::Write;
-    let Some(dir) = std::env::var("LOCALAPPDATA").ok().map(|p| std::path::PathBuf::from(p).join("Dealzora").join("logs")) else {
+    let Some(dir) = paths::logs_dir() else {
         return;
     };
     let _ = std::fs::create_dir_all(&dir);
@@ -293,9 +343,7 @@ struct BackendState {
 
 #[tauri::command]
 fn get_backend_state(state: State<AppState>) -> BackendState {
-    let log_dir = std::env::var("LOCALAPPDATA")
-        .ok()
-        .map(|p| format!("{p}\\Dealzora\\logs"));
+    let log_dir = paths::logs_dir().map(|d| d.display().to_string());
     if device::load().mode == device::Mode::Terminal {
         return BackendState { state: "terminal", exit_code: None, log_dir };
     }
@@ -319,7 +367,8 @@ fn spawn_backend(_: &str, _: &str) -> Option<Child> {
 }
 
 /// يفتح رابط واتساب فقط (قائمة بيضاء) في المتصفح/التطبيق الافتراضي لإرسال الفاتورة.
-/// rundll32 لا يمر عبر cmd، فلا يوجد حقن أوامر، والرابط مُرمَّز بالكامل من الواجهة.
+/// rundll32 (ويندوز) و open (ماك) و xdg-open (لينكس) لا تمر عبر shell، فلا يوجد حقن أوامر،
+/// والرابط مُرمَّز بالكامل من الواجهة.
 #[tauri::command]
 fn open_whatsapp(url: String) -> Result<(), String> {
     if !url.starts_with("https://wa.me/") {
@@ -372,7 +421,7 @@ fn launch_url(url: &str) -> Result<(), String> {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        std::process::Command::new("xdg-open").arg(url).spawn().map_err(|e| e.to_string())?;
+        downloads::open_with_system(std::ffi::OsStr::new(url))?;
     }
     Ok(())
 }

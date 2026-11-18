@@ -1,11 +1,24 @@
-# إصدار نسخة جديدة من برنامج سطح المكتب + التحديث التلقائي.
+# إصدار نسخة جديدة من برنامج سطح المكتب + التحديث التلقائي (ويندوز وماك ولينكس).
 #
-# التشغيل: GitHub > Actions > "Release desktop" > Run workflow
-#   version: رقم النسخة الجديدة (أكبر من آخر نسخة)، مثلاً 0.2.0
-#   notes  : ما الجديد (يظهر للتاجر في نافذة التحديث). افصل الأسطر بـ " | ".
+# طريقتان للتشغيل:
+#   أ) من صفحة Releases: Draft a new release > اختر وسماً جديداً باسم v<رقم> (مثلاً v0.2.0)
+#      > اكتب الجديد في الوصف (يظهر للتاجر في نافذة التحديث) > Publish release.
+#      يبدأ البناء تلقائياً، ويُعاد الـ Release مسودة مؤقتاً حتى تكتمل ملفات كل الأنظمة
+#      (فلا ترى البرامج المثبّتة تحديثاً ناقصاً)، ثم يُنشر من جديد وحده.
+#   ب) يدوياً: GitHub > Actions > "Release desktop" > Run workflow
+#      version: رقم النسخة الجديدة (أكبر من آخر نسخة)، مثلاً 0.2.0
+#      notes  : ما الجديد. افصل الأسطر بـ " | ".
 #
-# النتيجة: Release باسم v<version> فيه المُثبّت (setup.exe) + توقيعه + latest.json.
-# البرامج المثبّتة تقرأ latest.json من آخر Release وتعرض التحديث.
+# الخطوات:
+#   1) prepare : يتحقق من الرقم والأسرار، ويجهّز Release مسودة v<version>
+#                (ينشئها في التشغيل اليدوي، أو يحوّل الـ Release الذي نشرته إلى مسودة).
+#   2) build   : يبني على 4 أجهزة بالتوازي ويرفع الملفات للمسودة:
+#                ويندوز (setup.exe) | ماك Apple Silicon و Intel (.dmg + .app.tar.gz) | لينكس (.AppImage)
+#                مع توقيع كل ملف، ويُدمج الكل في latest.json واحد.
+#   3) publish : يتأكد أن latest.json فيه الأنظمة الأربعة ثم ينشر الـ Release.
+#                البرامج المثبّتة لا ترى التحديث إلا بعد هذه الخطوة (المسودة لا تظهر في latest).
+#   لو فشل أي بناء تبقى المسودة غير منشورة: أعد تشغيل المهام الفاشلة (Re-run failed jobs)،
+#   أو احذف المسودة وابدأ من جديد.
 #
 # أسرار المستودع (Settings > Secrets and variables > Actions):
 #   TAURI_SIGNING_PRIVATE_KEY          (إجباري) محتوى %USERPROFILE%\.tauri\dealzora-updater.key
@@ -14,12 +27,19 @@
 #   DEALZORA_VENDOR_PUBKEY             (إجباري)   ⚠ لازم تطابق النسخ المثبّتة عند العملاء حرفياً،
 #   DEALZORA_DB_SECRET                 (إجباري)   وإلا لا يفتح العميل قاعدة بياناته أو ترخيصه.
 #   DEALZORA_SYNC_LEASE_PUBKEY         (اختياري) نفس متغير build-backend.ps1
+#   توقيع ماك من Apple (اختياري، بدونه تُوقَّع النسخة توقيعاً محلياً ad-hoc ويظهر تحذير Gatekeeper
+#   عند أول فتح): APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
+#   APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID
 # متغيرات المستودع (Variables):
 #   NEXT_PUBLIC_SYNC_URL               عنوان سيرفر الفروع (نفس قيمة frontend/.env.local)
 
 name: Release desktop
 
 on:
+  # نشر Release من صفحة Releases. (نشر هذا الـ workflow نفسه للـ Release في النهاية لا يعيد
+  # تشغيله، لأن أحداث GITHUB_TOKEN لا تشغّل workflows.)
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -37,31 +57,115 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    runs-on: windows-latest
-    env:
-      VERSION: ${{ inputs.version }}
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release_id: ${{ steps.release.outputs.id }}
+      make_latest: ${{ steps.release.outputs.make_latest }}
     steps:
-      - name: Validate version
-        shell: pwsh
+      # الرقم من الإدخال اليدوي، أو من اسم الوسم (v0.2.0 أو 0.2.0) عند نشر Release.
+      - name: Resolve version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          TAG: ${{ github.event.release.tag_name }}
         run: |
-          if ($env:VERSION -notmatch '^\d+\.\d+\.\d+$') { throw "الرقم لازم يكون بصيغة 1.2.3" }
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then v="${TAG#v}"; else v="${INPUT_VERSION#v}"; fi
+          if ! [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::رقم النسخة لازم يكون بصيغة 1.2.3 (اسم الوسم v1.2.3). وصلنا: '${TAG:-$INPUT_VERSION}'"
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
 
       - name: Check secrets
-        shell: pwsh
         env:
           S1: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           S2: ${{ secrets.DEALZORA_LICENSE_SECRET }}
           S3: ${{ secrets.DEALZORA_VENDOR_PUBKEY }}
           S4: ${{ secrets.DEALZORA_DB_SECRET }}
         run: |
-          $missing = @()
-          if (-not $env:S1) { $missing += "TAURI_SIGNING_PRIVATE_KEY" }
-          if (-not $env:S2) { $missing += "DEALZORA_LICENSE_SECRET" }
-          if (-not $env:S3) { $missing += "DEALZORA_VENDOR_PUBKEY" }
-          if (-not $env:S4) { $missing += "DEALZORA_DB_SECRET" }
-          if ($missing) { throw "أسرار ناقصة في Settings > Secrets: $($missing -join ', ')" }
+          missing=()
+          [ -n "$S1" ] || missing+=(TAURI_SIGNING_PRIVATE_KEY)
+          [ -n "$S2" ] || missing+=(DEALZORA_LICENSE_SECRET)
+          [ -n "$S3" ] || missing+=(DEALZORA_VENDOR_PUBKEY)
+          [ -n "$S4" ] || missing+=(DEALZORA_DB_SECRET)
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::أسرار ناقصة في Settings > Secrets: ${missing[*]}"; exit 1
+          fi
 
+      # نشر من صفحة Releases: نعيده مسودة طوال البناء، وإلا يشير latest.json للنسخة الجديدة
+      # قبل رفع ملفاتها فتفشل التحديثات عند العملاء. ملاحظات التحديث = وصف الـ Release كما كتبته.
+      - name: Use published release
+        id: existing
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ github.event.release.id }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" -F draft=true >/dev/null
+          echo "id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+          # نسخة تجريبية (Pre-release) لا تصبح «الأحدث» فلا يصل تحديثها للعملاء.
+          if [ "$PRERELEASE" = "true" ]; then echo "make_latest=false"; else echo "make_latest=true"; fi >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        id: created
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NOTES: ${{ inputs.notes }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "::error::النسخة v$VERSION موجودة بالفعل"; exit 1
+          fi
+          body=""
+          IFS='|' read -ra lines <<< "$NOTES"
+          for line in "${lines[@]}"; do
+            line="$(printf '%s' "$line" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+            [ -n "$line" ] && body+="• $line"$'\n'
+          done
+          body="${body%$'\n'}"
+          id="$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+            -f tag_name="v$VERSION" \
+            -f target_commitish="$GITHUB_SHA" \
+            -f name="Dealzora v$VERSION" \
+            -f body="$body" \
+            -F draft=true \
+            --jq .id)"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "make_latest=true" >> "$GITHUB_OUTPUT"
+
+      - name: Release id
+        id: release
+        env:
+          ID: ${{ steps.existing.outputs.id || steps.created.outputs.id }}
+          LATEST: ${{ steps.existing.outputs.make_latest || steps.created.outputs.make_latest }}
+        run: |
+          [ -n "$ID" ] || { echo "::error::لم يُحدَّد الـ Release"; exit 1; }
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          echo "make_latest=$LATEST" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+          - platform: macos-latest # Apple Silicon (M1 وما بعده)
+            target: aarch64-apple-darwin
+          - platform: macos-15-intel # ماك Intel
+            target: x86_64-apple-darwin
+          # أقدم أوبونتو متاح: الـ AppImage يعمل على التوزيعات الأحدث من نسخة glibc التي بُني عليها.
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.platform }}
+    steps:
       - uses: actions/checkout@v5
 
       # رقم النسخة يُكتب في ملفات البناء هنا فقط (لا يُرفع commit).
@@ -74,14 +178,12 @@ jobs:
           $conf | ConvertTo-Json -Depth 32 | Set-Content src-tauri/tauri.conf.json -Encoding utf8
           npm version $env:VERSION --no-git-tag-version --allow-same-version
 
-      - name: Release notes
-        id: notes
-        shell: pwsh
-        env:
-          NOTES: ${{ inputs.notes }}
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
         run: |
-          $body = ($env:NOTES -split '\s*\|\s*' | Where-Object { $_ } | ForEach-Object { "• $_" }) -join "`n"
-          "body<<EOF`n$body`nEOF" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+            patchelf build-essential libssl-dev libxdo-dev libfuse2 file
 
       # ---------- الـ backend (PyInstaller) ----------
       - uses: actions/setup-python@v6
@@ -93,11 +195,19 @@ jobs:
       - name: Install backend deps
         run: pip install -r backend/requirements.txt pyinstaller
 
-      - name: Build backend
+      - name: Build backend (Windows)
+        if: runner.os == 'Windows'
         shell: pwsh
         env:
           DEALZORA_SYNC_LEASE_PUBKEY: ${{ secrets.DEALZORA_SYNC_LEASE_PUBKEY }}
         run: ./build-backend.ps1 -BackendOnly
+
+      - name: Build backend (macOS / Linux)
+        if: runner.os != 'Windows'
+        env:
+          DEALZORA_SYNC_LEASE_PUBKEY: ${{ secrets.DEALZORA_SYNC_LEASE_PUBKEY }}
+          TARGET_TRIPLE: ${{ matrix.target }}
+        run: bash ./build-backend.sh --backend-only
 
       # ---------- الـ frontend + Tauri ----------
       - uses: actions/setup-node@v5
@@ -107,16 +217,19 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: frontend/src-tauri -> target
+          key: ${{ matrix.target }}
 
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
 
-      - name: Build, sign and publish
+      - name: Build, sign and upload
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -126,11 +239,43 @@ jobs:
           DEALZORA_VENDOR_PUBKEY: ${{ secrets.DEALZORA_VENDOR_PUBKEY }}
           DEALZORA_DB_SECRET: ${{ secrets.DEALZORA_DB_SECRET }}
           NEXT_PUBLIC_SYNC_URL: ${{ vars.NEXT_PUBLIC_SYNC_URL }}
+          # توقيع وتوثيق Apple (يُتجاهل على باقي الأنظمة، ويُتخطى لو الأسرار فارغة)
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           projectPath: frontend
-          tagName: v${{ inputs.version }}
-          releaseName: Dealzora v${{ inputs.version }}
-          releaseBody: ${{ steps.notes.outputs.body }}
-          releaseDraft: false
-          prerelease: false
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          args: --target ${{ matrix.target }}
           includeUpdaterJson: true
+
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_ID: ${{ needs.prepare.outputs.release_id }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      MAKE_LATEST: ${{ needs.prepare.outputs.make_latest }}
+    steps:
+      # لو ضاعت منصة من latest.json (رفع متزامن مثلاً) لا ننشر: البرامج على تلك المنصة لن تجد تحديثها.
+      - name: Verify latest.json
+        run: |
+          url="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate \
+            --jq '.[] | select(.name == "latest.json") | .url')"
+          [ -n "$url" ] || { echo "::error::latest.json غير موجود في الـ Release"; exit 1; }
+          gh api -H "Accept: application/octet-stream" "$url" > latest.json
+          jq '.platforms | keys' latest.json
+          for p in windows-x86_64 darwin-aarch64 darwin-x86_64 linux-x86_64; do
+            jq -e --arg p "$p" '.platforms[$p].url and .platforms[$p].signature' latest.json >/dev/null \
+              || { echo "::error::المنصة $p ناقصة من latest.json"; exit 1; }
+          done
+
+      - name: Publish release
+        run: |
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" \
+            -F draft=false -f make_latest="$MAKE_LATEST" >/dev/null
+          echo "تم نشر v$VERSION"
