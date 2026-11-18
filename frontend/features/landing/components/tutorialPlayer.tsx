@@ -9,11 +9,9 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
 import {
   CATEGORY_BY_ID,
-  isPlaceholderVideo,
   lessonsLabel,
   TUTORIAL_CATEGORIES,
   tutorialsIn,
@@ -21,7 +19,13 @@ import {
 } from "../config/tutorials";
 import { youtubeEmbedUrl, youtubeThumbnail } from "../lib/youtube";
 
-/** غلاف بهوية Dealzora للشروحات التي لم يُضف رابطها الحقيقي بعد (العنوان تحته في البطاقة). */
+/** معرّف الفيديو → مدته «mm:ss»، تُجلب من يوتيوب وقت البناء. */
+export type Durations = Record<string, string>;
+
+/** شرح له فيديو منشور فعلاً. */
+type PlayableTutorial = ResolvedTutorial & { videoId: string };
+
+/** غلاف بهوية Dealzora للشروحات التي لم يُنشر فيديوها بعد (العنوان تحته في البطاقة). */
 function BrandedCover({ tutorial }: { tutorial: ResolvedTutorial }) {
   const category = CATEGORY_BY_ID.get(tutorial.category);
   const Icon = category?.icon;
@@ -38,6 +42,11 @@ function BrandedCover({ tutorial }: { tutorial: ResolvedTutorial }) {
           {String(tutorial.lesson).padStart(2, "0")}
         </span>
       </span>
+      <span className="absolute inset-0 flex items-center justify-center">
+        <span className="border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground">
+          قريباً
+        </span>
+      </span>
     </span>
   );
 }
@@ -45,73 +54,92 @@ function BrandedCover({ tutorial }: { tutorial: ResolvedTutorial }) {
 export function TutorialCard({
   tutorial,
   onPlay,
+  durations,
   showCategory = true,
 }: {
   tutorial: ResolvedTutorial;
-  onPlay: () => void;
+  onPlay: (tutorial: PlayableTutorial) => void;
+  durations: Durations;
   showCategory?: boolean;
 }) {
-  const placeholder = !tutorial.thumbnail && isPlaceholderVideo(tutorial.videoId);
+  const { videoId } = tutorial;
+
+  // لم يُنشر الفيديو بعد: غلاف «قريباً» بلا زر تشغيل.
+  if (videoId === null) {
+    return (
+      <li className="flex flex-col border bg-background">
+        <div className="relative aspect-video w-full overflow-hidden bg-muted">
+          <BrandedCover tutorial={tutorial} />
+        </div>
+        <TutorialCardBody tutorial={tutorial} showCategory={showCategory} showLesson={false} />
+      </li>
+    );
+  }
+
+  const duration = durations[videoId] ?? tutorial.duration;
 
   return (
     <li className="group flex flex-col border bg-background">
       <button
         type="button"
-        onClick={onPlay}
+        onClick={() => onPlay({ ...tutorial, videoId })}
         aria-label={`تشغيل الشرح: ${tutorial.title}`}
         className="relative block aspect-video w-full overflow-hidden bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        {placeholder ? (
-          <BrandedCover tutorial={tutorial} />
-        ) : (
-          // صورة يوتيوب خارجية بحجم ثابت: img عادي بتحميل كسول يكفي.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={tutorial.thumbnail ?? youtubeThumbnail(tutorial.videoId)}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-          />
-        )}
-        <span
-          className={cn(
-            "absolute inset-0 flex items-center justify-center transition-colors",
-            !placeholder && "bg-black/15 group-hover:bg-black/25",
-          )}
-        >
+        {/* صورة يوتيوب خارجية بحجم ثابت: img عادي بتحميل كسول يكفي. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={tutorial.thumbnail ?? youtubeThumbnail(videoId)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        />
+        <span className="absolute inset-0 flex items-center justify-center bg-black/15 transition-colors group-hover:bg-black/25">
           <span className="flex size-14 items-center justify-center bg-primary text-primary-foreground shadow-lg transition-transform group-hover:scale-105">
             <IconPlayerPlayFilled className="size-6" aria-hidden />
           </span>
         </span>
-        {tutorial.duration && (
+        {duration && (
           <span
             className="absolute bottom-2 left-2 bg-black/75 px-1.5 py-0.5 font-mono text-xs text-white"
             dir="ltr"
           >
-            {tutorial.duration}
+            {duration}
           </span>
         )}
       </button>
-      <div className="flex flex-1 flex-col gap-2 p-5">
-        {/* رقم الدرس ظاهر على الغلاف المؤقت؛ نكرره هنا فقط فوق صور يوتيوب أو مع اسم القسم. */}
-        {(showCategory || !placeholder) && (
-          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+      <TutorialCardBody tutorial={tutorial} showCategory={showCategory} showLesson />
+    </li>
+  );
+}
+
+function TutorialCardBody({
+  tutorial,
+  showCategory,
+  showLesson,
+}: {
+  tutorial: ResolvedTutorial;
+  showCategory: boolean;
+  /** رقم الدرس ظاهر على غلاف «قريباً»؛ نكرره هنا فقط فوق صور يوتيوب. */
+  showLesson: boolean;
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-2 p-5">
+      {(showCategory || showLesson) && (
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+          {showLesson && (
             <span className="font-mono" dir="ltr">
               {String(tutorial.lesson).padStart(2, "0")}
             </span>
-            {showCategory && (
-              <>
-                <span aria-hidden className="h-px w-3 bg-border" />
-                {CATEGORY_BY_ID.get(tutorial.category)?.title}
-              </>
-            )}
-          </span>
-        )}
-        <h3 className="text-base leading-7 font-semibold">{tutorial.title}</h3>
-        <p className="text-sm leading-7 text-muted-foreground">{tutorial.description}</p>
-      </div>
-    </li>
+          )}
+          {showLesson && showCategory && <span aria-hidden className="h-px w-3 bg-border" />}
+          {showCategory && CATEGORY_BY_ID.get(tutorial.category)?.title}
+        </span>
+      )}
+      <h3 className="text-base leading-7 font-semibold">{tutorial.title}</h3>
+      <p className="text-sm leading-7 text-muted-foreground">{tutorial.description}</p>
+    </div>
   );
 }
 
@@ -120,7 +148,7 @@ export function TutorialDialog({
   tutorial,
   onClose,
 }: {
-  tutorial: ResolvedTutorial | null;
+  tutorial: PlayableTutorial | null;
   onClose: () => void;
 }) {
   return (
@@ -150,13 +178,19 @@ export function TutorialDialog({
 }
 
 /** شبكة بطاقات مع مشغّلها (الصفحة الرئيسية). */
-export function TutorialGrid({ tutorials }: { tutorials: ResolvedTutorial[] }) {
-  const [playing, setPlaying] = useState<ResolvedTutorial | null>(null);
+export function TutorialGrid({
+  tutorials,
+  durations,
+}: {
+  tutorials: ResolvedTutorial[];
+  durations: Durations;
+}) {
+  const [playing, setPlaying] = useState<PlayableTutorial | null>(null);
   return (
     <>
       <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {tutorials.map((t) => (
-          <TutorialCard key={t.id} tutorial={t} onPlay={() => setPlaying(t)} />
+          <TutorialCard key={t.id} tutorial={t} durations={durations} onPlay={setPlaying} />
         ))}
       </ul>
       <TutorialDialog tutorial={playing} onClose={() => setPlaying(null)} />
@@ -165,8 +199,8 @@ export function TutorialGrid({ tutorials }: { tutorials: ResolvedTutorial[] }) {
 }
 
 /** مكتبة الشروحات كاملة مقسّمة حسب القسم (صفحة /tutorials)، بمشغّل واحد. */
-export function TutorialLibrary() {
-  const [playing, setPlaying] = useState<ResolvedTutorial | null>(null);
+export function TutorialLibrary({ durations }: { durations: Durations }) {
+  const [playing, setPlaying] = useState<PlayableTutorial | null>(null);
 
   return (
     <>
@@ -209,7 +243,8 @@ export function TutorialLibrary() {
                     key={t.id}
                     tutorial={t}
                     showCategory={false}
-                    onPlay={() => setPlaying(t)}
+                    durations={durations}
+                    onPlay={setPlaying}
                   />
                 ))}
               </ul>

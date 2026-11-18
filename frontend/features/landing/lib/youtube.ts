@@ -40,3 +40,22 @@ export function youtubeEmbedUrl(id: string): string {
 export function youtubeThumbnail(id: string): string {
   return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 }
+
+/** ثوانٍ → «mm:ss» (أو «h:mm:ss» للفيديو الذي يتجاوز ساعة). */
+export function formatDuration(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = String(s % 60).padStart(2, "0");
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${sec}`
+    : `${String(m).padStart(2, "0")}:${sec}`;
+}
+
+/** مدة ISO 8601 كما يرجعها يوتيوب (PT1H2M3S) → ثوانٍ، أو null إن لم تكن صالحة. */
+export function parseIsoDuration(iso: string): number | null {
+  const m = /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(iso);
+  if (!m) return null;
+  const [, d, h, min, s] = m.map((v) => Number(v ?? 0));
+  return d * 86400 + h * 3600 + min * 60 + s;
+}

@@ -21,10 +21,12 @@ import {
 } from "@/features/landing/config/site";
 import {
   lessonsLabel,
-  RESOLVED_TUTORIALS,
+  PUBLISHED_TUTORIALS,
+  PUBLISHED_VIDEO_IDS,
   TUTORIAL_CATEGORIES,
   tutorialsIn,
 } from "@/features/landing/config/tutorials";
+import { getYoutubeDurations } from "@/features/landing/lib/youtubeDurations";
 
 const TITLE = "شروحات Dealzora | تعلّم برنامج الكاشير وإدارة المحل بالفيديو";
 const DESCRIPTION =
@@ -46,8 +48,10 @@ export const metadata: Metadata = {
   twitter: { card: "summary", title: TITLE, description: DESCRIPTION },
 };
 
-export default function TutorialsPage() {
+export default async function TutorialsPage() {
   const categories = TUTORIAL_CATEGORIES.filter((c) => tutorialsIn(c.id).length > 0);
+  const published = PUBLISHED_TUTORIALS.length;
+  const durations = await getYoutubeDurations(PUBLISHED_VIDEO_IDS);
 
   return (
     <div className="landing-root flex min-h-full flex-col">
@@ -81,8 +85,9 @@ export default function TutorialsPage() {
                   تعلّم استخدام Dealzora
                 </h1>
                 <p className="text-lg leading-8 text-pretty text-muted-foreground">
-                  مكتبة من {lessonsLabel(RESOLVED_TUTORIALS.length)} بالفيديو،
-                  مرتبة حسب أقسام البرنامج. ابدأ من القسم الأول إن كنت جديداً، أو انتقل مباشرة إلى
+                  {published > 0
+                    ? `مكتبة من ${lessonsLabel(published)} بالفيديو، مرتبة حسب أقسام البرنامج.`
+                    : "مكتبة شروحات بالفيديو مرتبة حسب أقسام البرنامج."} ابدأ من القسم الأول إن كنت جديداً، أو انتقل مباشرة إلى
                   ما تحتاجه.
                 </p>
               </div>
@@ -123,7 +128,7 @@ export default function TutorialsPage() {
         </nav>
 
         <Container className="py-16 sm:py-20">
-          <TutorialLibrary />
+          <TutorialLibrary durations={durations} />
         </Container>
 
         <section aria-labelledby="tutorials-help" className="border-t bg-muted/40">

@@ -1,8 +1,15 @@
 import {
-  IconCash,
+  IconBuildingBank,
+  IconBuildingWarehouse,
   IconChartBar,
+  IconDevices,
+  IconDiscount2,
+  IconFileCertificate,
   IconPackage,
+  IconReceipt,
   IconRocket,
+  IconSettings,
+  IconShoppingCart,
   IconTruckDelivery,
   IconUsers,
   type Icon,
@@ -11,20 +18,30 @@ import {
 import { getYoutubeId } from "../lib/youtube";
 
 /**
- * شروحات Dealzora بالفيديو. القسم يحدد مكان الشرح في صفحة /tutorials، وترتيب العناصر داخل
- * القسم = ترتيب التعلّم المقترح. `featured` يظهر في الصفحة الرئيسية (يُفضَّل 6).
+ * مكتبة شروحات Dealzora بالفيديو، مبنية على شاشات البرنامج كلها.
  *
- * الروابط الحالية مؤقتة (معرّفات تبدأ بـ PLACEHOLD): استبدل كل youtubeUrl برابط الفيديو الحقيقي
- * بأي صيغة (youtube.com/watch?v= أو youtu.be/ أو embed/ أو shorts/) وستظهر صورته من يوتيوب تلقائياً.
+ * لإضافة فيديو: الصق رابطه في `youtubeUrl` بأي صيغة (youtube.com/watch?v= أو youtu.be/ أو
+ * embed/ أو shorts/). الصورة المصغرة تُجلب من يوتيوب تلقائياً، والمدة (mm:ss) تُقرأ من يوتيوب
+ * وقت البناء (انظر lib/youtubeDurations.ts). الشرح بلا رابط يظهر ببطاقة «قريباً» غير قابلة للتشغيل.
+ *
+ * القسم يحدد مكان الشرح في صفحة /tutorials، وترتيب العناصر داخل القسم = ترتيب التعلّم المقترح.
+ * `featured` يظهر في الصفحة الرئيسية (يُفضَّل 6).
  */
 
 export type TutorialCategoryId =
   | "start"
   | "products"
-  | "sales"
+  | "inventory"
+  | "pos"
+  | "invoices"
+  | "promotions"
   | "purchases"
   | "contacts"
-  | "finance";
+  | "finance"
+  | "reports"
+  | "settings"
+  | "devices"
+  | "e-receipt";
 
 export interface TutorialCategory {
   id: TutorialCategoryId;
@@ -42,33 +59,75 @@ export const TUTORIAL_CATEGORIES: TutorialCategory[] = [
   },
   {
     id: "products",
-    title: "المنتجات والمخزون",
-    description: "إضافة الأصناف والباركود والوحدات، ومتابعة المخزون والجرد.",
+    title: "المنتجات",
+    description: "إضافة الأصناف والباركود والأقسام والوحدات، والاستيراد والتصدير بملفات Excel.",
     icon: IconPackage,
   },
   {
-    id: "sales",
-    title: "المبيعات ونقطة البيع",
-    description: "شاشة الكاشير والخصومات وطرق الدفع والمرتجعات والورديات.",
-    icon: IconCash,
+    id: "inventory",
+    title: "المخزون والصلاحية",
+    description: "متابعة الكميات والنواقص، والجرد والتالف، وحركة كل صنف، وتواريخ الصلاحية.",
+    icon: IconBuildingWarehouse,
+  },
+  {
+    id: "pos",
+    title: "نقطة البيع (الكاشير)",
+    description: "شاشة البيع، والباركود والميزان، والخصومات، وطرق الدفع، والتعليق والاستبدال.",
+    icon: IconShoppingCart,
+  },
+  {
+    id: "invoices",
+    title: "الفواتير والورديات",
+    description: "سجل الفواتير والمرتجعات، وفتح الوردية وإغلاقها ومراجعة فروق الدرج.",
+    icon: IconReceipt,
+  },
+  {
+    id: "promotions",
+    title: "العروض ونقاط الولاء",
+    description: "عروض الخصم المجدولة، ونقاط الولاء التي تعيد العميل للشراء منك.",
+    icon: IconDiscount2,
   },
   {
     id: "purchases",
-    title: "المشتريات",
-    description: "فواتير الشراء من الموردين ومرتجعاتها وطلبات الشراء من النواقص.",
+    title: "المشتريات وطلبات الشراء",
+    description: "فواتير الشراء من الموردين ومرتجعاتها، وطلبات الشراء من النواقص.",
     icon: IconTruckDelivery,
   },
   {
     id: "contacts",
     title: "العملاء والموردون",
-    description: "البيع الآجل والتحصيل وأرصدة الموردين وكشوف الحساب.",
+    description: "البيع الآجل والحد الائتماني، والتحصيل، وأرصدة الموردين، وكشوف الحساب.",
     icon: IconUsers,
   },
   {
     id: "finance",
-    title: "الحسابات والتقارير",
-    description: "الخزنة والمصروفات والتقارير والنسخ الاحتياطي.",
+    title: "الخزنة والمصروفات",
+    description: "المصروفات اليومية، وحركات الخزنة، وقراءة الشاشة الرئيسية.",
+    icon: IconBuildingBank,
+  },
+  {
+    id: "reports",
+    title: "التقارير وسجل العمليات",
+    description: "تقارير المبيعات والأصناف والمخزون والعملاء والخزنة، وتصديرها، وسجل العمليات.",
     icon: IconChartBar,
+  },
+  {
+    id: "settings",
+    title: "الإعدادات والطباعة",
+    description: "بيانات المحل والعملة والضريبة، والطابعة وشكل الفاتورة، والنسخ الاحتياطي والخطة.",
+    icon: IconSettings,
+  },
+  {
+    id: "devices",
+    title: "الأجهزة والفروع",
+    description: "أجهزة الكاشير الإضافية، وربط الفروع وتحويل البضاعة بينها، وتطبيق الهاتف.",
+    icon: IconDevices,
+  },
+  {
+    id: "e-receipt",
+    title: "الإيصال الإلكتروني",
+    description: "الربط مع منظومة الإيصال الإلكتروني لمصلحة الضرائب خطوة بخطوة.",
+    icon: IconFileCertificate,
   },
 ];
 
@@ -76,10 +135,12 @@ export interface Tutorial {
   id: string;
   title: string;
   description: string;
+  /** رابط الفيديو على يوتيوب. فارغ = «قريباً». */
   youtubeUrl: string;
   category: TutorialCategoryId;
   /** صورة مخصصة؛ بدونها تُستخدم صورة يوتيوب للفيديو. */
   thumbnail?: string;
+  /** مدة يدوية (mm:ss) تُستخدم فقط إن تعذّر جلبها من يوتيوب. */
   duration?: string;
   featured?: boolean;
 }
@@ -90,129 +151,281 @@ export const TUTORIALS: Tutorial[] = [
     id: "install",
     title: "تحميل البرنامج وتثبيته على ويندوز",
     description: "تحميل ملف التثبيت، وخطوات المعالج، وفتح البرنامج لأول مرة.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD01",
+    youtubeUrl: "",
     category: "start",
-    duration: "3:10",
     featured: true,
   },
   {
     id: "setup-shop",
-    title: "إعداد بيانات المحل وحساب المالك",
-    description: "اسم المحل والعملة وبيانات الإيصال، وإنشاء حساب المالك.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD02",
+    title: "الإعداد الأول: بيانات المحل وحساب المالك",
+    description: "اسم المحل والعملة، وإنشاء حساب المالك، وتفعيل الخطة المناسبة.",
+    youtubeUrl: "",
     category: "start",
-    duration: "4:25",
+  },
+  {
+    id: "login-roles",
+    title: "تسجيل الدخول للمدير والكاشير",
+    description: "الدخول بحساب المدير أو الكاشير، والفرق بين ما يراه كل منهما.",
+    youtubeUrl: "",
+    category: "start",
   },
   {
     id: "tour",
     title: "جولة في واجهة البرنامج",
-    description: "القائمة الجانبية والرئيسية والبحث السريع واختصارات لوحة المفاتيح.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD03",
+    description: "القائمة الجانبية ومجموعاتها، والبحث الشامل، والتنقل بين الصفحات بـ Alt والأرقام.",
+    youtubeUrl: "",
     category: "start",
-    duration: "5:40",
+  },
+  {
+    id: "demo-data",
+    title: "تجربة البرنامج بالبيانات التجريبية",
+    description: "تحميل بيانات تجريبية للتعرف على البرنامج، ثم حذفها قبل البدء الفعلي.",
+    youtubeUrl: "",
+    category: "start",
   },
   {
     id: "users",
     title: "إضافة المستخدمين وتحديد الصلاحيات",
-    description: "إنشاء حسابات المدير والكاشير، والفرق بين صلاحيات كل دور.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD04",
+    description: "إنشاء حسابات المديرين والكاشير، وتعديلها وإيقافها، والفرق بين صلاحيات كل دور.",
+    youtubeUrl: "",
     category: "start",
-    duration: "4:05",
   },
   {
-    id: "printer",
-    title: "ضبط الطابعة الحرارية وتصميم الإيصال",
-    description: "اختيار الطابعة، ومقاس الورق، وتخصيص شكل الإيصال ومعاينته.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD05",
+    id: "passwords",
+    title: "تغيير كلمة المرور وإعادة تعيينها لموظف",
+    description: "تغيير كلمة مرورك من «حسابي»، وإعادة تعيين كلمة مرور موظف نسيها.",
+    youtubeUrl: "",
     category: "start",
-    duration: "4:50",
   },
 
-  // ---------- المنتجات والمخزون ----------
+  // ---------- المنتجات ----------
   {
     id: "add-product",
     title: "إضافة صنف جديد بالباركود",
     description: "الاسم والقسم والباركود وسعر الشراء والبيع والكمية الافتتاحية.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD06",
+    youtubeUrl: "",
     category: "products",
-    duration: "4:15",
     featured: true,
   },
   {
-    id: "units",
+    id: "categories-units",
+    title: "إدارة الأقسام والوحدات",
+    description: "إنشاء أقسام الأصناف ووحدات القياس وتعديلها من نافذة واحدة.",
+    youtubeUrl: "",
+    category: "products",
+  },
+  {
+    id: "product-units",
     title: "وحدات البيع الإضافية: الكرتونة والدستة",
     description: "بيع الصنف الواحد بأكثر من وحدة وسعر، مع خصم المخزون بدقة.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD07",
+    youtubeUrl: "",
     category: "products",
-    duration: "3:35",
+  },
+  {
+    id: "product-pricing",
+    title: "الأسعار وهامش الربح وضريبة الصنف",
+    description: "سعر الشراء والبيع، وقراءة هامش الربح، وضبط ضريبة القيمة المضافة لكل صنف.",
+    youtubeUrl: "",
+    category: "products",
+  },
+  {
+    id: "products-list",
+    title: "البحث في الأصناف وتعديلها وحذفها",
+    description: "البحث والتصفية والترتيب في قائمة المنتجات، وتعديل صنف أو حذفه.",
+    youtubeUrl: "",
+    category: "products",
+  },
+  {
+    id: "price-lookup",
+    title: "معرفة سعر السوق للصنف قبل التسعير",
+    description: "البحث عن سعر الصنف في السوق باسمه وقسمه ووحدته قبل تحديد سعر البيع.",
+    youtubeUrl: "",
+    category: "products",
   },
   {
     id: "import-excel",
     title: "استيراد الأصناف من ملف Excel",
-    description: "تجهيز الملف، ومطابقة الأعمدة، ومراجعة النتيجة قبل الحفظ.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD08",
+    description: "تجهيز الملف أو سحبه إلى الشاشة، ومطابقة الأعمدة، ومراجعة النتيجة قبل الحفظ.",
+    youtubeUrl: "",
     category: "products",
-    duration: "5:05",
+  },
+  {
+    id: "export-excel",
+    title: "تصدير الأصناف إلى Excel",
+    description: "حفظ قائمة الأصناف بأسعارها وكمياتها في ملف Excel للمراجعة أو التعديل.",
+    youtubeUrl: "",
+    category: "products",
   },
   {
     id: "barcode-labels",
     title: "طباعة ملصقات الباركود",
-    description: "طباعة ملصقات للأصناف التي لا تحمل باركوداً من المصنع.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD09",
+    description: "طباعة ملصقات للأصناف التي لا تحمل باركوداً من المصنع، وضبط مقاس الملصق.",
+    youtubeUrl: "",
     category: "products",
-    duration: "3:20",
-  },
-  {
-    id: "stock",
-    title: "متابعة المخزون وتسجيل الجرد والتالف",
-    description: "النواقص والراكد، وتسويات الجرد، وحركة كل صنف بالتفصيل.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD10",
-    category: "products",
-    duration: "5:30",
-    featured: true,
   },
 
-  // ---------- المبيعات ----------
+  // ---------- المخزون والصلاحية ----------
+  {
+    id: "stock",
+    title: "متابعة المخزون: النواقص والراكد",
+    description: "قراءة شاشة المخزون، وقيمة البضاعة، والأصناف التي قاربت على النفاد.",
+    youtubeUrl: "",
+    category: "inventory",
+    featured: true,
+  },
+  {
+    id: "adjust-stock",
+    title: "الجرد وتسوية المخزون وتسجيل التالف",
+    description: "تصحيح الكمية بعد الجرد، وتسجيل التالف والفاقد مع سبب كل حركة.",
+    youtubeUrl: "",
+    category: "inventory",
+  },
+  {
+    id: "item-ledger",
+    title: "حركة الصنف بالتفصيل",
+    description: "كل ما دخل الصنف وخرج منه: مبيعات ومشتريات ومرتجعات وتسويات.",
+    youtubeUrl: "",
+    category: "inventory",
+  },
+  {
+    id: "expiry",
+    title: "متابعة تواريخ الصلاحية",
+    description: "دفعات كل صنف وتواريخ انتهائها، والتنبيه قبل الانتهاء، وإعدام الدفعة المنتهية.",
+    youtubeUrl: "",
+    category: "inventory",
+  },
+
+  // ---------- نقطة البيع ----------
   {
     id: "first-sale",
     title: "أول عملية بيع على نقطة البيع",
     description: "إضافة الأصناف بالباركود أو البحث، وتحصيل المبلغ، وطباعة الإيصال.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD11",
-    category: "sales",
-    duration: "4:40",
+    youtubeUrl: "",
+    category: "pos",
     featured: true,
   },
   {
-    id: "discounts-payments",
-    title: "الخصومات وطرق الدفع",
-    description: "الخصم على الصنف أو الفاتورة، والدفع نقداً أو آجلاً أو إلكترونياً.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD12",
-    category: "sales",
-    duration: "4:00",
+    id: "pos-search",
+    title: "البحث عن الأصناف وتعديل الكميات",
+    description: "البحث بالاسم أو الباركود، واستعراض الأصناف، وتعديل الكمية والوحدة في السلة.",
+    youtubeUrl: "",
+    category: "pos",
+  },
+  {
+    id: "scale-barcode",
+    title: "بيع الأصناف الموزونة بباركود الميزان",
+    description: "ضبط ميزان الملصقات، ومسح الملصق ليُضاف الصنف بوزنه وسعره.",
+    youtubeUrl: "",
+    category: "pos",
+  },
+  {
+    id: "discounts",
+    title: "الخصم على الصنف والفاتورة",
+    description: "الخصم بنسبة أو بمبلغ، وأقصى خصم مسموح للكاشير.",
+    youtubeUrl: "",
+    category: "pos",
+  },
+  {
+    id: "payments",
+    title: "طرق الدفع: نقداً وبطاقة ومحافظ إلكترونية",
+    description: "تحصيل المبلغ بالطريقة التي يختارها العميل، وحساب الباقي.",
+    youtubeUrl: "",
+    category: "pos",
+  },
+  {
+    id: "pos-customer",
+    title: "اختيار العميل والبيع الآجل من الكاشير",
+    description: "ربط الفاتورة بعميل، ومعرفة دينه والمتاح من حده الائتماني، والبيع له بالآجل.",
+    youtubeUrl: "",
+    category: "pos",
   },
   {
     id: "hold",
     title: "تعليق الفاتورة واستكمالها لاحقاً",
     description: "خدمة أكثر من عميل في الوقت نفسه دون فقدان أي فاتورة.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD13",
-    category: "sales",
-    duration: "2:30",
+    youtubeUrl: "",
+    category: "pos",
   },
   {
-    id: "returns",
-    title: "مرتجع المبيعات الكلي والجزئي",
-    description: "استرجاع صنف أو فاتورة كاملة، وأثره على المخزون والخزنة.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD14",
-    category: "sales",
-    duration: "3:45",
+    id: "pos-return",
+    title: "المرتجع من شاشة الكاشير",
+    description: "استرجاع صنف أو فاتورة كاملة بمسح باركود الإيصال، وأثره على المخزون والدرج.",
+    youtubeUrl: "",
+    category: "pos",
   },
+  {
+    id: "exchange",
+    title: "استبدال صنف بآخر وتسوية الفرق",
+    description: "تسجيل المرتجع والبيع الجديد معاً، ودفع الفرق أو رده فقط.",
+    youtubeUrl: "",
+    category: "pos",
+  },
+  {
+    id: "second-currency",
+    title: "عرض السعر بعملة ثانية",
+    description: "إظهار المقابل بالدولار أو غيره في البيع والإيصال، وتحديث سعر الصرف.",
+    youtubeUrl: "",
+    category: "pos",
+  },
+  {
+    id: "pos-shortcuts",
+    title: "اختصارات لوحة المفاتيح للكاشير",
+    description: "البيع كله من لوحة المفاتيح: البحث والكمية والدفع والتعليق دون الفأرة.",
+    youtubeUrl: "",
+    category: "pos",
+  },
+
+  // ---------- الفواتير والورديات ----------
   {
     id: "shifts",
     title: "فتح الوردية وإغلاقها وجرد الدرج",
-    description: "رصيد البداية، وعدّ النقدية في آخر اليوم، وقراءة الفرق.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD15",
-    category: "sales",
-    duration: "4:20",
+    description: "رصيد البداية، وعدّ النقدية في آخر اليوم، وإغلاق الوردية.",
+    youtubeUrl: "",
+    category: "invoices",
+  },
+  {
+    id: "shift-review",
+    title: "مراجعة الورديات وفروق الدرج",
+    description: "سجل الورديات لكل كاشير، وقراءة العجز والزيادة في كل وردية.",
+    youtubeUrl: "",
+    category: "invoices",
+  },
+  {
+    id: "invoices",
+    title: "سجل الفواتير وإعادة طباعة الإيصال",
+    description: "البحث في الفواتير وتصفيتها، وعرض تفاصيل فاتورة، وإعادة طباعتها.",
+    youtubeUrl: "",
+    category: "invoices",
+  },
+  {
+    id: "returns",
+    title: "مرتجع المبيعات وسجل المرتجعات",
+    description: "إرجاع صنف من فاتورة سابقة كلياً أو جزئياً، ومتابعة كل المرتجعات.",
+    youtubeUrl: "",
+    category: "invoices",
+  },
+
+  // ---------- العروض ونقاط الولاء ----------
+  {
+    id: "promotions",
+    title: "إنشاء عروض الخصم وجدولتها",
+    description: "خصم بنسبة أو «اشترِ واحصل على»، وتحديد الأصناف ومدة العرض وإيقافه.",
+    youtubeUrl: "",
+    category: "promotions",
+  },
+  {
+    id: "loyalty-setup",
+    title: "إعداد نقاط الولاء",
+    description: "عدد النقاط لكل مبلغ، وقيمة النقطة عند الاستبدال.",
+    youtubeUrl: "",
+    category: "promotions",
+  },
+  {
+    id: "loyalty-use",
+    title: "كسب النقاط واستبدالها عند البيع",
+    description: "رصيد نقاط العميل، واستبدالها خصماً في نقطة البيع، وتعديلها يدوياً.",
+    youtubeUrl: "",
+    category: "promotions",
   },
 
   // ---------- المشتريات ----------
@@ -220,105 +433,297 @@ export const TUTORIALS: Tutorial[] = [
     id: "purchase-invoice",
     title: "تسجيل فاتورة شراء من مورد",
     description: "إضافة الأصناف المشتراة وأسعارها، وتحديث المخزون وحساب المورد.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD16",
+    youtubeUrl: "",
     category: "purchases",
-    duration: "4:35",
+  },
+  {
+    id: "purchases-list",
+    title: "سجل المشتريات وتفاصيل الفاتورة",
+    description: "البحث في فواتير الشراء وتصفيتها حسب المورد والتاريخ، وعرض تفاصيلها.",
+    youtubeUrl: "",
+    category: "purchases",
   },
   {
     id: "purchase-returns",
     title: "مرتجع المشتريات",
     description: "إرجاع بضاعة للمورد وخصمها من المخزون ومن رصيده.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD17",
+    youtubeUrl: "",
     category: "purchases",
-    duration: "2:55",
   },
   {
     id: "purchase-orders",
-    title: "طلبات الشراء من النواقص",
-    description: "تجهيز طلب شراء تلقائي بالأصناف التي قاربت على النفاد.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD18",
+    title: "طلبات الشراء واقتراحات إعادة الطلب",
+    description: "طلب شراء جاهز بالأصناف التي قاربت على النفاد مجمّعة حسب المورد.",
+    youtubeUrl: "",
     category: "purchases",
-    duration: "3:25",
   },
 
   // ---------- العملاء والموردون ----------
   {
+    id: "customers",
+    title: "إضافة العملاء وإدارتهم",
+    description: "بيانات العميل، والبحث والتصفية، ومعرفة المتأخرين ومن بلغوا حدهم.",
+    youtubeUrl: "",
+    category: "contacts",
+  },
+  {
     id: "credit-sales",
     title: "البيع الآجل والحد الائتماني",
-    description: "إضافة عميل، والبيع له بالآجل، وضبط الحد الأقصى لدينه.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD19",
+    description: "البيع للعميل بالآجل، وضبط الحد الأقصى لدينه ومتابعته.",
+    youtubeUrl: "",
     category: "contacts",
-    duration: "4:10",
     featured: true,
   },
   {
     id: "collections",
-    title: "تحصيل الديون وكشف حساب العميل",
-    description: "تسجيل دفعات العملاء ومراجعة كشف الحساب وإرساله على واتساب.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD20",
+    title: "تحصيل الديون من العملاء",
+    description: "تسجيل دفعات العملاء وأثرها على الرصيد والخزنة.",
+    youtubeUrl: "",
     category: "contacts",
-    duration: "3:50",
   },
   {
-    id: "supplier-accounts",
-    title: "حسابات الموردين ودفعاتهم",
-    description: "متابعة المستحق لكل مورد وتسجيل ما دفعته له.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD21",
+    id: "customer-statement",
+    title: "كشف حساب العميل وإرساله على واتساب",
+    description: "مراجعة كشف الحساب لفترة محددة، وحفظه PDF أو إرساله للعميل.",
+    youtubeUrl: "",
     category: "contacts",
-    duration: "3:15",
+  },
+  {
+    id: "suppliers",
+    title: "إضافة الموردين وإدارتهم",
+    description: "بيانات المورد، والبحث في الموردين، ومعرفة المستحق لكل منهم.",
+    youtubeUrl: "",
+    category: "contacts",
+  },
+  {
+    id: "supplier-payments",
+    title: "دفعات الموردين وكشف حسابهم",
+    description: "تسجيل ما دفعته للمورد، ومراجعة كشف حسابه بالتفصيل.",
+    youtubeUrl: "",
+    category: "contacts",
   },
 
-  // ---------- الحسابات والتقارير ----------
+  // ---------- الخزنة والمصروفات ----------
   {
-    id: "treasury",
-    title: "الخزنة والمصروفات اليومية",
-    description: "تسجيل المصروفات والحركات اليدوية، وقراءة رصيد الخزنة.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD22",
+    id: "dashboard",
+    title: "قراءة الشاشة الرئيسية",
+    description: "مبيعات اليوم وصافي الربح، والتنبيهات، والإجراءات السريعة في نظرة واحدة.",
+    youtubeUrl: "",
     category: "finance",
-    duration: "3:40",
   },
   {
-    id: "reports",
-    title: "قراءة التقارير واتخاذ القرار",
-    description: "تقارير المبيعات والأصناف والمخزون والديون، وتصديرها PDF.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD23",
+    id: "expenses",
+    title: "تسجيل المصروفات اليومية",
+    description: "الإيجار والكهرباء والرواتب وغيرها، مع البحث والتصفية حسب البند والتاريخ.",
+    youtubeUrl: "",
     category: "finance",
-    duration: "6:10",
+  },
+  {
+    id: "treasury",
+    title: "الخزنة والحركات اليدوية",
+    description: "قراءة رصيد الخزنة وحركاتها، وتسجيل إيداع أو سحب يدوي.",
+    youtubeUrl: "",
+    category: "finance",
+  },
+
+  // ---------- التقارير ----------
+  {
+    id: "reports-sales",
+    title: "تقرير المبيعات والأرباح",
+    description: "صافي المبيعات ومجمل الربح وعدد الفواتير لأي فترة، بالرسم البياني.",
+    youtubeUrl: "",
+    category: "reports",
     featured: true,
+  },
+  {
+    id: "reports-products",
+    title: "تقرير الأصناف والأقسام",
+    description: "الأكثر مبيعاً والأعلى ربحاً والأقل حركة، وأداء كل قسم.",
+    youtubeUrl: "",
+    category: "reports",
+  },
+  {
+    id: "reports-stock",
+    title: "تقارير النواقص والراكد والمشتريات",
+    description: "ما يجب شراؤه، وما لا يتحرك، وما اشتريته من كل مورد.",
+    youtubeUrl: "",
+    category: "reports",
+  },
+  {
+    id: "reports-people",
+    title: "تقارير العملاء والكاشيرية والمديونيات",
+    description: "أفضل العملاء ونقاطهم، وأداء كل كاشير وورديته، والديون المستحقة.",
+    youtubeUrl: "",
+    category: "reports",
+  },
+  {
+    id: "reports-treasury",
+    title: "تقارير الخزنة والعروض والمرتجعات",
+    description: "حركة الأموال، وأثر كل عرض على المبيعات، وأسباب المرتجعات.",
+    youtubeUrl: "",
+    category: "reports",
+  },
+  {
+    id: "reports-export",
+    title: "تصدير التقارير PDF وExcel",
+    description: "حفظ أي تقرير أو طباعته لمشاركته مع شريك أو محاسب.",
+    youtubeUrl: "",
+    category: "reports",
+  },
+  {
+    id: "audit-log",
+    title: "سجل العمليات: من فعل ماذا ومتى",
+    description: "متابعة كل تعديل وحذف في البرنامج باسم المستخدم ووقته وتفاصيل التغيير.",
+    youtubeUrl: "",
+    category: "reports",
+  },
+
+  // ---------- الإعدادات والطباعة ----------
+  {
+    id: "shop-settings",
+    title: "بيانات المحل والعملة",
+    description: "اسم المحل الذي يظهر في الإيصال وواتساب، وعملة الأسعار والتقارير.",
+    youtubeUrl: "",
+    category: "settings",
+  },
+  {
+    id: "tax",
+    title: "ضريبة القيمة المضافة",
+    description: "تفعيل الضريبة للمحل المسجل، وأثرها على الفاتورة والإيصال والتقارير.",
+    youtubeUrl: "",
+    category: "settings",
+  },
+  {
+    id: "payment-methods",
+    title: "إعداد طرق الدفع",
+    description: "المحافظ والبطاقات والتحويلات التي تقبلها، ورقم الحساب الظاهر للكاشير.",
+    youtubeUrl: "",
+    category: "settings",
+  },
+  {
+    id: "printer",
+    title: "ضبط الطابعة الحرارية أو A4",
+    description: "اختيار الطابعة ومقاس الورق على كل جهاز، وطباعة إيصال تجريبي.",
+    youtubeUrl: "",
+    category: "settings",
+  },
+  {
+    id: "receipt-design",
+    title: "تصميم شكل الفاتورة",
+    description: "الشعار والعنوان والتليفون ورسالة الشكر، ومعاينة الإيصال قبل الحفظ.",
+    youtubeUrl: "",
+    category: "settings",
   },
   {
     id: "backup",
     title: "النسخ الاحتياطي واستعادة البيانات",
-    description: "النسخة اليومية التلقائية، والحفظ على فلاشة، والاستعادة بضغطة.",
-    youtubeUrl: "https://youtu.be/PLACEHOLD24",
-    category: "finance",
-    duration: "3:05",
+    description: "النسخ التلقائي، واختيار مكان الحفظ كفلاشة، واسترجاع نسخة سابقة.",
+    youtubeUrl: "",
+    category: "settings",
+  },
+  {
+    id: "appearance-updates",
+    title: "شكل البرنامج والتحديثات",
+    description: "الوضع الفاتح والغامق، وتحديث البرنامج لأحدث إصدار مع بقاء بياناتك.",
+    youtubeUrl: "",
+    category: "settings",
+  },
+  {
+    id: "plans",
+    title: "الخطط والترقية وتفعيل الترخيص",
+    description: "معرفة خطتك الحالية، والترقية، وتفعيل مفتاح الترخيص على الجهاز.",
+    youtubeUrl: "",
+    category: "settings",
+  },
+
+  // ---------- الأجهزة والفروع ----------
+  {
+    id: "cashier-devices",
+    title: "ربط أجهزة كاشير إضافية في المحل",
+    description: "تشغيل الشبكة على الجهاز الأساسي، وربط جهاز كاشير آخر يبيع على البيانات نفسها.",
+    youtubeUrl: "",
+    category: "devices",
+  },
+  {
+    id: "branches",
+    title: "ربط الفروع بسيرفر الفروع",
+    description: "تسجيل المحل وإضافة الفروع، وربط كل فرع ومزامنة الأصناف بينها.",
+    youtubeUrl: "",
+    category: "devices",
+  },
+  {
+    id: "transfers",
+    title: "تحويل البضاعة بين الفروع",
+    description: "إرسال بضاعة لفرع آخر، واستلامها هناك، ومتابعة حالة كل تحويل.",
+    youtubeUrl: "",
+    category: "devices",
+  },
+  {
+    id: "mobile-app",
+    title: "تطبيق الهاتف لمتابعة الفروع",
+    description: "متابعة المبيعات والمخزون والتنبيهات والتحويلات لكل الفروع من هاتفك.",
+    youtubeUrl: "",
+    category: "devices",
+  },
+
+  // ---------- الإيصال الإلكتروني ----------
+  {
+    id: "eta-readiness",
+    title: "تجهيز الإيصال الإلكتروني وتفعيله",
+    description: "قائمة الجاهزية وما ينقص قبل التفعيل، وبيئة التجربة والتشغيل الفعلي.",
+    youtubeUrl: "",
+    category: "e-receipt",
+  },
+  {
+    id: "eta-shop",
+    title: "بيانات المحل والفرع في المنظومة",
+    description: "رقم التسجيل الضريبي والاسم التجاري وكود النشاط، وكود الفرع وعنوانه.",
+    youtubeUrl: "",
+    category: "e-receipt",
+  },
+  {
+    id: "eta-devices-units",
+    title: "أجهزة الإيصال ووحدات القياس",
+    description: "الرقم التسلسلي وبيانات الدخول لكل جهاز، وكود كل وحدة بيع في المنظومة.",
+    youtubeUrl: "",
+    category: "e-receipt",
+  },
+  {
+    id: "eta-sending",
+    title: "إرسال الإيصالات ومتابعة حالتها",
+    description: "حالة كل إيصال، والإرسال الآن، ومعالجة الإيصالات المرفوضة.",
+    youtubeUrl: "",
+    category: "e-receipt",
   },
 ];
 
-/** شرح جاهز للعرض: معرّف الفيديو مستخرج، ورقمه داخل قسمه. */
+/** شرح جاهز للعرض: معرّف الفيديو مستخرج (null = لم يُنشر بعد)، ورقمه داخل قسمه. */
 export interface ResolvedTutorial extends Tutorial {
-  videoId: string;
+  videoId: string | null;
   /** ترتيب الشرح داخل قسمه (1، 2، 3…). */
   lesson: number;
 }
 
 const categoryOrder = new Map(TUTORIAL_CATEGORIES.map((c, i) => [c.id, i]));
 
-/** الشروحات ذات الروابط الصالحة فقط، مرتبة حسب القسم ثم ترتيب التعلّم. */
+/** كل الشروحات مرتبة حسب القسم ثم ترتيب التعلّم. رقم الدرس ثابت سواء نُشر الفيديو أم لا. */
 export const RESOLVED_TUTORIALS: ResolvedTutorial[] = (() => {
   const counters = new Map<TutorialCategoryId, number>();
-  return TUTORIALS.flatMap((t) => {
-    const videoId = getYoutubeId(t.youtubeUrl);
-    if (!videoId) return [];
+  return TUTORIALS.map((t) => {
     const lesson = (counters.get(t.category) ?? 0) + 1;
     counters.set(t.category, lesson);
-    return [{ ...t, videoId, lesson }];
+    return { ...t, videoId: getYoutubeId(t.youtubeUrl), lesson };
   }).sort(
     (a, b) =>
       (categoryOrder.get(a.category) ?? 0) - (categoryOrder.get(b.category) ?? 0),
   );
 })();
+
+/** الشروحات التي لها فيديو منشور فعلاً. */
+export const PUBLISHED_TUTORIALS = RESOLVED_TUTORIALS.filter((t) => t.videoId !== null);
+
+/** معرّفات فيديوهات يوتيوب المنشورة (لجلب المدد وقت البناء). */
+export const PUBLISHED_VIDEO_IDS = PUBLISHED_TUTORIALS.map((t) => t.videoId as string);
 
 export const CATEGORY_BY_ID = new Map(TUTORIAL_CATEGORIES.map((c) => [c.id, c]));
 
@@ -326,11 +731,10 @@ export function tutorialsIn(category: TutorialCategoryId): ResolvedTutorial[] {
   return RESOLVED_TUTORIALS.filter((t) => t.category === category);
 }
 
-export const FEATURED_TUTORIALS = RESOLVED_TUTORIALS.filter((t) => t.featured);
-
-/** رابط مؤقت لم يُستبدل بعد بفيديو حقيقي: نعرض غلافاً بهوية Dealzora بدل صورة يوتيوب. */
-export const isPlaceholderVideo = (videoId: string) =>
-  videoId.startsWith("PLACEHOLD");
+/** المختارات للرئيسية: المنشور منها أولاً حتى لا تتصدر بطاقات «قريباً». */
+export const FEATURED_TUTORIALS = RESOLVED_TUTORIALS.filter((t) => t.featured).sort(
+  (a, b) => Number(a.videoId === null) - Number(b.videoId === null),
+);
 
 /** «شرح واحد / شرحان / 5 شروح / 24 شرحًا» حسب قواعد العدد في العربية. */
 export function lessonsLabel(n: number): string {

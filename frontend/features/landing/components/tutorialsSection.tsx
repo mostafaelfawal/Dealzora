@@ -7,18 +7,23 @@ import { YOUTUBE_CHANNEL_URL } from "../config/site";
 import {
   FEATURED_TUTORIALS,
   lessonsLabel,
+  PUBLISHED_TUTORIALS,
+  PUBLISHED_VIDEO_IDS,
   RESOLVED_TUTORIALS,
   TUTORIAL_CATEGORIES,
   tutorialsIn,
 } from "../config/tutorials";
+import { getYoutubeDurations } from "../lib/youtubeDurations";
 import { Container, ctaClass, external, Section, SectionHeading } from "./primitives";
 import { TutorialGrid } from "./tutorialPlayer";
 
 /** مختارات من الشروحات في الرئيسية، والمكتبة الكاملة في /tutorials. */
-export function TutorialsSection() {
+export async function TutorialsSection() {
   const total = RESOLVED_TUTORIALS.length;
   if (total === 0) return null;
+  const published = PUBLISHED_TUTORIALS.length;
   const featured = FEATURED_TUTORIALS.length > 0 ? FEATURED_TUTORIALS : RESOLVED_TUTORIALS.slice(0, 6);
+  const durations = await getYoutubeDurations(PUBLISHED_VIDEO_IDS);
 
   return (
     <Section id="tutorials" aria-labelledby="tutorials-title">
@@ -29,7 +34,11 @@ export function TutorialsSection() {
             index="04"
             eyebrow="الشروحات"
             title="تعلّم استخدام Dealzora"
-            lead={`مكتبة من ${lessonsLabel(total)} بالفيديو تأخذك خطوة بخطوة من أول تشغيل إلى التقارير.`}
+            lead={
+              published > 0
+                ? `مكتبة من ${lessonsLabel(published)} بالفيديو تأخذك خطوة بخطوة من أول تشغيل إلى التقارير.`
+                : "شروحات بالفيديو تأخذك خطوة بخطوة من أول تشغيل إلى التقارير."
+            }
           />
           <a
             href={YOUTUBE_CHANNEL_URL}
@@ -41,7 +50,7 @@ export function TutorialsSection() {
           </a>
         </div>
 
-        <TutorialGrid tutorials={featured} />
+        <TutorialGrid tutorials={featured} durations={durations} />
 
         {/* أقسام المكتبة: كل قسم يفتح مكانه في صفحة الشروحات. */}
         <div className="grid gap-px border bg-border sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)_auto]">
@@ -50,7 +59,7 @@ export function TutorialsSection() {
           ))}
           <Link
             href="/tutorials"
-            className="flex items-center justify-center gap-2 bg-primary px-6 py-5 text-sm font-semibold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 order-last sm:col-span-2 lg:order-none lg:col-span-1 lg:row-span-2"
+            className="flex items-center justify-center gap-2 bg-primary px-6 py-5 text-sm font-semibold text-primary-foreground outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 order-last sm:col-span-2 lg:order-0 lg:col-span-1 lg:row-span-2"
           >
             كل الشروحات
             <span className="font-mono" dir="ltr">
@@ -58,7 +67,8 @@ export function TutorialsSection() {
             </span>
             <IconArrowLeft className="size-4" aria-hidden />
           </Link>
-          {TUTORIAL_CATEGORIES.slice(3).map((c) => (
+          {/* الرئيسية تعرض أول ستة أقسام فقط، والبقية في صفحة الشروحات. */}
+          {TUTORIAL_CATEGORIES.slice(3, 6).map((c) => (
             <CategoryLink key={c.id} id={c.id} title={c.title} count={tutorialsIn(c.id).length} />
           ))}
         </div>
