@@ -79,6 +79,21 @@ export function LandingFooter() {
                 </a>
               </li>
             )}
+            {isDownloadReady(DOWNLOADS.linux) && (
+              <li>
+                <a href={DOWNLOADS.linux.url} className={linkClass}>
+                  Dealzora للينكس
+                </a>
+              </li>
+            )}
+            {isDownloadReady(DOWNLOADS.macos) && (
+              <li>
+                {/* نسختان (Apple Silicon و Intel): الاختيار في قسم التحميل. */}
+                <Link href="/#download" className={linkClass}>
+                  Dealzora لماك
+                </Link>
+              </li>
+            )}
             <li>
               <a href={RELEASES_URL} {...external} className={linkClass}>
                 كل الإصدارات

@@ -81,7 +81,26 @@ function PlatformCard({
       {children}
 
       <div className="mt-auto">
-        {ready ? (
+        {ready && config.variants?.length ? (
+          <div className="space-y-2">
+            {config.variants.map((v, i) => (
+              <a
+                key={v.url}
+                href={v.url}
+                className={cn(
+                  ctaClass(i === 0 ? "default" : "outline", "md"),
+                  "h-auto w-full flex-wrap py-2",
+                )}
+              >
+                <IconDownload aria-hidden />
+                <span>
+                  {p.action} <bdi dir="ltr">{v.label}</bdi>
+                </span>
+                {v.hint && <span className="text-xs font-normal opacity-75">({v.hint})</span>}
+              </a>
+            ))}
+          </div>
+        ) : ready ? (
           <a
             href={config.url}
             {...(id === "ios" ? external : {})}
@@ -162,8 +181,41 @@ export function DownloadSection() {
                 صدور تحديث جديد.
               </p>
             </PlatformCard>
-            <PlatformCard id="linux" config={DOWNLOADS.linux} />
-            <PlatformCard id="macos" config={DOWNLOADS.macos} />
+            <PlatformCard id="linux" config={DOWNLOADS.linux}>
+              <Steps
+                items={[
+                  "حمّل ملف AppImage.",
+                  "من خصائص الملف فعّل «السماح بتشغيله كبرنامج».",
+                  "افتحه بنقرة مزدوجة، ولا يحتاج إلى تثبيت.",
+                ]}
+              />
+              <p className="text-xs leading-6 text-muted-foreground">
+                يعمل على أوبونتو 22.04 وما بعده والتوزيعات المماثلة بنظام{" "}
+                <bdi dir="ltr">64-bit</bdi>. إن لم يفتح فثبّت مكتبة FUSE بالأمر{" "}
+                <bdi dir="ltr" className="font-mono">
+                  sudo apt install libfuse2
+                </bdi>{" "}
+                (في أوبونتو 24.04:{" "}
+                <bdi dir="ltr" className="font-mono">
+                  libfuse2t64
+                </bdi>
+                ).
+              </p>
+            </PlatformCard>
+            <PlatformCard id="macos" config={DOWNLOADS.macos}>
+              <Steps
+                items={[
+                  "اختر النسخة المناسبة لمعالج جهازك وحمّلها.",
+                  "افتح ملف dmg واسحب Dealzora إلى مجلد التطبيقات.",
+                  "عند أول فتح، إن ظهر تحذير الأمان: افتح «إعدادات النظام» ثم «الخصوصية والأمان» واضغط «الفتح على أي حال».",
+                ]}
+              />
+              <p className="text-xs leading-6 text-muted-foreground">
+                يعمل على macOS 11 وما بعده. لمعرفة معالج جهازك: قائمة Apple ثم «حول هذا الماك»؛
+                إن ظهرت كلمة <bdi dir="ltr">Chip</bdi> فاختر <bdi dir="ltr">Apple Silicon</bdi>، وإن
+                ظهرت <bdi dir="ltr">Processor Intel</bdi> فاختر <bdi dir="ltr">Intel</bdi>.
+              </p>
+            </PlatformCard>
           </ul>
         </div>
 

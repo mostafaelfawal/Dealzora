@@ -200,7 +200,7 @@ const jsonLd = {
       "@id": `${SITE_URL}/#software`,
       name: SITE_NAME,
       applicationCategory: "BusinessApplication",
-      operatingSystem: "Web, Windows",
+      operatingSystem: "Web, Windows, macOS, Linux",
       description: SITE_DESCRIPTION,
       inLanguage: "ar-EG",
       creator: {

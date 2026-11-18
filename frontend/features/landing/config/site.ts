@@ -90,9 +90,19 @@ export const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@dealzora-s";
 
 export type PlatformId = "windows" | "linux" | "macos" | "android" | "ios";
 
+/** نسخة بديلة من نفس المنصة (مثل ماك Apple Silicon وماك Intel): زر لكل واحدة. */
+export interface DownloadVariant {
+  label: string;
+  /** وصف قصير يساعد الزائر على اختيار النسخة المناسبة لجهازه. */
+  hint?: string;
+  url: string;
+}
+
 export interface DownloadConfig {
   version?: string;
   url?: string;
+  /** عند وجودها تُعرض أزرارها بدل زر url الواحد. */
+  variants?: DownloadVariant[];
   /** صيغة الملف كما يظهر للزائر. */
   fileType: string;
   /** الزر يعمل فقط عندما تكون true ويوجد url. */
@@ -100,27 +110,44 @@ export interface DownloadConfig {
 }
 
 /**
- * روابط التحميل الحقيقية. ويندوز من إصدارات GitHub (نفس مصدر التحديث التلقائي في tauri.conf.json).
- * عند نشر إصدار جديد: حدّث version و url. لينكس وماك غير مبنيين حالياً في release-desktop.yml.
+ * نسخة برنامج الكمبيوتر الحالية. عند نشر إصدار جديد (release-desktop.yml) حدّث هذا الرقم فقط:
+ * روابط ويندوز ولينكس وماك تُبنى منه بأسماء الملفات التي يرفعها tauri-action.
  */
+export const DESKTOP_VERSION = "1.0.4";
+
+const RELEASE_FILES = `https://github.com/mostafaelfawal/Dealzora/releases/download/v${DESKTOP_VERSION}`;
+
+/** روابط التحميل الحقيقية من إصدارات GitHub (نفس مصدر التحديث التلقائي في tauri.conf.json). */
 export const DOWNLOADS = {
   windows: {
-    version: "1.0.3",
-    url: "https://github.com/mostafaelfawal/Dealzora/releases/download/v1.0.3/dealzora_1.0.3_x64-setup.exe",
+    version: DESKTOP_VERSION,
+    url: `${RELEASE_FILES}/dealzora_${DESKTOP_VERSION}_x64-setup.exe`,
     fileType: "exe (64-bit)",
     available: true,
   },
   linux: {
-    version: "",
-    url: "",
-    fileType: "AppImage",
-    available: false,
+    version: DESKTOP_VERSION,
+    url: `${RELEASE_FILES}/dealzora_${DESKTOP_VERSION}_amd64.AppImage`,
+    fileType: "AppImage (64-bit)",
+    available: true,
   },
   macos: {
-    version: "",
-    url: "",
+    version: DESKTOP_VERSION,
+    url: `${RELEASE_FILES}/dealzora_${DESKTOP_VERSION}_aarch64.dmg`,
+    variants: [
+      {
+        label: "Apple Silicon",
+        hint: "أجهزة M1 وما بعدها",
+        url: `${RELEASE_FILES}/dealzora_${DESKTOP_VERSION}_aarch64.dmg`,
+      },
+      {
+        label: "Intel",
+        hint: "أجهزة ماك الأقدم بمعالج Intel",
+        url: `${RELEASE_FILES}/dealzora_${DESKTOP_VERSION}_x64.dmg`,
+      },
+    ],
     fileType: "dmg",
-    available: false,
+    available: true,
   },
   android: {
     version: "",
