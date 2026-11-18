@@ -471,36 +471,3 @@ pub fn lease_terms() -> R<(u64, u32)> {
         _ => Err(e("license_inactive")),
     }
 }
-
-const DB_SECRET: &str = match option_env!("DEALZORA_DB_SECRET") {
-    Some(s) => s,
-    None => "dev-only-db-secret",
-};
-
-/// كلمة مرور SQLCipher: ثابتة لنفس الجهاز، فلا تحتاج تخزيناً.
-pub fn db_password() -> R<String> {
-    let mut mac = HmacSha256::new_from_slice(DB_SECRET.as_bytes()).map_err(|x| x.to_string())?;
-    mac.update(b"db|");
-    mac.update(machine_id()?.as_bytes());
-    Ok(hex::encode(mac.finalize().into_bytes()))
-}
-
-/// device_id بصيغة UUID (36 حرفاً) ثابت لنفس الجهاز.
-pub fn device_id() -> R<String> {
-    let h = hex::encode(Sha256::digest(format!("device|{}", machine_id()?)));
-    Ok(format!("{}-{}-{}-{}-{}", &h[0..8], &h[8..12], &h[12..16], &h[16..20], &h[20..32]))
-}
-
-#[cfg(debug_assertions)]
-pub fn reset_dev() -> R<()> {
-    let _g = lock();
-    for p in file_paths() {
-        let _ = fs::remove_file(p);
-    }
-    #[cfg(windows)]
-    {
-        use winreg::{ enums::HKEY_CURRENT_USER, RegKey };
-        let _ = RegKey::predef(HKEY_CURRENT_USER).delete_subkey_all(REG_PATH);
-    }
-    Ok(())
-}
