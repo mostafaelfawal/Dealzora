@@ -3,7 +3,7 @@
 الجدول المرجعي = صفحة الخطط (frontend/features/settings/config/plans.ts):
   دُكّان: العملاء، المحافظ، الموردين، المصروفات، الوحدات، الملصقات، Excel، واتساب، مكان النسخ، تقارير سنة، 4 مستخدمين
   سوق:   سجل العمليات، أجهزة الكاشير، الصلاحية، الإيصال الإلكتروني، الميزان، العروض، الجملة، طلبات الشراء، الولاء، التقسيط
-  سلسلة: الفروع
+  سلسلة: الفروع، المتجر الإلكتروني
 """
 
 import shutil
@@ -39,7 +39,7 @@ PRO = {
     Feature.PROMOTIONS, Feature.WHOLESALE, Feature.PURCHASE_ORDERS, Feature.LOYALTY,
     Feature.STATEMENT_PDF, Feature.INSTALLMENTS,
 }  # fmt: skip
-ENTERPRISE = {Feature.BRANCHES}
+ENTERPRISE = {Feature.BRANCHES, Feature.ONLINE_STORE}
 
 
 class _NoInheritedPlan:

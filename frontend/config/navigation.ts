@@ -20,6 +20,7 @@ import {
   IconTruckDelivery,
   IconUserShield,
   IconUsers,
+  IconWorldWww,
 } from "@tabler/icons-react";
 
 import type { UserRole } from "@/types/auth";
@@ -55,6 +56,13 @@ export const NAVIGATION: NavGroup[] = [
         icon: IconDiscount2,
       },
       { title: "الورديات", href: "/admin/shifts", icon: IconClockHour4 },
+      {
+        title: "المتجر الإلكتروني",
+        href: "/admin/store",
+        feature: "online_store",
+        roles: ["owner"],
+        icon: IconWorldWww,
+      },
     ],
   },
   {

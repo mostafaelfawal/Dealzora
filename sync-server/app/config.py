@@ -87,6 +87,19 @@ class Settings(BaseSettings):
     # الخطط المسموح لها بتطبيق الهاتف («سلسلة» فقط).
     mobile_plans: Annotated[list[str], NoDecode] = ["enterprise"]
 
+    # المتجر الإلكتروني: الخطط المسموح لها («سلسلة» فقط)، والعنوان العام لواجهة المتجر
+    # (الرابط الذي يشاركه المالك = هذا العنوان + "/" + slug). مثال: https://store.dealzora.com
+    store_plans: Annotated[list[str], NoDecode] = ["enterprise"]
+    store_public_url: str = ""
+    # حماية الواجهة العامة: قراءات لكل IP في الدقيقة، وطلبات شراء لكل IP ولكل هاتف خلال 10 دقائق.
+    store_read_rate_per_min: int = Field(240, ge=10)
+    store_order_rate_per_ip: int = Field(6, ge=1)
+    store_order_rate_per_phone: int = Field(3, ge=1)
+    # الصور: أقصى حجم للصورة (بعد ضغطها في البرنامج) وأقصى عدد لكل محل.
+    store_image_max_bytes: int = Field(600_000, ge=20_000, le=5_000_000)
+    store_max_images: int = Field(3000, ge=10)
+    store_max_products: int = Field(5000, ge=10)
+
     @field_validator("jwt_secret", "admin_token")
     @classmethod
     def _strong(cls, value: str) -> str:
@@ -94,7 +107,9 @@ class Settings(BaseSettings):
             raise ValueError("يجب أن يكون 32 حرفاً على الأقل (openssl rand -hex 32)")
         return value
 
-    @field_validator("admin_allowed_ips", "register_plans", "mobile_plans", "cors_origins", mode="before")
+    @field_validator(
+        "admin_allowed_ips", "register_plans", "mobile_plans", "store_plans", "cors_origins", mode="before"
+    )
     @classmethod
     def _ips(cls, value: object) -> object:
         if isinstance(value, str):

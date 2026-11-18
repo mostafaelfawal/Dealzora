@@ -58,6 +58,7 @@ class Feature(StrEnum):
     LOYALTY = "loyalty"  # نقاط ولاء العملاء (سوق)
     STATEMENT_PDF = "statement_pdf"  # كشف حساب العميل PDF وإرساله على واتساب (سوق)
     INSTALLMENTS = "installments"  # نظام التقسيط بجدول أقساط ومتابعة المتأخر (سوق)
+    ONLINE_STORE = "online_store"  # المتجر الإلكتروني بالدفع عند الاستلام (سلسلة)
 
 
 FEATURE_NAMES: dict[Feature, str] = {
@@ -84,6 +85,7 @@ FEATURE_NAMES: dict[Feature, str] = {
     Feature.LOYALTY: "نقاط الولاء",
     Feature.STATEMENT_PDF: "كشف حساب العميل PDF على واتساب",
     Feature.INSTALLMENTS: "نظام التقسيط",
+    Feature.ONLINE_STORE: "المتجر الإلكتروني",
 }
 
 _RANK = {Plan.FREE: 0, Plan.BASIC: 1, Plan.PRO: 2, Plan.ENTERPRISE: 3}
@@ -102,6 +104,7 @@ _UNLOCKED_IN: dict[Feature, Plan] = {f: Plan.BASIC for f in Feature} | {
     Feature.STATEMENT_PDF: Plan.PRO,
     Feature.INSTALLMENTS: Plan.PRO,
     Feature.BRANCHES: Plan.ENTERPRISE,
+    Feature.ONLINE_STORE: Plan.ENTERPRISE,
 }
 
 # حدود كل خطة (None = بلا حد). المستخدمون يشملون المالك.

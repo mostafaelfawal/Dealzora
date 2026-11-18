@@ -10,6 +10,8 @@
 - catalog_items: الأصناف والعملاء المشتركين بين الفروع (نسخة واحدة لكل سجل، وseq لكل تغيير).
 - audit_log: سجل أمني (دخول فاشل، ربط أجهزة، عمليات الإدارة، التحويلات).
 - mobile_codes / mobile_sessions: ربط هاتف المالك أو المدير بالمحل، وجلسة لكل هاتف (refresh مُجزّأ).
+- stores / store_products / store_images / store_orders: المتجر الإلكتروني («سلسلة»): إعداداته، الأصناف
+  التي اختارها المالك من الكتالوج، صورها، وطلبات الدفع عند الاستلام.
 """
 
 from datetime import date, datetime
@@ -23,6 +25,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     UniqueConstraint,
 )
@@ -379,6 +382,142 @@ class BranchRecord(Base):
         UniqueConstraint("branch_id", "key", name="uq_branch_records_branch_key"),
         Index("ix_branch_records_shop_kind_day", "shop_id", "kind", "day"),
     )
+
+
+class Store(Base):
+    """المتجر الإلكتروني للمحل (واحد لكل محل، «سلسلة» فقط). slug = رابط المتجر العام، فريد ولا يُعاد استخدامه
+    لمحل آخر طالما المتجر موجود. is_published: ظاهر للزوار، accepting_orders: يستقبل طلبات الآن."""
+
+    __tablename__ = "stores"
+
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), primary_key=True)
+    slug: Mapped[str] = mapped_column(String(40), unique=True)
+    name: Mapped[str] = mapped_column(String(80))
+    tagline: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    about: Mapped[str | None] = mapped_column(String(600), nullable=True)
+    phone: Mapped[str] = mapped_column(String(16))
+    whatsapp: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    address: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    hours: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    # رمز عملة المحل كما في البرنامج (ج.م، ر.س…): للعرض فقط، والمبالغ بالقروش.
+    currency: Mapped[str] = mapped_column(String(8), default="ج.م", server_default="ج.م")
+    logo_image_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    is_published: Mapped[bool] = mapped_column(Boolean, default=False)
+    accepting_orders: Mapped[bool] = mapped_column(Boolean, default=True)
+    # المال بالقروش (نفس قاعدة البرنامج).
+    delivery_fee: Mapped[int] = mapped_column(BigInteger, default=0)
+    free_delivery_over: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    min_order: Mapped[int] = mapped_column(BigInteger, default=0)
+    delivery_note: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # الفرع الذي يجهّز الطلبات ويرفع مخزون الأصناف المعروضة (None = الفرع الرئيسي).
+    fulfillment_branch_id: Mapped[str | None] = mapped_column(ForeignKey("branches.id"), nullable=True)
+    last_order_no: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class StoreProduct(Base):
+    """صنف من كتالوج المحل اختاره المالك للمتجر. الاسم والسعر والتصنيف تُقرأ من الكتالوج نفسه دائماً
+    (تعديل السعر في البرنامج يظهر في المتجر مع المزامنة)، وهنا فقط ما يخص المتجر."""
+
+    __tablename__ = "store_products"
+
+    gid: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), index=True)
+    is_published: Mapped[bool] = mapped_column(Boolean, default=True)
+    featured: Mapped[bool] = mapped_column(Boolean, default=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    image_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # أقصى كمية في الطلب الواحد (× 1000). None = بلا حد غير المخزون.
+    max_qty: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    # مخزون فرع التجهيز (× 1000) كما رفعه آخر مرة. None = لم يصل بعد (يُعرض متاحاً).
+    stock_qty: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    stock_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (Index("ix_store_products_shop_published", "shop_id", "is_published"),)
+
+
+class StoreImage(Base):
+    """صورة صنف أو شعار (WebP/JPEG/PNG بعد ضغطها في البرنامج، ويُتحقق من نوعها الفعلي). المعرّف عشوائي
+    وغير قابل للتخمين، والصورة لا تتغير أبداً (صورة جديدة = معرّف جديد) فتُخزَّن مؤقتاً في المتصفح."""
+
+    __tablename__ = "store_images"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"), index=True)
+    content_type: Mapped[str] = mapped_column(String(16))
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    size: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class StoreOrder(Base):
+    """طلب من المتجر (الدفع عند الاستلام). الأسعار تُحسب على السيرفر من الكتالوج وقت الطلب وتُحفظ
+    في الأسطر (تغيير السعر لاحقاً لا يغيّر طلباً قائماً). token_hash: رابط متابعة الطلب للعميل.
+
+    new ← وصل · confirmed ← أكّده المحل · delivering ← خرج للتوصيل · delivered ← تم التسليم والتحصيل
+    cancelled ← ألغاه المحل (بسبب) أو العميل (قبل التأكيد فقط)
+    """
+
+    __tablename__ = "store_orders"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    shop_id: Mapped[str] = mapped_column(ForeignKey("shops.id"))
+    number: Mapped[int] = mapped_column(Integer)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    client_ref: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(16), default="new")
+    customer_name: Mapped[str] = mapped_column(String(80))
+    phone: Mapped[str] = mapped_column(String(16))
+    city: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    address: Mapped[str] = mapped_column(String(300))
+    notes: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    subtotal: Mapped[int] = mapped_column(BigInteger)
+    delivery_fee: Mapped[int] = mapped_column(BigInteger)
+    total: Mapped[int] = mapped_column(BigInteger)
+    items_count: Mapped[int] = mapped_column(Integer)
+    cancel_reason: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    cancelled_by: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    owner_note: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivering_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    lines: Mapped[list["StoreOrderLine"]] = relationship(
+        back_populates="order", order_by="StoreOrderLine.position", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("shop_id", "number", name="uq_store_orders_shop_number"),
+        UniqueConstraint("shop_id", "client_ref", name="uq_store_orders_shop_ref"),
+        Index("ix_store_orders_shop_status", "shop_id", "status", "created_at"),
+        Index("ix_store_orders_shop_phone", "shop_id", "phone", "created_at"),
+    )
+
+
+class StoreOrderLine(Base):
+    __tablename__ = "store_order_lines"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    order_id: Mapped[str] = mapped_column(ForeignKey("store_orders.id"), index=True)
+    position: Mapped[int] = mapped_column(Integer)
+    gid: Mapped[str] = mapped_column(String(36))
+    barcode: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    name: Mapped[str] = mapped_column(String(200))
+    unit: Mapped[str] = mapped_column(String(30))
+    unit_price: Mapped[int] = mapped_column(BigInteger)  # قروش
+    qty: Mapped[int] = mapped_column(BigInteger)  # × 1000
+    line_total: Mapped[int] = mapped_column(BigInteger)
+
+    order: Mapped[StoreOrder] = relationship(back_populates="lines")
 
 
 class ShopReportConfig(Base):

@@ -137,7 +137,14 @@ class SyncClient:
         err = (data or {}).get("error") if isinstance(data, dict) else None
         if not err:
             return RemoteError(status, f"sync_http_{status}", "سيرفر الفروع رفض الطلب")
-        return RemoteError(status, err.get("code", "sync_error"), err.get("message", "خطأ من سيرفر الفروع"), err.get("details"))
+        message = err.get("message", "خطأ من سيرفر الفروع")
+        details = err.get("details")
+        if err.get("code") == "validation_error" and isinstance(details, list) and details:
+            # أول سبب محدد (مثل قاعدة رابط المتجر) بدل «بيانات غير صالحة» العامة.
+            first = str((details[0] or {}).get("msg") or "").removeprefix("Value error, ").strip()
+            if first:
+                message = first[:200]
+        return RemoteError(status, err.get("code", "sync_error"), message, details)
 
     # ---------- التوكن ----------
     def _token(self, force: bool = False) -> str:

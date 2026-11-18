@@ -15,6 +15,8 @@ os.environ.update(
     SYNC_MAX_PUSH_EVENTS="50",
     # الاختبارات كلها من نفس «IP»: حد عالٍ هنا، واختبار الحد نفسه يخفّضه مؤقتاً.
     SYNC_AUTH_RATE_PER_MIN="100000",
+    SYNC_STORE_READ_RATE_PER_MIN="100000",
+    SYNC_STORE_ORDER_RATE_PER_IP="1000",
     # متغيرات البيئة تغلب ملف .env المحلي (اللي ممكن يقصر لوحة الإدارة على IPs معينة).
     SYNC_ADMIN_ALLOWED_IPS="",
     SYNC_DOCS_ENABLED="false",
@@ -47,6 +49,9 @@ def client(tmp_path: Path):
     from app import ratelimit
 
     ratelimit._auth_window = ratelimit._Window()
+    from app.services import store_public
+
+    store_public.reset_limits()
     with TestClient(create_app()) as c:
         yield c
     get_engine().dispose()
@@ -74,6 +79,9 @@ class BranchClient:
 
     def put(self, url: str, **kw):
         return self.c.put(url, headers=self.headers, **kw)
+
+    def patch(self, url: str, **kw):
+        return self.c.patch(url, headers=self.headers, **kw)
 
 
 @pytest.fixture

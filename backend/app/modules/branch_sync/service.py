@@ -47,7 +47,7 @@ from .client import (
     is_transient,
     normalize_server_url,
 )
-from . import branch_reports, branch_stats
+from . import branch_reports, branch_stats, store_stock
 from .catalog_sync import CatalogSync, catalog_status, global_product_id, local_product_id
 from .model import BranchTransfer
 from .schemas import (
@@ -673,6 +673,7 @@ class BranchSyncService:
         sent = phone = 0
         if result.get("ok"):
             self._push_reports(client)  # النواقص والورديات والعمليات الحساسة… (فشلها لا يوقف المزامنة)
+            self._push_store_stock(client)  # مخزون أصناف المتجر الإلكتروني (فرع التجهيز فقط)
             try:
                 sent = self.retry_pending()
             except (SyncUnavailable, SyncAuthLost, RemoteError):
@@ -748,6 +749,23 @@ class BranchSyncService:
     REPORTS_RETRY_SECONDS = 6 * 3600
     # كل 5 دقائق لا كل مزامنة (كل دقيقة): أقل عبء على جهاز البيع، والهاتف يعرض «آخر تحديث من الفرع».
     REPORTS_EVERY_SECONDS = 300
+
+    def _push_store_stock(self, client: SyncClient) -> None:
+        cfg = self.config()
+        if cfg is None:
+            return
+        try:
+            updated = store_stock.push(self.session, cfg, client)
+        except Exception:  # noqa: BLE001 — المتجر لا يوقف مزامنة الفروع أبداً
+            self.session.rollback()
+            log.warning("store stock push failed", exc_info=True)
+            return
+        if updated is None:
+            return
+        latest = self.config() or cfg
+        latest.update({k: v for k, v in updated.items() if k.startswith("store_")})
+        self.settings.set_local(self.actor, SettingKey.BRANCH_SYNC, json.dumps(latest, ensure_ascii=False))
+        self.session.commit()
 
     def _push_reports(self, client: SyncClient) -> dict | None:
         """يرفع ما تغيّر من ملخصات المرحلة 7. خلفية فقط (مع المزامنة)، ولا يلمس مسار البيع.

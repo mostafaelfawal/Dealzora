@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { AppTooltip } from "@/components/shared/AppTooltip";
 import { PlanLock } from "@/components/shared/PlanGate";
 import { InstallmentsNavBadge } from "@/features/installments/components/installmentsNavBadge";
+import { StoreNavBadge } from "@/features/onlineStore/components/storeNavBadge";
 import { useFeature } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/types/navigation";
@@ -77,6 +78,9 @@ export function SidebarNavItem({
       )}
       {unlocked && item.feature === "installments" && (
         <InstallmentsNavBadge collapsed={collapsed} />
+      )}
+      {unlocked && item.feature === "online_store" && (
+        <StoreNavBadge collapsed={collapsed} />
       )}
       {!collapsed && !unlocked && item.feature && (
         <PlanLock feature={item.feature} className="ms-auto" />

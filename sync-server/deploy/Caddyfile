@@ -26,3 +26,38 @@
 		format console
 	}
 }
+
+# واجهة المتجر الإلكتروني: https://STORE_DOMAIN/<slug>
+# طلبات المتصفح للواجهة العامة تذهب لـ api مباشرة (بعنوان IP الحقيقي للعميل لحدود الطلبات)،
+# ولا يمر من هذا النطاق أي مسار آخر للـ api (لا إدارة ولا مزامنة).
+{$STORE_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 64KB
+	}
+
+	handle /v1/store/public/* {
+		reverse_proxy api:8000
+	}
+
+	handle /v1/* {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy storefront:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+		-X-Powered-By
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

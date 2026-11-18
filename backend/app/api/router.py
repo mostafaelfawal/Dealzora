@@ -27,6 +27,7 @@ from app.modules.sales.routes import router as sales_router
 from app.modules.shifts.routes import router as shifts_router
 from app.modules.settings.routes import router as settings_router
 from app.modules.shop.routes import router as shop_router
+from app.modules.store.routes import router as store_router
 from app.modules.suppliers.routes import router as suppliers_router
 from app.modules.treasury.routes import router as treasury_router
 from app.modules.users.routes import router as users_router
@@ -58,6 +59,7 @@ routes = [
     backup_router,
     batches_router,
     branch_sync_router,
+    store_router,
     realtime_router,
     eta_router,
     e_receipt_router,

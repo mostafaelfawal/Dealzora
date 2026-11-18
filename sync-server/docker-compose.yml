@@ -41,6 +41,21 @@ services:
       api:
         condition: service_started
 
+  # واجهة المتجر الإلكتروني العامة (STORE_DOMAIN/<slug>). تقرأ من api داخل الشبكة فقط.
+  storefront:
+    build:
+      context: ../storefront
+      args:
+        NEXT_PUBLIC_STORE_URL: https://${STORE_DOMAIN:-store.localhost}
+    restart: unless-stopped
+    environment:
+      STORE_API_INTERNAL_URL: http://api:8000
+      NEXT_PUBLIC_STORE_URL: https://${STORE_DOMAIN:-store.localhost}
+    expose:
+      - "3000"
+    depends_on:
+      - api
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -50,6 +65,7 @@ services:
       - "443:443/udp"
     environment:
       SYNC_DOMAIN: ${SYNC_DOMAIN:?ضع SYNC_DOMAIN في .env}
+      STORE_DOMAIN: ${STORE_DOMAIN:-store.localhost}
       ACME_EMAIL: ${ACME_EMAIL:?ضع ACME_EMAIL في .env}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
@@ -57,6 +73,7 @@ services:
       - caddy_config:/config
     depends_on:
       - api
+      - storefront
 
   backup:
     image: postgres:16-alpine

@@ -391,13 +391,30 @@ const ALLOWED_EXTERNAL_PREFIXES: &[&str] = &[
     "https://www.google.com/search?",
 ];
 
+/// واجهة المتجر الإلكتروني (تُضبط وقت البناء مثل عنوان سيرفر الفروع): «افتح المتجر» من لوحة المالك.
+/// https فقط، والرابط يجب أن يبدأ بالعنوان + "/" حتى لا يمر نطاق آخر يبدأ بنفس الحروف.
+const STORE_PUBLIC_URL: Option<&str> = option_env!("DEALZORA_STORE_URL");
+
+fn store_url_allowed(url: &str) -> bool {
+    match STORE_PUBLIC_URL {
+        Some(base) if base.starts_with("https://") => {
+            let base = base.trim_end_matches('/');
+            url.strip_prefix(base)
+                .is_some_and(|rest| rest.starts_with('/') && !rest.starts_with("//"))
+        }
+        _ => false,
+    }
+}
+
 /// يفتح رابطاً خارجياً (من القائمة البيضاء) أو رقم تليفون tel: في البرنامج الافتراضي.
 #[tauri::command]
 fn open_external(url: String) -> Result<(), String> {
     let is_tel = url
         .strip_prefix("tel:")
         .is_some_and(|n| !n.is_empty() && n.chars().all(|c| c.is_ascii_digit() || c == '+'));
-    let allowed = is_tel || ALLOWED_EXTERNAL_PREFIXES.iter().any(|p| url.starts_with(p));
+    let allowed = is_tel
+        || ALLOWED_EXTERNAL_PREFIXES.iter().any(|p| url.starts_with(p))
+        || store_url_allowed(&url);
     if !allowed {
         return Err("invalid_url".into());
     }
