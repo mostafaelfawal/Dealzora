@@ -109,7 +109,7 @@ export default async function TutorialsPage() {
           className="sticky top-16 z-30 border-b bg-background/90 backdrop-blur-sm supports-backdrop-filter:bg-background/75"
         >
           <Container>
-            <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 py-2 [scrollbar-width:none] sm:mx-0 sm:px-0">
+            <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 py-2 scrollbar-none sm:mx-0 sm:px-0">
               {categories.map((c) => (
                 <li key={c.id} className="shrink-0">
                   <a
