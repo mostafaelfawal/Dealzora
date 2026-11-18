@@ -14,6 +14,7 @@ from app.modules.expenses.routes import router as expenses_router
 from app.modules.e_receipt.routes import router as e_receipt_router
 from app.modules.eta.routes import router as eta_router
 from app.modules.held.routes import router as held_router
+from app.modules.installments.routes import router as installments_router
 from app.modules.loyalty.routes import router as loyalty_router
 from app.modules.plan.routes import router as plan_router
 from app.modules.products.routes import router as products_router
@@ -41,6 +42,7 @@ routes = [
     products_router,
     catalog_router,
     customers_router,
+    installments_router,
     suppliers_router,
     expenses_router,
     treasury_router,

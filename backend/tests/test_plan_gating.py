@@ -2,7 +2,7 @@
 
 الجدول المرجعي = صفحة الخطط (frontend/features/settings/config/plans.ts):
   دُكّان: العملاء، المحافظ، الموردين، المصروفات، الوحدات، الملصقات، Excel، واتساب، مكان النسخ، تقارير سنة، 4 مستخدمين
-  سوق:   سجل العمليات، أجهزة الكاشير، الصلاحية، الإيصال الإلكتروني، الميزان، العروض، الجملة، طلبات الشراء، الولاء
+  سوق:   سجل العمليات، أجهزة الكاشير، الصلاحية، الإيصال الإلكتروني، الميزان، العروض، الجملة، طلبات الشراء، الولاء، التقسيط
   سلسلة: الفروع
 """
 
@@ -37,7 +37,7 @@ BASIC = {
 PRO = {
     Feature.AUDIT_LOG, Feature.TERMINALS, Feature.EXPIRY, Feature.E_RECEIPT, Feature.SCALE_BARCODE,
     Feature.PROMOTIONS, Feature.WHOLESALE, Feature.PURCHASE_ORDERS, Feature.LOYALTY,
-    Feature.STATEMENT_PDF,
+    Feature.STATEMENT_PDF, Feature.INSTALLMENTS,
 }  # fmt: skip
 ENTERPRISE = {Feature.BRANCHES}
 

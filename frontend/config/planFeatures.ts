@@ -24,7 +24,8 @@ export type PlanFeature =
   | "wholesale"
   | "purchase_orders"
   | "loyalty"
-  | "statement_pdf";
+  | "statement_pdf"
+  | "installments";
 
 /**
  * اسم الميزة في رسالة الترقية + أقل خطة تفتحها (نفس _UNLOCKED_IN في backend/app/core/plan.py،
@@ -59,5 +60,6 @@ export const FEATURE_INFO: Record<PlanFeature, { name: string; plan: string }> =
     purchase_orders: { name: "طلبات الشراء من النواقص", plan: "سوق" },
     loyalty: { name: "نقاط الولاء", plan: "سوق" },
     statement_pdf: { name: "كشف حساب العميل PDF على واتساب", plan: "سوق" },
+    installments: { name: "نظام التقسيط", plan: "سوق" },
     branches: { name: "تعدد الفروع وتحويل المخزون", plan: "سلسلة" },
   };

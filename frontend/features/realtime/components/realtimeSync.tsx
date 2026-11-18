@@ -23,7 +23,13 @@ const TOPIC_QUERIES: Record<RealtimeTopic, QueryKey[]> = {
     ["reports"],
     ["dashboard"],
   ],
-  customers: [["customers"], ["pos", "catalog"], ["reports"], ["dashboard"]],
+  customers: [
+    ["customers"],
+    ["installments"],
+    ["pos", "catalog"],
+    ["reports"],
+    ["dashboard"],
+  ],
   sales: [
     ["sales"],
     ["eta", "send-status"], // بيع جديد = إيصال جديد في الطابور

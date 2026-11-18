@@ -64,11 +64,7 @@ export function SidebarNavItem({
           active && "motion-safe:animate-icon-pop",
         )}
       />
-      {!collapsed && (
-        <AppTooltip message={item.title} side="left" onlyWhenTruncated>
-          <span className="truncate">{item.title}</span>
-        </AppTooltip>
-      )}
+      {!collapsed && <span className="truncate">{item.title}</span>}
       {!collapsed && item.hotkey !== undefined && (
         <kbd
           dir="ltr"

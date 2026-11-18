@@ -3,6 +3,7 @@ import {
   IconBuildingBank,
   IconBuildingStore,
   IconBuildingWarehouse,
+  IconCalendarDollar,
   IconCalendarTime,
   IconCash,
   IconChartBar,
@@ -109,6 +110,12 @@ export const NAVIGATION: NavGroup[] = [
         feature: "customers",
         icon: IconUsers,
         hotkey: 6,
+      },
+      {
+        title: "التقسيط",
+        href: "/admin/installments",
+        feature: "installments",
+        icon: IconCalendarDollar,
       },
       {
         title: "الموردين",

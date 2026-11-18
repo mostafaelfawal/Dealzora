@@ -57,6 +57,7 @@ ENTITY_LABELS: dict[str, str] = {
     "promotion": "عرض",
     "branch_transfer": "تحويل فروع",
     "branch_sync": "ربط الفروع",
+    "installment_plan": "خطة تقسيط",
 }
 
 # مع «ال» للجمل: «عدّل الصنف «سكر»».
@@ -70,6 +71,7 @@ _THE = {
     "purchase": "فاتورة الشراء",
     "purchase_order": "طلب الشراء",
     "promotion": "العرض",
+    "installment_plan": "خطة التقسيط",
     "expense": "المصروف",
     "cash_entry": "حركة الخزنة",
     "shift": "الوردية",
@@ -129,6 +131,8 @@ ACTION_LABELS: dict[str, str] = {
     "send": "إرسال طلب شراء للمورد",
     "cancel": "إلغاء طلب شراء",
     "receive": "استلام طلب شراء",
+    "installment_pay": "تحصيل قسط",
+    "installment_cancel": "إلغاء خطة تقسيط",
     "login": "تسجيل دخول",
     "login_failed": "محاولة دخول فاشلة",
     "logout": "تسجيل خروج",
@@ -453,6 +457,7 @@ _LOADERS: dict[str, Callable[[Session, set[str]], dict[str, str]]] = {
     "purchase": _by_number("app.modules.purchases.model.Purchase"),
     "purchase_order": _by_number("app.modules.purchase_orders.model.PurchaseOrder"),
     "promotion": _by_name("app.modules.promotions.model.Promotion"),
+    "installment_plan": _by_name("app.modules.installments.model.InstallmentPlan", "title"),
     "shift": _shifts,
     "expense": _expenses,
     "device": _devices,
@@ -596,6 +601,11 @@ def _summary(r: AuditLog, name: str | None, fmt: _Fmt) -> str:
         amount = amount.get("to") if _is_diff(amount) else amount
         verb = _VERB.get(a, ACTION_LABELS.get(a, a))
         return f"{verb} مصروف «{name or ''}»" + (f" بقيمة {fmt.money(amount)}" if amount is not None else "")
+    if r.entity == "installment_plan":
+        if a == "installment_pay":
+            return f"حصّل قسطاً بقيمة {fmt.money(c.get('amount'))} من خطة التقسيط{_quoted(name)}"
+        if a == "installment_cancel":
+            return f"ألغى خطة التقسيط{_quoted(name)}"
     if r.entity == "shop" and a == "rename":
         return f"غيّر اسم المحل إلى «{c.get('name', {}).get('to', '')}»" if _is_diff(c.get("name")) else "غيّر اسم المحل"
 

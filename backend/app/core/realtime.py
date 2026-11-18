@@ -31,6 +31,7 @@ TABLE_TOPICS: dict[str, str] = {
     "customers": "customers",
     "customer_ledger": "customers",
     "loyalty_ledger": "customers",
+    "installment_plans": "customers",  # التقسيط يغيّر رصيد العميل وكشفه
     "sales": "sales",
     "sale_lines": "sales",
     "sale_returns": "sales",

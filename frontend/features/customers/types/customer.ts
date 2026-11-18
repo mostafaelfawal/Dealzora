@@ -72,7 +72,8 @@ export type StatementEntryType =
   | "adjustment"
   | "deposit"
   | "balance_use"
-  | "balance_payout";
+  | "balance_payout"
+  | "installment";
 
 export interface StatementEntry {
   id: string;

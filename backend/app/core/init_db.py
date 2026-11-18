@@ -12,6 +12,7 @@ import app.core.audit  # noqa: F401
 import app.core.outbox  # noqa: F401
 import app.modules.users.model  # noqa: F401
 import app.modules.customers.model  # noqa: F401
+import app.modules.installments.model  # noqa: F401
 import app.modules.auth.model  # noqa: F401
 import app.modules.products.model  # noqa: F401
 import app.modules.catalog.model  # noqa: F401
@@ -148,6 +149,14 @@ _POST_COLUMN_UPGRADES = (
 )
 
 
+# أعمدة أُلغيت: تُحذف إن وُجدت في قاعدة قديمة (NOT NULL بلا قيمة افتراضية يكسر الإدخال).
+_DROPPED_COLUMNS = (
+    # زيادة التقسيط (فائدة = ربا) أُلغيت نهائياً.
+    ("installment_plans", "markup_bp"),
+    ("installment_plans", "markup_amount"),
+)
+
+
 def init_db() -> None:
     engine = get_engine()
     Base.metadata.create_all(engine)
@@ -158,5 +167,9 @@ def init_db() -> None:
             existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
             if column not in existing:
                 conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
+        for table, column in _DROPPED_COLUMNS:
+            existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+            if column in existing:
+                conn.exec_driver_sql(f"ALTER TABLE {table} DROP COLUMN {column}")
         for sql in _POST_COLUMN_UPGRADES:
             conn.exec_driver_sql(sql)

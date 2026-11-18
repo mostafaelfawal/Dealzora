@@ -10,4 +10,5 @@ export const STATEMENT_TYPE_LABEL: Record<StatementEntryType, string> = {
   deposit: "باقٍ حُفظ رصيداً",
   balance_use: "دفع من رصيده",
   balance_payout: "صرف رصيد نقداً",
+  installment: "بيع بالتقسيط",
 };
