@@ -1,19 +1,17 @@
 /**
  * دخول الهاتف: كود ربط الهاتف (يحدد المحل، مرة واحدة) + اسم المستخدم وكلمة المرور نفسها في البرنامج.
- * عنوان الخادم يُكتب مرة واحدة هنا (أو يأتي افتراضياً مع نسخة التطبيق).
+ * عنوان الخادم ثابت داخل التطبيق (lib/serverUrl)، فلا حقل له هنا.
  */
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, View, type TextInputInstance } from "react-native";
 
 import { errorMessage } from "@/api/errors";
-import { isInsecureRemote, normalizeServerUrl } from "@/api/url";
 import { AppText } from "@/components/shared/AppText";
 import { Button } from "@/components/shared/Button";
 import { FadeIn } from "@/components/shared/Motion";
 import { TextField } from "@/components/shared/TextField";
 import { formatPairingCode } from "@/lib/format";
-import { getServerUrl, setServerUrl } from "@/lib/serverUrl";
 import { radius, space } from "@/theme/colors";
 import { useTheme } from "@/theme/ThemeProvider";
 
@@ -25,8 +23,6 @@ const CODE_LEN = 14; // XXXX-XXXX-XXXX
 export function LoginForm() {
   const { colors } = useTheme();
   const { notice } = useAuth();
-  const [server, setServer] = useState("");
-  const [editServer, setEditServer] = useState(false);
   const [code, setCode] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -35,28 +31,16 @@ export function LoginForm() {
   const userRef = useRef<TextInputInstance>(null);
   const passRef = useRef<TextInputInstance>(null);
 
-  useEffect(() => {
-    void getServerUrl().then((url) => {
-      setServer(url ?? "");
-      setEditServer(!url);
-    });
-  }, []);
-
-  const serverUrl = normalizeServerUrl(server);
-  const serverError = server && !serverUrl ? "عنوان غير صالح" : null;
-  const insecure = serverUrl ? isInsecureRemote(serverUrl) : false;
   const ready =
-    !!serverUrl &&
     code.length === CODE_LEN &&
     username.trim().length >= 3 &&
     password.length > 0;
 
   async function submit() {
-    if (!ready || submitting || !serverUrl) return;
+    if (!ready || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
-      await setServerUrl(serverUrl);
       await signIn({ code, username, password });
       // التنقّل يتم تلقائياً مع تغيّر حالة الدخول.
     } catch (e) {
@@ -77,38 +61,6 @@ export function LoginForm() {
           ]}
         >
           <AppText size="sm">{notice}</AppText>
-        </View>
-      )}
-
-      {editServer ? (
-        <TextField
-          label="عنوان خادم المزامنة"
-          value={server}
-          onChangeText={setServer}
-          placeholder="sync.example.com"
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          ltr
-          error={
-            serverError ??
-            (insecure
-              ? "اتصال غير مشفّر: استخدم https لعنوان على الإنترنت"
-              : null)
-          }
-          hint="نفس العنوان المكتوب في إعدادات المزامنة في البرنامج"
-        />
-      ) : (
-        <View style={styles.serverRow}>
-          <AppText size="sm" tone="muted" style={styles.flex} numberOfLines={1}>
-            الخادم: {serverUrl?.replace(/^https?:\/\//, "")}
-          </AppText>
-          <Button
-            title="تغيير"
-            variant="ghost"
-            onPress={() => setEditServer(true)}
-            style={styles.smallBtn}
-          />
         </View>
       )}
 
@@ -195,7 +147,5 @@ const styles = StyleSheet.create({
   form: { gap: space.lg },
   notice: { borderWidth: 1, borderRadius: radius.md, padding: space.md },
   errorBox: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  serverRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   flex: { flex: 1 },
-  smallBtn: { minHeight: 36, paddingHorizontal: space.sm },
 });

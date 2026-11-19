@@ -37,14 +37,14 @@ export function StoreHeader({
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
+    <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-md supports-backdrop-filter:bg-background/70">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
         <Link
           href={`/${store.slug}`}
           className="flex min-w-0 items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           <StoreLogo url={logoUrl} name={store.name} className="size-9" />
-          <span className="truncate font-bold max-sm:max-w-[9rem]">
+          <span className="truncate font-bold max-sm:max-w-36">
             {store.name}
           </span>
         </Link>

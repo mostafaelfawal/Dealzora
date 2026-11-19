@@ -482,6 +482,22 @@ export const createShopBranch = async (name: string, code: string) => {
   return { branch: toShopBranch(d.branch), pairing: toPairing(d.pairing) };
 };
 
+export interface MobileCode {
+  code: string;
+  shopName: string;
+  expiresAt: string;
+}
+
+/** كود ربط تطبيق الهاتف بالمحل (مرة واحدة، صالح دقائق). */
+export const createMobileCode = async (): Promise<MobileCode> => {
+  const d = (await api.post(`${BASE}/mobile-code`)).data as {
+    code: string;
+    shop_name: string;
+    expires_at: string;
+  };
+  return { code: d.code, shopName: d.shop_name, expiresAt: d.expires_at };
+};
+
 export const createPairingCode = async (branchId: string) =>
   toPairing(
     (await api.post(`${BASE}/shop/branches/${branchId}/pairing-code`)).data,

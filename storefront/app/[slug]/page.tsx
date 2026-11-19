@@ -71,12 +71,12 @@ export default async function StorePage({ params, searchParams }: Props) {
             <>
               {/* eslint-disable-next-line @next/next/no-img-element -- صورة الغلاف من السيرفر نفسه */}
               <img src={cover} alt="" className="absolute inset-0 size-full object-cover" fetchPriority="high" />
-              <div aria-hidden className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/55 to-black/20" />
+              <div aria-hidden className="absolute inset-0 bg-linear-to-l from-black/80 via-black/55 to-black/20" />
             </>
           ) : (
             <div
               aria-hidden
-              className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:28px_28px]"
+              className="absolute inset-0 opacity-[0.06] bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] bg-size-[28px_28px]"
             />
           )}
           <div

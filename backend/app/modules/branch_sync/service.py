@@ -610,6 +610,16 @@ class BranchSyncService:
         self._audit_admin("license_renewed", {"expires_at": out.get("license_expires_at")})
         return out
 
+    def mobile_code(self) -> dict:
+        """كود ربط تطبيق الهاتف بالمحل (مرة واحدة، صالح دقائق). من أي فرع مربوط: الكود يحدد المحل فقط،
+        والدخول نفسه باسم مستخدم المالك أو المدير وكلمة مروره، والكاشير لا يدخل التطبيق."""
+        client, _ = self._client()
+        out = client.call("POST", "/shop/mobile-code")
+        record_audit(self.session, self.actor, entity="branch_sync", entity_id=self._branch_id() or "-",
+                     action="mobile_code_created", changes={})  # fmt: skip
+        self.session.commit()
+        return out
+
     # ---------- موظفو كل الفروع ----------
     def staff_list(self) -> list[dict]:
         return self._admin_client().call("GET", "/shop/staff")

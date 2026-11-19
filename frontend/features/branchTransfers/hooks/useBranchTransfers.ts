@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/errors";
 
 import {
+  createMobileCode,
   createStaff,
   deleteStaff,
   fetchStaff,
@@ -325,6 +326,13 @@ export const useShopBranches = (enabled: boolean) =>
     refetchInterval: 30_000,
     retry: false,
   });
+
+export function useCreateMobileCode() {
+  return useMutation({
+    mutationFn: createMobileCode,
+    onError: fail("تعذّر إصدار كود ربط الهاتف"),
+  });
+}
 
 export function useShopBranchActions() {
   const qc = useQueryClient();

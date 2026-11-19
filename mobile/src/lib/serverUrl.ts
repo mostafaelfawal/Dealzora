@@ -1,32 +1,20 @@
 /**
- * عنوان خادم المزامنة: من الإعدادات داخل التطبيق (يُكتب في شاشة الدخول)، والافتراضي من
- * EXPO_PUBLIC_SYNC_URL وقت البناء. ليس سراً (AsyncStorage)، والقراءة الأولى تُحفظ في الذاكرة.
+ * عنوان خادم المزامنة: ثابت داخل التطبيق، فلا يكتبه المستخدم ولا يقدر يغيّره (لا خطأ في الكتابة،
+ * ولا توجيه الهاتف لخادم آخر). تغييره = تعديل SYNC_URL هنا ثم نسخة جديدة من التطبيق.
+ *
+ * نسخة التطوير فقط (__DEV__): EXPO_PUBLIC_SYNC_URL يغلبه، للتجربة على خادم محلي.
+ * أي عنوان قديم محفوظ على الهاتف من نسخ سابقة (كانت تسمح بالكتابة) يُتجاهل.
  */
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { normalizeServerUrl } from "@/api/url";
 
-const KEY = "dz.server-url";
-const DEFAULT_URL = normalizeServerUrl(process.env.EXPO_PUBLIC_SYNC_URL);
+export const SYNC_URL = "https://dealzora-sync.duckdns.org";
 
-let cached: string | null | undefined;
+const DEV_URL = __DEV__
+  ? normalizeServerUrl(process.env.EXPO_PUBLIC_SYNC_URL)
+  : null;
+
+const SERVER = DEV_URL ?? normalizeServerUrl(SYNC_URL);
 
 export async function getServerUrl(): Promise<string | null> {
-  if (cached === undefined) {
-    try {
-      cached =
-        normalizeServerUrl(await AsyncStorage.getItem(KEY)) ?? DEFAULT_URL;
-    } catch {
-      cached = DEFAULT_URL;
-    }
-  }
-  return cached;
-}
-
-export async function setServerUrl(input: string): Promise<string> {
-  const url = normalizeServerUrl(input);
-  if (!url) throw new Error("عنوان الخادم غير صالح");
-  await AsyncStorage.setItem(KEY, url);
-  cached = url;
-  return url;
+  return SERVER;
 }

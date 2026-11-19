@@ -184,7 +184,7 @@ function Preview({
                 alt=""
                 className="absolute inset-0 size-full object-cover"
               />
-              <span className="absolute inset-0 bg-gradient-to-l from-black/75 via-black/45 to-black/10" />
+              <span className="absolute inset-0 bg-linear-to-l from-black/75 via-black/45 to-black/10" />
             </>
           )}
           <div
@@ -338,7 +338,7 @@ export function StoreAppearance({
               id={theme.coverImageId}
               previewUrl={theme.coverImageId ? coverPreview : null}
               name="الغلاف"
-              className="aspect-[12/5] w-48 shrink-0 border"
+              className="aspect-12/5 w-48 shrink-0 border"
             />
             <div className="flex gap-1.5">
               <Button

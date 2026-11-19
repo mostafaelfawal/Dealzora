@@ -418,7 +418,7 @@ export function StoreProducts({ imageBase }: { imageBase: string | null }) {
             <span className="flex-1 ps-14">الصنف</span>
             <span className="hidden w-28 text-end sm:block">السعر</span>
             <span className="hidden w-28 text-center md:block">المتاح</span>
-            <span className="w-[7.5rem] text-end">معروض</span>
+            <span className="w-30 text-end">معروض</span>
           </div>
           <ul>
             {items.map((p) => (

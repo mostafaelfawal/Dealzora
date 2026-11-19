@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { isOwner } from "@/config/roles";
+import { isManagement, isOwner } from "@/config/roles";
 import { useSessionUser } from "@/hooks/useShellData";
 import { useFeature } from "@/lib/plan";
 
@@ -39,6 +39,7 @@ import {
   useRetryPending,
 } from "../hooks/useBranchTransfers";
 import { CatalogSyncCard } from "./catalogSyncCard";
+import { MobileLinkCard } from "./mobileLinkCard";
 import { RegisterShopForm } from "./registerShopForm";
 import { SyncUrlMissing } from "./syncUrlMissing";
 import { ShopBranchesCard } from "./shopBranchesCard";
@@ -47,7 +48,8 @@ import { ShopBranchesCard } from "./shopBranchesCard";
 export function BranchConnectSection() {
   const planAllowed = useFeature("branches");
   // ربط الفرع وفصله لمالك المحل بس (الـ backend بيفرضها كمان).
-  const owner = isOwner(useSessionUser().role);
+  const role = useSessionUser().role;
+  const owner = isOwner(role);
   const allowed = planAllowed && owner;
   const status = useBranchStatus();
   const connect = useConnectBranch();
@@ -238,6 +240,9 @@ export function BranchConnectSection() {
       )}
 
       <CatalogSyncCard />
+
+      {/* المالك والمديرون فقط: الكاشير لا يدخل تطبيق الهاتف. */}
+      {isManagement(role) && <MobileLinkCard />}
 
       {s.isAdmin && owner && <ShopBranchesCard />}
 

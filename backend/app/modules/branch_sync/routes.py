@@ -161,6 +161,12 @@ def combined_report(
     return svc.combined_report(date_from, date_to)
 
 
+@router.post("/mobile-code", dependencies=Write)
+def mobile_code(svc: Svc):
+    """كود ربط تطبيق الهاتف (للمالك والمديرين). يُكتب في التطبيق مع اسم المستخدم وكلمة المرور."""
+    return svc.mobile_code()
+
+
 @router.get("/staff", dependencies=OwnerRead)
 def staff_list(svc: Svc):
     """موظفو كل الفروع (المديرون والكاشيرية) وفروع كل واحد. من الجهاز الرئيسي للمالك."""
