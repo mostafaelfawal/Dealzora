@@ -4,6 +4,8 @@ import type { SimpleIcon } from "simple-icons";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { Stagger, StaggerItem } from "./motion";
+
 /** عرض المحتوى الموحّد للصفحة: 16px على الهاتف ويتسع تدريجياً. */
 export function Container({ className, ...props }: ComponentProps<"div">) {
   return (
@@ -51,15 +53,21 @@ export function SectionHeading({
   align?: "start" | "center";
   className?: string;
 }) {
+  // العنوان يتتابع عند الوصول إليه: السطر الصغير، ثم العنوان بتلاشي الضبابية، ثم الشرح.
   return (
-    <header
+    <Stagger
+      as="header"
+      stagger={0.12}
+      amount={0.5}
       className={cn(
         "max-w-2xl space-y-4",
         align === "center" && "mx-auto text-center",
         className,
       )}
     >
-      <p
+      <StaggerItem
+        as="p"
+        variant="fade"
         className={cn(
           "flex items-center gap-3 text-sm font-medium text-muted-foreground",
           align === "center" && "justify-center",
@@ -68,21 +76,31 @@ export function SectionHeading({
         <span className="font-mono text-xs text-foreground" dir="ltr">
           {index}
         </span>
-        <span aria-hidden className="h-px w-8 bg-border" />
+        <StaggerItem
+          as="span"
+          variant="line"
+          aria-hidden
+          className="h-px w-8 origin-right bg-border"
+        />
         {eyebrow}
-      </p>
-      <h2
+      </StaggerItem>
+      <StaggerItem
+        as="h2"
+        variant="blur"
         id={id}
         className="text-3xl leading-[1.35] font-bold text-balance sm:text-4xl"
       >
         {title}
-      </h2>
+      </StaggerItem>
       {lead && (
-        <p className="text-base leading-8 text-pretty text-muted-foreground sm:text-lg">
+        <StaggerItem
+          as="p"
+          className="text-base leading-8 text-pretty text-muted-foreground sm:text-lg"
+        >
           {lead}
-        </p>
+        </StaggerItem>
       )}
-    </header>
+    </Stagger>
   );
 }
 

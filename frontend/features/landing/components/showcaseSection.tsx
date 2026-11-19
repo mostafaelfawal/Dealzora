@@ -6,6 +6,7 @@ import {
   IconSquare,
   IconX,
 } from "@tabler/icons-react";
+import { m } from "framer-motion";
 import Image from "next/image";
 import { useState, type KeyboardEvent } from "react";
 
@@ -13,6 +14,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { SCREENSHOTS, type Screenshot } from "../config/site";
+import { Reveal } from "./motion";
 import { Container, Section, SectionHeading } from "./primitives";
 
 /** إطار نافذة ويندوز (البرنامج يعمل على ويندوز) حول اللقطة. */
@@ -103,7 +105,7 @@ export function ShowcaseSection() {
           lead="شاشات مصمَّمة للعمل السريع خلف الكاشير: خطوط واضحة، وأرقام كبيرة، ووضع فاتح وداكن."
         />
 
-        <div
+        <Reveal
           role="tablist"
           aria-label="شاشات البرنامج"
           className="flex gap-px overflow-x-auto border bg-border scrollbar-none"
@@ -129,23 +131,33 @@ export function ShowcaseSection() {
               {s.title}
             </button>
           ))}
-        </div>
+        </Reveal>
 
-        <figure
+        {/* النافذة تصعد وتتكبّر عند الوصول إليها، والتبديل بين اللقطات بتلاشٍ قصير. */}
+        <Reveal
+          as="figure"
+          variant="zoom"
+          amount={0.25}
           id="shot-panel"
           role="tabpanel"
           aria-labelledby={`shot-tab-${shot.id}`}
           className="space-y-4"
         >
-          <WindowFrame
+          <m.div
             key={shot.id}
-            shot={shot}
-            onExpand={shot.src ? () => setZoomed(true) : undefined}
-          />
+            initial={{ opacity: 0.4, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <WindowFrame
+              shot={shot}
+              onExpand={shot.src ? () => setZoomed(true) : undefined}
+            />
+          </m.div>
           <figcaption className="text-center text-sm text-muted-foreground">
             {shot.caption}
           </figcaption>
-        </figure>
+        </Reveal>
       </Container>
 
       {shot.src && (

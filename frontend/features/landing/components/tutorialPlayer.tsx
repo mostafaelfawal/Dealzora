@@ -18,6 +18,7 @@ import {
   type ResolvedTutorial,
 } from "../config/tutorials";
 import { youtubeEmbedUrl, youtubeThumbnail } from "../lib/youtube";
+import { Stagger, StaggerItem } from "./motion";
 
 /** معرّف الفيديو → مدته «mm:ss»، تُجلب من يوتيوب وقت البناء. */
 export type Durations = Record<string, string>;
@@ -72,7 +73,7 @@ export function TutorialCard({
   // لم يُنشر الفيديو بعد: غلاف «قريباً» بلا زر تشغيل.
   if (videoId === null) {
     return (
-      <li className="flex flex-col border bg-background">
+      <StaggerItem as="li" className="flex flex-col border bg-background">
         <div className="relative aspect-video w-full overflow-hidden bg-muted">
           <BrandedCover tutorial={tutorial} />
         </div>
@@ -81,14 +82,14 @@ export function TutorialCard({
           showCategory={showCategory}
           showLesson={false}
         />
-      </li>
+      </StaggerItem>
     );
   }
 
   const duration = durations[videoId] ?? tutorial.duration;
 
   return (
-    <li className="group flex flex-col border bg-background">
+    <StaggerItem as="li" className="group flex flex-col border bg-background">
       <button
         type="button"
         onClick={() => onPlay({ ...tutorial, videoId })}
@@ -123,7 +124,7 @@ export function TutorialCard({
         showCategory={showCategory}
         showLesson
       />
-    </li>
+    </StaggerItem>
   );
 }
 
@@ -212,7 +213,12 @@ export function TutorialGrid({
   const [playing, setPlaying] = useState<PlayableTutorial | null>(null);
   return (
     <>
-      <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <Stagger
+        as="ul"
+        stagger={0.1}
+        amount={0.1}
+        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      >
         {tutorials.map((t) => (
           <TutorialCard
             key={t.id}
@@ -221,7 +227,7 @@ export function TutorialGrid({
             onPlay={setPlaying}
           />
         ))}
-      </ul>
+      </Stagger>
       <TutorialDialog tutorial={playing} onClose={() => setPlaying(null)} />
     </>
   );

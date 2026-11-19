@@ -31,6 +31,7 @@ import {
 } from "@/features/settings/config/plans";
 import { cn } from "@/lib/utils";
 
+import { Reveal, Stagger, StaggerItem } from "./motion";
 import { ctaClass, external } from "./primitives";
 
 /**
@@ -187,7 +188,9 @@ function PlanColumn({
   const free = plan.monthly === null;
 
   return (
-    <article
+    <StaggerItem
+      as="article"
+      variant="scale"
       aria-labelledby={`plan-${plan.id}`}
       className={cn(
         "relative flex flex-col bg-background",
@@ -274,7 +277,7 @@ function PlanColumn({
           ))}
         </ul>
       </div>
-    </article>
+    </StaggerItem>
   );
 }
 
@@ -393,11 +396,16 @@ export function PlanCards() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-center">
+      <Reveal variant="fade" className="flex justify-center">
         <BillingToggle value={billing} onChange={setBilling} />
-      </div>
+      </Reveal>
 
-      <div className="grid gap-px border bg-border md:grid-cols-2 xl:grid-cols-4">
+      {/* الخطط تصعد بالتتابع من الأبسط إلى الأعلى. */}
+      <Stagger
+        stagger={0.12}
+        amount={0.15}
+        className="grid gap-px border bg-border md:grid-cols-2 xl:grid-cols-4"
+      >
         {PLANS.map((plan) => (
           <PlanColumn
             key={plan.id}
@@ -407,7 +415,7 @@ export function PlanCards() {
             onSubscribe={() => setSubscribing(plan)}
           />
         ))}
-      </div>
+      </Stagger>
 
       <SubscribeDialog
         plan={subscribing}

@@ -1,8 +1,6 @@
 import { IconArrowLeft, IconBrandYoutube } from "@tabler/icons-react";
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
-
 import { YOUTUBE_CHANNEL_URL } from "../config/site";
 import {
   FEATURED_TUTORIALS,
@@ -21,6 +19,7 @@ import {
   Section,
   SectionHeading,
 } from "./primitives";
+import { Reveal } from "./motion";
 import { TutorialGrid } from "./tutorialPlayer";
 
 /** مختارات من الشروحات في الرئيسية، والمكتبة الكاملة في /tutorials. */
@@ -49,20 +48,22 @@ export async function TutorialsSection() {
                 : "شروحات بالفيديو تأخذك خطوة بخطوة من أول تشغيل إلى التقارير."
             }
           />
-          <a
-            href={YOUTUBE_CHANNEL_URL}
-            {...external}
-            className={cn(ctaClass("outline"), "self-start md:self-auto")}
-          >
-            <IconBrandYoutube aria-hidden />
-            قناة Dealzora على يوتيوب
-          </a>
+          <Reveal variant="end" delay={0.3} className="self-start md:self-auto">
+            <a
+              href={YOUTUBE_CHANNEL_URL}
+              {...external}
+              className={ctaClass("outline")}
+            >
+              <IconBrandYoutube aria-hidden />
+              قناة Dealzora على يوتيوب
+            </a>
+          </Reveal>
         </div>
 
         <TutorialGrid tutorials={featured} durations={durations} />
 
         {/* أقسام المكتبة: كل قسم يفتح مكانه في صفحة الشروحات. */}
-        <div className="grid gap-px border bg-border sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)_auto]">
+        <Reveal className="grid gap-px border bg-border sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)_auto]">
           {TUTORIAL_CATEGORIES.slice(0, 3).map((c) => (
             <CategoryLink
               key={c.id}
@@ -90,7 +91,7 @@ export async function TutorialsSection() {
               count={tutorialsIn(c.id).length}
             />
           ))}
-        </div>
+        </Reveal>
       </Container>
     </Section>
   );

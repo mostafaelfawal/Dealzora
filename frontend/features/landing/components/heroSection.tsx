@@ -9,6 +9,7 @@ import {
 import { DOWNLOADS } from "../config/site";
 import { Container, ctaClass } from "./primitives";
 import { GridBackground } from "./gridBackground";
+import { Reveal, Stagger, StaggerItem } from "./motion";
 import { ReceiptSample } from "./receiptSample";
 
 const FACTS = [
@@ -35,8 +36,18 @@ export function HeroSection() {
       <GridBackground />
 
       <Container className="grid items-center gap-14 pt-12 pb-20 sm:pt-16 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10 lg:pt-20 lg:pb-28">
-        <div className="space-y-8">
-          <p className="inline-flex items-center gap-2 border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground sm:text-sm">
+        {/* أعلى الصفحة يظهر فور التحميل دون انتظار التمرير. */}
+        <Stagger
+          trigger="mount"
+          stagger={0.12}
+          delay={0.1}
+          className="space-y-8"
+        >
+          <StaggerItem
+            as="p"
+            variant="fade"
+            className="inline-flex items-center gap-2 border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground sm:text-sm"
+          >
             <span aria-hidden className="size-1.5 bg-success" />
             برنامج إدارة المحلات ونقاط البيع
             <span aria-hidden className="text-border">
@@ -45,21 +56,26 @@ export function HeroSection() {
             <span dir="ltr" className="font-mono text-foreground">
               v{DOWNLOADS.windows.version}
             </span>
-          </p>
+          </StaggerItem>
 
-          <h1
+          <StaggerItem
+            as="h1"
+            variant="blur"
             id="hero-title"
             className="max-w-[16ch] text-4xl leading-[1.3] font-bold tracking-tight text-balance sm:text-5xl sm:leading-[1.25] lg:text-[3.5rem]"
           >
             إدارة متجرك أصبحت أكثر سهولة ووضوحًا
-          </h1>
+          </StaggerItem>
 
-          <p className="max-w-xl text-lg leading-8 text-pretty text-muted-foreground">
+          <StaggerItem
+            as="p"
+            className="max-w-xl text-lg leading-8 text-pretty text-muted-foreground"
+          >
             من نقطة البيع والمشتريات إلى المخزون والخزنة وحسابات العملاء، اجمع
             إدارة أعمالك اليومية في برنامج واحد يعمل على جهاز محلك مع Dealzora.
-          </p>
+          </StaggerItem>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <StaggerItem className="flex flex-col gap-3 sm:flex-row">
             <a href="#download" className={ctaClass("default", "lg")}>
               <IconDownload aria-hidden />
               تحميل البرنامج
@@ -68,11 +84,18 @@ export function HeroSection() {
               استكشف المميزات
               <IconArrowDown aria-hidden />
             </a>
-          </div>
+          </StaggerItem>
 
-          <ul className="grid grid-cols-1 border sm:grid-cols-3">
+          <Stagger
+            as="ul"
+            nested
+            stagger={0.1}
+            className="grid grid-cols-1 border sm:grid-cols-3"
+          >
             {FACTS.map(({ icon: Icon, title, text }) => (
-              <li
+              <StaggerItem
+                as="li"
+                variant="scale"
                 key={title}
                 className="flex items-center gap-3 border-b bg-background p-4 last:border-b-0 sm:border-b-0 sm:not-last:border-l"
               >
@@ -83,12 +106,14 @@ export function HeroSection() {
                     {text}
                   </span>
                 </span>
-              </li>
+              </StaggerItem>
             ))}
-          </ul>
-        </div>
+          </Stagger>
+        </Stagger>
 
-        <ReceiptSample />
+        <Reveal variant="scale" delay={0.2}>
+          <ReceiptSample />
+        </Reveal>
       </Container>
     </section>
   );

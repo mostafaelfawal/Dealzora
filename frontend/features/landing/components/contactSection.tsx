@@ -16,6 +16,7 @@ import {
   Section,
   SectionHeading,
 } from "./primitives";
+import { Stagger, StaggerItem } from "./motion";
 
 /** اسم الحساب كما يظهر في الرابط (بدون اختلاق أسماء). */
 function handleOf(url: string): string {
@@ -39,8 +40,15 @@ export function ContactSection() {
           lead="تابع الجديد في البرنامج، واطرح أسئلتك، وشارك تجربتك مع تجار آخرين."
         />
 
-        <div className="grid gap-px border bg-border lg:grid-cols-[1fr_1.2fr]">
-          <div className="flex flex-col justify-between gap-8 bg-primary p-8 text-primary-foreground sm:p-10">
+        <Stagger
+          stagger={0.15}
+          amount={0.15}
+          className="grid gap-px border bg-border lg:grid-cols-[1fr_1.2fr]"
+        >
+          <StaggerItem
+            variant="start"
+            className="flex flex-col justify-between gap-8 bg-primary p-8 text-primary-foreground sm:p-10"
+          >
             <div className="space-y-3">
               <BrandIcon icon={siWhatsapp} className="size-8" />
               <h3 className="text-2xl leading-snug font-bold">
@@ -62,10 +70,15 @@ export function ContactSection() {
               <BrandIcon icon={siWhatsapp} className="size-5" />
               انضم إلى المجموعة
             </a>
-          </div>
+          </StaggerItem>
 
-          <ul className="grid gap-px bg-border sm:grid-cols-2">
-            <li className="bg-background">
+          <Stagger
+            as="ul"
+            nested
+            stagger={0.08}
+            className="grid gap-px bg-border sm:grid-cols-2"
+          >
+            <StaggerItem as="li" variant="scale" className="bg-background">
               <a
                 href={`tel:${CONTACT_PHONE}`}
                 aria-label={`اتصل بنا على الرقم ${CONTACT_PHONE}`}
@@ -88,9 +101,14 @@ export function ContactSection() {
                   aria-hidden
                 />
               </a>
-            </li>
+            </StaggerItem>
             {socials.map((s) => (
-              <li key={s.name} className="bg-background">
+              <StaggerItem
+                as="li"
+                variant="scale"
+                key={s.name}
+                className="bg-background"
+              >
                 <a
                   href={s.url}
                   {...external}
@@ -116,10 +134,10 @@ export function ContactSection() {
                     aria-hidden
                   />
                 </a>
-              </li>
+              </StaggerItem>
             ))}
-          </ul>
-        </div>
+          </Stagger>
+        </Stagger>
       </Container>
     </Section>
   );

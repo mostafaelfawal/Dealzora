@@ -8,6 +8,7 @@ import {
   RELEASES_URL,
   SOCIAL_LINKS,
 } from "../config/site";
+import { Stagger, StaggerItem } from "./motion";
 import { BrandIcon, Container, external } from "./primitives";
 
 const linkClass =
@@ -19,8 +20,11 @@ export function LandingFooter() {
 
   return (
     <footer className="border-t bg-muted/40">
-      <Container className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr]">
-        <div className="space-y-4">
+      <Stagger
+        stagger={0.12}
+        className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.5fr_1fr_1fr] lg:px-8"
+      >
+        <StaggerItem className="space-y-4">
           <div className="flex items-center gap-2.5">
             <BrandLogo variant="icon" className="size-8" />
             <span className="text-lg font-bold" dir="ltr">
@@ -46,9 +50,9 @@ export function LandingFooter() {
               </li>
             ))}
           </ul>
-        </div>
+        </StaggerItem>
 
-        <nav aria-label="روابط الصفحة" className="space-y-4">
+        <StaggerItem as="nav" aria-label="روابط الصفحة" className="space-y-4">
           <h2 className="text-sm font-semibold">روابط سريعة</h2>
           <ul className="space-y-2.5">
             {NAV_LINKS.map((l) => (
@@ -64,9 +68,9 @@ export function LandingFooter() {
               </Link>
             </li>
           </ul>
-        </nav>
+        </StaggerItem>
 
-        <div className="space-y-4">
+        <StaggerItem className="space-y-4">
           <h2 className="text-sm font-semibold">التحميل</h2>
           <ul className="space-y-2.5">
             {isDownloadReady(windows) && (
@@ -105,8 +109,8 @@ export function LandingFooter() {
               </Link>
             </li>
           </ul>
-        </div>
-      </Container>
+        </StaggerItem>
+      </Stagger>
 
       <div className="border-t">
         <Container className="flex flex-col gap-2 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">

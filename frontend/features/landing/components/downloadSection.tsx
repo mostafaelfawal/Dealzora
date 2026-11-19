@@ -23,6 +23,7 @@ import {
   Section,
   SectionHeading,
 } from "./primitives";
+import { Reveal, Stagger, StaggerItem } from "./motion";
 
 const PLATFORM: Record<
   PlatformId,
@@ -70,7 +71,11 @@ function PlatformCard({
   const ready = isDownloadReady(config);
 
   return (
-    <li className="flex flex-col gap-5 bg-background p-6">
+    <StaggerItem
+      as="li"
+      variant="scale"
+      className="flex flex-col gap-5 bg-background p-6"
+    >
       <div className="flex items-start justify-between gap-3">
         <span className="flex items-center gap-3">
           <span className="flex size-11 items-center justify-center border">
@@ -139,7 +144,7 @@ function PlatformCard({
           </p>
         )}
       </div>
-    </li>
+    </StaggerItem>
   );
 }
 
@@ -178,7 +183,7 @@ export function DownloadSection() {
         />
 
         <div className="space-y-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
+          <Reveal className="flex flex-wrap items-end justify-between gap-3">
             <div className="space-y-1">
               <h3 className="text-xl font-bold">برنامج الكمبيوتر</h3>
               <p className="text-sm text-muted-foreground">
@@ -193,9 +198,14 @@ export function DownloadSection() {
               كل الإصدارات وملاحظاتها
               <IconExternalLink className="size-4" aria-hidden />
             </a>
-          </div>
+          </Reveal>
 
-          <ul className="grid gap-px border bg-border lg:grid-cols-[1.4fr_1fr_1fr]">
+          <Stagger
+            as="ul"
+            stagger={0.12}
+            amount={0.15}
+            className="grid gap-px border bg-border lg:grid-cols-[1.4fr_1fr_1fr]"
+          >
             <PlatformCard id="windows" config={DOWNLOADS.windows} primary>
               <Steps
                 items={[
@@ -246,20 +256,25 @@ export function DownloadSection() {
                 <bdi dir="ltr">Intel</bdi>.
               </p>
             </PlatformCard>
-          </ul>
+          </Stagger>
         </div>
 
         <div className="space-y-6">
-          <div className="space-y-1">
+          <Reveal className="space-y-1">
             <h3 className="text-xl font-bold">تطبيق الهاتف</h3>
             <p className="max-w-2xl text-sm leading-7 text-muted-foreground">
               لأصحاب خطة «سلسلة» ومديري الفروع: متابعة الفروع والتقارير اللحظية،
               والموافقة على تحويلات المخزون، وتعديل الأسعار، والتنبيهات. التطبيق
               مكمّل لبرنامج الكمبيوتر ولا يحل محله.
             </p>
-          </div>
+          </Reveal>
 
-          <ul className="grid gap-px border bg-border md:grid-cols-2">
+          <Stagger
+            as="ul"
+            stagger={0.12}
+            amount={0.15}
+            className="grid gap-px border bg-border md:grid-cols-2"
+          >
             <PlatformCard id="android" config={DOWNLOADS.android} />
             <PlatformCard id="ios" config={DOWNLOADS.ios}>
               <div className="space-y-3">
@@ -275,7 +290,7 @@ export function DownloadSection() {
                 />
               </div>
             </PlatformCard>
-          </ul>
+          </Stagger>
         </div>
       </Container>
     </Section>

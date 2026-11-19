@@ -17,6 +17,7 @@ import {
   type PlanStats,
 } from "@/features/settings/config/plans";
 
+import { Reveal, Stagger, StaggerItem } from "./motion";
 import { PlanCards } from "./planCards";
 import { Container, Section, SectionHeading } from "./primitives";
 
@@ -71,13 +72,24 @@ const ASSURANCES: { icon: Icon; text: string }[] = [
 
 function HowToSubscribe() {
   return (
-    <section aria-labelledby="how-subscribe" className="border bg-muted/40">
+    <Reveal
+      as="section"
+      aria-labelledby="how-subscribe"
+      className="border bg-muted/40"
+    >
       <h3 id="how-subscribe" className="border-b px-6 py-4 text-base font-bold">
         الاشتراك في 3 خطوات
       </h3>
-      <ol className="grid gap-px bg-border md:grid-cols-3">
+      <Stagger
+        as="ol"
+        stagger={0.15}
+        delay={0.2}
+        className="grid gap-px bg-border md:grid-cols-3"
+      >
         {STEPS.map((step, i) => (
-          <li
+          <StaggerItem
+            as="li"
+            variant="scale"
             key={step.title}
             className="flex items-start gap-4 bg-background p-6"
           >
@@ -111,9 +123,9 @@ function HowToSubscribe() {
                 </ul>
               )}
             </div>
-          </li>
+          </StaggerItem>
         ))}
-      </ol>
+      </Stagger>
       <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 border-t px-6 py-4 text-sm text-muted-foreground">
         {ASSURANCES.map(({ icon: AIcon, text }) => (
           <li key={text} className="flex items-center gap-2">
@@ -122,7 +134,7 @@ function HowToSubscribe() {
           </li>
         ))}
       </ul>
-    </section>
+    </Reveal>
   );
 }
 
@@ -144,7 +156,7 @@ export function PricingSection() {
         <HowToSubscribe />
 
         {/* جدول المقارنة للشاشات المتوسطة فأكبر؛ في الهاتف تكفي البطاقات أعلاه. */}
-        <div className="hidden space-y-4 md:block">
+        <Reveal amount={0.1} className="hidden space-y-4 md:block">
           <h3 className="text-xl font-bold">مقارنة تفصيلية بين الخطط</h3>
           <div className="overflow-x-auto border">
             <table className="w-full min-w-[44rem] border-collapse text-sm">
@@ -210,7 +222,7 @@ export function PricingSection() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Reveal>
       </Container>
     </Section>
   );
