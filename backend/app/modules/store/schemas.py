@@ -48,7 +48,23 @@ class ProductPatchIn(BaseModel):
     sort_order: Annotated[int, Field(ge=0, le=100_000)] | None = None
     description: Annotated[str, StringConstraints(max_length=2000)] | None = None
     image_id: ImageId | None = None
+    gallery: list[ImageId] | None = Field(None, max_length=5)
     max_qty: Annotated[int, Field(ge=1, le=10**9)] | None = None
+
+
+class ThemeIn(BaseModel):
+    """التحقق الكامل (الألوان المسموحة، روابط التواصل) على سيرفر الفروع."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    color: Literal["neutral", "emerald", "teal", "blue", "indigo", "violet", "rose", "orange"] = "neutral"
+    mode: Literal["system", "light", "dark"] = "system"
+    cover_image_id: ImageId | None = None
+    announcement: Annotated[str, StringConstraints(max_length=300)] | None = None
+    show_featured: bool = True
+    facebook: Annotated[str, StringConstraints(max_length=300)] | None = None
+    instagram: Annotated[str, StringConstraints(max_length=300)] | None = None
+    tiktok: Annotated[str, StringConstraints(max_length=300)] | None = None
 
 
 class BulkIn(BaseModel):

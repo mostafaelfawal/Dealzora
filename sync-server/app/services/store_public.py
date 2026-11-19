@@ -130,6 +130,19 @@ class PublicProduct(BaseModel):
 class PublicProductDetail(PublicProduct):
     description: str | None
     barcode: str | None
+    # الرئيسية أولاً ثم الإضافية.
+    images: list[str]
+
+
+class PublicTheme(BaseModel):
+    color: str
+    mode: str
+    cover_url: str | None
+    announcement: str | None
+    show_featured: bool
+    facebook: str | None
+    instagram: str | None
+    tiktok: str | None
 
 
 class PublicStore(BaseModel):
@@ -152,6 +165,7 @@ class PublicStore(BaseModel):
     categories: list[dict[str, Any]]
     featured: list[PublicProduct]
     products_count: int
+    theme: PublicTheme
 
 
 def _step(data: dict[str, Any]) -> int:
@@ -185,7 +199,8 @@ def _public(slug: str, sp: StoreProduct, item: CatalogItem, reserved: dict[str, 
         low_stock=avail is not None and 0 < avail <= LOW_STOCK,
     )  # fmt: skip
     if detail:
-        return PublicProductDetail(**fields, description=sp.description, barcode=d.get("barcode"))
+        images = [image_url(slug, i) for i in [sp.image_id, *(sp.gallery or [])] if i]
+        return PublicProductDetail(**fields, description=sp.description, barcode=d.get("barcode"), images=images)
     return PublicProduct(**fields)
 
 
@@ -211,7 +226,15 @@ def store_home(session: Session, slug: str) -> PublicStore:
         delivery_note=store.delivery_note,
         categories=[{"name": k, "count": v} for k, v in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))],
         featured=[_public(store.slug, sp, item, reserved) for sp, item in featured],
-        products_count=len(rows),
+        products_count=len(rows), theme=_theme(store),
+    )  # fmt: skip
+
+
+def _theme(store: Store) -> PublicTheme:
+    t = core.theme_of(store)
+    return PublicTheme(
+        color=t.color, mode=t.mode, cover_url=image_url(store.slug, t.cover_image_id), announcement=t.announcement,
+        show_featured=t.show_featured, facebook=t.facebook, instagram=t.instagram, tiktok=t.tiktok,
     )  # fmt: skip
 
 

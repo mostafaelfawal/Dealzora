@@ -4,7 +4,8 @@ import Link from "next/link";
 
 import { Price } from "@/components/price";
 import { ProductActions } from "@/components/productActions";
-import { ProductCard, ProductImage } from "@/components/productCard";
+import { ProductCard } from "@/components/productCard";
+import { ProductGallery } from "@/components/productGallery";
 import { fetchProduct } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: product.name,
       description,
-      ...(product.image_url ? { images: [{ url: product.image_url }] } : {}),
+      ...(product.images.length ? { images: product.images.map((url) => ({ url })) } : {}),
     },
   };
 }
@@ -40,6 +41,7 @@ export default async function ProductPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: p.name,
+    ...(p.images.length ? { image: p.images } : {}),
     ...(p.description ? { description: p.description } : {}),
     ...(p.barcode ? { gtin: p.barcode } : {}),
     offers: {
@@ -72,7 +74,7 @@ export default async function ProductPage({ params }: Props) {
       </nav>
 
       <article className="grid gap-6 md:grid-cols-2 md:gap-10">
-        <ProductImage url={p.image_url} name={p.name} className="aspect-square border" />
+        <ProductGallery images={p.images.length ? p.images : p.image_url ? [p.image_url] : []} name={p.name} />
         <div className="flex flex-col gap-5">
           <div className="space-y-2">
             {p.category && <p className="text-sm text-muted-foreground">{p.category}</p>}

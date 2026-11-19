@@ -13,6 +13,27 @@ export interface StoreBranch {
   isActive: boolean;
 }
 
+export type ThemeColor =
+  | "neutral"
+  | "emerald"
+  | "teal"
+  | "blue"
+  | "indigo"
+  | "violet"
+  | "rose"
+  | "orange";
+
+export interface StoreTheme {
+  color: ThemeColor;
+  mode: "system" | "light" | "dark";
+  coverImageId: string | null;
+  announcement: string | null;
+  showFeatured: boolean;
+  facebook: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+}
+
 export interface StoreSettings {
   slug: string;
   url: string | null;
@@ -32,6 +53,7 @@ export interface StoreSettings {
   minOrder: number;
   deliveryNote: string | null;
   fulfillmentBranchId: string | null;
+  theme: StoreTheme;
   /** منشور فعلاً للزوار (منشور + الترخيص ساري). */
   live: boolean;
   updatedAt: number;
@@ -49,7 +71,7 @@ export interface StoreState {
 
 export type StoreSettingsInput = Omit<
   StoreSettings,
-  "url" | "live" | "updatedAt"
+  "url" | "live" | "updatedAt" | "theme"
 >;
 
 export interface StoreProduct {
@@ -66,6 +88,8 @@ export interface StoreProduct {
   sortOrder: number;
   description: string | null;
   imageId: string | null;
+  /** صور إضافية بعد الرئيسية (حتى 5). */
+  gallery: string[];
   maxQty: number | null;
   stockQty: number | null;
   availableQty: number | null;
@@ -90,6 +114,7 @@ export interface StoreProductPatch {
   sortOrder?: number;
   description?: string | null;
   imageId?: string | null;
+  gallery?: string[];
   maxQty?: number | null;
 }
 

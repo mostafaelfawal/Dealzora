@@ -3,6 +3,7 @@
 إدارة المالك (الجهاز الرئيسي، بتوكن الفرع):
   GET   /v1/shop/store                      إعدادات المتجر (أو null قبل الإنشاء) + رابط مقترح
   PUT   /v1/shop/store                      إنشاء/تعديل المتجر
+  PUT   /v1/shop/store/theme                تخصيص الواجهة (اللون، الوضع، الغلاف، الإعلان، روابط التواصل)
   GET   /v1/shop/store/slug?slug=           هل الرابط متاح؟
   POST  /v1/shop/store/images               رفع صورة (base64 بعد ضغطها في البرنامج)
   GET   /v1/shop/store/products             أصناف الكتالوج وحالتها في المتجر
@@ -54,6 +55,11 @@ def get_store(caller: CallerDep, session: SessionDep):
 @owner_router.put("", response_model=svc.StoreOut)
 def save_store(data: svc.StoreIn, caller: CallerDep, session: SessionDep):
     return svc.save_store(session, caller, data)
+
+
+@owner_router.put("/theme", response_model=svc.StoreOut)
+def save_theme(data: svc.ThemeIn, caller: CallerDep, session: SessionDep):
+    return svc.save_theme(session, caller, data)
 
 
 @owner_router.get("/slug")
@@ -180,7 +186,9 @@ def image(slug: str, image_id: str, _: PublicIp, session: SessionDep):
             # المعرّف لا يتغير أبداً لنفس الصورة: تخزين طويل في المتصفح.
             "Cache-Control": "public, max-age=31536000, immutable",
             "Content-Security-Policy": "default-src 'none'; sandbox",
-            "Cross-Origin-Resource-Policy": "same-site",
+            # cross-origin: البرنامج (localhost / tauri.localhost) يعرض صور متجره من هذا السيرفر.
+            # الصورة عامة أصلاً، ومعرّفها عشوائي لا يُخمَّن.
+            "Cross-Origin-Resource-Policy": "cross-origin",
             "Content-Disposition": "inline",
         },
     )

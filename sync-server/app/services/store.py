@@ -17,8 +17,17 @@ import secrets
 import unicodedata
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any, Literal
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationInfo, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+)
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -54,6 +63,7 @@ RESERVED_SLUGS = frozenset(
 )  # fmt: skip
 
 IMAGE_ID_RE = r"^[0-9a-f]{32}$"
+MAX_GALLERY = 5
 ImageId = Annotated[str, StringConstraints(pattern=IMAGE_ID_RE)]
 Gid = Annotated[str, StringConstraints(min_length=8, max_length=36, pattern=r"^[0-9A-Za-z-]+$")]
 Money = Annotated[int, Field(ge=0, le=10**10)]
@@ -231,6 +241,7 @@ class StoreOut(BaseModel):
     min_order: int
     delivery_note: str | None
     fulfillment_branch_id: str | None
+    theme: "ThemeOut"
     live: bool
     created_at: datetime
     updated_at: datetime
@@ -253,7 +264,7 @@ def _store_out(store: Store, shop: Shop) -> StoreOut:
         accepting_orders=store.accepting_orders, delivery_fee=store.delivery_fee,
         free_delivery_over=store.free_delivery_over, min_order=store.min_order,
         delivery_note=store.delivery_note, fulfillment_branch_id=store.fulfillment_branch_id,
-        live=store.is_published and shop_live(shop),
+        theme=theme_of(store), live=store.is_published and shop_live(shop),
         created_at=_aware(store.created_at), updated_at=_aware(store.updated_at),
     )  # fmt: skip
 
@@ -349,6 +360,102 @@ def require_store(session: Session, shop: Shop) -> Store:
     return store
 
 
+# ================= تخصيص الواجهة =================
+# ألوان جاهزة فقط (لا كود لون حر): كل لون مُختبر في الوضعين الفاتح والداكن في واجهة المتجر
+# (storefront/lib/theme.ts)، فلا يمكن حقن CSS عبر قيمة اللون.
+THEME_COLORS = ("neutral", "emerald", "teal", "blue", "indigo", "violet", "rose", "orange")
+ThemeColor = Literal["neutral", "emerald", "teal", "blue", "indigo", "violet", "rose", "orange"]
+_SOCIAL_HOSTS = {
+    "facebook": ("facebook.com", "fb.com", "fb.me"),
+    "instagram": ("instagram.com",),
+    "tiktok": ("tiktok.com",),
+}
+_SAFE_URL = re.compile(r"^https://[a-z0-9.-]+(/[A-Za-z0-9._~%@+\-/]*)?(\?[A-Za-z0-9._~%&=+\-]*)?$")
+
+
+def social_url(kind: str, value: str | None) -> str | None:
+    """رابط صفحة على فيسبوك أو إنستجرام أو تيك توك فقط، بـ https وبلا محارف قد تكسر الصفحة."""
+    text = clean_text(value)
+    if not text:
+        return None
+    if not re.match(r"^https?://", text, re.I):
+        text = "https://" + text
+    try:
+        parts = urlsplit(text)
+        port = parts.port
+    except ValueError as exc:
+        raise ValueError("رابط غير صالح") from exc
+    host = (parts.hostname or "").lower()
+    if parts.username or parts.password or port or not host:
+        raise ValueError("رابط غير صالح")
+    bare = host.removeprefix("www.").removeprefix("m.")
+    if not any(bare == h or bare.endswith("." + h) for h in _SOCIAL_HOSTS[kind]):
+        raise ValueError(f"الرابط يجب أن يكون من {_SOCIAL_HOSTS[kind][0]}")
+    out = f"https://{host}{parts.path}" + (f"?{parts.query}" if parts.query else "")
+    if len(out) > 200 or not _SAFE_URL.match(out):
+        raise ValueError("رابط غير صالح")
+    return out
+
+
+class ThemeIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    color: ThemeColor = "neutral"
+    mode: Literal["system", "light", "dark"] = "system"
+    cover_image_id: ImageId | None = None
+    announcement: Annotated[str, StringConstraints(max_length=300)] | None = None
+    show_featured: bool = True
+    facebook: Annotated[str, StringConstraints(max_length=300)] | None = None
+    instagram: Annotated[str, StringConstraints(max_length=300)] | None = None
+    tiktok: Annotated[str, StringConstraints(max_length=300)] | None = None
+
+    @field_validator("announcement")
+    @classmethod
+    def _announcement(cls, value: str | None) -> str | None:
+        return _text(140)(value)
+
+    @field_validator("facebook", "instagram", "tiktok")
+    @classmethod
+    def _social(cls, value: str | None, info: ValidationInfo) -> str | None:
+        return social_url(info.field_name, value)
+
+
+class ThemeOut(ThemeIn):
+    model_config = ConfigDict(extra="ignore")
+
+
+StoreOut.model_rebuild()  # StoreOut يشير إلى ThemeOut المعرّف بعده
+StoreStateOut.model_rebuild()
+
+
+def theme_of(store: Store) -> ThemeOut:
+    """القيم المحفوظة بعد التحقق مرة أخرى: قيمة قديمة لم تعد صالحة تُتجاهل بدل أن تكسر المتجر."""
+    raw = store.theme or {}
+    try:
+        return ThemeOut.model_validate(raw)
+    except ValidationError:
+        keep = {k: raw[k] for k in ("color", "mode", "show_featured") if k in raw}
+        try:
+            return ThemeOut.model_validate(keep)
+        except ValidationError:
+            return ThemeOut()
+
+
+def save_theme(session: Session, caller: Caller, data: ThemeIn) -> StoreOut:
+    shop = owner(session, caller)
+    store = require_store(session, shop)
+    _check_image(session, shop.id, data.cover_image_id)
+    old_cover = (store.theme or {}).get("cover_image_id")
+    store.theme = data.model_dump(mode="json")
+    store.updated_at = utcnow()
+    if old_cover and old_cover != data.cover_image_id:
+        drop_image_if_unused(session, shop.id, old_cover)
+    record(session, "store_theme_updated", actor="owner", shop_id=shop.id, branch_id=caller.branch_id, ip=caller.ip,
+           details={"color": data.color, "mode": data.mode})  # fmt: skip
+    session.commit()
+    return _store_out(store, shop)
+
+
 # ================= الصور =================
 _MAGIC = {
     "image/jpeg": lambda b: b[:3] == b"\xff\xd8\xff",
@@ -385,12 +492,23 @@ def upload_image(session: Session, caller: Caller, data: ImageIn) -> dict[str, A
     return {"id": image.id, "size": image.size}
 
 
-def drop_image_if_unused(session: Session, shop_id: str, image_id: str) -> None:
+def image_in_use(session: Session, shop_id: str, image_id: str) -> bool:
+    """هل الصورة مستخدمة: صورة صنف رئيسية أو إضافية، أو شعار المتجر، أو صورة الغلاف."""
     used = session.scalar(
         select(func.count()).select_from(StoreProduct).where(StoreProduct.shop_id == shop_id, StoreProduct.image_id == image_id)
     ) or 0  # fmt: skip
+    if used:
+        return True
     store = session.get(Store, shop_id)
-    if used or (store is not None and store.logo_image_id == image_id):
+    if store is not None and (store.logo_image_id == image_id or (store.theme or {}).get("cover_image_id") == image_id):
+        return True
+    galleries = session.scalars(select(StoreProduct.gallery).where(StoreProduct.shop_id == shop_id)).all()
+    return any(image_id in (g or []) for g in galleries)
+
+
+def drop_image_if_unused(session: Session, shop_id: str, image_id: str) -> None:
+    session.flush()
+    if image_in_use(session, shop_id, image_id):
         return
     image = session.get(StoreImage, image_id)
     if image is not None and image.shop_id == shop_id:
@@ -461,6 +579,7 @@ class AdminProductOut(BaseModel):
     sort_order: int
     description: str | None
     image_id: str | None
+    gallery: list[str]
     max_qty: int | None
     stock_qty: int | None
     available_qty: int | None
@@ -485,7 +604,8 @@ def _admin_product(item: CatalogItem, sp: StoreProduct | None, reserved: dict[st
         catalog_active=bool(d.get("is_active", True)), in_store=sp is not None,
         is_published=bool(sp and sp.is_published), featured=bool(sp and sp.featured),
         sort_order=sp.sort_order if sp else 0, description=sp.description if sp else None,
-        image_id=sp.image_id if sp else None, max_qty=sp.max_qty if sp else None,
+        image_id=sp.image_id if sp else None, gallery=list(sp.gallery or []) if sp else [],
+        max_qty=sp.max_qty if sp else None,
         stock_qty=sp.stock_qty if sp else None, available_qty=available_qty(sp, reserved) if sp else None,
         stock_at=_aware(sp.stock_at) if sp else None,
     )  # fmt: skip
@@ -554,12 +674,21 @@ class StoreProductIn(BaseModel):
     sort_order: Annotated[int, Field(ge=0, le=100_000)] | None = None
     description: Annotated[str, StringConstraints(max_length=2000)] | None = None
     image_id: ImageId | None = None
+    # الصور الإضافية بالترتيب (بدون الرئيسية). [] = حذف كل الإضافية.
+    gallery: list[ImageId] | None = Field(None, max_length=MAX_GALLERY)
     max_qty: Annotated[int, Field(ge=1, le=10**9)] | None = None
 
     @field_validator("description")
     @classmethod
     def _desc(cls, value: str | None) -> str | None:
         return _text(1000, multiline=True)(value)
+
+    @field_validator("gallery")
+    @classmethod
+    def _gallery(cls, value: list[str] | None) -> list[str] | None:
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("صورة مكررة في صور الصنف")
+        return value
 
 
 def _catalog_product(session: Session, shop_id: str, gid: str) -> CatalogItem:
@@ -594,18 +723,21 @@ def update_product(session: Session, caller: Caller, gid: str, data: StoreProduc
         session.add(sp)
     if "image_id" in fields:
         _check_image(session, shop.id, data.image_id)
+    for image_id in data.gallery or []:
+        _check_image(session, shop.id, image_id)
     if data.is_published and not sp.is_published:
         _ensure_room(session, shop.id, 1)
-    old_image = sp.image_id
+    before = {sp.image_id, *(sp.gallery or [])} - {None}
     for key in fields:
         value = getattr(data, key)
-        if key in ("is_published", "featured", "sort_order") and value is None:
+        if key in ("is_published", "featured", "sort_order", "gallery") and value is None:
             continue  # لا معنى لـ null هنا
-        setattr(sp, key, value)
+        setattr(sp, key, list(value) if key == "gallery" else value)
+    if sp.image_id and sp.gallery and sp.image_id in sp.gallery:  # الرئيسية لا تتكرر في الإضافية
+        sp.gallery = [g for g in sp.gallery if g != sp.image_id]
     sp.updated_at = now
-    session.flush()
-    if old_image and old_image != sp.image_id:
-        drop_image_if_unused(session, shop.id, old_image)
+    for image_id in before - ({sp.image_id, *(sp.gallery or [])} - {None}):
+        drop_image_if_unused(session, shop.id, image_id)
     session.commit()
     return _admin_product(item, sp, reserved_qty(session, shop.id, [gid]))
 

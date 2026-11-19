@@ -14,7 +14,14 @@ import { ThemeToggle } from "./themeToggle";
 import { buttonClass } from "./ui";
 
 /** رأس ثابت: الشعار والاسم، والبحث، والسلة بعددها. */
-export function StoreHeader({ logoUrl }: { logoUrl: string | null }) {
+export function StoreHeader({
+  logoUrl,
+  allowThemeToggle = true,
+}: {
+  logoUrl: string | null;
+  /** التاجر ثبّت الوضع (فاتح/داكن): لا زر تبديل. */
+  allowThemeToggle?: boolean;
+}) {
   const store = useStore();
   const cart = useCart(store.slug);
   const router = useRouter();
@@ -72,7 +79,7 @@ export function StoreHeader({ logoUrl }: { logoUrl: string | null }) {
         </form>
 
         <div className="ms-auto flex items-center gap-1 md:ms-0">
-          <ThemeToggle />
+          {allowThemeToggle && <ThemeToggle />}
           <Link
             href={`/${store.slug}/cart`}
             className={cn(buttonClass("default", "md"), "relative")}

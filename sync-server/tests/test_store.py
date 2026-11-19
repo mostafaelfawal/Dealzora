@@ -342,3 +342,63 @@ def test_quote_corrects_cart_before_order(client, store):
     # الطلب نفسه بنفس الكميات الأصلية يُرفض (لا تصحيح صامت عند الطلب)
     bad = order(gids, items=body["items"][:1])
     assert client.post("/v1/store/public/elbaraka/orders", json=bad).json()["error"]["code"] == "qty_exceeds"
+
+
+# ================= التخصيص وصور الصنف =================
+def _img(br):  # noqa: ANN001
+    r = br["A"].post("/v1/shop/store/images", json={"content_type": "image/png", "data": base64.b64encode(PNG).decode()})
+    assert r.status_code == 201, r.text
+    return r.json()["id"]
+
+
+def test_theme_customization(client, store):
+    br, _ = store
+    cover = _img(br)
+    r = br["A"].put("/v1/shop/store/theme", json={
+        "color": "emerald", "mode": "dark", "cover_image_id": cover, "announcement": "  خصم 10%  على كل الطلبات ",
+        "show_featured": False, "facebook": "fb.com/elbaraka", "instagram": "https://www.instagram.com/elbaraka/",
+    })  # fmt: skip
+    assert r.status_code == 200, r.text
+    t = r.json()["theme"]
+    assert t["color"] == "emerald" and t["announcement"] == "خصم 10% على كل الطلبات"
+    assert t["facebook"] == "https://fb.com/elbaraka" and t["instagram"] == "https://www.instagram.com/elbaraka/"
+
+    pub = client.get("/v1/store/public/elbaraka").json()["theme"]
+    assert pub["mode"] == "dark" and pub["show_featured"] is False and pub["cover_url"].endswith(cover)
+
+    # لون غير معروف، ورابط من موقع آخر أو بمحارف خطرة، مرفوض
+    bad = [{"color": "#ff0000"}, {"facebook": "https://evil.com/x"}, {"instagram": "javascript:alert(1)"},
+           {"tiktok": 'https://tiktok.com/@a"onmouseover=1'}, {"facebook": "https://user:pw@facebook.com/x"}]  # fmt: skip
+    for body in bad:
+        assert br["A"].put("/v1/shop/store/theme", json=body).status_code == 422, body
+
+    # تغيير الغلاف يحذف القديم غير المستخدم
+    br["A"].put("/v1/shop/store/theme", json={"color": "blue"})
+    assert client.get(f"/v1/store/public/elbaraka/images/{cover}").status_code == 404
+    assert br["B"].put("/v1/shop/store/theme", json={}).status_code == 403  # الجهاز الرئيسي فقط
+
+
+def test_product_gallery(client, store):
+    br, gids = store
+    main, extra1, extra2 = _img(br), _img(br), _img(br)
+    url = f"/v1/shop/store/products/{gids['milk']}"
+    r = br["A"].patch(url, json={"image_id": main, "gallery": [extra1, extra2]})
+    assert r.status_code == 200 and r.json()["gallery"] == [extra1, extra2]
+    imgs = client.get(f"/v1/store/public/elbaraka/products/{gids['milk']}").json()["product"]["images"]
+    assert [i.rsplit("/", 1)[1] for i in imgs] == [main, extra1, extra2]
+
+    # جعل صورة إضافية رئيسية: لا تتكرر، والرئيسية القديمة المحذوفة تُمسح
+    r = br["A"].patch(url, json={"image_id": extra1, "gallery": [extra2]})
+    assert r.json()["image_id"] == extra1 and r.json()["gallery"] == [extra2]
+    assert client.get(f"/v1/store/public/elbaraka/images/{main}").status_code == 404
+    assert client.get(f"/v1/store/public/elbaraka/images/{extra2}").status_code == 200
+
+    assert br["A"].patch(url, json={"gallery": [extra2, extra2]}).status_code == 422
+    assert br["A"].patch(url, json={"gallery": [_img(br) for _ in range(6)]}).status_code == 422
+    assert br["A"].patch(url, json={"gallery": ["f" * 32]}).status_code == 400  # صورة ليست لهذا المحل
+
+
+def test_images_load_cross_origin_in_desktop_app(client, store):
+    br, _ = store
+    r = client.get(f"/v1/store/public/elbaraka/images/{_img(br)}")
+    assert r.headers["cross-origin-resource-policy"] == "cross-origin"

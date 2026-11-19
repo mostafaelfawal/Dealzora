@@ -16,6 +16,7 @@ import {
   fetchStoreState,
   fetchStoreSummary,
   saveStore,
+  saveTheme,
   setOrderNote,
   setOrderStatus,
   updateStoreProduct,
@@ -110,6 +111,20 @@ export function useSaveStore() {
       });
     },
     onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ المتجر")),
+  });
+}
+
+export function useSaveTheme() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: saveTheme,
+    onSuccess: (s) => {
+      refresh();
+      toast.success("حُفظ مظهر المتجر", {
+        description: s.live ? "التغييرات ظاهرة للزوار الآن." : undefined,
+      });
+    },
+    onError: (e) => toast.error(extractErrorMessage(e, "تعذّر حفظ المظهر")),
   });
 }
 

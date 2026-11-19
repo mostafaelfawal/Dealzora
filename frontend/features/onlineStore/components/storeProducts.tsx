@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  IconCamera,
   IconEdit,
+  IconLoader2,
   IconEye,
   IconEyeOff,
   IconPackage,
@@ -10,6 +12,7 @@ import {
   IconStarFilled,
 } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
@@ -29,6 +32,7 @@ import {
   useStoreProducts,
   useUpdateStoreProduct,
 } from "../hooks/useOnlineStore";
+import { useImageUpload } from "../hooks/useImageUpload";
 import { formatQtyUnit } from "../lib/storeText";
 import type { ProductFilter, StoreProduct } from "../types/store";
 import { ProductEditDialog } from "./productEditDialog";
@@ -77,6 +81,75 @@ function StockCell({ p }: { p: StoreProduct }) {
   );
 }
 
+/** الصورة المصغّرة: ضغطة واحدة لرفع صورة رئيسية للصنف (أو تغييرها) بدون فتح نافذة التعديل. */
+function ThumbUpload({
+  p,
+  imageBase,
+}: {
+  p: StoreProduct;
+  imageBase: string | null;
+}) {
+  const update = useUpdateStoreProduct();
+  const { pick, busy } = useImageUpload();
+  const [preview, setPreview] = useState<string | null>(null);
+  const working = busy || update.isPending;
+
+  async function upload() {
+    const img = await pick();
+    if (!img) return;
+    // الصورة القديمة تبقى ضمن الصور الإضافية بدل أن تُحذف.
+    const gallery = p.imageId
+      ? [p.imageId, ...p.gallery].slice(0, 5)
+      : p.gallery;
+    update.mutate(
+      { gid: p.gid, patch: { imageId: img.id, gallery } },
+      {
+        onSuccess: () => {
+          setPreview(img.previewUrl);
+          toast.success(`أُضيفت صورة «${p.name}»`);
+        },
+      },
+    );
+  }
+
+  return (
+    <AppTooltip message={p.imageId ? "تغيير الصورة الرئيسية" : "إضافة صورة"}>
+      <button
+        type="button"
+        onClick={() => void upload()}
+        disabled={working}
+        aria-label={p.imageId ? `تغيير صورة ${p.name}` : `إضافة صورة ${p.name}`}
+        className="group/thumb relative size-11 shrink-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      >
+        <StoreImage
+          base={imageBase}
+          id={p.imageId}
+          previewUrl={preview}
+          name={p.name}
+          className="size-full border"
+        />
+        <span
+          className={cn(
+            "absolute inset-0 flex items-center justify-center bg-black/50 text-white transition-opacity",
+            working
+              ? "opacity-100"
+              : "opacity-0 group-hover/thumb:opacity-100 group-focus-visible/thumb:opacity-100",
+            !p.imageId &&
+              !working &&
+              "bg-muted text-muted-foreground opacity-100",
+          )}
+        >
+          {working ? (
+            <IconLoader2 className="size-4 animate-spin" />
+          ) : (
+            <IconCamera className="size-4" />
+          )}
+        </span>
+      </button>
+    </AppTooltip>
+  );
+}
+
 function ProductRow({
   p,
   imageBase,
@@ -104,12 +177,7 @@ function ProductRow({
         onCheckedChange={(v) => onSelect(Boolean(v))}
         aria-label={`تحديد ${p.name}`}
       />
-      <StoreImage
-        base={imageBase}
-        id={p.imageId}
-        name={p.name}
-        className="size-11 shrink-0 border"
-      />
+      <ThumbUpload p={p} imageBase={imageBase} />
       <div className="min-w-0 flex-1">
         <AppTooltip message={p.name} onlyWhenTruncated>
           <p className="truncate text-sm font-medium">{p.name}</p>

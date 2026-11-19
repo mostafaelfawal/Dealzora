@@ -412,6 +412,8 @@ class Store(Base):
     delivery_note: Mapped[str | None] = mapped_column(String(200), nullable=True)
     # الفرع الذي يجهّز الطلبات ويرفع مخزون الأصناف المعروضة (None = الفرع الرئيسي).
     fulfillment_branch_id: Mapped[str | None] = mapped_column(ForeignKey("branches.id"), nullable=True)
+    # تخصيص الواجهة (services/store.ThemeIn): اللون، الوضع، صورة الغلاف، شريط الإعلان، روابط التواصل.
+    theme: Mapped[dict[str, Any] | None] = mapped_column(JSONType, nullable=True)
     last_order_no: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -430,6 +432,8 @@ class StoreProduct(Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     image_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # صور إضافية تظهر في صفحة الصنف بعد الصورة الرئيسية (قائمة معرّفات، حتى 5).
+    gallery: Mapped[list[str] | None] = mapped_column(JSONType, nullable=True)
     # أقصى كمية في الطلب الواحد (× 1000). None = بلا حد غير المخزون.
     max_qty: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     # مخزون فرع التجهيز (× 1000) كما رفعه آخر مرة. None = لم يصل بعد (يُعرض متاحاً).

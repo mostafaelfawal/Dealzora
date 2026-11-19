@@ -23,13 +23,20 @@ import { extractErrorMessage } from "@/lib/errors";
 
 import { useStoreState, useStoreSummary } from "../hooks/useOnlineStore";
 import type { StoreState } from "../types/store";
+import { StoreAppearance } from "./storeAppearance";
 import { StoreLinkBar } from "./storeLinkBar";
 import { StoreOrders } from "./storeOrders";
 import { StoreOverview, type StoreTab } from "./storeOverview";
 import { StoreProducts } from "./storeProducts";
 import { StoreSettingsForm } from "./storeSettingsForm";
 
-const TABS: StoreTab[] = ["overview", "orders", "products", "settings"];
+const TABS: StoreTab[] = [
+  "overview",
+  "orders",
+  "products",
+  "appearance",
+  "settings",
+];
 
 function Notice({
   icon,
@@ -120,6 +127,7 @@ function StoreDashboard({ state }: { state: StoreState }) {
             count: counts ? counts.new : undefined,
           },
           { id: "products", label: "الأصناف" },
+          { id: "appearance", label: "المظهر" },
           { id: "settings", label: "الإعدادات" },
         ]}
         value={tab}
@@ -143,6 +151,13 @@ function StoreDashboard({ state }: { state: StoreState }) {
         />
       )}
       {tab === "products" && <StoreProducts imageBase={state.imageBase} />}
+      {tab === "appearance" && (
+        <StoreAppearance
+          key={store.updatedAt}
+          store={store}
+          imageBase={state.imageBase}
+        />
+      )}
       {tab === "settings" && (
         <StoreSettingsForm key={store.updatedAt} state={state} mode="edit" />
       )}

@@ -1,4 +1,12 @@
-import { IconBrandWhatsapp, IconClock, IconMapPin, IconPhone } from "@tabler/icons-react";
+import {
+  IconBrandFacebook,
+  IconBrandInstagram,
+  IconBrandTiktok,
+  IconBrandWhatsapp,
+  IconClock,
+  IconMapPin,
+  IconPhone,
+} from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -7,6 +15,7 @@ import { CartBar } from "@/components/cartBar";
 import { StoreProvider } from "@/components/storeContext";
 import { StoreHeader } from "@/components/storeHeader";
 import { waLink } from "@/lib/format";
+import { forcedModeScript, themeCss } from "@/lib/theme";
 
 import { getStore } from "./data";
 
@@ -50,10 +59,26 @@ export default async function StoreLayout({ children, params }: Props) {
     delivery_note: store.delivery_note,
   };
 
+  const css = themeCss(store.theme.color);
+  const mode = forcedModeScript(store.theme.mode);
+  const socials = [
+    { href: store.theme.facebook, label: "فيسبوك", icon: IconBrandFacebook },
+    { href: store.theme.instagram, label: "إنستجرام", icon: IconBrandInstagram },
+    { href: store.theme.tiktok, label: "تيك توك", icon: IconBrandTiktok },
+  ].filter((s): s is typeof s & { href: string } => !!s.href);
+
   return (
     <StoreProvider store={info}>
+      {/* القيم من قوائم ثابتة في lib/theme.ts (لا نص من التاجر داخل CSS أو السكربت). */}
+      {css && <style dangerouslySetInnerHTML={{ __html: css }} />}
+      {mode && <script dangerouslySetInnerHTML={{ __html: mode }} />}
+      {store.theme.announcement && (
+        <div className="bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground">
+          {store.theme.announcement}
+        </div>
+      )}
       <Suspense fallback={<div className="h-16 border-b" />}>
-        <StoreHeader logoUrl={store.logo_url} />
+        <StoreHeader logoUrl={store.logo_url} allowThemeToggle={store.theme.mode === "system"} />
       </Suspense>
       {!store.accepting_orders && (
         <div className="border-b bg-warning/15 px-4 py-2 text-center text-sm">
@@ -109,6 +134,23 @@ export default async function StoreLayout({ children, params }: Props) {
                 طلباتي
               </Link>
             </li>
+            {socials.length > 0 && (
+              <li className="flex gap-1 pt-1">
+                {socials.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    aria-label={s.label}
+                    title={s.label}
+                    className="flex size-9 items-center justify-center border bg-background transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <s.icon className="size-4" />
+                  </a>
+                ))}
+              </li>
+            )}
           </ul>
         </div>
         <p className="border-t py-3 text-center text-[11px] text-muted-foreground">

@@ -19,7 +19,7 @@ from app.core.errors import BadRequestError, NotFoundError
 from app.core.security import Actor
 from app.modules.branch_sync.service import BranchSyncService
 
-from .schemas import BulkIn, ImageIn, NoteIn, ProductPatchIn, StatusIn, StoreIn
+from .schemas import BulkIn, ImageIn, NoteIn, ProductPatchIn, StatusIn, StoreIn, ThemeIn
 
 _ID_RE = re.compile(r"^[0-9A-Za-z-]{8,64}$")
 MAX_IMAGE_BYTES = 600_000
@@ -66,6 +66,11 @@ class StoreService:
         out = self._call("PUT", "", data.model_dump(mode="json"))
         self._audit("store_saved", out.get("slug", ""), {"slug": out.get("slug"), "published": out.get("is_published"),
                                                           "accepting_orders": out.get("accepting_orders")})  # fmt: skip
+        return out
+
+    def save_theme(self, data: ThemeIn) -> dict:
+        out = self._call("PUT", "/theme", data.model_dump(mode="json"))
+        self._audit("store_theme_saved", out.get("slug", ""), {"color": data.color, "mode": data.mode})
         return out
 
     def slug_check(self, slug: str) -> dict:

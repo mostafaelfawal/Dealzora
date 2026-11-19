@@ -25,6 +25,8 @@ import type {
   StoreSettingsInput,
   StoreState,
   StoreSummary,
+  StoreTheme,
+  ThemeColor,
 } from "../types/store";
 
 /* شكل sync-server/app/services/store.py (المال بالقروش، الكميات × 1000). */
@@ -49,8 +51,20 @@ interface StoreDto {
   min_order: number;
   delivery_note: string | null;
   fulfillment_branch_id: string | null;
+  theme: ThemeDto;
   live: boolean;
   updated_at: string;
+}
+
+interface ThemeDto {
+  color: ThemeColor;
+  mode: StoreTheme["mode"];
+  cover_image_id: string | null;
+  announcement: string | null;
+  show_featured: boolean;
+  facebook: string | null;
+  instagram: string | null;
+  tiktok: string | null;
 }
 
 interface StateDto {
@@ -82,6 +96,7 @@ interface ProductDto {
   sort_order: number;
   description: string | null;
   image_id: string | null;
+  gallery: string[];
   max_qty: number | null;
   stock_qty: number | null;
   available_qty: number | null;
@@ -126,6 +141,17 @@ interface OrderDetailDto extends OrderDto {
 
 const qtyOrNull = (v: number | null) => (v === null ? null : fromQty(v));
 
+const toTheme = (t: ThemeDto | null | undefined): StoreTheme => ({
+  color: t?.color ?? "neutral",
+  mode: t?.mode ?? "system",
+  coverImageId: t?.cover_image_id ?? null,
+  announcement: t?.announcement ?? null,
+  showFeatured: t?.show_featured ?? true,
+  facebook: t?.facebook ?? null,
+  instagram: t?.instagram ?? null,
+  tiktok: t?.tiktok ?? null,
+});
+
 const toStore = (d: StoreDto): StoreSettings => ({
   slug: d.slug,
   url: d.url,
@@ -146,6 +172,7 @@ const toStore = (d: StoreDto): StoreSettings => ({
   minOrder: toPounds(d.min_order),
   deliveryNote: d.delivery_note,
   fulfillmentBranchId: d.fulfillment_branch_id,
+  theme: toTheme(d.theme),
   live: d.live,
   updatedAt: toMs(d.updated_at),
 });
@@ -172,6 +199,7 @@ const toProduct = (d: ProductDto): StoreProduct => ({
   sortOrder: d.sort_order,
   description: d.description,
   imageId: d.image_id,
+  gallery: d.gallery ?? [],
   maxQty: qtyOrNull(d.max_qty),
   stockQty: qtyOrNull(d.stock_qty),
   availableQty: qtyOrNull(d.available_qty),
@@ -256,6 +284,20 @@ export async function saveStore(v: StoreSettingsInput): Promise<StoreSettings> {
   return toStore(data);
 }
 
+export async function saveTheme(t: StoreTheme): Promise<StoreSettings> {
+  const { data } = await api.put<StoreDto>("/store/theme", {
+    color: t.color,
+    mode: t.mode,
+    cover_image_id: t.coverImageId,
+    announcement: blank(t.announcement),
+    show_featured: t.showFeatured,
+    facebook: blank(t.facebook),
+    instagram: blank(t.instagram),
+    tiktok: blank(t.tiktok),
+  });
+  return toStore(data);
+}
+
 export async function checkSlug(
   slug: string,
 ): Promise<{ slug: string; available: boolean; message: string | null }> {
@@ -322,6 +364,7 @@ export async function updateStoreProduct(
   if (patch.description !== undefined)
     body.description = blank(patch.description);
   if (patch.imageId !== undefined) body.image_id = patch.imageId;
+  if (patch.gallery !== undefined) body.gallery = patch.gallery;
   if (patch.maxQty !== undefined)
     body.max_qty = patch.maxQty === null ? null : toQty(patch.maxQty);
   const { data } = await api.patch<ProductDto>(

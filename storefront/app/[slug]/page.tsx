@@ -39,6 +39,7 @@ export default async function StorePage({ params, searchParams }: Props) {
   const store = await getStore(slug);
   const page = await orNotFound(fetchProducts(slug, { q, category, sort, pageSize: 24 }));
   const browsing = !q && !category;
+  const cover = store.theme.cover_url;
   const catHref = (c?: string) => {
     const qs = new URLSearchParams();
     if (c) qs.set("category", c);
@@ -66,11 +67,24 @@ export default async function StorePage({ params, searchParams }: Props) {
     <div className="space-y-8">
       {browsing && (
         <section className="relative overflow-hidden border bg-card">
+          {cover ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element -- صورة الغلاف من السيرفر نفسه */}
+              <img src={cover} alt="" className="absolute inset-0 size-full object-cover" fetchPriority="high" />
+              <div aria-hidden className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/55 to-black/20" />
+            </>
+          ) : (
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:28px_28px]"
+            />
+          )}
           <div
-            aria-hidden
-            className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:28px_28px]"
-          />
-          <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-8">
+            className={cn(
+              "relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-8",
+              cover && "min-h-56 text-white sm:min-h-72 [&_li]:border-white/20 [&_li]:bg-black/30 [&_li]:backdrop-blur [&_p]:text-white/85",
+            )}
+          >
             <StoreLogo url={store.logo_url} name={store.name} className="size-20 sm:size-24" />
             <div className="min-w-0 flex-1 space-y-2">
               <h1 className="text-2xl font-bold sm:text-3xl">{store.name}</h1>
@@ -94,14 +108,19 @@ export default async function StorePage({ params, searchParams }: Props) {
             </div>
           </div>
           {store.about && (
-            <p className="relative border-t px-5 py-3 text-sm whitespace-pre-line text-muted-foreground sm:px-8">
+            <p
+              className={cn(
+                "relative border-t px-5 py-3 text-sm whitespace-pre-line sm:px-8",
+                cover ? "border-white/15 bg-black/40 text-white/85 backdrop-blur" : "text-muted-foreground",
+              )}
+            >
               {store.about}
             </p>
           )}
         </section>
       )}
 
-      {browsing && store.featured.length > 0 && (
+      {browsing && store.theme.show_featured && store.featured.length > 0 && (
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <IconStarFilled className="size-5 text-warning" />

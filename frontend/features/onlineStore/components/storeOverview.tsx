@@ -25,7 +25,8 @@ import { useStoreSummary } from "../hooks/useOnlineStore";
 import type { StoreSettings } from "../types/store";
 import { StatusBadge } from "./orderDetailSheet";
 
-export type StoreTab = "overview" | "orders" | "products" | "settings";
+export type StoreTab =
+  "overview" | "orders" | "products" | "appearance" | "settings";
 
 function Checklist({
   store,

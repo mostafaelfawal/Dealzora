@@ -8,7 +8,7 @@ from app.core.deps import ActorDep, SessionDep
 from app.core.permissions import require_owner, require_owner_write
 from app.core.plan import Feature, require_feature
 
-from .schemas import BulkIn, ImageIn, NoteIn, ProductPatchIn, StatusIn, StoreIn
+from .schemas import BulkIn, ImageIn, NoteIn, ProductPatchIn, StatusIn, StoreIn, ThemeIn
 from .service import StoreService
 
 router = APIRouter(prefix="/store", tags=["store"])
@@ -33,6 +33,12 @@ def state(svc: Svc):
 @router.put("", dependencies=Write)
 def save(data: StoreIn, svc: Svc):
     return svc.save(data)
+
+
+@router.put("/theme", dependencies=Write)
+def save_theme(data: ThemeIn, svc: Svc):
+    """تخصيص واجهة المتجر: اللون، الوضع، الغلاف، شريط الإعلان، روابط التواصل."""
+    return svc.save_theme(data)
 
 
 @router.get("/slug", dependencies=Read)

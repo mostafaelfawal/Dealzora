@@ -19,6 +19,19 @@ export interface PublicProduct {
 export interface PublicProductDetail extends PublicProduct {
   description: string | null;
   barcode: string | null;
+  /** الرئيسية أولاً ثم الإضافية. */
+  images: string[];
+}
+
+export interface PublicTheme {
+  color: string;
+  mode: "system" | "light" | "dark";
+  cover_url: string | null;
+  announcement: string | null;
+  show_featured: boolean;
+  facebook: string | null;
+  instagram: string | null;
+  tiktok: string | null;
 }
 
 export interface PublicStore {
@@ -41,6 +54,7 @@ export interface PublicStore {
   categories: { name: string; count: number }[];
   featured: PublicProduct[];
   products_count: number;
+  theme: PublicTheme;
 }
 
 export interface ProductsPage {

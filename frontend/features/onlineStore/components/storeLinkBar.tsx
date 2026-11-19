@@ -31,9 +31,7 @@ export function StoreLinkBar({ store }: { store: StoreSettings }) {
             description: "الصقه في المتصفح لفتح المتجر.",
           }),
         )
-        .catch(() =>
-          toast.error("تعذّر فتح المتصفح. انسخ الرابط وافتحه يدوياً"),
-        );
+        .catch(() => toast.error("تعذّر فتح المتصفح. انسخ الرابط وافتحه يدوياً"));
     });
   };
 
