@@ -113,7 +113,7 @@ export interface DownloadConfig {
  * نسخة برنامج الكمبيوتر الحالية. عند نشر إصدار جديد (release-desktop.yml) حدّث هذا الرقم فقط:
  * روابط ويندوز ولينكس وماك تُبنى منه بأسماء الملفات التي يرفعها tauri-action.
  */
-export const DESKTOP_VERSION = "1.0.4";
+export const DESKTOP_VERSION = "1.0.7";
 
 const RELEASE_FILES = `https://github.com/mostafaelfawal/Dealzora/releases/download/v${DESKTOP_VERSION}`;
 
@@ -150,16 +150,16 @@ export const DOWNLOADS = {
     available: true,
   },
   android: {
-    version: "",
+    version: "1.0.0",
     url: "",
     fileType: "apk",
-    available: false,
+    available: true,
   },
   ios: {
     // رابط نسخة الويب (PWA) عند نشرها. لا يوجد تطبيق على App Store.
-    url: "",
+    url: "https://dealzora-app.vercel.app",
     fileType: "PWA",
-    available: false,
+    available: true,
   },
 } satisfies Record<PlatformId, DownloadConfig>;
 
