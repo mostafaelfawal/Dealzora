@@ -58,6 +58,8 @@ concurrency:
 
 jobs:
   prepare:
+    # إصدارات الكمبيوتر وسومها v<رقم> فقط؛ إصدارات الهاتف (mobile-v<رقم>) وغيرها لا تشغّل هذا البناء.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -84,6 +86,7 @@ jobs:
           S2: ${{ secrets.DEALZORA_LICENSE_SECRET }}
           S3: ${{ secrets.DEALZORA_VENDOR_PUBKEY }}
           S4: ${{ secrets.DEALZORA_DB_SECRET }}
+          SYNC_URL: ${{ vars.NEXT_PUBLIC_SYNC_URL }}
         run: |
           missing=()
           [ -n "$S1" ] || missing+=(TAURI_SIGNING_PRIVATE_KEY)
@@ -93,6 +96,11 @@ jobs:
           if [ ${#missing[@]} -gt 0 ]; then
             echo "::error::أسرار ناقصة في Settings > Secrets: ${missing[*]}"; exit 1
           fi
+          # يُثبَّت عنوان سيرفر الفروع في الواجهة وقت البناء؛ بدونه تظهر للعميل رسالة «عنوان سيرفر الفروع غير مضبوط».
+          if [ -z "$SYNC_URL" ]; then
+            echo "::error::متغير NEXT_PUBLIC_SYNC_URL غير معرّف في Settings > Secrets and variables > Actions > تبويب Variables (لا Secrets)."; exit 1
+          fi
+          echo "عنوان سيرفر الفروع: $SYNC_URL"
 
       # نشر من صفحة Releases: نعيده مسودة طوال البناء، وإلا يشير latest.json للنسخة الجديدة
       # قبل رفع ملفاتها فتفشل التحديثات عند العملاء. ملاحظات التحديث = وصف الـ Release كما كتبته.
