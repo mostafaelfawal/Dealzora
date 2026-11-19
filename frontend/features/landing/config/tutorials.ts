@@ -1,5 +1,6 @@
 import {
   IconBuildingBank,
+  IconBuildingStore,
   IconBuildingWarehouse,
   IconChartBar,
   IconDevices,
@@ -41,6 +42,7 @@ export type TutorialCategoryId =
   | "reports"
   | "settings"
   | "devices"
+  | "online-store"
   | "e-receipt";
 
 export interface TutorialCategory {
@@ -96,7 +98,7 @@ export const TUTORIAL_CATEGORIES: TutorialCategory[] = [
   {
     id: "contacts",
     title: "العملاء والموردون",
-    description: "البيع الآجل والحد الائتماني، والتحصيل، وأرصدة الموردين، وكشوف الحساب.",
+    description: "البيع الآجل والتقسيط، والحد الائتماني، والتحصيل، وأرصدة الموردين، وكشوف الحساب.",
     icon: IconUsers,
   },
   {
@@ -122,6 +124,12 @@ export const TUTORIAL_CATEGORIES: TutorialCategory[] = [
     title: "الأجهزة والفروع",
     description: "أجهزة الكاشير الإضافية، وربط الفروع وتحويل البضاعة بينها، وتطبيق الهاتف.",
     icon: IconDevices,
+  },
+  {
+    id: "online-store",
+    title: "المتجر الإلكتروني",
+    description: "متجر على الإنترنت برابط خاص بمحلك، يستقبل طلبات العملاء والدفع عند الاستلام.",
+    icon: IconBuildingStore,
   },
   {
     id: "e-receipt",
@@ -271,7 +279,6 @@ export const TUTORIALS: Tutorial[] = [
     description: "قراءة شاشة المخزون، وقيمة البضاعة، والأصناف التي قاربت على النفاد.",
     youtubeUrl: "",
     category: "inventory",
-    featured: true,
   },
   {
     id: "adjust-stock",
@@ -472,6 +479,13 @@ export const TUTORIALS: Tutorial[] = [
     description: "البيع للعميل بالآجل، وضبط الحد الأقصى لدينه ومتابعته.",
     youtubeUrl: "",
     category: "contacts",
+  },
+  {
+    id: "installments",
+    title: "البيع بالتقسيط ومتابعة الأقساط",
+    description: "إنشاء خطة تقسيط بمقدّم وعدد أقساط ودوريتها، وتحصيل الأقساط ومتابعة المتأخر منها.",
+    youtubeUrl: "",
+    category: "contacts",
     featured: true,
   },
   {
@@ -664,6 +678,16 @@ export const TUTORIALS: Tutorial[] = [
     description: "متابعة المبيعات والمخزون والتنبيهات والتحويلات لكل الفروع من هاتفك.",
     youtubeUrl: "",
     category: "devices",
+  },
+
+  // ---------- المتجر الإلكتروني ----------
+  {
+    id: "online-store",
+    title: "إنشاء متجرك الإلكتروني واستقبال الطلبات",
+    description: "تفعيل المتجر ورابطه، واختيار الأصناف المعروضة، واستقبال الطلبات بالدفع عند الاستلام.",
+    youtubeUrl: "",
+    category: "online-store",
+    featured: true,
   },
 
   // ---------- الإيصال الإلكتروني ----------

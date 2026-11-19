@@ -1,0 +1,2 @@
+cd D:\mySoftwares\Full_Stack\Dealzora\mobile
+npx eas-cli@latest update --channel production --environment production --message "وصف التعديل"
