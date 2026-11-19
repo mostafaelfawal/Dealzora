@@ -60,7 +60,8 @@ function read(slug: string): CartLine[] {
 
 function write(slug: string, lines: CartLine[]) {
   try {
-    if (lines.length) window.localStorage.setItem(key(slug), JSON.stringify(lines));
+    if (lines.length)
+      window.localStorage.setItem(key(slug), JSON.stringify(lines));
     else window.localStorage.removeItem(key(slug));
   } catch {
     /* وضع التصفح الخاص: السلة تبقى للصفحة الحالية فقط */
@@ -96,7 +97,9 @@ export function useCart(slug: string) {
     (gid: string, qty: number) => {
       const current = read(slug);
       const next = current
-        .map((l) => (l.gid === gid ? { ...l, qty: clamp(qty, l.step, l.maxQty) } : l))
+        .map((l) =>
+          l.gid === gid ? { ...l, qty: clamp(qty, l.step, l.maxQty) } : l,
+        )
         .filter((l) => l.qty > 0);
       write(slug, next);
     },
@@ -157,7 +160,8 @@ export function useCart(slug: string) {
             qty: s.qty,
           };
         });
-      if (JSON.stringify(next) !== JSON.stringify(read(slug))) write(slug, next);
+      if (JSON.stringify(next) !== JSON.stringify(read(slug)))
+        write(slug, next);
     },
     [slug],
   );
@@ -202,7 +206,8 @@ export function loadOrders(slug: string): SavedOrder[] {
     const list = raw ? JSON.parse(raw) : [];
     return Array.isArray(list)
       ? list.filter(
-          (o) => o && typeof o.token === "string" && /^[0-9a-f]{40}$/.test(o.token),
+          (o) =>
+            o && typeof o.token === "string" && /^[0-9a-f]{40}$/.test(o.token),
         )
       : [];
   } catch {

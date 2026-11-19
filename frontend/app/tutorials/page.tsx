@@ -43,13 +43,17 @@ export const metadata: Metadata = {
     siteName: "Dealzora",
     title: TITLE,
     description: DESCRIPTION,
-    images: [{ url: "/logo/logo.png", width: 512, height: 512, alt: "Dealzora" }],
+    images: [
+      { url: "/logo/logo.png", width: 512, height: 512, alt: "Dealzora" },
+    ],
   },
   twitter: { card: "summary", title: TITLE, description: DESCRIPTION },
 };
 
 export default async function TutorialsPage() {
-  const categories = TUTORIAL_CATEGORIES.filter((c) => tutorialsIn(c.id).length > 0);
+  const categories = TUTORIAL_CATEGORIES.filter(
+    (c) => tutorialsIn(c.id).length > 0,
+  );
   const published = PUBLISHED_TUTORIALS.length;
   const durations = await getYoutubeDurations(PUBLISHED_VIDEO_IDS);
 
@@ -57,13 +61,19 @@ export default async function TutorialsPage() {
     <div className="landing-root flex min-h-full flex-col">
       <LandingHeader />
       <main id="main" className="flex-1">
-        <section aria-labelledby="tutorials-page-title" className="relative isolate overflow-hidden border-b">
+        <section
+          aria-labelledby="tutorials-page-title"
+          className="relative isolate overflow-hidden border-b"
+        >
           <GridBackground />
           <Container className="space-y-8 py-14 sm:py-20">
             <nav aria-label="مسار الصفحة">
               <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <li>
-                  <Link href="/" className="outline-none hover:text-foreground focus-visible:underline">
+                  <Link
+                    href="/"
+                    className="outline-none hover:text-foreground focus-visible:underline"
+                  >
                     الرئيسية
                   </Link>
                 </li>
@@ -87,8 +97,9 @@ export default async function TutorialsPage() {
                 <p className="text-lg leading-8 text-pretty text-muted-foreground">
                   {published > 0
                     ? `مكتبة من ${lessonsLabel(published)} بالفيديو، مرتبة حسب أقسام البرنامج.`
-                    : "مكتبة شروحات بالفيديو مرتبة حسب أقسام البرنامج."} ابدأ من القسم الأول إن كنت جديداً، أو انتقل مباشرة إلى
-                  ما تحتاجه.
+                    : "مكتبة شروحات بالفيديو مرتبة حسب أقسام البرنامج."}{" "}
+                  ابدأ من القسم الأول إن كنت جديداً، أو انتقل مباشرة إلى ما
+                  تحتاجه.
                 </p>
               </div>
               <a
@@ -131,7 +142,10 @@ export default async function TutorialsPage() {
           <TutorialLibrary durations={durations} />
         </Container>
 
-        <section aria-labelledby="tutorials-help" className="border-t bg-muted/40">
+        <section
+          aria-labelledby="tutorials-help"
+          className="border-t bg-muted/40"
+        >
           <Container className="flex flex-col gap-6 py-14 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <h2 id="tutorials-help" className="text-2xl font-bold">

@@ -1,6 +1,11 @@
 "use client";
 
-import { IconBrandWhatsapp, IconCheck, IconCrown, IconDownload } from "@tabler/icons-react";
+import {
+  IconBrandWhatsapp,
+  IconCheck,
+  IconCrown,
+  IconDownload,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -42,7 +47,9 @@ const STAT_ROWS: { key: keyof PlanStats; label: string }[] = [
 
 /** ما يوفّره السنوي مقارنة بدفع 12 شهراً. */
 const yearlySaving = (plan: PlanCard) =>
-  plan.monthly !== null && plan.yearly !== null ? plan.monthly * 12 - plan.yearly : 0;
+  plan.monthly !== null && plan.yearly !== null
+    ? plan.monthly * 12 - plan.yearly
+    : 0;
 
 // أكبر توفير بين الخطط، لشارة زر «سنوي».
 const MONTHS_FREE = (() => {
@@ -50,7 +57,13 @@ const MONTHS_FREE = (() => {
   return paid ? Math.round(yearlySaving(paid) / paid.monthly!) : 0;
 })();
 
-function BillingToggle({ value, onChange }: { value: Billing; onChange: (b: Billing) => void }) {
+function BillingToggle({
+  value,
+  onChange,
+}: {
+  value: Billing;
+  onChange: (b: Billing) => void;
+}) {
   const items: Billing[] = ["monthly", "yearly"];
   return (
     <div
@@ -79,10 +92,14 @@ function BillingToggle({ value, onChange }: { value: Billing; onChange: (b: Bill
               <span
                 className={cn(
                   "px-1.5 py-0.5 text-[11px] font-semibold",
-                  active ? "bg-primary-foreground/15" : "bg-success/15 text-success",
+                  active
+                    ? "bg-primary-foreground/15"
+                    : "bg-success/15 text-success",
                 )}
               >
-                {MONTHS_FREE === 2 ? "شهران مجاناً" : `${MONTHS_FREE} أشهر مجاناً`}
+                {MONTHS_FREE === 2
+                  ? "شهران مجاناً"
+                  : `${MONTHS_FREE} أشهر مجاناً`}
               </span>
             )}
           </button>
@@ -92,7 +109,15 @@ function BillingToggle({ value, onChange }: { value: Billing; onChange: (b: Bill
   );
 }
 
-function Price({ plan, billing, onYearly }: { plan: PlanCard; billing: Billing; onYearly: () => void }) {
+function Price({
+  plan,
+  billing,
+  onYearly,
+}: {
+  plan: PlanCard;
+  billing: Billing;
+  onYearly: () => void;
+}) {
   if (plan.monthly === null || plan.yearly === null)
     return (
       <div className="space-y-1">
@@ -107,7 +132,9 @@ function Price({ plan, billing, onYearly }: { plan: PlanCard; billing: Billing; 
   return (
     <div className="space-y-1">
       <p className="flex flex-wrap items-baseline gap-x-1.5">
-        {plan.startsFrom && <span className="text-xs text-muted-foreground">يبدأ من</span>}
+        {plan.startsFrom && (
+          <span className="text-xs text-muted-foreground">يبدأ من</span>
+        )}
         <span dir="ltr" className="font-mono text-3xl font-bold tabular-nums">
           {price.toLocaleString("en-US")}
         </span>
@@ -122,7 +149,9 @@ function Price({ plan, billing, onYearly }: { plan: PlanCard; billing: Billing; 
               <span className="bg-success/15 px-1.5 py-0.5 font-semibold text-success">
                 وفّر {formatPlanPrice(saving)}
               </span>
-              <span className="line-through">{formatPlanPrice(plan.monthly * 12)}</span>
+              <span className="line-through">
+                {formatPlanPrice(plan.monthly * 12)}
+              </span>
             </p>
             <p>يعادل {formatPlanPrice(Math.round(plan.yearly / 12))} شهرياً</p>
           </>
@@ -200,7 +229,10 @@ function PlanColumn({
           <button
             type="button"
             onClick={onSubscribe}
-            className={cn(ctaClass(plan.popular ? "default" : "outline"), "w-full")}
+            className={cn(
+              ctaClass(plan.popular ? "default" : "outline"),
+              "w-full",
+            )}
           >
             <IconBrandWhatsapp aria-hidden />
             اشترك في «{plan.name}»
@@ -212,7 +244,11 @@ function PlanColumn({
         {STAT_ROWS.map((r, i) => (
           <div
             key={r.key}
-            className={cn("space-y-0.5 p-4", i % 2 === 0 && "border-l", i < 2 && "border-b")}
+            className={cn(
+              "space-y-0.5 p-4",
+              i % 2 === 0 && "border-l",
+              i < 2 && "border-b",
+            )}
           >
             <dt className="text-xs text-muted-foreground">{r.label}</dt>
             <dd className="font-semibold">{plan.stats[r.key]}</dd>
@@ -222,12 +258,17 @@ function PlanColumn({
 
       <div className="flex-1 space-y-3 p-6">
         {plan.includes && (
-          <p className="text-sm font-semibold">كل ما في «{plan.includes}»، وأيضاً:</p>
+          <p className="text-sm font-semibold">
+            كل ما في «{plan.includes}»، وأيضاً:
+          </p>
         )}
         <ul className="space-y-2.5">
           {plan.features.map((f) => (
             <li key={f} className="flex gap-2.5 text-sm leading-6">
-              <IconCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+              <IconCheck
+                className="mt-0.5 size-4 shrink-0 text-success"
+                aria-hidden
+              />
               {f}
             </li>
           ))}
@@ -250,7 +291,11 @@ function SubscribeDialog({
   const [shopName, setShopName] = useState("");
   const [machineId, setMachineId] = useState("");
 
-  const price = plan ? (billing === "monthly" ? plan.monthly : plan.yearly) : null;
+  const price = plan
+    ? billing === "monthly"
+      ? plan.monthly
+      : plan.yearly
+    : null;
   const href = plan
     ? `https://wa.me/${SALES_WHATSAPP}?text=${encodeURIComponent(
         subscribeMessage({
@@ -272,8 +317,8 @@ function SubscribeDialog({
                 طلب الاشتراك في «{plan.name}»
               </DialogTitle>
               <DialogDescription className="text-sm leading-7">
-                سيُفتح واتساب برسالة جاهزة بالخطة والمبلغ. بعد تأكيد الدفع نرسل لك
-                مفتاح الترخيص على المحادثة نفسها.
+                سيُفتح واتساب برسالة جاهزة بالخطة والمبلغ. بعد تأكيد الدفع نرسل
+                لك مفتاح الترخيص على المحادثة نفسها.
               </DialogDescription>
             </DialogHeader>
 
@@ -294,7 +339,8 @@ function SubscribeDialog({
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="sub-shop" className="text-sm">
-                  اسم المحل <span className="text-muted-foreground">(اختياري)</span>
+                  اسم المحل{" "}
+                  <span className="text-muted-foreground">(اختياري)</span>
                 </Label>
                 <Input
                   id="sub-shop"
@@ -306,7 +352,8 @@ function SubscribeDialog({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="sub-machine" className="text-sm">
-                  رقم الجهاز <span className="text-muted-foreground">(اختياري)</span>
+                  رقم الجهاز{" "}
+                  <span className="text-muted-foreground">(اختياري)</span>
                 </Label>
                 <Input
                   id="sub-machine"

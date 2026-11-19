@@ -19,7 +19,9 @@ export function InstallmentsNavBadge({ collapsed }: { collapsed: boolean }) {
       title={label}
       className={cn(
         "flex min-w-5 items-center justify-center bg-destructive px-1 font-mono text-[11px] leading-5 text-white tabular-nums",
-        collapsed ? "absolute top-1 inset-e-1 min-w-4 text-[10px] leading-4" : "ms-auto",
+        collapsed
+          ? "absolute top-1 inset-e-1 min-w-4 text-[10px] leading-4"
+          : "ms-auto",
       )}
     >
       {count > 99 ? "99+" : count}

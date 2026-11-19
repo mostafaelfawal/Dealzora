@@ -15,7 +15,8 @@ export function GridBackground() {
     const glow = glowRef.current;
     const host = glow?.parentElement;
     if (!glow || !host) return;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches)
+      return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let frame = 0;
@@ -49,7 +50,10 @@ export function GridBackground() {
 
   return (
     <>
-      <div aria-hidden className="landing-grid pointer-events-none absolute inset-0 -z-10" />
+      <div
+        aria-hidden
+        className="landing-grid pointer-events-none absolute inset-0 -z-10"
+      />
       <div
         ref={glowRef}
         aria-hidden

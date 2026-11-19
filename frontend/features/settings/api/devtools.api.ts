@@ -37,8 +37,7 @@ export const fetchDemoStatus = async () =>
   (await api.get<DemoStatus>("/demo")).data;
 
 export const seedDemo = async () =>
-  (await api.post<SeedResult>("/demo", null, { timeout: LONG_TIMEOUT }))
-    .data;
+  (await api.post<SeedResult>("/demo", null, { timeout: LONG_TIMEOUT })).data;
 
 export const clearDemo = async () =>
   (await api.delete<ClearResult>("/demo", { timeout: LONG_TIMEOUT })).data;

@@ -26,7 +26,9 @@ export function SortSelect({ slug, value }: { slug: string; value: SortKey }) {
           if (e.target.value === "default") next.delete("sort");
           else next.set("sort", e.target.value);
           const qs = next.toString();
-          router.push(`/${slug}${qs ? `?${qs}` : ""}#products`, { scroll: false });
+          router.push(`/${slug}${qs ? `?${qs}` : ""}#products`, {
+            scroll: false,
+          });
         }}
         className="h-full cursor-pointer appearance-none bg-transparent ps-8 pe-3 outline-none"
       >

@@ -44,7 +44,9 @@ export const metadata: Metadata = {
     siteName: "Dealzora",
     title: TITLE,
     description: DESCRIPTION,
-    images: [{ url: "/logo/logo.png", width: 512, height: 512, alt: "Dealzora" }],
+    images: [
+      { url: "/logo/logo.png", width: 512, height: 512, alt: "Dealzora" },
+    ],
   },
   twitter: {
     card: "summary",

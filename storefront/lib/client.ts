@@ -60,7 +60,9 @@ export async function storeApi<T>(
     if (msg) message = msg;
   }
   const details =
-    err.details && typeof err.details === "object" && !Array.isArray(err.details)
+    err.details &&
+    typeof err.details === "object" &&
+    !Array.isArray(err.details)
       ? (err.details as Record<string, unknown>)
       : null;
   throw new ApiError(

@@ -15,7 +15,10 @@ const CONCURRENCY = 6;
 
 type Durations = Record<string, string>;
 
-async function fetchText(url: string, init?: RequestInit): Promise<string | null> {
+async function fetchText(
+  url: string,
+  init?: RequestInit,
+): Promise<string | null> {
   try {
     const res = await fetch(url, {
       ...init,
@@ -86,11 +89,15 @@ async function viaWatchPages(ids: string[]): Promise<Durations> {
 }
 
 /** معرّف الفيديو → مدته «mm:ss». مخزّنة لكل عملية عرض (الرئيسية وصفحة الشروحات تشتركان). */
-export const getYoutubeDurations = cache(async (ids: readonly string[]): Promise<Durations> => {
-  const unique = [...new Set(ids)];
-  if (unique.length === 0) return {};
-  const key = process.env.YOUTUBE_API_KEY;
-  const fromApi = key ? await viaDataApi(unique, key) : {};
-  const missing = unique.filter((id) => !fromApi[id]);
-  return missing.length > 0 ? { ...fromApi, ...(await viaWatchPages(missing)) } : fromApi;
-});
+export const getYoutubeDurations = cache(
+  async (ids: readonly string[]): Promise<Durations> => {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) return {};
+    const key = process.env.YOUTUBE_API_KEY;
+    const fromApi = key ? await viaDataApi(unique, key) : {};
+    const missing = unique.filter((id) => !fromApi[id]);
+    return missing.length > 0
+      ? { ...fromApi, ...(await viaWatchPages(missing)) }
+      : fromApi;
+  },
+);

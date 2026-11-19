@@ -8,7 +8,14 @@ import {
   SOCIAL_LINKS,
   WHATSAPP_COMMUNITY_URL,
 } from "../config/site";
-import { BrandIcon, Container, ctaClass, external, Section, SectionHeading } from "./primitives";
+import {
+  BrandIcon,
+  Container,
+  ctaClass,
+  external,
+  Section,
+  SectionHeading,
+} from "./primitives";
 
 /** اسم الحساب كما يظهر في الرابط (بدون اختلاق أسماء). */
 function handleOf(url: string): string {

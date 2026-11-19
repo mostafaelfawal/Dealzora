@@ -56,49 +56,57 @@ export const TUTORIAL_CATEGORIES: TutorialCategory[] = [
   {
     id: "start",
     title: "البدء باستخدام Dealzora",
-    description: "من تثبيت البرنامج إلى تجهيز المحل والمستخدمين قبل أول عملية بيع.",
+    description:
+      "من تثبيت البرنامج إلى تجهيز المحل والمستخدمين قبل أول عملية بيع.",
     icon: IconRocket,
   },
   {
     id: "products",
     title: "المنتجات",
-    description: "إضافة الأصناف والباركود والأقسام والوحدات، والاستيراد والتصدير بملفات Excel.",
+    description:
+      "إضافة الأصناف والباركود والأقسام والوحدات، والاستيراد والتصدير بملفات Excel.",
     icon: IconPackage,
   },
   {
     id: "inventory",
     title: "المخزون والصلاحية",
-    description: "متابعة الكميات والنواقص، والجرد والتالف، وحركة كل صنف، وتواريخ الصلاحية.",
+    description:
+      "متابعة الكميات والنواقص، والجرد والتالف، وحركة كل صنف، وتواريخ الصلاحية.",
     icon: IconBuildingWarehouse,
   },
   {
     id: "pos",
     title: "نقطة البيع (الكاشير)",
-    description: "شاشة البيع، والباركود والميزان، والخصومات، وطرق الدفع، والتعليق والاستبدال.",
+    description:
+      "شاشة البيع، والباركود والميزان، والخصومات، وطرق الدفع، والتعليق والاستبدال.",
     icon: IconShoppingCart,
   },
   {
     id: "invoices",
     title: "الفواتير والورديات",
-    description: "سجل الفواتير والمرتجعات، وفتح الوردية وإغلاقها ومراجعة فروق الدرج.",
+    description:
+      "سجل الفواتير والمرتجعات، وفتح الوردية وإغلاقها ومراجعة فروق الدرج.",
     icon: IconReceipt,
   },
   {
     id: "promotions",
     title: "العروض ونقاط الولاء",
-    description: "عروض الخصم المجدولة، ونقاط الولاء التي تعيد العميل للشراء منك.",
+    description:
+      "عروض الخصم المجدولة، ونقاط الولاء التي تعيد العميل للشراء منك.",
     icon: IconDiscount2,
   },
   {
     id: "purchases",
     title: "المشتريات وطلبات الشراء",
-    description: "فواتير الشراء من الموردين ومرتجعاتها، وطلبات الشراء من النواقص.",
+    description:
+      "فواتير الشراء من الموردين ومرتجعاتها، وطلبات الشراء من النواقص.",
     icon: IconTruckDelivery,
   },
   {
     id: "contacts",
     title: "العملاء والموردون",
-    description: "البيع الآجل والتقسيط، والحد الائتماني، والتحصيل، وأرصدة الموردين، وكشوف الحساب.",
+    description:
+      "البيع الآجل والتقسيط، والحد الائتماني، والتحصيل، وأرصدة الموردين، وكشوف الحساب.",
     icon: IconUsers,
   },
   {
@@ -110,31 +118,36 @@ export const TUTORIAL_CATEGORIES: TutorialCategory[] = [
   {
     id: "reports",
     title: "التقارير وسجل العمليات",
-    description: "تقارير المبيعات والأصناف والمخزون والعملاء والخزنة، وتصديرها، وسجل العمليات.",
+    description:
+      "تقارير المبيعات والأصناف والمخزون والعملاء والخزنة، وتصديرها، وسجل العمليات.",
     icon: IconChartBar,
   },
   {
     id: "settings",
     title: "الإعدادات والطباعة",
-    description: "بيانات المحل والعملة والضريبة، والطابعة وشكل الفاتورة، والنسخ الاحتياطي والخطة.",
+    description:
+      "بيانات المحل والعملة والضريبة، والطابعة وشكل الفاتورة، والنسخ الاحتياطي والخطة.",
     icon: IconSettings,
   },
   {
     id: "devices",
     title: "الأجهزة والفروع",
-    description: "أجهزة الكاشير الإضافية، وربط الفروع وتحويل البضاعة بينها، وتطبيق الهاتف.",
+    description:
+      "أجهزة الكاشير الإضافية، وربط الفروع وتحويل البضاعة بينها، وتطبيق الهاتف.",
     icon: IconDevices,
   },
   {
     id: "online-store",
     title: "المتجر الإلكتروني",
-    description: "متجر على الإنترنت برابط خاص بمحلك، يستقبل طلبات العملاء والدفع عند الاستلام.",
+    description:
+      "متجر على الإنترنت برابط خاص بمحلك، يستقبل طلبات العملاء والدفع عند الاستلام.",
     icon: IconBuildingStore,
   },
   {
     id: "e-receipt",
     title: "الإيصال الإلكتروني",
-    description: "الربط مع منظومة الإيصال الإلكتروني لمصلحة الضرائب خطوة بخطوة.",
+    description:
+      "الربط مع منظومة الإيصال الإلكتروني لمصلحة الضرائب خطوة بخطوة.",
     icon: IconFileCertificate,
   },
 ];
@@ -166,7 +179,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "setup-shop",
     title: "الإعداد الأول: بيانات المحل وحساب المالك",
-    description: "اسم المحل وحساب المالك، وتفعيل خطة «بَسطة» المجانية تلقائياً، ثم ضبط العملة من الإعدادات.",
+    description:
+      "اسم المحل وحساب المالك، وتفعيل خطة «بَسطة» المجانية تلقائياً، ثم ضبط العملة من الإعدادات.",
     youtubeUrl: "",
     category: "start",
   },
@@ -180,28 +194,32 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "tour",
     title: "جولة في واجهة البرنامج",
-    description: "القائمة الجانبية ومجموعاتها، والبحث الشامل، والتنقل بين الصفحات بـ Alt والأرقام.",
+    description:
+      "القائمة الجانبية ومجموعاتها، والبحث الشامل، والتنقل بين الصفحات بـ Alt والأرقام.",
     youtubeUrl: "",
     category: "start",
   },
   {
     id: "demo-data",
     title: "تجربة البرنامج بالبيانات التجريبية",
-    description: "تحميل بيانات تجريبية للتعرف على البرنامج، ثم حذفها قبل البدء الفعلي.",
+    description:
+      "تحميل بيانات تجريبية للتعرف على البرنامج، ثم حذفها قبل البدء الفعلي.",
     youtubeUrl: "",
     category: "start",
   },
   {
     id: "users",
     title: "إضافة المستخدمين وتحديد الصلاحيات",
-    description: "إنشاء حسابات المديرين والكاشير، وتعديلها وإيقافها، والفرق بين صلاحيات كل دور.",
+    description:
+      "إنشاء حسابات المديرين والكاشير، وتعديلها وإيقافها، والفرق بين صلاحيات كل دور.",
     youtubeUrl: "",
     category: "start",
   },
   {
     id: "passwords",
     title: "تغيير كلمة المرور وإعادة تعيينها لموظف",
-    description: "تغيير كلمة مرورك من «حسابي»، وإعادة تعيين كلمة مرور موظف نسيها.",
+    description:
+      "تغيير كلمة مرورك من «حسابي»، وإعادة تعيين كلمة مرور موظف نسيها.",
     youtubeUrl: "",
     category: "start",
   },
@@ -210,7 +228,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "add-product",
     title: "إضافة صنف جديد بالباركود",
-    description: "الاسم والقسم والباركود وسعر الشراء والبيع والكمية الافتتاحية.",
+    description:
+      "الاسم والقسم والباركود وسعر الشراء والبيع والكمية الافتتاحية.",
     youtubeUrl: "",
     category: "products",
     featured: true,
@@ -232,42 +251,48 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "product-pricing",
     title: "الأسعار وهامش الربح وضريبة الصنف",
-    description: "سعر الشراء والبيع، وقراءة هامش الربح، وضبط ضريبة القيمة المضافة لكل صنف.",
+    description:
+      "سعر الشراء والبيع، وقراءة هامش الربح، وضبط ضريبة القيمة المضافة لكل صنف.",
     youtubeUrl: "",
     category: "products",
   },
   {
     id: "products-list",
     title: "البحث في الأصناف وتعديلها وحذفها",
-    description: "البحث والتصفية والترتيب في قائمة المنتجات، وتعديل صنف أو حذفه.",
+    description:
+      "البحث والتصفية والترتيب في قائمة المنتجات، وتعديل صنف أو حذفه.",
     youtubeUrl: "",
     category: "products",
   },
   {
     id: "price-lookup",
     title: "معرفة سعر السوق للصنف قبل التسعير",
-    description: "البحث عن سعر الصنف في السوق باسمه وقسمه ووحدته قبل تحديد سعر البيع.",
+    description:
+      "البحث عن سعر الصنف في السوق باسمه وقسمه ووحدته قبل تحديد سعر البيع.",
     youtubeUrl: "",
     category: "products",
   },
   {
     id: "import-excel",
     title: "استيراد الأصناف من ملف Excel",
-    description: "تجهيز الملف أو سحبه إلى الشاشة، ومطابقة الأعمدة، ومراجعة النتيجة قبل الحفظ.",
+    description:
+      "تجهيز الملف أو سحبه إلى الشاشة، ومطابقة الأعمدة، ومراجعة النتيجة قبل الحفظ.",
     youtubeUrl: "",
     category: "products",
   },
   {
     id: "export-excel",
     title: "تصدير الأصناف إلى Excel",
-    description: "حفظ قائمة الأصناف بأسعارها وكمياتها في ملف Excel للمراجعة أو التعديل.",
+    description:
+      "حفظ قائمة الأصناف بأسعارها وكمياتها في ملف Excel للمراجعة أو التعديل.",
     youtubeUrl: "",
     category: "products",
   },
   {
     id: "barcode-labels",
     title: "طباعة ملصقات الباركود",
-    description: "طباعة ملصقات للأصناف التي لا تحمل باركوداً من المصنع، وضبط مقاس الملصق.",
+    description:
+      "طباعة ملصقات للأصناف التي لا تحمل باركوداً من المصنع، وضبط مقاس الملصق.",
     youtubeUrl: "",
     category: "products",
   },
@@ -276,14 +301,16 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "stock",
     title: "متابعة المخزون: النواقص والراكد",
-    description: "قراءة شاشة المخزون، وقيمة البضاعة، والأصناف التي قاربت على النفاد.",
+    description:
+      "قراءة شاشة المخزون، وقيمة البضاعة، والأصناف التي قاربت على النفاد.",
     youtubeUrl: "",
     category: "inventory",
   },
   {
     id: "adjust-stock",
     title: "الجرد وتسوية المخزون وتسجيل التالف",
-    description: "تصحيح الكمية بعد الجرد، وتسجيل التالف والفاقد مع سبب كل حركة.",
+    description:
+      "تصحيح الكمية بعد الجرد، وتسجيل التالف والفاقد مع سبب كل حركة.",
     youtubeUrl: "",
     category: "inventory",
   },
@@ -297,7 +324,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "expiry",
     title: "متابعة تواريخ الصلاحية",
-    description: "دفعات كل صنف وتواريخ انتهائها، والتنبيه قبل الانتهاء، وإعدام الدفعة المنتهية.",
+    description:
+      "دفعات كل صنف وتواريخ انتهائها، والتنبيه قبل الانتهاء، وإعدام الدفعة المنتهية.",
     youtubeUrl: "",
     category: "inventory",
   },
@@ -306,7 +334,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "first-sale",
     title: "أول عملية بيع على نقطة البيع",
-    description: "إضافة الأصناف بالباركود أو البحث، وتحصيل المبلغ، وطباعة الإيصال.",
+    description:
+      "إضافة الأصناف بالباركود أو البحث، وتحصيل المبلغ، وطباعة الإيصال.",
     youtubeUrl: "",
     category: "pos",
     featured: true,
@@ -314,7 +343,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "pos-search",
     title: "البحث عن الأصناف وتعديل الكميات",
-    description: "البحث بالاسم أو الباركود، واستعراض الأصناف، وتعديل الكمية والوحدة في السلة.",
+    description:
+      "البحث بالاسم أو الباركود، واستعراض الأصناف، وتعديل الكمية والوحدة في السلة.",
     youtubeUrl: "",
     category: "pos",
   },
@@ -342,7 +372,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "pos-customer",
     title: "اختيار العميل والبيع الآجل من الكاشير",
-    description: "ربط الفاتورة بعميل، ومعرفة دينه والمتاح من حده الائتماني، والبيع له بالآجل.",
+    description:
+      "ربط الفاتورة بعميل، ومعرفة دينه والمتاح من حده الائتماني، والبيع له بالآجل.",
     youtubeUrl: "",
     category: "pos",
   },
@@ -356,7 +387,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "pos-return",
     title: "المرتجع من شاشة الكاشير",
-    description: "استرجاع صنف أو فاتورة كاملة بمسح باركود الإيصال، وأثره على المخزون والدرج.",
+    description:
+      "استرجاع صنف أو فاتورة كاملة بمسح باركود الإيصال، وأثره على المخزون والدرج.",
     youtubeUrl: "",
     category: "pos",
   },
@@ -370,14 +402,16 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "second-currency",
     title: "عرض السعر بعملة ثانية",
-    description: "إظهار المقابل بالدولار أو غيره في البيع والإيصال، وتحديث سعر الصرف.",
+    description:
+      "إظهار المقابل بالدولار أو غيره في البيع والإيصال، وتحديث سعر الصرف.",
     youtubeUrl: "",
     category: "pos",
   },
   {
     id: "pos-shortcuts",
     title: "اختصارات لوحة المفاتيح للكاشير",
-    description: "البيع كله من لوحة المفاتيح: البحث والكمية والدفع والتعليق دون الفأرة.",
+    description:
+      "البيع كله من لوحة المفاتيح: البحث والكمية والدفع والتعليق دون الفأرة.",
     youtubeUrl: "",
     category: "pos",
   },
@@ -400,14 +434,16 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "invoices",
     title: "سجل الفواتير وإعادة طباعة الإيصال",
-    description: "البحث في الفواتير وتصفيتها، وعرض تفاصيل فاتورة، وإعادة طباعتها.",
+    description:
+      "البحث في الفواتير وتصفيتها، وعرض تفاصيل فاتورة، وإعادة طباعتها.",
     youtubeUrl: "",
     category: "invoices",
   },
   {
     id: "returns",
     title: "مرتجع المبيعات وسجل المرتجعات",
-    description: "إرجاع صنف من فاتورة سابقة كلياً أو جزئياً، ومتابعة كل المرتجعات.",
+    description:
+      "إرجاع صنف من فاتورة سابقة كلياً أو جزئياً، ومتابعة كل المرتجعات.",
     youtubeUrl: "",
     category: "invoices",
   },
@@ -416,7 +452,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "promotions",
     title: "إنشاء عروض الخصم وجدولتها",
-    description: "خصم بنسبة أو «اشترِ واحصل على»، وتحديد الأصناف ومدة العرض وإيقافه.",
+    description:
+      "خصم بنسبة أو «اشترِ واحصل على»، وتحديد الأصناف ومدة العرض وإيقافه.",
     youtubeUrl: "",
     category: "promotions",
   },
@@ -430,7 +467,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "loyalty-use",
     title: "كسب النقاط واستبدالها عند البيع",
-    description: "رصيد نقاط العميل، واستبدالها خصماً في نقطة البيع، وتعديلها يدوياً.",
+    description:
+      "رصيد نقاط العميل، واستبدالها خصماً في نقطة البيع، وتعديلها يدوياً.",
     youtubeUrl: "",
     category: "promotions",
   },
@@ -439,14 +477,16 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "purchase-invoice",
     title: "تسجيل فاتورة شراء من مورد",
-    description: "إضافة الأصناف المشتراة وأسعارها، وتحديث المخزون وحساب المورد.",
+    description:
+      "إضافة الأصناف المشتراة وأسعارها، وتحديث المخزون وحساب المورد.",
     youtubeUrl: "",
     category: "purchases",
   },
   {
     id: "purchases-list",
     title: "سجل المشتريات وتفاصيل الفاتورة",
-    description: "البحث في فواتير الشراء وتصفيتها حسب المورد والتاريخ، وعرض تفاصيلها.",
+    description:
+      "البحث في فواتير الشراء وتصفيتها حسب المورد والتاريخ، وعرض تفاصيلها.",
     youtubeUrl: "",
     category: "purchases",
   },
@@ -460,7 +500,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "purchase-orders",
     title: "طلبات الشراء واقتراحات إعادة الطلب",
-    description: "طلب شراء جاهز بالأصناف التي قاربت على النفاد مجمّعة حسب المورد.",
+    description:
+      "طلب شراء جاهز بالأصناف التي قاربت على النفاد مجمّعة حسب المورد.",
     youtubeUrl: "",
     category: "purchases",
   },
@@ -469,7 +510,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "customers",
     title: "إضافة العملاء وإدارتهم",
-    description: "بيانات العميل، والبحث والتصفية، ومعرفة المتأخرين ومن بلغوا حدهم.",
+    description:
+      "بيانات العميل، والبحث والتصفية، ومعرفة المتأخرين ومن بلغوا حدهم.",
     youtubeUrl: "",
     category: "contacts",
   },
@@ -483,7 +525,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "installments",
     title: "البيع بالتقسيط ومتابعة الأقساط",
-    description: "إنشاء خطة تقسيط بمقدّم وعدد أقساط ودوريتها، وتحصيل الأقساط ومتابعة المتأخر منها.",
+    description:
+      "إنشاء خطة تقسيط بمقدّم وعدد أقساط ودوريتها، وتحصيل الأقساط ومتابعة المتأخر منها.",
     youtubeUrl: "",
     category: "contacts",
     featured: true,
@@ -521,14 +564,16 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "dashboard",
     title: "قراءة الشاشة الرئيسية",
-    description: "مبيعات اليوم وصافي الربح، والتنبيهات، والإجراءات السريعة في نظرة واحدة.",
+    description:
+      "مبيعات اليوم وصافي الربح، والتنبيهات، والإجراءات السريعة في نظرة واحدة.",
     youtubeUrl: "",
     category: "finance",
   },
   {
     id: "expenses",
     title: "تسجيل المصروفات اليومية",
-    description: "الإيجار والكهرباء والرواتب وغيرها، مع البحث والتصفية حسب البند والتاريخ.",
+    description:
+      "الإيجار والكهرباء والرواتب وغيرها، مع البحث والتصفية حسب البند والتاريخ.",
     youtubeUrl: "",
     category: "finance",
   },
@@ -544,7 +589,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "reports-sales",
     title: "تقرير المبيعات والأرباح",
-    description: "صافي المبيعات ومجمل الربح وعدد الفواتير لأي فترة، بالرسم البياني.",
+    description:
+      "صافي المبيعات ومجمل الربح وعدد الفواتير لأي فترة، بالرسم البياني.",
     youtubeUrl: "",
     category: "reports",
     featured: true,
@@ -566,7 +612,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "reports-people",
     title: "تقارير العملاء والكاشيرية والمديونيات",
-    description: "أفضل العملاء ونقاطهم، وأداء كل كاشير وورديته، والديون المستحقة.",
+    description:
+      "أفضل العملاء ونقاطهم، وأداء كل كاشير وورديته، والديون المستحقة.",
     youtubeUrl: "",
     category: "reports",
   },
@@ -587,7 +634,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "audit-log",
     title: "سجل العمليات: من فعل ماذا ومتى",
-    description: "متابعة كل تعديل وحذف في البرنامج باسم المستخدم ووقته وتفاصيل التغيير.",
+    description:
+      "متابعة كل تعديل وحذف في البرنامج باسم المستخدم ووقته وتفاصيل التغيير.",
     youtubeUrl: "",
     category: "reports",
   },
@@ -596,21 +644,24 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "shop-settings",
     title: "بيانات المحل والعملة",
-    description: "اسم المحل الذي يظهر في الإيصال وواتساب، وعملة الأسعار والتقارير.",
+    description:
+      "اسم المحل الذي يظهر في الإيصال وواتساب، وعملة الأسعار والتقارير.",
     youtubeUrl: "",
     category: "settings",
   },
   {
     id: "tax",
     title: "ضريبة القيمة المضافة",
-    description: "تفعيل الضريبة للمحل المسجل، وأثرها على الفاتورة والإيصال والتقارير.",
+    description:
+      "تفعيل الضريبة للمحل المسجل، وأثرها على الفاتورة والإيصال والتقارير.",
     youtubeUrl: "",
     category: "settings",
   },
   {
     id: "payment-methods",
     title: "إعداد طرق الدفع",
-    description: "المحافظ والبطاقات والتحويلات التي تقبلها، ورقم الحساب الظاهر للكاشير.",
+    description:
+      "المحافظ والبطاقات والتحويلات التي تقبلها، ورقم الحساب الظاهر للكاشير.",
     youtubeUrl: "",
     category: "settings",
   },
@@ -624,28 +675,32 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "receipt-design",
     title: "تصميم شكل الفاتورة",
-    description: "الشعار والعنوان والتليفون ورسالة الشكر، ومعاينة الإيصال قبل الحفظ.",
+    description:
+      "الشعار والعنوان والتليفون ورسالة الشكر، ومعاينة الإيصال قبل الحفظ.",
     youtubeUrl: "",
     category: "settings",
   },
   {
     id: "backup",
     title: "النسخ الاحتياطي واستعادة البيانات",
-    description: "النسخ التلقائي، واختيار مكان الحفظ كفلاشة، واسترجاع نسخة سابقة.",
+    description:
+      "النسخ التلقائي، واختيار مكان الحفظ كفلاشة، واسترجاع نسخة سابقة.",
     youtubeUrl: "",
     category: "settings",
   },
   {
     id: "appearance-updates",
     title: "شكل البرنامج والتحديثات",
-    description: "الوضع الفاتح والغامق، وتحديث البرنامج لأحدث إصدار مع بقاء بياناتك.",
+    description:
+      "الوضع الفاتح والغامق، وتحديث البرنامج لأحدث إصدار مع بقاء بياناتك.",
     youtubeUrl: "",
     category: "settings",
   },
   {
     id: "plans",
     title: "الخطط والترقية وتفعيل الترخيص",
-    description: "معرفة خطتك الحالية، والترقية، وتفعيل مفتاح الترخيص على الجهاز.",
+    description:
+      "معرفة خطتك الحالية، والترقية، وتفعيل مفتاح الترخيص على الجهاز.",
     youtubeUrl: "",
     category: "settings",
   },
@@ -654,14 +709,16 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "cashier-devices",
     title: "ربط أجهزة كاشير إضافية في المحل",
-    description: "تشغيل الشبكة على الجهاز الأساسي، وربط جهاز كاشير آخر يبيع على البيانات نفسها.",
+    description:
+      "تشغيل الشبكة على الجهاز الأساسي، وربط جهاز كاشير آخر يبيع على البيانات نفسها.",
     youtubeUrl: "",
     category: "devices",
   },
   {
     id: "branches",
     title: "ربط الفروع بسيرفر الفروع",
-    description: "تسجيل المحل وإضافة الفروع، وربط كل فرع ومزامنة الأصناف بينها.",
+    description:
+      "تسجيل المحل وإضافة الفروع، وربط كل فرع ومزامنة الأصناف بينها.",
     youtubeUrl: "",
     category: "devices",
   },
@@ -675,7 +732,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "mobile-app",
     title: "تطبيق الهاتف لمتابعة الفروع",
-    description: "متابعة المبيعات والمخزون والتنبيهات والتحويلات لكل الفروع من هاتفك.",
+    description:
+      "متابعة المبيعات والمخزون والتنبيهات والتحويلات لكل الفروع من هاتفك.",
     youtubeUrl: "",
     category: "devices",
   },
@@ -684,7 +742,8 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "online-store",
     title: "إنشاء متجرك الإلكتروني واستقبال الطلبات",
-    description: "تفعيل المتجر ورابطه، واختيار الأصناف المعروضة، واستقبال الطلبات بالدفع عند الاستلام.",
+    description:
+      "تفعيل المتجر ورابطه، واختيار الأصناف المعروضة، واستقبال الطلبات بالدفع عند الاستلام.",
     youtubeUrl: "",
     category: "online-store",
     featured: true,
@@ -694,21 +753,24 @@ export const TUTORIALS: Tutorial[] = [
   {
     id: "eta-readiness",
     title: "تجهيز الإيصال الإلكتروني وتفعيله",
-    description: "قائمة الجاهزية وما ينقص قبل التفعيل، وبيئة التجربة والتشغيل الفعلي.",
+    description:
+      "قائمة الجاهزية وما ينقص قبل التفعيل، وبيئة التجربة والتشغيل الفعلي.",
     youtubeUrl: "",
     category: "e-receipt",
   },
   {
     id: "eta-shop",
     title: "بيانات المحل والفرع في المنظومة",
-    description: "رقم التسجيل الضريبي والاسم التجاري وكود النشاط، وكود الفرع وعنوانه.",
+    description:
+      "رقم التسجيل الضريبي والاسم التجاري وكود النشاط، وكود الفرع وعنوانه.",
     youtubeUrl: "",
     category: "e-receipt",
   },
   {
     id: "eta-devices-units",
     title: "أجهزة الإيصال ووحدات القياس",
-    description: "الرقم التسلسلي وبيانات الدخول لكل جهاز، وكود كل وحدة بيع في المنظومة.",
+    description:
+      "الرقم التسلسلي وبيانات الدخول لكل جهاز، وكود كل وحدة بيع في المنظومة.",
     youtubeUrl: "",
     category: "e-receipt",
   },
@@ -739,26 +801,33 @@ export const RESOLVED_TUTORIALS: ResolvedTutorial[] = (() => {
     return { ...t, videoId: getYoutubeId(t.youtubeUrl), lesson };
   }).sort(
     (a, b) =>
-      (categoryOrder.get(a.category) ?? 0) - (categoryOrder.get(b.category) ?? 0),
+      (categoryOrder.get(a.category) ?? 0) -
+      (categoryOrder.get(b.category) ?? 0),
   );
 })();
 
 /** الشروحات التي لها فيديو منشور فعلاً. */
-export const PUBLISHED_TUTORIALS = RESOLVED_TUTORIALS.filter((t) => t.videoId !== null);
+export const PUBLISHED_TUTORIALS = RESOLVED_TUTORIALS.filter(
+  (t) => t.videoId !== null,
+);
 
 /** معرّفات فيديوهات يوتيوب المنشورة (لجلب المدد وقت البناء). */
-export const PUBLISHED_VIDEO_IDS = PUBLISHED_TUTORIALS.map((t) => t.videoId as string);
+export const PUBLISHED_VIDEO_IDS = PUBLISHED_TUTORIALS.map(
+  (t) => t.videoId as string,
+);
 
-export const CATEGORY_BY_ID = new Map(TUTORIAL_CATEGORIES.map((c) => [c.id, c]));
+export const CATEGORY_BY_ID = new Map(
+  TUTORIAL_CATEGORIES.map((c) => [c.id, c]),
+);
 
 export function tutorialsIn(category: TutorialCategoryId): ResolvedTutorial[] {
   return RESOLVED_TUTORIALS.filter((t) => t.category === category);
 }
 
 /** المختارات للرئيسية: المنشور منها أولاً حتى لا تتصدر بطاقات «قريباً». */
-export const FEATURED_TUTORIALS = RESOLVED_TUTORIALS.filter((t) => t.featured).sort(
-  (a, b) => Number(a.videoId === null) - Number(b.videoId === null),
-);
+export const FEATURED_TUTORIALS = RESOLVED_TUTORIALS.filter(
+  (t) => t.featured,
+).sort((a, b) => Number(a.videoId === null) - Number(b.videoId === null));
 
 /** «شرح واحد / شرحان / 5 شروح / 24 شرحًا» حسب قواعد العدد في العربية. */
 export function lessonsLabel(n: number): string {

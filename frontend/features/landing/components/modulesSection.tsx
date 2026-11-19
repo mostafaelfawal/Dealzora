@@ -32,10 +32,7 @@ export function ModulesSection() {
                   >
                     {String(gi + 1).padStart(2, "0")} / {MODULE_GROUPS.length}
                   </p>
-                  <h3
-                    id={`group-${group.id}`}
-                    className="text-2xl font-bold"
-                  >
+                  <h3 id={`group-${group.id}`} className="text-2xl font-bold">
                     {group.label}
                   </h3>
                   <p className="text-sm leading-7 text-muted-foreground">
@@ -63,9 +60,7 @@ export function ModulesSection() {
                             )}
                           </div>
                           <div className="space-y-2">
-                            <h4 className="text-base font-semibold">
-                              {title}
-                            </h4>
+                            <h4 className="text-base font-semibold">{title}</h4>
                             <p className="text-sm leading-7 text-muted-foreground">
                               {description}
                             </p>

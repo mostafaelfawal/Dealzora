@@ -23,7 +23,6 @@ export interface PlanInfo {
   };
 }
 
-
 interface PlanDto {
   plan: PlanInfo["plan"];
   name: string;

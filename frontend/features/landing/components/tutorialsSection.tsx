@@ -14,7 +14,13 @@ import {
   tutorialsIn,
 } from "../config/tutorials";
 import { getYoutubeDurations } from "../lib/youtubeDurations";
-import { Container, ctaClass, external, Section, SectionHeading } from "./primitives";
+import {
+  Container,
+  ctaClass,
+  external,
+  Section,
+  SectionHeading,
+} from "./primitives";
 import { TutorialGrid } from "./tutorialPlayer";
 
 /** مختارات من الشروحات في الرئيسية، والمكتبة الكاملة في /tutorials. */
@@ -22,7 +28,10 @@ export async function TutorialsSection() {
   const total = RESOLVED_TUTORIALS.length;
   if (total === 0) return null;
   const published = PUBLISHED_TUTORIALS.length;
-  const featured = FEATURED_TUTORIALS.length > 0 ? FEATURED_TUTORIALS : RESOLVED_TUTORIALS.slice(0, 6);
+  const featured =
+    FEATURED_TUTORIALS.length > 0
+      ? FEATURED_TUTORIALS
+      : RESOLVED_TUTORIALS.slice(0, 6);
   const durations = await getYoutubeDurations(PUBLISHED_VIDEO_IDS);
 
   return (
@@ -55,7 +64,12 @@ export async function TutorialsSection() {
         {/* أقسام المكتبة: كل قسم يفتح مكانه في صفحة الشروحات. */}
         <div className="grid gap-px border bg-border sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)_auto]">
           {TUTORIAL_CATEGORIES.slice(0, 3).map((c) => (
-            <CategoryLink key={c.id} id={c.id} title={c.title} count={tutorialsIn(c.id).length} />
+            <CategoryLink
+              key={c.id}
+              id={c.id}
+              title={c.title}
+              count={tutorialsIn(c.id).length}
+            />
           ))}
           <Link
             href="/tutorials"
@@ -69,7 +83,12 @@ export async function TutorialsSection() {
           </Link>
           {/* الرئيسية تعرض أول ستة أقسام فقط، والبقية في صفحة الشروحات. */}
           {TUTORIAL_CATEGORIES.slice(3, 6).map((c) => (
-            <CategoryLink key={c.id} id={c.id} title={c.title} count={tutorialsIn(c.id).length} />
+            <CategoryLink
+              key={c.id}
+              id={c.id}
+              title={c.title}
+              count={tutorialsIn(c.id).length}
+            />
           ))}
         </div>
       </Container>
@@ -77,14 +96,24 @@ export async function TutorialsSection() {
   );
 }
 
-function CategoryLink({ id, title, count }: { id: string; title: string; count: number }) {
+function CategoryLink({
+  id,
+  title,
+  count,
+}: {
+  id: string;
+  title: string;
+  count: number;
+}) {
   return (
     <Link
       href={`/tutorials#${id}`}
       className="group flex items-center justify-between gap-3 bg-background px-5 py-4 text-sm outline-none hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
     >
       <span className="font-medium">{title}</span>
-      <span className="text-xs text-muted-foreground">{lessonsLabel(count)}</span>
+      <span className="text-xs text-muted-foreground">
+        {lessonsLabel(count)}
+      </span>
     </Link>
   );
 }

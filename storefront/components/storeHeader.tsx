@@ -32,7 +32,9 @@ export function StoreHeader({
     e.preventDefault();
     const text = q.trim();
     router.push(
-      text ? `/${store.slug}?q=${encodeURIComponent(text)}#products` : `/${store.slug}#products`,
+      text
+        ? `/${store.slug}?q=${encodeURIComponent(text)}#products`
+        : `/${store.slug}#products`,
     );
   }
 

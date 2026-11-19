@@ -3,10 +3,34 @@
  * الأصناف والأرقام مثال فقط، ومُعلَن عنها بوضوح للزائر.
  */
 const LINES = [
-  { name: "أرز أبيض 1 كجم", qty: "2", unit: "كيس", price: "38.00", total: "76.00" },
-  { name: "زيت عباد الشمس", qty: "1", unit: "زجاجة", price: "95.00", total: "95.00" },
-  { name: "شاي 250 جم", qty: "3", unit: "علبة", price: "42.50", total: "127.50" },
-  { name: "مياه معدنية", qty: "1", unit: "كرتونة", price: "60.00", total: "60.00" },
+  {
+    name: "أرز أبيض 1 كجم",
+    qty: "2",
+    unit: "كيس",
+    price: "38.00",
+    total: "76.00",
+  },
+  {
+    name: "زيت عباد الشمس",
+    qty: "1",
+    unit: "زجاجة",
+    price: "95.00",
+    total: "95.00",
+  },
+  {
+    name: "شاي 250 جم",
+    qty: "3",
+    unit: "علبة",
+    price: "42.50",
+    total: "127.50",
+  },
+  {
+    name: "مياه معدنية",
+    qty: "1",
+    unit: "كرتونة",
+    price: "60.00",
+    total: "60.00",
+  },
 ] as const;
 
 function Row({
@@ -97,7 +121,10 @@ export function ReceiptSample() {
               <p className="text-center text-[11px] text-muted-foreground">
                 شكراً لزيارتكم
               </p>
-              <div aria-hidden className="receipt-barcode mx-auto mt-3 h-10 w-44" />
+              <div
+                aria-hidden
+                className="receipt-barcode mx-auto mt-3 h-10 w-44"
+              />
             </article>
           </div>
         </div>

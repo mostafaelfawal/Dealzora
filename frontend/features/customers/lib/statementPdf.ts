@@ -111,7 +111,9 @@ export async function saveStatementPdf({
     title: `كشف حساب ${customer.name}`,
     periodLabel,
     generatedBy,
-    sections: [{ title: "حركات الحساب", html: statementHtml(customer, entries) }],
+    sections: [
+      { title: "حركات الحساب", html: statementHtml(customer, entries) },
+    ],
     appCss: await collectAppCss(),
   });
   return saveHtmlAsPdf(html, `كشف حساب ${customer.name} ${fileDate()}.pdf`);
@@ -143,5 +145,8 @@ export async function sendStatementWhatsapp(
   shopName: string,
 ): Promise<void> {
   const number = customer.phone ? toWhatsappNumber(customer.phone) : null;
-  await openWhatsapp(number ?? "", buildStatementWhatsappText(customer, shopName));
+  await openWhatsapp(
+    number ?? "",
+    buildStatementWhatsappText(customer, shopName),
+  );
 }

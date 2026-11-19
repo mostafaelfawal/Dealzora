@@ -1,4 +1,8 @@
-import { IconBrandWindows, IconDownload, IconExternalLink } from "@tabler/icons-react";
+import {
+  IconBrandWindows,
+  IconDownload,
+  IconExternalLink,
+} from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { siAndroid, siApple, siLinux } from "simple-icons";
 
@@ -11,9 +15,19 @@ import {
   type DownloadConfig,
   type PlatformId,
 } from "../config/site";
-import { BrandIcon, Container, ctaClass, external, Section, SectionHeading } from "./primitives";
+import {
+  BrandIcon,
+  Container,
+  ctaClass,
+  external,
+  Section,
+  SectionHeading,
+} from "./primitives";
 
-const PLATFORM: Record<PlatformId, { name: string; icon: ReactNode; action: string }> = {
+const PLATFORM: Record<
+  PlatformId,
+  { name: string; icon: ReactNode; action: string }
+> = {
   windows: {
     name: "ويندوز",
     icon: <IconBrandWindows className="size-6" aria-hidden />,
@@ -59,7 +73,9 @@ function PlatformCard({
     <li className="flex flex-col gap-5 bg-background p-6">
       <div className="flex items-start justify-between gap-3">
         <span className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center border">{p.icon}</span>
+          <span className="flex size-11 items-center justify-center border">
+            {p.icon}
+          </span>
           <span>
             <span className="block text-base font-semibold">{p.name}</span>
             <span className="block text-xs text-muted-foreground" dir="ltr">
@@ -96,7 +112,11 @@ function PlatformCard({
                 <span>
                   {p.action} <bdi dir="ltr">{v.label}</bdi>
                 </span>
-                {v.hint && <span className="text-xs font-normal opacity-75">({v.hint})</span>}
+                {v.hint && (
+                  <span className="text-xs font-normal opacity-75">
+                    ({v.hint})
+                  </span>
+                )}
               </a>
             ))}
           </div>
@@ -104,14 +124,18 @@ function PlatformCard({
           <a
             href={config.url}
             {...(id === "ios" ? external : {})}
-            className={cn(ctaClass(primary ? "default" : "outline", primary ? "lg" : "md"), "w-full")}
+            className={cn(
+              ctaClass(primary ? "default" : "outline", primary ? "lg" : "md"),
+              "w-full",
+            )}
           >
             <IconDownload aria-hidden />
             {p.action}
           </a>
         ) : (
           <p className="border border-dashed p-3 text-center text-sm text-muted-foreground">
-            سيُتاح {p.name === "آيفون" ? "رابط نسخة الويب" : "التحميل"} هنا فور صدوره
+            سيُتاح {p.name === "آيفون" ? "رابط نسخة الويب" : "التحميل"} هنا فور
+            صدوره
           </p>
         )}
       </div>
@@ -139,7 +163,11 @@ function Steps({ items }: { items: string[] }) {
 
 export function DownloadSection() {
   return (
-    <Section id="download" aria-labelledby="download-title" className="bg-muted/40">
+    <Section
+      id="download"
+      aria-labelledby="download-title"
+      className="bg-muted/40"
+    >
       <Container className="space-y-14">
         <SectionHeading
           id="download-title"
@@ -177,8 +205,8 @@ export function DownloadSection() {
                 ]}
               />
               <p className="text-xs leading-6 text-muted-foreground">
-                يعمل على ويندوز 10 و11 بنظام <bdi dir="ltr">64-bit</bdi>. يصلك تنبيه داخل البرنامج عند
-                صدور تحديث جديد.
+                يعمل على ويندوز 10 و11 بنظام <bdi dir="ltr">64-bit</bdi>. يصلك
+                تنبيه داخل البرنامج عند صدور تحديث جديد.
               </p>
             </PlatformCard>
             <PlatformCard id="linux" config={DOWNLOADS.linux}>
@@ -211,9 +239,11 @@ export function DownloadSection() {
                 ]}
               />
               <p className="text-xs leading-6 text-muted-foreground">
-                يعمل على macOS 11 وما بعده. لمعرفة معالج جهازك: قائمة Apple ثم «حول هذا الماك»؛
-                إن ظهرت كلمة <bdi dir="ltr">Chip</bdi> فاختر <bdi dir="ltr">Apple Silicon</bdi>، وإن
-                ظهرت <bdi dir="ltr">Processor Intel</bdi> فاختر <bdi dir="ltr">Intel</bdi>.
+                يعمل على macOS 11 وما بعده. لمعرفة معالج جهازك: قائمة Apple ثم
+                «حول هذا الماك»؛ إن ظهرت كلمة <bdi dir="ltr">Chip</bdi> فاختر{" "}
+                <bdi dir="ltr">Apple Silicon</bdi>، وإن ظهرت{" "}
+                <bdi dir="ltr">Processor Intel</bdi> فاختر{" "}
+                <bdi dir="ltr">Intel</bdi>.
               </p>
             </PlatformCard>
           </ul>
@@ -223,9 +253,9 @@ export function DownloadSection() {
           <div className="space-y-1">
             <h3 className="text-xl font-bold">تطبيق الهاتف</h3>
             <p className="max-w-2xl text-sm leading-7 text-muted-foreground">
-              لأصحاب خطة «سلسلة» ومديري الفروع: متابعة الفروع والتقارير
-              اللحظية، والموافقة على تحويلات المخزون، وتعديل الأسعار، والتنبيهات.
-              التطبيق مكمّل لبرنامج الكمبيوتر ولا يحل محله.
+              لأصحاب خطة «سلسلة» ومديري الفروع: متابعة الفروع والتقارير اللحظية،
+              والموافقة على تحويلات المخزون، وتعديل الأسعار، والتنبيهات. التطبيق
+              مكمّل لبرنامج الكمبيوتر ولا يحل محله.
             </p>
           </div>
 

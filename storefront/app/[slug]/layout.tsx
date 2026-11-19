@@ -21,11 +21,15 @@ import { getStore } from "./data";
 
 type Props = { children: React.ReactNode; params: Promise<{ slug: string }> };
 
-export async function generateMetadata({ params }: Omit<Props, "children">): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: Omit<Props, "children">): Promise<Metadata> {
   const { slug } = await params;
   const store = await getStore(slug);
   const description =
-    store.tagline ?? store.about?.slice(0, 160) ?? `اطلب من ${store.name} أونلاين والدفع عند الاستلام.`;
+    store.tagline ??
+    store.about?.slice(0, 160) ??
+    `اطلب من ${store.name} أونلاين والدفع عند الاستلام.`;
   return {
     title: { default: store.name, template: `%s | ${store.name}` },
     description,
@@ -37,7 +41,9 @@ export async function generateMetadata({ params }: Omit<Props, "children">): Pro
       description,
       locale: "ar_EG",
       url: `/${store.slug}`,
-      ...(store.logo_url ? { images: [{ url: store.logo_url, width: 512, height: 512 }] } : {}),
+      ...(store.logo_url
+        ? { images: [{ url: store.logo_url, width: 512, height: 512 }] }
+        : {}),
     },
     icons: store.logo_url ? { icon: store.logo_url } : undefined,
   };
@@ -63,7 +69,11 @@ export default async function StoreLayout({ children, params }: Props) {
   const mode = forcedModeScript(store.theme.mode);
   const socials = [
     { href: store.theme.facebook, label: "فيسبوك", icon: IconBrandFacebook },
-    { href: store.theme.instagram, label: "إنستجرام", icon: IconBrandInstagram },
+    {
+      href: store.theme.instagram,
+      label: "إنستجرام",
+      icon: IconBrandInstagram,
+    },
     { href: store.theme.tiktok, label: "تيك توك", icon: IconBrandTiktok },
   ].filter((s): s is typeof s & { href: string } => !!s.href);
 
@@ -78,19 +88,26 @@ export default async function StoreLayout({ children, params }: Props) {
         </div>
       )}
       <Suspense fallback={<div className="h-16 border-b" />}>
-        <StoreHeader logoUrl={store.logo_url} allowThemeToggle={store.theme.mode === "system"} />
+        <StoreHeader
+          logoUrl={store.logo_url}
+          allowThemeToggle={store.theme.mode === "system"}
+        />
       </Suspense>
       {!store.accepting_orders && (
         <div className="border-b bg-warning/15 px-4 py-2 text-center text-sm">
           المتجر لا يستقبل طلبات الآن. يمكنك التصفح والتواصل معه بالهاتف.
         </div>
       )}
-      <main className="mx-auto min-h-[60dvh] max-w-6xl px-4 py-6 pb-28 md:pb-12">{children}</main>
+      <main className="mx-auto min-h-[60dvh] max-w-6xl px-4 py-6 pb-28 md:pb-12">
+        {children}
+      </main>
       <footer className="border-t bg-muted/30">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
           <div className="space-y-1">
             <p className="font-bold">{store.name}</p>
-            {store.tagline && <p className="text-muted-foreground">{store.tagline}</p>}
+            {store.tagline && (
+              <p className="text-muted-foreground">{store.tagline}</p>
+            )}
           </div>
           <ul className="space-y-2 text-muted-foreground">
             {store.address && (
@@ -109,7 +126,10 @@ export default async function StoreLayout({ children, params }: Props) {
           </ul>
           <ul className="space-y-2">
             <li>
-              <a href={`tel:${store.phone}`} className="flex items-center gap-2 hover:underline">
+              <a
+                href={`tel:${store.phone}`}
+                className="flex items-center gap-2 hover:underline"
+              >
                 <IconPhone className="size-4" />
                 <span dir="ltr" className="font-mono">
                   {store.phone}
@@ -130,7 +150,10 @@ export default async function StoreLayout({ children, params }: Props) {
               </li>
             )}
             <li>
-              <Link href={`/${store.slug}/orders`} className="text-muted-foreground hover:underline">
+              <Link
+                href={`/${store.slug}/orders`}
+                className="text-muted-foreground hover:underline"
+              >
                 طلباتي
               </Link>
             </li>

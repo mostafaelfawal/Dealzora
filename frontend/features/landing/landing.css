@@ -66,8 +66,7 @@ html:has(.landing-root) {
 /* خروج الإيصال من فتحة الطابعة مرة واحدة عند الفتح (نفس فكرة المعاينة في البرنامج). */
 @media (prefers-reduced-motion: no-preference) {
   .landing-print {
-    animation: landing-print-out 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s
-      both;
+    animation: landing-print-out 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
   }
 }
 

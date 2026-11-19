@@ -22,7 +22,9 @@ export function ProductActions({ p }: { p: PublicProduct }) {
   if (!canOrder)
     return (
       <p className="border bg-muted p-3 text-sm">
-        {p.available ? "المتجر لا يستقبل طلبات الآن." : "هذا الصنف غير متوفر حالياً."}
+        {p.available
+          ? "المتجر لا يستقبل طلبات الآن."
+          : "هذا الصنف غير متوفر حالياً."}
       </p>
     );
 

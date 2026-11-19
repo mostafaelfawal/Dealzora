@@ -49,7 +49,9 @@ export function QtyStepper({
           {formatQty(qty)}
         </span>
         {size === "md" && (
-          <span className="mt-0.5 text-[10px] text-muted-foreground">{unit}</span>
+          <span className="mt-0.5 text-[10px] text-muted-foreground">
+            {unit}
+          </span>
         )}
       </span>
       <button

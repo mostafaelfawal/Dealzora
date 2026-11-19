@@ -11,7 +11,11 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 
-export default async function OrderPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function OrderPage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
   const { token } = await params;
   if (!/^[0-9a-f]{40}$/.test(token)) notFound();
   return (

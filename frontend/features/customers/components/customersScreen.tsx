@@ -293,7 +293,9 @@ export function CustomersScreen() {
       />
       <InstallmentFormDialog
         open={dialog?.type === "installment"}
-        prefill={{ customerId: dialog?.type === "installment" ? dialog.id : null }}
+        prefill={{
+          customerId: dialog?.type === "installment" ? dialog.id : null,
+        }}
         onClose={close}
       />
       <DeleteCustomerDialog

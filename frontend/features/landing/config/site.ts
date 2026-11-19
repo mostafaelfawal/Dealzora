@@ -164,7 +164,8 @@ export const DOWNLOADS = {
 } satisfies Record<PlatformId, DownloadConfig>;
 
 /** صفحة كل الإصدارات وملاحظاتها. */
-export const RELEASES_URL = "https://github.com/mostafaelfawal/Dealzora/releases";
+export const RELEASES_URL =
+  "https://github.com/mostafaelfawal/Dealzora/releases";
 
 export function isDownloadReady(d: DownloadConfig): d is DownloadConfig & {
   url: string;

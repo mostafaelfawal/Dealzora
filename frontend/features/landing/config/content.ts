@@ -150,7 +150,8 @@ export const MODULE_GROUPS: ModuleGroup[] = [
       {
         icon: IconBarcode,
         title: "ملصقات الباركود",
-        description: "طباعة ملصقات الباركود للأصناف التي لا تحمل باركوداً من المصنع.",
+        description:
+          "طباعة ملصقات الباركود للأصناف التي لا تحمل باركوداً من المصنع.",
         feature: "barcode_labels",
       },
     ],
@@ -197,7 +198,8 @@ export const MODULE_GROUPS: ModuleGroup[] = [
       {
         icon: IconHistory,
         title: "سجل العمليات",
-        description: "من أضاف أو عدّل أو حذف، ومتى، لكل عملية حساسة في البرنامج.",
+        description:
+          "من أضاف أو عدّل أو حذف، ومتى، لكل عملية حساسة في البرنامج.",
         feature: "audit_log",
       },
       {

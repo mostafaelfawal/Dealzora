@@ -34,11 +34,16 @@ function BrandedCover({ tutorial }: { tutorial: ResolvedTutorial }) {
       <span aria-hidden className="landing-grid absolute inset-0 opacity-60" />
       <span className="absolute inset-x-4 top-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
         <span className="truncate">{category?.title}</span>
-        {Icon && <Icon className="size-5 shrink-0 text-foreground" aria-hidden />}
+        {Icon && (
+          <Icon className="size-5 shrink-0 text-foreground" aria-hidden />
+        )}
       </span>
       <span className="absolute right-4 bottom-3 text-xs text-muted-foreground">
         الدرس{" "}
-        <span className="font-mono text-sm font-semibold text-foreground" dir="ltr">
+        <span
+          className="font-mono text-sm font-semibold text-foreground"
+          dir="ltr"
+        >
           {String(tutorial.lesson).padStart(2, "0")}
         </span>
       </span>
@@ -71,7 +76,11 @@ export function TutorialCard({
         <div className="relative aspect-video w-full overflow-hidden bg-muted">
           <BrandedCover tutorial={tutorial} />
         </div>
-        <TutorialCardBody tutorial={tutorial} showCategory={showCategory} showLesson={false} />
+        <TutorialCardBody
+          tutorial={tutorial}
+          showCategory={showCategory}
+          showLesson={false}
+        />
       </li>
     );
   }
@@ -109,7 +118,11 @@ export function TutorialCard({
           </span>
         )}
       </button>
-      <TutorialCardBody tutorial={tutorial} showCategory={showCategory} showLesson />
+      <TutorialCardBody
+        tutorial={tutorial}
+        showCategory={showCategory}
+        showLesson
+      />
     </li>
   );
 }
@@ -133,12 +146,16 @@ function TutorialCardBody({
               {String(tutorial.lesson).padStart(2, "0")}
             </span>
           )}
-          {showLesson && showCategory && <span aria-hidden className="h-px w-3 bg-border" />}
+          {showLesson && showCategory && (
+            <span aria-hidden className="h-px w-3 bg-border" />
+          )}
           {showCategory && CATEGORY_BY_ID.get(tutorial.category)?.title}
         </span>
       )}
       <h3 className="text-base leading-7 font-semibold">{tutorial.title}</h3>
-      <p className="text-sm leading-7 text-muted-foreground">{tutorial.description}</p>
+      <p className="text-sm leading-7 text-muted-foreground">
+        {tutorial.description}
+      </p>
     </div>
   );
 }
@@ -152,13 +169,20 @@ export function TutorialDialog({
   onClose: () => void;
 }) {
   return (
-    <Dialog open={tutorial !== null} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={tutorial !== null}
+      onOpenChange={(open) => !open && onClose()}
+    >
       <DialogContent className="w-[min(94vw,64rem)] max-w-none gap-0 p-0 sm:max-w-none">
         {tutorial && (
           <>
             <div className="space-y-1 p-4 pe-12">
-              <DialogTitle className="text-base font-semibold">{tutorial.title}</DialogTitle>
-              <DialogDescription className="text-sm">{tutorial.description}</DialogDescription>
+              <DialogTitle className="text-base font-semibold">
+                {tutorial.title}
+              </DialogTitle>
+              <DialogDescription className="text-sm">
+                {tutorial.description}
+              </DialogDescription>
             </div>
             <div className="relative aspect-video w-full bg-black">
               <iframe
@@ -190,7 +214,12 @@ export function TutorialGrid({
     <>
       <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {tutorials.map((t) => (
-          <TutorialCard key={t.id} tutorial={t} durations={durations} onPlay={setPlaying} />
+          <TutorialCard
+            key={t.id}
+            tutorial={t}
+            durations={durations}
+            onPlay={setPlaying}
+          />
         ))}
       </ul>
       <TutorialDialog tutorial={playing} onClose={() => setPlaying(null)} />
@@ -222,10 +251,17 @@ export function TutorialLibrary({ durations }: { durations: Durations }) {
                     <Icon className="size-6" aria-hidden />
                   </span>
                   <div className="space-y-1">
-                    <p className="font-mono text-xs text-muted-foreground" dir="ltr">
-                      {String(i + 1).padStart(2, "0")} / {TUTORIAL_CATEGORIES.length}
+                    <p
+                      className="font-mono text-xs text-muted-foreground"
+                      dir="ltr"
+                    >
+                      {String(i + 1).padStart(2, "0")} /{" "}
+                      {TUTORIAL_CATEGORIES.length}
                     </p>
-                    <h2 id={`cat-${category.id}`} className="text-2xl font-bold">
+                    <h2
+                      id={`cat-${category.id}`}
+                      className="text-2xl font-bold"
+                    >
                       {category.title}
                     </h2>
                     <p className="text-sm leading-7 text-muted-foreground">

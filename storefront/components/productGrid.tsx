@@ -59,7 +59,11 @@ export function ProductGrid({
           جرّب كلمة أبسط أو تصفّح كل الأصناف.
         </p>
         {(filters.q || filters.category) && (
-          <ButtonLink href={`/${store.slug}#products`} variant="outline" size="sm">
+          <ButtonLink
+            href={`/${store.slug}#products`}
+            variant="outline"
+            size="sm"
+          >
             كل الأصناف
           </ButtonLink>
         )}
@@ -75,7 +79,12 @@ export function ProductGrid({
       </div>
       {more && (
         <div className="flex flex-col items-center gap-2">
-          <Button variant="outline" onClick={loadMore} disabled={loading} className="min-w-44">
+          <Button
+            variant="outline"
+            onClick={loadMore}
+            disabled={loading}
+            className="min-w-44"
+          >
             {loading ? <IconLoader2 className="animate-spin" /> : null}
             عرض المزيد ({initial.total - items.length})
           </Button>

@@ -21,11 +21,36 @@ import { Price } from "./price";
 import { useStore } from "./storeContext";
 import { Button, ButtonLink, Skeleton } from "./ui";
 
-const STEPS: { status: OrderStatus; label: string; hint: string; key: keyof TrackedOrder }[] = [
-  { status: "new", label: "تم استلام الطلب", hint: "بانتظار تأكيد المتجر", key: "created_at" },
-  { status: "confirmed", label: "تم التأكيد", hint: "المتجر يجهّز طلبك", key: "confirmed_at" },
-  { status: "delivering", label: "في الطريق إليك", hint: "المندوب خرج للتوصيل", key: "delivering_at" },
-  { status: "delivered", label: "تم التسليم", hint: "شكراً لطلبك", key: "delivered_at" },
+const STEPS: {
+  status: OrderStatus;
+  label: string;
+  hint: string;
+  key: keyof TrackedOrder;
+}[] = [
+  {
+    status: "new",
+    label: "تم استلام الطلب",
+    hint: "بانتظار تأكيد المتجر",
+    key: "created_at",
+  },
+  {
+    status: "confirmed",
+    label: "تم التأكيد",
+    hint: "المتجر يجهّز طلبك",
+    key: "confirmed_at",
+  },
+  {
+    status: "delivering",
+    label: "في الطريق إليك",
+    hint: "المندوب خرج للتوصيل",
+    key: "delivering_at",
+  },
+  {
+    status: "delivered",
+    label: "تم التسليم",
+    hint: "شكراً لطلبك",
+    key: "delivered_at",
+  },
 ];
 
 /** متابعة الطلب برابطه السري: المراحل، والأصناف، والإلغاء قبل التأكيد. تتحدّث كل 30 ثانية. */
@@ -68,7 +93,11 @@ export function OrderTracker({ token }: { token: string }) {
   async function cancel() {
     setCancelling(true);
     try {
-      setOrder(await storeApi<TrackedOrder>(store.slug, `/orders/${token}/cancel`, { method: "POST" }));
+      setOrder(
+        await storeApi<TrackedOrder>(store.slug, `/orders/${token}/cancel`, {
+          method: "POST",
+        }),
+      );
       setConfirmCancel(false);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "تعذّر إلغاء الطلب");
@@ -109,7 +138,8 @@ export function OrderTracker({ token }: { token: string }) {
           <div className="space-y-1">
             <h1 className="text-lg font-bold">تم إرسال طلبك بنجاح</h1>
             <p className="text-sm text-muted-foreground">
-              احفظ هذه الصفحة لمتابعة طلبك. سيتواصل معك المتجر لتأكيد الطلب، والدفع نقداً عند الاستلام.
+              احفظ هذه الصفحة لمتابعة طلبك. سيتواصل معك المتجر لتأكيد الطلب،
+              والدفع نقداً عند الاستلام.
             </p>
           </div>
         </section>
@@ -120,8 +150,16 @@ export function OrderTracker({ token }: { token: string }) {
           <h2 className="text-lg font-bold">
             طلب <span className="font-mono">#{order.number}</span>
           </h2>
-          <span className="text-sm text-muted-foreground">{formatDateTime(order.created_at)}</span>
-          <Button variant="ghost" size="icon-sm" className="ms-auto" aria-label="تحديث" onClick={() => void load()}>
+          <span className="text-sm text-muted-foreground">
+            {formatDateTime(order.created_at)}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="ms-auto"
+            aria-label="تحديث"
+            onClick={() => void load()}
+          >
             <IconRefresh />
           </Button>
         </header>
@@ -132,7 +170,9 @@ export function OrderTracker({ token }: { token: string }) {
             <div>
               <p className="font-semibold">تم إلغاء الطلب</p>
               <p className="text-sm">
-                {order.cancelled_by === "customer" ? "ألغيت الطلب بنفسك." : order.cancel_reason}
+                {order.cancelled_by === "customer"
+                  ? "ألغيت الطلب بنفسك."
+                  : order.cancel_reason}
               </p>
             </div>
           </div>
@@ -143,11 +183,17 @@ export function OrderTracker({ token }: { token: string }) {
               const current = i === reached;
               const at = order[s.key] as string | null;
               return (
-                <li key={s.status} className="relative flex gap-3 pb-5 last:pb-0">
+                <li
+                  key={s.status}
+                  className="relative flex gap-3 pb-5 last:pb-0"
+                >
                   {i < STEPS.length - 1 && (
                     <span
                       aria-hidden
-                      className={cn("absolute top-7 bottom-0 start-[0.6875rem] w-0.5", i < reached ? "bg-success" : "bg-border")}
+                      className={cn(
+                        "absolute top-7 bottom-0 start-[0.6875rem] w-0.5",
+                        i < reached ? "bg-success" : "bg-border",
+                      )}
                     />
                   )}
                   <span
@@ -163,10 +209,21 @@ export function OrderTracker({ token }: { token: string }) {
                     )}
                   </span>
                   <div className="min-w-0">
-                    <p className={cn("text-sm", current ? "font-bold" : done ? "font-medium" : "text-muted-foreground")}>
+                    <p
+                      className={cn(
+                        "text-sm",
+                        current
+                          ? "font-bold"
+                          : done
+                            ? "font-medium"
+                            : "text-muted-foreground",
+                      )}
+                    >
                       {s.label}
                     </p>
-                    <p className="text-xs text-muted-foreground">{at ? formatDateTime(at) : s.hint}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {at ? formatDateTime(at) : s.hint}
+                    </p>
                   </div>
                 </li>
               );
@@ -179,7 +236,10 @@ export function OrderTracker({ token }: { token: string }) {
         <h3 className="border-b p-4 font-bold">الأصناف</h3>
         <ul className="divide-y">
           {order.lines.map((l) => (
-            <li key={l.gid} className="flex items-center gap-3 px-4 py-3 text-sm">
+            <li
+              key={l.gid}
+              className="flex items-center gap-3 px-4 py-3 text-sm"
+            >
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">{l.name}</span>
                 <span className="text-xs text-muted-foreground">
@@ -199,12 +259,22 @@ export function OrderTracker({ token }: { token: string }) {
           </div>
           <div className="flex justify-between text-muted-foreground">
             <dt>التوصيل</dt>
-            <dd>{order.delivery_fee ? <Price cents={order.delivery_fee} currency={order.currency} /> : "مجاني"}</dd>
+            <dd>
+              {order.delivery_fee ? (
+                <Price cents={order.delivery_fee} currency={order.currency} />
+              ) : (
+                "مجاني"
+              )}
+            </dd>
           </div>
           <div className="flex justify-between border-t pt-2 text-base font-bold">
             <dt>المطلوب عند الاستلام</dt>
             <dd>
-              <Price cents={order.total} currency={order.currency} className="text-lg" />
+              <Price
+                cents={order.total}
+                currency={order.currency}
+                className="text-lg"
+              />
             </dd>
           </div>
         </dl>
@@ -217,13 +287,19 @@ export function OrderTracker({ token }: { token: string }) {
           {order.city ? `${order.city} — ` : ""}
           {order.address}
         </p>
-        <p dir="ltr" className="text-end font-mono text-xs text-muted-foreground">
+        <p
+          dir="ltr"
+          className="text-end font-mono text-xs text-muted-foreground"
+        >
           {order.phone}
         </p>
       </section>
 
       <div className="flex flex-wrap gap-2">
-        <a href={`tel:${store.phone}`} className="inline-flex h-10 items-center gap-2 border px-4 text-sm hover:bg-muted">
+        <a
+          href={`tel:${store.phone}`}
+          className="inline-flex h-10 items-center gap-2 border px-4 text-sm hover:bg-muted"
+        >
           <IconPhone className="size-4" />
           اتصل بالمتجر
         </a>
@@ -240,7 +316,12 @@ export function OrderTracker({ token }: { token: string }) {
           (confirmCancel ? (
             <span className="ms-auto flex items-center gap-2">
               <span className="text-sm">إلغاء الطلب؟</span>
-              <Button variant="destructive" size="md" disabled={cancelling} onClick={() => void cancel()}>
+              <Button
+                variant="destructive"
+                size="md"
+                disabled={cancelling}
+                onClick={() => void cancel()}
+              >
                 {cancelling ? <IconLoader2 className="animate-spin" /> : null}
                 نعم، ألغِ
               </Button>
@@ -249,7 +330,11 @@ export function OrderTracker({ token }: { token: string }) {
               </Button>
             </span>
           ) : (
-            <Button variant="ghost" className="ms-auto text-destructive" onClick={() => setConfirmCancel(true)}>
+            <Button
+              variant="ghost"
+              className="ms-auto text-destructive"
+              onClick={() => setConfirmCancel(true)}
+            >
               إلغاء الطلب
             </Button>
           ))}

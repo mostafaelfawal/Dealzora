@@ -52,8 +52,15 @@ export function ProductCard({ p }: { p: PublicProduct }) {
 
   return (
     <article className="group relative flex flex-col border bg-card transition-[border-color,box-shadow] duration-200 hover:border-foreground/20 hover:shadow-[0_8px_30px_-12px_oklch(0_0_0/0.25)]">
-      <Link href={href} className="outline-none focus-visible:ring-2 focus-visible:ring-ring/60">
-        <ProductImage url={p.image_url} name={p.name} className="aspect-square" />
+      <Link
+        href={href}
+        className="outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      >
+        <ProductImage
+          url={p.image_url}
+          name={p.name}
+          className="aspect-square"
+        />
         <span className="absolute inset-x-2 top-2 flex flex-wrap gap-1">
           {p.featured && (
             <span className="flex items-center gap-1 bg-background/90 px-1.5 py-0.5 text-[10px] font-medium backdrop-blur">
@@ -80,7 +87,11 @@ export function ProductCard({ p }: { p: PublicProduct }) {
           {p.name}
         </Link>
         <div className="flex items-baseline justify-between gap-1">
-          <Price cents={p.price} currency={store.currency} className="text-base" />
+          <Price
+            cents={p.price}
+            currency={store.currency}
+            className="text-base"
+          />
           <span className="text-[11px] text-muted-foreground">/ {p.unit}</span>
         </div>
         <div className="mt-auto">

@@ -1,4 +1,8 @@
-import { IconArrowRight, IconCash, IconTruckDelivery } from "@tabler/icons-react";
+import {
+  IconArrowRight,
+  IconCash,
+  IconTruckDelivery,
+} from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -27,7 +31,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: product.name,
       description,
-      ...(product.images.length ? { images: product.images.map((url) => ({ url })) } : {}),
+      ...(product.images.length
+        ? { images: product.images.map((url) => ({ url })) }
+        : {}),
     },
   };
 }
@@ -47,7 +53,9 @@ export default async function ProductPage({ params }: Props) {
     offers: {
       "@type": "Offer",
       price: (p.price / 100).toFixed(2),
-      availability: p.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      availability: p.available
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
     },
   };
 
@@ -56,17 +64,28 @@ export default async function ProductPage({ params }: Props) {
       <script
         type="application/ld+json"
         // JSON.stringify آمن هنا: نهرب "<" حتى لا يُغلق الوسم من داخل نص الصنف.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
-      <nav aria-label="مسار التصفح" className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href={`/${slug}`} className="flex items-center gap-1 hover:text-foreground">
+      <nav
+        aria-label="مسار التصفح"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground"
+      >
+        <Link
+          href={`/${slug}`}
+          className="flex items-center gap-1 hover:text-foreground"
+        >
           <IconArrowRight className="size-4" />
           {store.name}
         </Link>
         {p.category && (
           <>
             <span>/</span>
-            <Link href={`/${slug}?category=${encodeURIComponent(p.category)}#products`} className="hover:text-foreground">
+            <Link
+              href={`/${slug}?category=${encodeURIComponent(p.category)}#products`}
+              className="hover:text-foreground"
+            >
               {p.category}
             </Link>
           </>
@@ -74,16 +93,31 @@ export default async function ProductPage({ params }: Props) {
       </nav>
 
       <article className="grid gap-6 md:grid-cols-2 md:gap-10">
-        <ProductGallery images={p.images.length ? p.images : p.image_url ? [p.image_url] : []} name={p.name} />
+        <ProductGallery
+          images={p.images.length ? p.images : p.image_url ? [p.image_url] : []}
+          name={p.name}
+        />
         <div className="flex flex-col gap-5">
           <div className="space-y-2">
-            {p.category && <p className="text-sm text-muted-foreground">{p.category}</p>}
-            <h1 className="text-2xl leading-tight font-bold sm:text-3xl">{p.name}</h1>
+            {p.category && (
+              <p className="text-sm text-muted-foreground">{p.category}</p>
+            )}
+            <h1 className="text-2xl leading-tight font-bold sm:text-3xl">
+              {p.name}
+            </h1>
             <div className="flex items-baseline gap-2">
-              <Price cents={p.price} currency={store.currency} className="text-3xl" />
+              <Price
+                cents={p.price}
+                currency={store.currency}
+                className="text-3xl"
+              />
               <span className="text-sm text-muted-foreground">/ {p.unit}</span>
             </div>
-            {p.low_stock && p.available && <p className="text-sm font-medium text-warning">كمية محدودة متبقية</p>}
+            {p.low_stock && p.available && (
+              <p className="text-sm font-medium text-warning">
+                كمية محدودة متبقية
+              </p>
+            )}
           </div>
 
           <ProductActions p={p} />
@@ -108,7 +142,9 @@ export default async function ProductPage({ params }: Props) {
           {p.description && (
             <section className="space-y-2">
               <h2 className="font-bold">عن المنتج</h2>
-              <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">{p.description}</p>
+              <p className="text-sm leading-7 whitespace-pre-line text-muted-foreground">
+                {p.description}
+              </p>
             </section>
           )}
         </div>

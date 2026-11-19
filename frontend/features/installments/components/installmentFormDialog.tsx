@@ -347,9 +347,9 @@ function PlanForm({
       <p className="flex gap-2 border bg-muted/40 p-3 text-xs text-muted-foreground">
         <IconFileInvoice className="size-4 shrink-0 text-primary" />
         <span>
-          يُقسَّط دين مسجّل على العميل. لبيع جديد بالتقسيط: بِع من الكاشير
-          بالدفع الآجل (فيُخصم المخزون وتصدر الفاتورة)، ثم اضغط «قسّط هذه
-          الفاتورة» بعد إتمام البيع.
+          يُقسَّط دين مسجّل على العميل. لبيع جديد بالتقسيط: بِع من الكاشير بالدفع
+          الآجل (فيُخصم المخزون وتصدر الفاتورة)، ثم اضغط «قسّط هذه الفاتورة» بعد
+          إتمام البيع.
         </span>
       </p>
 
@@ -556,8 +556,8 @@ export function InstallmentFormDialog({
         <DialogHeader className="text-start">
           <DialogTitle>خطة تقسيط جديدة</DialogTitle>
           <DialogDescription>
-            قسّط مديونية العميل على أقساط شهرية أو أسبوعية بلا فائدة، ويُسجَّل
-            كل قسط في كشف حسابه وفي الخزنة.
+            قسّط مديونية العميل على أقساط شهرية أو أسبوعية بلا فائدة، ويُسجَّل كل
+            قسط في كشف حسابه وفي الخزنة.
           </DialogDescription>
         </DialogHeader>
         {open && (

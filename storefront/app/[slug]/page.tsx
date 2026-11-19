@@ -34,10 +34,13 @@ export default async function StorePage({ params, searchParams }: Props) {
   const q = one(sp.q)?.trim() || undefined;
   const category = one(sp.category);
   const rawSort = one(sp.sort) as SortKey | undefined;
-  const sort: SortKey = rawSort && SORTS.includes(rawSort) ? rawSort : "default";
+  const sort: SortKey =
+    rawSort && SORTS.includes(rawSort) ? rawSort : "default";
 
   const store = await getStore(slug);
-  const page = await orNotFound(fetchProducts(slug, { q, category, sort, pageSize: 24 }));
+  const page = await orNotFound(
+    fetchProducts(slug, { q, category, sort, pageSize: 24 }),
+  );
   const browsing = !q && !category;
   const cover = store.theme.cover_url;
   const catHref = (c?: string) => {
@@ -70,8 +73,16 @@ export default async function StorePage({ params, searchParams }: Props) {
           {cover ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element -- صورة الغلاف من السيرفر نفسه */}
-              <img src={cover} alt="" className="absolute inset-0 size-full object-cover" fetchPriority="high" />
-              <div aria-hidden className="absolute inset-0 bg-linear-to-l from-black/80 via-black/55 to-black/20" />
+              <img
+                src={cover}
+                alt=""
+                className="absolute inset-0 size-full object-cover"
+                fetchPriority="high"
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0 bg-linear-to-l from-black/80 via-black/55 to-black/20"
+              />
             </>
           ) : (
             <div
@@ -82,13 +93,22 @@ export default async function StorePage({ params, searchParams }: Props) {
           <div
             className={cn(
               "relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-8",
-              cover && "min-h-56 text-white sm:min-h-72 [&_li]:border-white/20 [&_li]:bg-black/30 [&_li]:backdrop-blur [&_p]:text-white/85",
+              cover &&
+                "min-h-56 text-white sm:min-h-72 [&_li]:border-white/20 [&_li]:bg-black/30 [&_li]:backdrop-blur [&_p]:text-white/85",
             )}
           >
-            <StoreLogo url={store.logo_url} name={store.name} className="size-20 sm:size-24" />
+            <StoreLogo
+              url={store.logo_url}
+              name={store.name}
+              className="size-20 sm:size-24"
+            />
             <div className="min-w-0 flex-1 space-y-2">
               <h1 className="text-2xl font-bold sm:text-3xl">{store.name}</h1>
-              {store.tagline && <p className="text-muted-foreground sm:text-lg">{store.tagline}</p>}
+              {store.tagline && (
+                <p className="text-muted-foreground sm:text-lg">
+                  {store.tagline}
+                </p>
+              )}
               <ul className="flex flex-wrap gap-1.5 pt-1">
                 {chips.map((c) => (
                   <li
@@ -111,7 +131,9 @@ export default async function StorePage({ params, searchParams }: Props) {
             <p
               className={cn(
                 "relative border-t px-5 py-3 text-sm whitespace-pre-line sm:px-8",
-                cover ? "border-white/15 bg-black/40 text-white/85 backdrop-blur" : "text-muted-foreground",
+                cover
+                  ? "border-white/15 bg-black/40 text-white/85 backdrop-blur"
+                  : "text-muted-foreground",
               )}
             >
               {store.about}
@@ -140,7 +162,9 @@ export default async function StorePage({ params, searchParams }: Props) {
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-lg font-bold">
             {q ? `نتائج «${q}»` : (category ?? "كل الأصناف")}
-            <span className="ms-2 text-sm font-normal text-muted-foreground">{page.total} صنف</span>
+            <span className="ms-2 text-sm font-normal text-muted-foreground">
+              {page.total} صنف
+            </span>
           </h2>
           <div className="ms-auto">
             <Suspense>
@@ -150,33 +174,54 @@ export default async function StorePage({ params, searchParams }: Props) {
         </div>
 
         {store.categories.length > 1 && !q && (
-          <nav aria-label="التصنيفات" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-            {[{ name: undefined, label: "الكل", count: store.products_count }, ...store.categories.map((c) => ({ name: c.name, label: c.name, count: c.count }))].map(
-              (c) => {
-                const active = c.name === category;
-                return (
-                  <Link
-                    key={c.label}
-                    href={catHref(c.name)}
-                    scroll={false}
-                    aria-current={active ? "page" : undefined}
+          <nav
+            aria-label="التصنيفات"
+            className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+          >
+            {[
+              { name: undefined, label: "الكل", count: store.products_count },
+              ...store.categories.map((c) => ({
+                name: c.name,
+                label: c.name,
+                count: c.count,
+              })),
+            ].map((c) => {
+              const active = c.name === category;
+              return (
+                <Link
+                  key={c.label}
+                  href={catHref(c.name)}
+                  scroll={false}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-9 shrink-0 items-center gap-1.5 border px-3 text-sm transition-colors",
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "bg-background hover:bg-muted",
+                  )}
+                >
+                  {c.label}
+                  <span
                     className={cn(
-                      "flex h-9 shrink-0 items-center gap-1.5 border px-3 text-sm transition-colors",
-                      active ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
+                      "font-mono text-[11px]",
+                      active
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground",
                     )}
                   >
-                    {c.label}
-                    <span className={cn("font-mono text-[11px]", active ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                      {c.count}
-                    </span>
-                  </Link>
-                );
-              },
-            )}
+                    {c.count}
+                  </span>
+                </Link>
+              );
+            })}
           </nav>
         )}
 
-        <ProductGrid key={`${q}|${category}|${sort}`} initial={page} filters={{ q, category, sort }} />
+        <ProductGrid
+          key={`${q}|${category}|${sort}`}
+          initial={page}
+          filters={{ q, category, sort }}
+        />
       </section>
     </div>
   );

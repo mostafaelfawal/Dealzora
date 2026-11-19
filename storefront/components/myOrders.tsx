@@ -56,8 +56,12 @@ export function MyOrders() {
             >
               <IconReceipt className="size-5 text-muted-foreground" />
               <span className="flex-1">
-                <span className="block font-mono font-semibold">#{o.number}</span>
-                <span className="text-xs text-muted-foreground">{formatDateTime(o.at)}</span>
+                <span className="block font-mono font-semibold">
+                  #{o.number}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDateTime(o.at)}
+                </span>
               </span>
               <Price cents={o.total} currency={store.currency} />
               <IconChevronLeft className="size-4 text-muted-foreground" />

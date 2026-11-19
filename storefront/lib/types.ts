@@ -102,11 +102,7 @@ export interface Quote {
 }
 
 export type OrderStatus =
-  | "new"
-  | "confirmed"
-  | "delivering"
-  | "delivered"
-  | "cancelled";
+  "new" | "confirmed" | "delivering" | "delivered" | "cancelled";
 
 export interface TrackedOrder {
   number: number;

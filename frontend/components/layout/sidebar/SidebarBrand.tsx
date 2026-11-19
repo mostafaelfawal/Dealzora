@@ -19,7 +19,9 @@ export function SidebarBrand({
   const { data: plan } = usePlan();
 
   return (
-    <AppTooltip message={`${BRAND.name} — الرئيسية${plan ? ` · خطة ${plan.name}` : ""}`}>
+    <AppTooltip
+      message={`${BRAND.name} — الرئيسية${plan ? ` · خطة ${plan.name}` : ""}`}
+    >
       <Link
         href="/"
         onClick={onNavigate}

@@ -43,24 +43,25 @@ const FEATURE_ROWS = Object.values(FEATURE_INFO).sort(
 );
 
 /** نفس خطوات الاشتراك في صفحة «الخطة والترخيص» بالبرنامج. */
-const STEPS: { icon: Icon; title: string; text: string; payment?: boolean }[] = [
-  {
-    icon: IconBrandWhatsapp,
-    title: "اختر خطتك واضغط «اشترك»",
-    text: "يُفتح واتساب برسالة جاهزة فيها الخطة ونوع الاشتراك والمبلغ.",
-  },
-  {
-    icon: IconCash,
-    title: "ادفع بالطريقة المناسبة لك",
-    text: "نؤكد الدفع ونرسل لك مفتاح الترخيص على المحادثة نفسها.",
-    payment: true,
-  },
-  {
-    icon: IconKey,
-    title: "فعّل المفتاح في البرنامج",
-    text: "من الإعدادات ← الخطة والترخيص، فتنفتح ميزات خطتك فوراً.",
-  },
-];
+const STEPS: { icon: Icon; title: string; text: string; payment?: boolean }[] =
+  [
+    {
+      icon: IconBrandWhatsapp,
+      title: "اختر خطتك واضغط «اشترك»",
+      text: "يُفتح واتساب برسالة جاهزة فيها الخطة ونوع الاشتراك والمبلغ.",
+    },
+    {
+      icon: IconCash,
+      title: "ادفع بالطريقة المناسبة لك",
+      text: "نؤكد الدفع ونرسل لك مفتاح الترخيص على المحادثة نفسها.",
+      payment: true,
+    },
+    {
+      icon: IconKey,
+      title: "فعّل المفتاح في البرنامج",
+      text: "من الإعدادات ← الخطة والترخيص، فتنفتح ميزات خطتك فوراً.",
+    },
+  ];
 
 const ASSURANCES: { icon: Icon; text: string }[] = [
   { icon: IconDatabase, text: "بياناتك تبقى كما هي عند أي تغيير" },
@@ -76,7 +77,10 @@ function HowToSubscribe() {
       </h3>
       <ol className="grid gap-px bg-border md:grid-cols-3">
         {STEPS.map((step, i) => (
-          <li key={step.title} className="flex items-start gap-4 bg-background p-6">
+          <li
+            key={step.title}
+            className="flex items-start gap-4 bg-background p-6"
+          >
             <span className="relative flex size-11 shrink-0 items-center justify-center border">
               <step.icon className="size-5" aria-hidden />
               <span
@@ -88,11 +92,19 @@ function HowToSubscribe() {
             </span>
             <div className="space-y-1.5">
               <p className="font-semibold">{step.title}</p>
-              <p className="text-sm leading-6 text-muted-foreground">{step.text}</p>
+              <p className="text-sm leading-6 text-muted-foreground">
+                {step.text}
+              </p>
               {step.payment && (
-                <ul aria-label="طرق الدفع المتاحة" className="flex flex-wrap gap-1.5 pt-1">
+                <ul
+                  aria-label="طرق الدفع المتاحة"
+                  className="flex flex-wrap gap-1.5 pt-1"
+                >
                   {PAYMENT_METHODS.map((m) => (
-                    <li key={m} className="border bg-background px-2 py-0.5 text-xs font-medium">
+                    <li
+                      key={m}
+                      className="border bg-background px-2 py-0.5 text-xs font-medium"
+                    >
                       {m}
                     </li>
                   ))}
@@ -145,7 +157,11 @@ export function PricingSection() {
                     الميزة
                   </th>
                   {PLANS.map((p) => (
-                    <th key={p.id} scope="col" className="w-36 p-4 text-center font-semibold">
+                    <th
+                      key={p.id}
+                      scope="col"
+                      className="w-36 p-4 text-center font-semibold"
+                    >
                       {p.name}
                     </th>
                   ))}
@@ -174,9 +190,17 @@ export function PricingSection() {
                       return (
                         <td key={p.id} className="p-4 text-center">
                           {has ? (
-                            <IconCheck className="mx-auto size-4 text-success" role="img" aria-label="متاحة" />
+                            <IconCheck
+                              className="mx-auto size-4 text-success"
+                              role="img"
+                              aria-label="متاحة"
+                            />
                           ) : (
-                            <IconMinus className="mx-auto size-4 text-muted-foreground/60" role="img" aria-label="غير متاحة" />
+                            <IconMinus
+                              className="mx-auto size-4 text-muted-foreground/60"
+                              role="img"
+                              aria-label="غير متاحة"
+                            />
                           )}
                         </td>
                       );

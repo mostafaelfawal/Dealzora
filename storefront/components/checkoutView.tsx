@@ -33,7 +33,13 @@ import { Button, ButtonLink, Field, Input, Textarea } from "./ui";
 
 const PHONE_RE = /^\+?[\d\s\-()]{8,20}$/;
 
-type Form = { name: string; phone: string; city: string; address: string; notes: string };
+type Form = {
+  name: string;
+  phone: string;
+  city: string;
+  address: string;
+  notes: string;
+};
 type Errors = Partial<Record<keyof Form, string>>;
 
 function validate(f: Form): Errors {
@@ -47,10 +53,15 @@ function validate(f: Form): Errors {
   return e;
 }
 
-const keyOf = (lines: CartLine[]) => lines.map((l) => `${l.gid}:${l.qty}`).join("|");
+const keyOf = (lines: CartLine[]) =>
+  lines.map((l) => `${l.gid}:${l.qty}`).join("|");
 
 /** مراجعة السلة بأسعار السيرفر الحالية (بعد توقف التعديل لحظة). */
-function useQuote(slug: string, lines: CartLine[], onQuote: (q: Quote) => void) {
+function useQuote(
+  slug: string,
+  lines: CartLine[],
+  onQuote: (q: Quote) => void,
+) {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +78,14 @@ function useQuote(slug: string, lines: CartLine[], onQuote: (q: Quote) => void) 
       setLoading(true);
       storeApi<Quote>(slug, "/quote", {
         method: "POST",
-        body: { items: key.split("|").map((x) => ({ gid: x.split(":")[0], qty: Number(x.split(":")[1]) })) },
+        body: {
+          items: key
+            .split("|")
+            .map((x) => ({
+              gid: x.split(":")[0],
+              qty: Number(x.split(":")[1]),
+            })),
+        },
         signal: ctrl.signal,
       })
         .then((q) => {
@@ -96,7 +114,11 @@ export function CheckoutView() {
   const router = useRouter();
   const [notices, setNotices] = useState<string[]>([]);
   // تصحيحات السيرفر (نفد، الكمية المتاحة أقل) تنعكس على السلة ويراها العميل.
-  const { quote, error: quoteError, loading } = useQuote(store.slug, cart.lines, (q) => {
+  const {
+    quote,
+    error: quoteError,
+    loading,
+  } = useQuote(store.slug, cart.lines, (q) => {
     if (q.issues.length) setNotices(q.issues.map((i) => i.message));
     cart.sync(q.lines);
   });
@@ -127,7 +149,8 @@ export function CheckoutView() {
     e.preventDefault();
     setTouched(true);
     setSubmitError(null);
-    if (Object.keys(errors).length || below || closed || !cart.lines.length) return;
+    if (Object.keys(errors).length || below || closed || !cart.lines.length)
+      return;
     if (!ref.current) ref.current = newClientRef();
     setSubmitting(true);
     const contact = {
@@ -149,7 +172,12 @@ export function CheckoutView() {
         },
       });
       saveContact(store.slug, contact);
-      saveOrder(store.slug, { number: out.number, token: out.token, total: out.total, at: out.created_at });
+      saveOrder(store.slug, {
+        number: out.number,
+        token: out.token,
+        total: out.total,
+        at: out.created_at,
+      });
       cart.clear();
       router.replace(`/${store.slug}/order/${out.token}?new=1`);
     } catch (err) {
@@ -173,7 +201,9 @@ export function CheckoutView() {
         </span>
         <h1 className="text-xl font-bold">السلة فارغة</h1>
         <p className="text-sm text-muted-foreground">
-          {notices.length ? notices.join("، ") : "أضف ما تحتاجه من الأصناف ثم ارجع هنا لإتمام الطلب."}
+          {notices.length
+            ? notices.join("، ")
+            : "أضف ما تحتاجه من الأصناف ثم ارجع هنا لإتمام الطلب."}
         </p>
         <ButtonLink href={`/${store.slug}`} size="lg">
           <IconArrowRight />
@@ -183,12 +213,18 @@ export function CheckoutView() {
     );
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-start">
+    <form
+      onSubmit={submit}
+      noValidate
+      className="grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-start"
+    >
       <div className="space-y-6">
         <section className="border bg-card">
           <header className="flex items-center justify-between border-b p-4">
             <h1 className="text-lg font-bold">سلة المشتريات</h1>
-            <span className="text-sm text-muted-foreground">{cart.count} صنف</span>
+            <span className="text-sm text-muted-foreground">
+              {cart.count} صنف
+            </span>
           </header>
           {notices.length > 0 && (
             <div className="flex gap-2 border-b bg-warning/10 p-3 text-sm">
@@ -204,10 +240,17 @@ export function CheckoutView() {
             {cart.lines.map((l) => (
               <li key={l.gid} className="flex items-center gap-3 p-3 sm:p-4">
                 <Link href={`/${store.slug}/p/${l.gid}`} className="shrink-0">
-                  <ProductImage url={l.imageUrl} name={l.name} className="size-16 border sm:size-20" />
+                  <ProductImage
+                    url={l.imageUrl}
+                    name={l.name}
+                    className="size-16 border sm:size-20"
+                  />
                 </Link>
                 <div className="min-w-0 flex-1 space-y-1">
-                  <Link href={`/${store.slug}/p/${l.gid}`} className="line-clamp-2 text-sm font-medium hover:underline">
+                  <Link
+                    href={`/${store.slug}/p/${l.gid}`}
+                    className="line-clamp-2 text-sm font-medium hover:underline"
+                  >
                     {l.name}
                   </Link>
                   <p className="text-xs text-muted-foreground">
@@ -258,7 +301,12 @@ export function CheckoutView() {
                 aria-describedby={show("name") ? "c-name-error" : undefined}
               />
             </Field>
-            <Field id="c-phone" label="رقم الهاتف" error={show("phone")} hint="للتواصل بخصوص الطلب فقط">
+            <Field
+              id="c-phone"
+              label="رقم الهاتف"
+              error={show("phone")}
+              hint="للتواصل بخصوص الطلب فقط"
+            >
               <Input
                 id="c-phone"
                 type="tel"
@@ -274,7 +322,11 @@ export function CheckoutView() {
                 aria-describedby={show("phone") ? "c-phone-error" : undefined}
               />
             </Field>
-            <Field id="c-city" label="المنطقة / المدينة" className="sm:col-span-2">
+            <Field
+              id="c-city"
+              label="المنطقة / المدينة"
+              className="sm:col-span-2"
+            >
               <Input
                 id="c-city"
                 value={form.city}
@@ -283,7 +335,12 @@ export function CheckoutView() {
                 maxLength={60}
               />
             </Field>
-            <Field id="c-address" label="العنوان بالتفصيل" error={show("address")} className="sm:col-span-2">
+            <Field
+              id="c-address"
+              label="العنوان بالتفصيل"
+              error={show("address")}
+              className="sm:col-span-2"
+            >
               <Textarea
                 id="c-address"
                 value={form.address}
@@ -293,10 +350,16 @@ export function CheckoutView() {
                 rows={2}
                 placeholder="الشارع، رقم العقار، الدور، علامة مميزة"
                 aria-invalid={Boolean(show("address"))}
-                aria-describedby={show("address") ? "c-address-error" : undefined}
+                aria-describedby={
+                  show("address") ? "c-address-error" : undefined
+                }
               />
             </Field>
-            <Field id="c-notes" label="ملاحظات (اختياري)" className="sm:col-span-2">
+            <Field
+              id="c-notes"
+              label="ملاحظات (اختياري)"
+              className="sm:col-span-2"
+            >
               <Textarea
                 id="c-notes"
                 value={form.notes}
@@ -308,9 +371,18 @@ export function CheckoutView() {
             </Field>
           </div>
           {/* حقل فخ للبرامج الآلية: مخفي عن الزوار وقارئات الشاشة. */}
-          <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+          >
             <label htmlFor="c-website">الموقع</label>
-            <input id="c-website" ref={honeypot} tabIndex={-1} autoComplete="off" defaultValue="" />
+            <input
+              id="c-website"
+              ref={honeypot}
+              tabIndex={-1}
+              autoComplete="off"
+              defaultValue=""
+            />
           </div>
         </section>
       </div>
@@ -340,15 +412,25 @@ export function CheckoutView() {
           </div>
           {quote?.free_delivery_over != null && quote.delivery_fee > 0 && (
             <p className="bg-muted p-2 text-xs text-muted-foreground">
-              أضف بقيمة {formatMoney(quote.free_delivery_over - quote.subtotal, store.currency)} للحصول على
-              توصيل مجاني.
+              أضف بقيمة{" "}
+              {formatMoney(
+                quote.free_delivery_over - quote.subtotal,
+                store.currency,
+              )}{" "}
+              للحصول على توصيل مجاني.
             </p>
           )}
           <div className="flex items-baseline justify-between border-t pt-3 text-base font-bold">
             <dt>الإجمالي</dt>
             <dd className="flex items-center gap-2">
-              {loading && <IconLoader2 className="size-4 animate-spin text-muted-foreground" />}
-              <Price cents={total} currency={store.currency} className="text-xl" />
+              {loading && (
+                <IconLoader2 className="size-4 animate-spin text-muted-foreground" />
+              )}
+              <Price
+                cents={total}
+                currency={store.currency}
+                className="text-xl"
+              />
             </dd>
           </div>
         </dl>
@@ -357,15 +439,20 @@ export function CheckoutView() {
           <IconCash className="size-5 shrink-0" />
           <div>
             <p className="font-medium">الدفع عند الاستلام</p>
-            <p className="text-xs text-muted-foreground">ادفع نقداً للمندوب عند استلام طلبك.</p>
+            <p className="text-xs text-muted-foreground">
+              ادفع نقداً للمندوب عند استلام طلبك.
+            </p>
           </div>
         </div>
 
-        {store.delivery_note && <p className="text-xs text-muted-foreground">{store.delivery_note}</p>}
+        {store.delivery_note && (
+          <p className="text-xs text-muted-foreground">{store.delivery_note}</p>
+        )}
 
         {below && quote && (
           <p className="bg-warning/10 p-2 text-xs">
-            أقل قيمة للطلب {formatMoney(quote.min_order, store.currency)}. أضف أصنافاً بقيمة{" "}
+            أقل قيمة للطلب {formatMoney(quote.min_order, store.currency)}. أضف
+            أصنافاً بقيمة{" "}
             {formatMoney(quote.min_order - quote.subtotal, store.currency)}.
           </p>
         )}
@@ -375,7 +462,10 @@ export function CheckoutView() {
           </p>
         )}
         {(submitError || quoteError) && (
-          <p role="alert" className="bg-destructive/10 p-2 text-sm text-destructive">
+          <p
+            role="alert"
+            className="bg-destructive/10 p-2 text-sm text-destructive"
+          >
             {submitError ?? quoteError}
           </p>
         )}

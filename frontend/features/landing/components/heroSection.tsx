@@ -13,7 +13,11 @@ import { ReceiptSample } from "./receiptSample";
 
 const FACTS = [
   { icon: IconGift, title: "خطة مجانية دائمة", text: "«بَسطة» لمحل بجهاز واحد" },
-  { icon: IconWifiOff, title: "يعمل دون إنترنت", text: "البيانات على جهاز المحل" },
+  {
+    icon: IconWifiOff,
+    title: "يعمل دون إنترنت",
+    text: "البيانات على جهاز المحل",
+  },
   {
     icon: IconDatabaseExport,
     title: "نسخ احتياطي يومي",
@@ -51,9 +55,8 @@ export function HeroSection() {
           </h1>
 
           <p className="max-w-xl text-lg leading-8 text-pretty text-muted-foreground">
-            من نقطة البيع والمشتريات إلى المخزون والخزنة وحسابات العملاء،
-            اجمع إدارة أعمالك اليومية في برنامج واحد يعمل على جهاز محلك مع
-            Dealzora.
+            من نقطة البيع والمشتريات إلى المخزون والخزنة وحسابات العملاء، اجمع
+            إدارة أعمالك اليومية في برنامج واحد يعمل على جهاز محلك مع Dealzora.
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row">
