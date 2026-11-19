@@ -12,7 +12,9 @@
       "bundleIdentifier": "com.dealzora.chain",
       "infoPlist": {
         "ExpoLocalization_forcesRTL": true,
-        "CFBundleLocalizations": ["ar"]
+        "CFBundleLocalizations": [
+          "ar"
+        ]
       }
     },
     "android": {
@@ -46,7 +48,9 @@
         {
           "supportsRTL": true,
           "forcesRTL": true,
-          "supportedLocales": ["ar"]
+          "supportedLocales": [
+            "ar"
+          ]
         }
       ],
       [
@@ -100,6 +104,14 @@
       "output": "single",
       "bundler": "metro",
       "favicon": "./assets/brand/logo.png"
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3795e361-7ab4-4893-94b7-7b5a3b416854",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
     }
   }
 }
