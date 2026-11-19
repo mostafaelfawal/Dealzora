@@ -5,6 +5,7 @@
 """
 
 import random
+import secrets
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 
@@ -43,6 +44,7 @@ from app.modules.sales.schema import ReturnCreate, ReturnLineIn, SaleCreate, Sal
 from app.modules.sales.service import SaleService
 from app.modules.sales.types import PaymentMethod, ReturnReason
 from app.modules.settings.constants import SettingKey
+from app.modules.settings.model import AppSetting
 from app.modules.settings.schema import DiscountLimitIn
 from app.modules.settings.service import SettingsService
 from app.modules.shifts.schema import ShiftCloseIn, ShiftOpenIn
@@ -60,7 +62,6 @@ from app.modules.users.types import AuditAction
 
 DAYS = 60
 SEED = 2026
-DEMO_PASSWORD = "Demo-Pass-2026"  # لتجربة دخول الكاشير التجريبي
 Q = 1000  # الكميات × 1000
 
 CATEGORIES = ["مشروبات", "ألبان وأجبان", "بقالة جافة", "منظفات", "حلويات وسناكس", "عناية شخصية"]
@@ -173,6 +174,8 @@ class DemoSeeder:
         self.credit_customers: list[str] = []
         self.suppliers: list[tuple[str, list[int]]] = []
         self.cashiers: list[Actor] = []
+        # عشوائية لكل توليد: البرنامج يعمل عند مستخدمين حقيقيين، فلا كلمة مرور ثابتة معروفة.
+        self.password = f"Demo-{secrets.token_urlsafe(9)}"
         self.recent_sales: list[str] = []
         self.categories: list[str] = []
         self.promos: list[Promotion] = []
@@ -217,7 +220,7 @@ class DemoSeeder:
             user = User(
                 id=uuid7(),
                 username=username,
-                password_hash=hash_password(DEMO_PASSWORD),
+                password_hash=hash_password(self.password),
                 role=role.value,
                 is_active=active,
                 device_id=self.device,
@@ -232,6 +235,11 @@ class DemoSeeder:
             self.stats.users += 1
             if role is Role.CASHIER and active:
                 self.cashiers.append(self._actor(user.id))
+        # تُسجَّل مع صفوف التوليد، فتُحذف مع البيانات التجريبية.
+        self.s.add(AppSetting(
+            id=uuid7(), key=SettingKey.DEMO_PASSWORD.value, value=self.password,
+            device_id=self.device, created_by=self.manager.user_id,
+        ))  # fmt: skip
         self.s.commit()
 
     def _settings(self, start: date) -> None:

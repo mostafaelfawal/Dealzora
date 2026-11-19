@@ -1,7 +1,5 @@
 from fastapi import APIRouter
 
-from app.core.config import get_settings
-
 from app.modules.audit.routes import router as audit_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.backup.routes import router as backup_router
@@ -10,6 +8,7 @@ from app.modules.branch_sync.routes import router as branch_sync_router
 from app.modules.catalog.routes import router as catalog_router
 from app.modules.customers.routes import router as customers_router
 from app.modules.devices.routes import router as devices_router
+from app.modules.devtools.routes import router as demo_router
 from app.modules.expenses.routes import router as expenses_router
 from app.modules.e_receipt.routes import router as e_receipt_router
 from app.modules.eta.routes import router as eta_router
@@ -63,13 +62,8 @@ routes = [
     realtime_router,
     eta_router,
     e_receipt_router,
+    demo_router,
 ]
-
-# أدوات التطوير (بيانات تجريبية) لا توجد أصلاً في نسخة الإنتاج.
-if get_settings().debug:
-    from app.modules.devtools.routes import router as devtools_router
-
-    routes.append(devtools_router)
 
 for router in routes:
     api_router.include_router(router)

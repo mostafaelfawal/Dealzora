@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 import type { DemoStatus } from "../api/devtools.api";
-import { IS_DEV, useDemoMutations, useDemoStatus } from "../hooks/useDemoData";
+import { useDemoMutations, useDemoStatus } from "../hooks/useDemoData";
 
 type DemoAction = "seed" | "clear";
 
@@ -61,7 +61,7 @@ function DemoHeader() {
             variant="outline"
             className="border-warning/60 font-normal text-warning"
           >
-            للتطوير فقط
+            للتجربة
           </Badge>
         </h2>
         <p className="text-xs text-muted-foreground">
@@ -69,6 +69,10 @@ function DemoHeader() {
           عملاء آجل، موردون، فواتير بيع وشراء، مرتجعات، ورديات، مصروفات، تحصيل
           وسداد. كل سجل يُحفظ رقمه، فالحذف يزيلها كلها دفعة واحدة دون لمس بياناتك
           الحقيقية.
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          جرّبها على جهاز غير مربوط بسيرفر الفروع والإيصال الإلكتروني متوقف،
+          واحذفها قبل البدء بالبيع الفعلي حتى لا تختلط بتقاريرك.
         </p>
       </div>
     </header>
@@ -144,10 +148,7 @@ function ConfirmDemoDialog({
   );
 }
 
-/**
- * أدوات التطوير فقط: يظهر في `next dev` وعندما يكون الـ backend بـ POS_DEBUG=true.
- * في الإنتاج لا يُعرض القسم، ومسارات /dev غير موجودة أصلاً في الـ backend.
- */
+/** البيانات التجريبية: يجرّب بها المالك أو المدير النظام ثم يحذفها بضغطة. */
 export function DemoDataSection() {
   const [confirm, setConfirm] = useState<DemoAction | null>(null);
   const status = useDemoStatus();
@@ -155,8 +156,7 @@ export function DemoDataSection() {
     onSettled: () => setConfirm(null),
   });
 
-  // خارج التطوير، أو الـ backend ليس في وضع debug (404) → لا شيء.
-  if (!IS_DEV || !status.data?.enabled) return null;
+  if (!status.data?.enabled) return null;
   const s = status.data;
 
   return (

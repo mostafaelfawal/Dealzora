@@ -50,8 +50,11 @@ export function usePosSecondCurrency() {
   return { state, enabled, secondBig: enabled && big };
 }
 
-/** المبلغ الكبير: بعملة المحل أو بالعملة الثانية حسب اختيار الكاشير. */
-export function PosGrandAmount({
+/**
+ * مبلغ في شاشة الكاشير: بعملة المحل أو بالعملة الثانية حسب اختيار الكاشير.
+ * يُستعمل للإجمالي ولأسعار أسطر الفاتورة حتى تتبدّل كلها معاً.
+ */
+export function PosMoney({
   amount,
   className,
 }: {

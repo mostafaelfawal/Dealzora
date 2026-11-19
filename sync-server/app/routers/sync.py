@@ -9,6 +9,7 @@
 
 import asyncio
 import json
+import threading
 import time
 from datetime import UTC, datetime
 from typing import Annotated
@@ -23,6 +24,7 @@ from ..config import get_settings
 from ..db import SessionDep, get_sessionmaker
 from ..errors import BadRequest
 from ..models import Branch, Shop
+from ..ratelimit import TooManyRequests
 from ..schemas import AckIn, EventOut, PullOut, PushIn, PushOut, SyncStatusOut
 from ..security import Caller, CallerDep
 from ..services.events import append_events, pull_events
@@ -134,6 +136,39 @@ def _sse(event: str, data: object) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
+class _StreamSlots:
+    """اتصالات البث المفتوحة لكل فرع في هذا الـ worker (الحد الفعلي = الحد × عدد الـ workers).
+    كل حجزة لها موعد انتهاء (نهاية البث)، فلا يبقى فرع محجوباً لو ضاع تحرير حجزة."""
+
+    def __init__(self) -> None:
+        self._open: dict[str, dict[int, float]] = {}
+        self._next = 0
+        self._lock = threading.Lock()
+
+    def acquire(self, branch_id: str, limit: int, until: float) -> int | None:
+        now = time.monotonic()
+        with self._lock:
+            slots = {k: v for k, v in self._open.get(branch_id, {}).items() if v > now}
+            if len(slots) >= limit:
+                self._open[branch_id] = slots
+                return None
+            self._next += 1
+            slots[self._next] = until
+            self._open[branch_id] = slots
+            return self._next
+
+    def release(self, branch_id: str, slot: int) -> None:
+        with self._lock:
+            slots = self._open.get(branch_id)
+            if slots is not None:
+                slots.pop(slot, None)
+                if not slots:
+                    self._open.pop(branch_id, None)
+
+
+_stream_slots = _StreamSlots()
+
+
 @router.get("/stream")
 async def stream(
     request: Request,
@@ -147,24 +182,35 @@ async def stream(
         time.monotonic() + settings.stream_max_seconds,
         time.monotonic() + max((caller.token_exp - datetime.now(UTC)).total_seconds(), 0),
     )
+    slot = _stream_slots.acquire(caller.branch_id, settings.stream_max_per_branch, deadline)
+    if slot is None:
+        raise TooManyRequests(
+            "too_many_streams",
+            "اتصالات بث كثيرة مفتوحة لهذا الفرع. أغلق النسخ الأخرى من البرنامج أو انتظر قليلاً",
+            {"retry_after": 30},
+        )
 
     async def gen():
-        sent = after
-        last_beat = time.monotonic()
-        yield _sse("hello", {"branch_id": caller.branch_id, "after": after})
-        while time.monotonic() < deadline:
-            current = await run_in_threadpool(_last_seq, caller.shop_id)
-            if current > sent:
-                sent = current
-                yield _sse("changed", {"last_seq": current})
-                last_beat = time.monotonic()
-            elif time.monotonic() - last_beat >= settings.stream_heartbeat_seconds:
-                yield ": ping\n\n"
-                last_beat = time.monotonic()
-            if await request.is_disconnected():
-                return
-            await asyncio.sleep(settings.stream_poll_seconds)
-        yield _sse("reconnect", {"reason": "expired"})
+        try:
+            sent = after
+            last_beat = time.monotonic()
+            yield _sse("hello", {"branch_id": caller.branch_id, "after": after})
+            while time.monotonic() < deadline:
+                current = await run_in_threadpool(_last_seq, caller.shop_id)
+                if current > sent:
+                    sent = current
+                    yield _sse("changed", {"last_seq": current})
+                    last_beat = time.monotonic()
+                elif time.monotonic() - last_beat >= settings.stream_heartbeat_seconds:
+                    yield ": ping\n\n"
+                    last_beat = time.monotonic()
+                if await request.is_disconnected():
+                    return
+                await asyncio.sleep(settings.stream_poll_seconds)
+            yield _sse("reconnect", {"reason": "expired"})
+        finally:
+            # عند الانتهاء أو انقطاع الفرع. لو لم يبدأ البث أصلاً، تنتهي الحجزة وحدها عند deadline.
+            _stream_slots.release(caller.branch_id, slot)
 
     return StreamingResponse(
         gen(),

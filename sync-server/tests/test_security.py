@@ -165,3 +165,32 @@ def test_errors_never_leak_internals(client, shop, monkeypatch):
     r = b["A"].get("/v1/transfers")
     assert r.status_code == 500 and r.json()["error"]["code"] == "server_error"
     assert "SELECT" not in r.text
+
+
+def test_global_rate_limit(client, shop, monkeypatch):
+    _, b = shop
+    monkeypatch.setattr(get_settings(), "rate_per_min", 3)
+    ratelimit.reset()
+    codes = [b["A"].get("/v1/sync/status").status_code for _ in range(4)]
+    assert codes == [200, 200, 200, 429]
+    r = b["A"].get("/v1/sync/status")
+    assert r.json()["error"]["code"] == "rate_limited" and int(r.headers["Retry-After"]) > 0
+    # فحص الصحة لا يدخل في الحد (المراقبة و Docker).
+    assert client.get("/health").status_code == 200
+
+
+def test_stream_slots_per_branch(monkeypatch):
+    from app.routers import sync
+
+    slots = sync._StreamSlots()
+    now = sync.time.monotonic()
+    a = slots.acquire("A", 2, now + 60)
+    assert a is not None and slots.acquire("A", 2, now + 60) is not None
+    assert slots.acquire("A", 2, now + 60) is None  # الحد للفرع
+    assert slots.acquire("B", 2, now + 60) is not None  # فرع آخر مستقل
+    slots.release("A", a)
+    assert slots.acquire("A", 2, now + 60) is not None
+    # حجزة ضاع تحريرها تنتهي وحدها.
+    stale = sync._StreamSlots()
+    stale.acquire("C", 1, now - 1)
+    assert stale.acquire("C", 1, now + 60) is not None

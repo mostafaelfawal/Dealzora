@@ -11,7 +11,6 @@ import {
 import { useEffect } from "react";
 
 import { AppTooltip } from "@/components/shared/AppTooltip";
-import { Money } from "@/components/shared/Money";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,6 +40,7 @@ import {
 import type { CartLine } from "../types/pos";
 
 import { PosQtyField } from "./posQtyField";
+import { PosMoney } from "./posSecondCurrency";
 
 const th = "h-8 px-2 text-start text-xs font-normal text-muted-foreground";
 
@@ -109,7 +109,7 @@ function UnitSwitcher({ line, id }: { line: CartLine; id: string }) {
                   </span>
                 )}
               </span>
-              <Money amount={u.price} className="text-xs" />
+              <PosMoney amount={u.price} className="text-xs" />
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>
@@ -177,7 +177,7 @@ function CartRow({
             {line.barcode}
           </span>
           <span className="sm:hidden">
-            <Money amount={line.price} className="text-[11px]" />
+            <PosMoney amount={line.price} className="text-[11px]" />
           </span>
           {overStock && (
             <span className="inline-flex items-center gap-1 text-warning">
@@ -188,21 +188,21 @@ function CartRow({
         </span>
       </td>
       <td className="hidden px-2 sm:table-cell">
-        <Money amount={line.price} className="text-xs" />
+        <PosMoney amount={line.price} className="text-xs" />
       </td>
       <td className="px-2">
         <PosQtyField line={line} />
       </td>
       <td className="px-2">
-        <Money amount={lineTotal(line)} className="text-sm" />
+        <PosMoney amount={lineTotal(line)} className="text-sm" />
         {linePromo(line) > 0 && (
           <span className="block text-[10px] text-success">
-            عرض −<Money amount={linePromo(line)} className="text-[10px]" />
+            عرض −<PosMoney amount={linePromo(line)} className="text-[10px]" />
           </span>
         )}
         {lineDiscount(line) > 0 && (
           <span className="block text-[10px] text-warning">
-            خصم <Money amount={lineDiscount(line)} className="text-[10px]" />
+            خصم <PosMoney amount={lineDiscount(line)} className="text-[10px]" />
           </span>
         )}
       </td>

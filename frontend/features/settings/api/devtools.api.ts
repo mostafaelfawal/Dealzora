@@ -34,11 +34,11 @@ export interface ClearResult {
 }
 
 export const fetchDemoStatus = async () =>
-  (await api.get<DemoStatus>("/dev/demo")).data;
+  (await api.get<DemoStatus>("/demo")).data;
 
 export const seedDemo = async () =>
-  (await api.post<SeedResult>("/dev/demo", null, { timeout: LONG_TIMEOUT }))
+  (await api.post<SeedResult>("/demo", null, { timeout: LONG_TIMEOUT }))
     .data;
 
 export const clearDemo = async () =>
-  (await api.delete<ClearResult>("/dev/demo", { timeout: LONG_TIMEOUT })).data;
+  (await api.delete<ClearResult>("/demo", { timeout: LONG_TIMEOUT })).data;

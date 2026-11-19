@@ -1,6 +1,12 @@
-"""أدوات التطوير: توليد بيانات تجريبية وحذفها بالكامل. تعمل فقط مع POS_DEBUG=true.
+"""البيانات التجريبية: توليد محل كامل للتجربة وحذفه بالكامل. متاحة لكل المستخدمين (المدير والمالك).
 
 الحذف يعتمد على demo_records فقط (ما أنشأه المولّد بالضبط)، فلا يمس أي بيانات حقيقية.
+
+الحماية في الإنتاج:
+- لا توليد والإيصال الإلكتروني مفعّل: فواتير تجريبية لا يجوز أن تُرسل لمصلحة الضرائب.
+- لا توليد والجهاز مربوط بسيرفر الفروع، ولا ربط والبيانات التجريبية موجودة (ensure_no_demo):
+  حتى لا تصل فواتير تجريبية لتقارير المحل وباقي الفروع.
+- كلمة مرور مستخدمي العرض عشوائية لكل توليد (لا كلمة ثابتة معروفة)، وتُحذف مع البيانات.
 """
 
 import time
@@ -13,15 +19,18 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import record_audit
 from app.core.base import Base, uuid7
-from app.core.config import get_settings
 from app.core.database import get_engine
 from app.core.errors import ConflictError, NotFoundError
 from app.core.security import Actor
+from app.modules.branch_sync.service import BranchSyncService
+from app.modules.e_receipt.service import is_active as is_receipt_active
+from app.modules.settings.constants import SettingKey
+from app.modules.settings.service import SettingsService
 from app.modules.shifts.repository import ShiftRepository
 
 from .model import DemoRecord
 from .recorder import record_new_rows
-from .seed import DAYS, DEMO_PASSWORD, DemoSeeder
+from .seed import DAYS, DemoSeeder
 
 DELETE_BATCH = 500
 
@@ -60,9 +69,17 @@ class DemoClearOut(BaseModel):
     seconds: float
 
 
-def ensure_enabled() -> None:
-    if not get_settings().debug:
-        raise NotFoundError("not_found", "غير متاح")
+def demo_loaded(session: Session) -> bool:
+    return bool(session.scalar(select(func.count()).select_from(DemoRecord)))
+
+
+def ensure_no_demo(session: Session) -> None:
+    """يُستدعى قبل ربط الجهاز بسيرفر الفروع: البيانات التجريبية لا تُرفع أبداً."""
+    if demo_loaded(session):
+        raise ConflictError(
+            "demo_loaded",
+            "احذف البيانات التجريبية أولاً (الإعدادات ← الأمان) قبل ربط الجهاز بسيرفر الفروع",
+        )
 
 
 class DemoService:
@@ -81,12 +98,22 @@ class DemoService:
             loaded=total > 0,
             records=total,
             tables=tables,
-            demo_password=DEMO_PASSWORD,
+            demo_password=SettingsService(self.session).get(SettingKey.DEMO_PASSWORD) or "",
         )
 
     def seed(self) -> DemoSeedOut:
-        if self.session.scalar(select(func.count()).select_from(DemoRecord)):
+        if demo_loaded(self.session):
             raise ConflictError("demo_exists", "البيانات التجريبية موجودة بالفعل. احذفها أولاً")
+        if is_receipt_active(self.session):
+            raise ConflictError(
+                "demo_e_receipt",
+                "الإيصال الإلكتروني مفعّل: الفواتير التجريبية ستُرسل لمصلحة الضرائب. أوقفه أولاً لتجربة النظام",
+            )
+        if BranchSyncService(self.session, self.actor).config() is not None:
+            raise ConflictError(
+                "demo_branch_sync",
+                "الجهاز مربوط بسيرفر الفروع: البيانات التجريبية ستصل لتقارير المحل. جرّبها على جهاز غير مربوط",
+            )
         if ShiftRepository(self.session).current(self.actor.device_id) is not None:
             raise ConflictError("shift_open", "اقفل الوردية المفتوحة أولاً، فالمولّد يفتح ويقفل ورديات")
         self.session.commit()  # إنهاء معاملة القراءة قبل البدء

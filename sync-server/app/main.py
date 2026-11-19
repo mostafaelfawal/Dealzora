@@ -17,6 +17,7 @@ from sqlalchemy import text
 from .config import get_settings
 from .db import get_engine
 from .errors import register_error_handlers
+from .ratelimit import client_ip, limit_global
 from .routers import (
     admin,
     auth,
@@ -80,6 +81,17 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def _guard(request: Request, call_next):  # noqa: ANN202
+        # حد عام لكل IP قبل أي عمل (قاعدة بيانات أو تحقق توكن): الإغراق لا يصل للمسارات.
+        if request.url.path != "/health":
+            wait = limit_global(client_ip(request))
+            if wait is not None:
+                retry = int(wait) + 1
+                return JSONResponse(
+                    {"error": {"code": "rate_limited", "message": "طلبات كثيرة. انتظر قليلاً ثم أعد المحاولة",
+                               "details": {"retry_after": retry}}},
+                    status_code=429,
+                    headers={"Retry-After": str(retry)},
+                )  # fmt: skip
         # حد حجم الطلب (حتى بدون Caddy، مثل التشغيل المحلي).
         length = request.headers.get("content-length")
         if length and length.isdigit() and int(length) > settings.max_body_bytes:

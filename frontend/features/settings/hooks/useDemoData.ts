@@ -5,16 +5,13 @@ import { extractErrorMessage } from "@/lib/errors";
 
 import { clearDemo, fetchDemoStatus, seedDemo } from "../api/devtools.api";
 
-export const IS_DEV = process.env.NODE_ENV === "development";
-
 const demoKey = ["devtools", "demo"] as const;
 
-/** حالة البيانات التجريبية. 404 من backend ليس في وضع debug = غير مفعّل. */
+/** حالة البيانات التجريبية. */
 export function useDemoStatus() {
   return useQuery({
     queryKey: demoKey,
     queryFn: fetchDemoStatus,
-    enabled: IS_DEV,
     retry: false,
   });
 }

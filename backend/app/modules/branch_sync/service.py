@@ -85,6 +85,13 @@ class NotConnected(ConflictError):
         super().__init__("branch_not_connected", "هذا الجهاز غير مربوط بسيرفر الفروع. اربطه من الإعدادات")
 
 
+def _ensure_no_demo(session: Session) -> None:
+    # استيراد متأخر: devtools يستورد هذه الوحدة.
+    from app.modules.devtools.service import ensure_no_demo
+
+    ensure_no_demo(session)
+
+
 class BranchSyncService:
     def __init__(self, session: Session, actor: Actor) -> None:
         self.session = session
@@ -137,6 +144,7 @@ class BranchSyncService:
         # بدون فحص الخطة: كود الربط من المالك هو الإثبات، والجهاز يرث خطة المحل بعد الربط.
         if self.config() is not None:
             raise ConflictError("branch_already_connected", "هذا الجهاز مربوط بالفعل. افصله أولاً")
+        _ensure_no_demo(self.session)
         url = normalize_server_url(data.server_url)
         creds = SyncClient(url).pair(data.code)
         return self._save_connection(url, creds, admin=False)
@@ -195,6 +203,7 @@ class BranchSyncService:
         ensure_feature(Feature.BRANCHES)
         if self.config() is not None:
             raise ConflictError("branch_already_connected", "هذا الجهاز مربوط بالفعل. افصله أولاً")
+        _ensure_no_demo(self.session)
         url = normalize_server_url(data.server_url)
         creds = SyncClient(url).register({
             "license_key": data.license_key.strip(), "branch_name": data.branch_name.strip(),

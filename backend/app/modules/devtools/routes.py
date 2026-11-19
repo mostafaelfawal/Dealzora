@@ -1,5 +1,5 @@
-"""مسارات التطوير. لا تُسجَّل أصلاً في الـ router إلا مع POS_DEBUG=true (انظر api/router.py)،
-وكل مسار يتحقق من ذلك مرة أخرى احتياطاً. للمدير فقط، والكتابة بتصريح كتابة.
+"""البيانات التجريبية: يجرّب المالك أو المدير النظام على محل كامل ثم يحذفه بضغطة.
+للمدير فقط، والإنشاء والحذف بتصريح كتابة.
 """
 
 from fastapi import APIRouter, Depends
@@ -7,13 +7,9 @@ from fastapi import APIRouter, Depends
 from app.core.deps import service_dependency
 from app.core.permissions import require_manager, require_manager_write
 
-from .service import DemoClearOut, DemoSeedOut, DemoService, DemoStatusOut, ensure_enabled
+from .service import DemoClearOut, DemoSeedOut, DemoService, DemoStatusOut
 
-router = APIRouter(
-    prefix="/dev/demo",
-    tags=["devtools"],
-    dependencies=[Depends(ensure_enabled), Depends(require_manager)],
-)
+router = APIRouter(prefix="/demo", tags=["demo"], dependencies=[Depends(require_manager)])
 Service = service_dependency(DemoService)
 
 

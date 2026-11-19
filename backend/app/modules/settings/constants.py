@@ -44,6 +44,8 @@ class SettingKey(StrEnum):
     ETA_BRANCH = "eta.branch"
     # ربط هذا الجهاز بسيرفر الفروع (JSON فيه سر الفرع): محلي فقط، لا يُرفع أبداً.
     BRANCH_SYNC = "branch_sync.config"
+    # كلمة مرور مستخدمي البيانات التجريبية: عشوائية لكل توليد، وتُحذف مع البيانات.
+    DEMO_PASSWORD = "demo.password"
     # مفاتيح قديمة (قبل القوالب): تُقرأ مرة واحدة لترحيلها إلى PAY_METHODS.
     PAY_VODAFONE_CASH = "payments.vodafone_cash"
     PAY_INSTAPAY = "payments.instapay"
