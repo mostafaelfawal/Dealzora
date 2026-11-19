@@ -132,10 +132,13 @@ export const metadata: Metadata = {
     },
   },
 
-  // icons: {
-  //   icon: "/favicon.ico",
-  //   apple: "/apple-touch-icon.png",
-  // },
+  icons: {
+    icon: [
+      { url: BRAND.logo.favicon.svg, type: "image/svg+xml" },
+      { url: BRAND.logo.favicon.png, type: "image/png", sizes: "512x512" },
+    ],
+    apple: { url: BRAND.logo.favicon.png, sizes: "512x512" },
+  },
   // manifest: "/manifest.webmanifest",
 
   // verification: {

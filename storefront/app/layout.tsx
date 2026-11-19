@@ -26,6 +26,14 @@ export const metadata: Metadata = {
   description: "متاجر إلكترونية للمحلات بالدفع عند الاستلام.",
   robots: { index: true, follow: true },
   formatDetection: { telephone: false },
+  // شعار Dealzora (نفس frontend/config/brand.ts ← logo.favicon). صفحات متجر له شعار تستخدم شعاره هو.
+  icons: {
+    icon: [
+      { url: "/logo/favicon.svg", type: "image/svg+xml" },
+      { url: "/logo/logo.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: { url: "/logo/logo.png", sizes: "512x512" },
+  },
 };
 
 export const viewport: Viewport = {

@@ -18,5 +18,13 @@ export const BRAND = {
       width: 132,
       height: 32,
     },
+    /**
+     * أيقونة المتصفح: favicon.svg مأخوذ من icon.light ويتلوّن تلقائياً (أسود في الثيم الفاتح، أبيض في الداكن)،
+     * و png لشاشة الهاتف الرئيسية (آيفون/أندرويد). نفس الملفين في storefront/public/logo.
+     */
+    favicon: {
+      svg: "/logo/favicon.svg",
+      png: "/logo/logo.png",
+    },
   },
 } as const;
