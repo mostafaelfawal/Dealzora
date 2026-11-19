@@ -172,7 +172,7 @@ export const TUTORIALS: Tutorial[] = [
     id: "install",
     title: "تحميل البرنامج وتثبيته على ويندوز",
     description: "تحميل ملف التثبيت، وخطوات المعالج، وفتح البرنامج لأول مرة.",
-    youtubeUrl: "",
+    youtubeUrl: "https://youtu.be/w4lM7RW36rI?si=jZF1nCbC81RjLV5X",
     category: "start",
     featured: true,
   },
