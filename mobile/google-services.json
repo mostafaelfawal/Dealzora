@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027976387115",
+    "project_id": "dealzora-80b85",
+    "storage_bucket": "dealzora-80b85.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027976387115:android:d267adde6b4165dbee686e",
+        "android_client_info": {
+          "package_name": "com.dealzora.chain"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOfuTar28D7QrktkLIvE9hEQZ81QDDgP8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
