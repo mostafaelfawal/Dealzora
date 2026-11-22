@@ -60,6 +60,12 @@ const BUILTIN_METHODS: MethodButton[] = [
   { id: "credit", label: "آجل", key: "F2" },
   { id: "mixed", label: "مختلط", key: "F3" },
 ];
+/** سطر يشرح أثر الطريقة المختارة (التاجر الجديد قد لا يعرف «آجل» و«مختلط»). */
+const METHOD_HINT: Partial<Record<PaymentMethod, string>> = {
+  cash: "يدفع العميل المبلغ كاملاً الآن نقداً.",
+  credit: "لا يدفع العميل الآن: يُسجَّل المبلغ كله ديناً في حسابه.",
+  mixed: "يدفع العميل جزءاً نقداً الآن، والباقي يُسجَّل ديناً في حسابه.",
+};
 /** اختصارات الطرق الإلكترونية بالترتيب (F6 لاختيار العميل، F9 لفتح الدفع). */
 const ELECTRONIC_KEYS = ["F4", "F5", "F7", "F8"];
 /** عرض أزرار الطرق الإلكترونية في شبكة من 6 أعمدة حسب عددها. */
@@ -334,6 +340,9 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
           </Button>
         ))}
       </div>
+      {METHOD_HINT[method] && (
+        <p className="text-xs text-muted-foreground">{METHOD_HINT[method]}</p>
+      )}
 
       {walletMethod && walletsAllowed && (
         <div className="space-y-2">

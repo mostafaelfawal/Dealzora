@@ -3,6 +3,7 @@
 import {
   IconArrowDownLeft,
   IconArrowUpRight,
+  IconCashOff,
   IconWallet,
 } from "@tabler/icons-react";
 
@@ -96,7 +97,12 @@ export function TreasuryReportTab({ range }: { range: DateRange }) {
 
       <ReportPanel title="ملخص الخزنة حسب النوع">
         <ul className="divide-y">
-          {r.byKind.length === 0 && <ReportListEmpty text="لا توجد حركات" />}
+          {r.byKind.length === 0 && (
+            <ReportListEmpty
+              text="لا توجد حركات في الخزنة خلال هذه الفترة"
+              icon={IconCashOff}
+            />
+          )}
           {r.byKind.map((k) => (
             <KindListRow key={kindRowKey(k)} k={k} />
           ))}

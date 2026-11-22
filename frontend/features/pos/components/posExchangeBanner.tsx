@@ -67,7 +67,7 @@ export function PosExchangeBanner() {
         <Money amount={returnTotal} />
       </div>
       <p className="text-muted-foreground">
-        أضف الأصناف الجديدة ثم اضغط «تسوية» (F9).
+        أضف الأصناف الجديدة ثم اضغط «حساب الفرق» (F9).
       </p>
     </div>
   );

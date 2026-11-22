@@ -119,7 +119,7 @@ function PosPreview() {
         )}
         <div className="flex flex-wrap gap-1">
           {!isActive && (
-            <Tag className="bg-destructive/10 text-destructive">معطّل</Tag>
+            <Tag className="bg-destructive/10 text-destructive">مخفي من الكاشير</Tag>
           )}
           {allowDecimal && (
             <Tag className="bg-muted text-foreground">بالوزن</Tag>

@@ -59,7 +59,7 @@ export function CustomerActionsMenu({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`إجراءات ${customer.name}`}
+            aria-label={`خيارات ${customer.name}`}
             className="size-8"
           />
         }
@@ -119,7 +119,7 @@ export function CustomerActionsMenu({
           onClick={() => onRemove(customer.id)}
         >
           <IconTrash />
-          حذف
+          حذف العميل
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

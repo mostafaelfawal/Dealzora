@@ -29,7 +29,7 @@ export function TreasuryActionsMenu({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`إجراءات حركة ${entry.note || "الخزنة"}`}
+            aria-label={`خيارات حركة ${entry.note || "الخزنة"}`}
             className="size-8"
           />
         }

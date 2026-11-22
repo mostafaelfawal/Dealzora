@@ -54,7 +54,7 @@ export function UserActionsMenu({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`إجراءات ${user.username}`}
+            aria-label={`خيارات ${user.username}`}
             className="size-8"
           />
         }
@@ -71,7 +71,7 @@ export function UserActionsMenu({
           render={<Link href={USER_ROUTES.edit(user.id)} />}
         >
           <IconPencil />
-          تعديل
+          تعديل المستخدم
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={locked}
@@ -94,7 +94,7 @@ export function UserActionsMenu({
           onClick={() => onRemove(user.id)}
         >
           <IconTrash />
-          حذف
+          حذف المستخدم
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

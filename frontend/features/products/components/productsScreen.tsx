@@ -15,6 +15,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { upgradeMessage, useFeature, usePlan } from "@/lib/plan";
 import { CatalogDialog } from "@/features/catalog/components/catalogDialog";
@@ -49,6 +51,9 @@ export function ProductsScreen() {
   const { view, setView } = useProductsView();
   const [importOpen, setImportOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
+  // الحذف من قائمة «⋯» كان فورياً بلا تأكيد: صار يمر بنافذة تأكيد.
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deleting = list.products.find((p) => p.id === deletingId) ?? null;
   // ملف مُفلَت على الصفحة: تفتح النافذة عليه مباشرة بدل خطوة اختيار الملف.
   const [droppedSheet, setDroppedSheet] = useState<LoadedSheet | null>(null);
   const exportMutation = useExportProducts();
@@ -74,7 +79,7 @@ export function ProductsScreen() {
   };
   // الاختصارات لا تعمل والنافذة مفتوحة.
   const whenIdle = (fn: () => void) => () => {
-    if (!importOpen && !catalogOpen) fn();
+    if (!importOpen && !catalogOpen && !deletingId) fn();
   };
 
   useHotkey(
@@ -111,7 +116,7 @@ export function ProductsScreen() {
   const actions = {
     onToggleActive: list.toggleActive,
     onDuplicate: list.duplicate,
-    onRemove: list.remove,
+    onRemove: setDeletingId,
   };
 
   const emptyAction = (
@@ -157,6 +162,7 @@ export function ProductsScreen() {
             isPending: list.bulkPending,
             onDelete: list.bulkRemove,
             onDeactivate: list.bulkDeactivate,
+            deactivateLabel: "إخفاء من الكاشير",
           }}
           {...actions}
         />
@@ -213,81 +219,82 @@ export function ProductsScreen() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold">المنتجات</h1>
-          <p className="text-xs text-muted-foreground">
-            أدر أصنافك وأسعارك ومخزونك من مكان واحد.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={() => setCatalogOpen(true)}
-          className="h-10 gap-2 font-normal"
-        >
-          <IconTags className="size-4" aria-hidden />
-          <span className="hidden sm:inline">الأقسام والوحدات</span>
-          <span className="sm:hidden">الأقسام</span>
-          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
-            {PRODUCTS_SHORTCUTS.catalog.label}
-          </ShortcutBadge>
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          disabled={exportMutation.isPending}
-          onClick={ifExcel(exportToExcel)}
-          className="h-10 gap-2 font-normal"
-        >
-          {!excel ? (
-            <IconLock className="size-4" aria-hidden />
-          ) : exportMutation.isPending ? (
-            <IconLoader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <IconDownload className="size-4" aria-hidden />
-          )}
-          <span className="hidden sm:inline">
-            {list.filtered ? "تصدير النتائج" : "تصدير إلى Excel"}
-          </span>
-          <span className="sm:hidden">تصدير</span>
-          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
-            {PRODUCTS_SHORTCUTS.exportExcel.label}
-          </ShortcutBadge>
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          onClick={ifExcel(() => openImport())}
-          className="h-10 gap-2 font-normal"
-        >
-          {excel ? (
-            <IconFileSpreadsheet className="size-4" />
-          ) : (
-            <IconLock className="size-4" aria-hidden />
-          )}
-          <span className="hidden sm:inline">استيراد من Excel</span>
-          <span className="sm:hidden">استيراد</span>
-          <ShortcutBadge className="hidden rounded-none lg:inline-flex">
-            {PRODUCTS_SHORTCUTS.importExcel.label}
-          </ShortcutBadge>
-        </Button>
-        <Button
-          size="lg"
-          nativeButton={false}
-          render={<Link href={PRODUCT_ROUTES.new} />}
-          className="h-10 gap-2"
-        >
-          <IconPlus className="size-4" />
-          صنف جديد
-          <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-            {PRODUCTS_SHORTCUTS.newProduct.label}
-          </ShortcutBadge>
-        </Button>
-      </header>
+      <PageHeader
+        title="المنتجات"
+        description="أضف أصنافك وعدّل أسعار الشراء والبيع، واطبع ملصقات الباركود، أو استورد قائمتك كاملة من ملف Excel."
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={() => setCatalogOpen(true)}
+              className="h-10 gap-2 font-normal"
+            >
+              <IconTags className="size-4" aria-hidden />
+              <span className="hidden sm:inline">الأقسام والوحدات</span>
+              <span className="sm:hidden">الأقسام</span>
+              <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+                {PRODUCTS_SHORTCUTS.catalog.label}
+              </ShortcutBadge>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled={exportMutation.isPending}
+              onClick={ifExcel(exportToExcel)}
+              className="h-10 gap-2 font-normal"
+            >
+              {!excel ? (
+                <IconLock className="size-4" aria-hidden />
+              ) : exportMutation.isPending ? (
+                <IconLoader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <IconDownload className="size-4" aria-hidden />
+              )}
+              <span className="hidden sm:inline">
+                {list.filtered ? "تصدير النتائج" : "تصدير إلى Excel"}
+              </span>
+              <span className="sm:hidden">تصدير</span>
+              <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+                {PRODUCTS_SHORTCUTS.exportExcel.label}
+              </ShortcutBadge>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={ifExcel(() => openImport())}
+              className="h-10 gap-2 font-normal"
+            >
+              {excel ? (
+                <IconFileSpreadsheet className="size-4" />
+              ) : (
+                <IconLock className="size-4" aria-hidden />
+              )}
+              <span className="hidden sm:inline">استيراد من Excel</span>
+              <span className="sm:hidden">استيراد</span>
+              <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+                {PRODUCTS_SHORTCUTS.importExcel.label}
+              </ShortcutBadge>
+            </Button>
+            <Button
+              size="lg"
+              nativeButton={false}
+              render={<Link href={PRODUCT_ROUTES.new} />}
+              className="h-10 gap-2"
+            >
+              <IconPlus className="size-4" />
+              صنف جديد
+              <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+                {PRODUCTS_SHORTCUTS.newProduct.label}
+              </ShortcutBadge>
+            </Button>
+      
+          </>
+        }
+      />
 
       {plan?.isFree && plan.limits.products !== null && (
         <p
@@ -370,6 +377,14 @@ export function ProductsScreen() {
         initial={droppedSheet}
       />
       <CatalogDialog open={catalogOpen} onOpenChange={setCatalogOpen} />
+      <ConfirmDialog
+        open={deleting !== null}
+        title={`حذف «${deleting?.name ?? ""}»؟`}
+        description="لن يظهر الصنف في الكاشير ولا في قائمة المنتجات. إن أردت إيقاف بيعه مؤقتاً فاختر «إخفاء من الكاشير» بدلاً من الحذف."
+        confirmLabel="حذف الصنف"
+        onConfirm={() => deletingId && list.remove(deletingId)}
+        onClose={() => setDeletingId(null)}
+      />
       <ProductsDropOverlay visible={dragging} />
     </div>
   );

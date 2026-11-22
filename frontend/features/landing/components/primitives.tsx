@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { SimpleIcon } from "simple-icons";
 
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
 import { Stagger, StaggerItem } from "./motion";

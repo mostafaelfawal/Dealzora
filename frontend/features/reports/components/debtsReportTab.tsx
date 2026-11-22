@@ -2,6 +2,7 @@
 
 import {
   IconAlertTriangle,
+  IconCircleCheck,
   IconArrowUpRight,
   IconClock,
   IconPhone,
@@ -194,7 +195,10 @@ export function DebtsReportTab() {
         <ReportPanel title="العملاء المدينون (المتأخر أولاً)">
           <ul className="divide-y">
             {r.customers.length === 0 && (
-              <ReportListEmpty text="لا توجد ديون" />
+              <ReportListEmpty
+                text="لا توجد ديون على العملاء"
+                icon={IconCircleCheck}
+              />
             )}
             {r.customers.map((c) => (
               <DebtorRow key={c.id} c={c} />
@@ -205,7 +209,10 @@ export function DebtsReportTab() {
         <ReportPanel title="مستحقات الموردين">
           <ul className="divide-y">
             {r.suppliers.length === 0 && (
-              <ReportListEmpty text="لا توجد مستحقات" />
+              <ReportListEmpty
+                text="لا توجد مستحقات للموردين"
+                icon={IconCircleCheck}
+              />
             )}
             {r.suppliers.map((s) => (
               <li

@@ -179,7 +179,7 @@ export function PosTotals() {
           onClick={() => dispatch(requestPayment())}
           className="h-12 gap-2 text-base lg:h-11"
         >
-          {exchange ? "تسوية" : "ادفع"}
+          {exchange ? "حساب الفرق" : "ادفع"}
           <ShortcutBadge className="rounded-none border-primary-foreground/30 text-primary-foreground/80">
             {POS_SHORTCUTS.pay.label}
           </ShortcutBadge>

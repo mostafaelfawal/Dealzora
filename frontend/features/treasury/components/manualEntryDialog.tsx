@@ -147,7 +147,7 @@ function ManualEntryForm({
       className="space-y-4"
     >
       <DialogHeader className="text-start">
-        <DialogTitle>حركة جديدة في الخزنة</DialogTitle>
+        <DialogTitle>إيداع أو سحب مبلغ من الخزنة</DialogTitle>
         <DialogDescription>
           للإيداع أو السحب اليدوي فقط (رصيد افتتاحي، تمويل، سحب المالك).
           المبيعات والمشتريات والمصروفات والتحصيل تدخل الخزنة تلقائياً.

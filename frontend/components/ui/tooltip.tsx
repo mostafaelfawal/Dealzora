@@ -2,6 +2,11 @@
 
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import { cn } from "cn";
+import { createContext, useContext } from "react";
+
+/** true داخل أي Tooltip: يمنع الزر الأيقوني من إضافة تلميح ثانٍ فوق تلميح موجود. */
+const InsideTooltipContext = createContext(false);
+export const useInsideTooltip = () => useContext(InsideTooltipContext);
 
 function TooltipProvider({
   delay = 0,
@@ -16,8 +21,14 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
+function Tooltip({ children, ...props }: TooltipPrimitive.Root.Props) {
+  return (
+    <InsideTooltipContext.Provider value>
+      <TooltipPrimitive.Root data-slot="tooltip" {...props}>
+        {children}
+      </TooltipPrimitive.Root>
+    </InsideTooltipContext.Provider>
+  );
 }
 
 function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {

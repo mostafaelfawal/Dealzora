@@ -33,7 +33,7 @@ export function ExpenseActionsMenu({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`إجراءات مصروف ${categoryLabel(expense.category)}`}
+            aria-label={`خيارات مصروف ${categoryLabel(expense.category)}`}
             className="size-8"
           />
         }
@@ -47,7 +47,7 @@ export function ExpenseActionsMenu({
       >
         <DropdownMenuItem onClick={() => onEdit(expense.id)}>
           <IconPencil />
-          تعديل
+          تعديل المصروف
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -55,7 +55,7 @@ export function ExpenseActionsMenu({
           onClick={() => onRemove(expense.id)}
         >
           <IconTrash />
-          حذف
+          حذف المصروف
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

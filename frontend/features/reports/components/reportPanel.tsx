@@ -1,7 +1,9 @@
 "use client";
 
+import type { Icon } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { extractErrorMessage } from "@/lib/errors";
@@ -88,10 +90,12 @@ export function ReportTableHead({ columns }: { columns: string[] }) {
   );
 }
 
-/** نص "لا يوجد" داخل قائمة. */
-export function ReportListEmpty({ text }: { text: string }) {
+/** حالة فارغة داخل قائمة (أيقونة + جملة). */
+export function ReportListEmpty({ text, icon }: { text: string; icon?: Icon }) {
   return (
-    <li className="py-6 text-center text-xs text-muted-foreground">{text}</li>
+    <li>
+      <EmptyState text={text} icon={icon} bordered={false} />
+    </li>
   );
 }
 
@@ -108,6 +112,7 @@ export function ReportTable<T>({
   columns,
   getKey,
   empty,
+  emptyIcon,
   action,
   minWidth = "min-w-130",
 }: {
@@ -116,15 +121,15 @@ export function ReportTable<T>({
   columns: ReportColumn<T>[];
   getKey: (row: T) => string;
   empty: string;
+  /** أيقونة الحالة الفارغة (الافتراضي صندوق فارغ). */
+  emptyIcon?: Icon;
   action?: ReactNode;
   minWidth?: string;
 }) {
   return (
     <ReportPanel title={title} action={action} count={rows.length}>
       {rows.length === 0 ? (
-        <p className="border border-dashed py-6 text-center text-xs text-muted-foreground">
-          {empty}
-        </p>
+        <EmptyState text={empty} icon={emptyIcon} />
       ) : (
         <div className="overflow-x-auto">
           <table className={`w-full ${minWidth}`}>

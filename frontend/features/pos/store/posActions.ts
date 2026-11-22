@@ -663,7 +663,7 @@ export const startExchange =
     }
     dispatch(posUiActions.closeDialog());
     dispatch(posUiActions.setMobileView("products"));
-    toast.info("أضف الأصناف الجديدة ثم اضغط تسوية", {
+    toast.info("أضف الأصناف الجديدة ثم اضغط «حساب الفرق»", {
       description: `استبدال من فاتورة #${draft.invoiceNumber}`,
     });
     focusSearch();

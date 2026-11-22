@@ -1,8 +1,10 @@
 "use client";
 
+import { IconChartBarOff, type Icon } from "@tabler/icons-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
 import { fadeUp, MotionDiv } from "@/components/shared/motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -63,16 +65,11 @@ export function ChartCard({
 export function ChartEmpty({
   text,
   height = 180,
+  icon = IconChartBarOff,
 }: {
   text: string;
   height?: number;
+  icon?: Icon;
 }) {
-  return (
-    <div
-      className="flex items-center justify-center border border-dashed text-xs text-muted-foreground"
-      style={{ height }}
-    >
-      {text}
-    </div>
-  );
+  return <EmptyState text={text} icon={icon} style={{ height }} />;
 }

@@ -76,7 +76,7 @@ export function LedgerSheet({
               className="gap-2"
             >
               <IconAdjustments className="size-4" />
-              تعديل المخزون (جرد / تالف / هدية)
+              تعديل الكمية (جرد / تالف / هدية)
               <ShortcutBadge className="border-primary-foreground/30 text-primary-foreground/80">
                 {INVENTORY_SHORTCUTS.adjust.label}
               </ShortcutBadge>

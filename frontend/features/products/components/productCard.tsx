@@ -84,7 +84,7 @@ export function ProductCard({ product, index, ...actions }: ProductCardProps) {
       <div className="flex flex-wrap items-center gap-1.5">
         {!product.isActive && (
           <Badge variant="secondary" className="font-normal">
-            معطّل
+            مخفي من الكاشير
           </Badge>
         )}
         <Badge variant="outline" className="font-normal text-muted-foreground">

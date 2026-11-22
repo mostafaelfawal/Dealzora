@@ -28,7 +28,7 @@ export const MOVEMENT_LABEL: Record<MovementType, string> = {
   count: "جرد",
   damage: "تالف",
   gift: "هدية",
-  adjustment: "تسوية",
+  adjustment: "تعديل يدوي",
   transfer_out: "تحويل لفرع",
   transfer_in: "تحويل من فرع",
 };

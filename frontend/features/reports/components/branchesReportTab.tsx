@@ -157,6 +157,7 @@ function Comparison({ r }: { r: CombinedReport }) {
           <ChartEmpty
             text="لا توجد حركة في الفروع خلال هذه الفترة"
             height={220}
+            icon={IconBuildingStore}
           />
         ) : (
           <RankBarChart items={items} valueLabel={label} kind={kind} />
@@ -168,7 +169,11 @@ function Comparison({ r }: { r: CombinedReport }) {
         className="lg:col-span-3"
       >
         {empty ? (
-          <ChartEmpty text="لا توجد حركة في هذه الفترة" height={260} />
+          <ChartEmpty
+            text="لا توجد حركة في هذه الفترة"
+            height={260}
+            icon={IconBuildingStore}
+          />
         ) : (
           <TrendChart
             data={trend}

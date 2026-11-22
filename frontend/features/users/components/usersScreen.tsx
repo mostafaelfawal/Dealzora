@@ -12,6 +12,7 @@ import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { isOwner } from "@/config/roles";
 import { BranchStaffPanel } from "@/features/branchTransfers/components/branchStaffPanel";
 import { useBranchStatus } from "@/features/branchTransfers/hooks/useBranchTransfers";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
@@ -171,28 +172,29 @@ export function UsersScreen() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold">المستخدمون</h1>
-          <p className="text-xs text-muted-foreground">
-            أضف الكاشير وحدّد كلمات مرورهم، وعطّل أو احذف من تريد.
-          </p>
-        </div>
-        {scope === "here" && (
-          <Button
-            size="lg"
-            nativeButton={false}
-            render={<Link href={USER_ROUTES.new} />}
-            className="h-10 gap-2"
-          >
-            <IconPlus className="size-4" />
-            مستخدم جديد
-            <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-              {USERS_SHORTCUTS.newUser.label}
-            </ShortcutBadge>
-          </Button>
-        )}
-      </header>
+      <PageHeader
+        title="المستخدمون"
+        description="أضف الكاشير وحدّد كلمات مرورهم، وعطّل أو احذف من تريد."
+        actions={
+          <>
+            {scope === "here" && (
+              <Button
+                size="lg"
+                nativeButton={false}
+                render={<Link href={USER_ROUTES.new} />}
+                className="h-10 gap-2"
+              >
+                <IconPlus className="size-4" />
+                مستخدم جديد
+                <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+                  {USERS_SHORTCUTS.newUser.label}
+                </ShortcutBadge>
+              </Button>
+            )}
+      
+          </>
+        }
+      />
 
       {central && (
         <SegmentedTabs

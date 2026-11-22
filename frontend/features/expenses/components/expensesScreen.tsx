@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import type { AppTableBulkActions } from "@/components/shared/AppTable/types";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
@@ -112,7 +113,7 @@ export function ExpensesScreen() {
             onPageChange: (page) => list.patchFilters({ page }),
             onPageSizeChange: (pageSize) => list.patchFilters({ pageSize }),
             pageSizes: PAGE_SIZES,
-            itemsLabel: "المصاريف",
+            itemsLabel: "المصروفات",
           }}
           bulkActions={bulkActions}
           {...actions}
@@ -170,21 +171,22 @@ export function ExpensesScreen() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold">المصاريف</h1>
-          <p className="text-xs text-muted-foreground">
-            سجّل مصاريف المحل وتابعها حسب النوع والفترة.
-          </p>
-        </div>
-        <Button size="lg" onClick={openNew} className="h-10 gap-2">
-          <IconPlus className="size-4" />
-          مصروف جديد
-          <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-            {EXPENSES_SHORTCUTS.newExpense.label}
-          </ShortcutBadge>
-        </Button>
-      </header>
+      <PageHeader
+        title="المصروفات"
+        description="سجّل كل ما يُصرف من المحل (إيجار، كهرباء، رواتب...) وتابعه حسب النوع والفترة. كل مصروف يُخصم من الخزنة تلقائياً."
+        actions={
+          <>
+            <Button size="lg" onClick={openNew} className="h-10 gap-2">
+              <IconPlus className="size-4" />
+              مصروف جديد
+              <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+                {EXPENSES_SHORTCUTS.newExpense.label}
+              </ShortcutBadge>
+            </Button>
+      
+          </>
+        }
+      />
 
       <ExpensesStats
         summary={list.summary}

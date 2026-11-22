@@ -126,7 +126,7 @@ export const NAVIGATION: NavGroup[] = [
         icon: IconCalendarDollar,
       },
       {
-        title: "الموردين",
+        title: "الموردون",
         href: "/admin/suppliers",
         feature: "suppliers",
         icon: IconBuildingStore,
@@ -158,7 +158,7 @@ export const NAVIGATION: NavGroup[] = [
     label: "الإدارة",
     items: [
       {
-        title: "المستخدمين",
+        title: "المستخدمون",
         href: "/admin/users",
         icon: IconUserShield,
       },

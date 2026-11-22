@@ -25,6 +25,7 @@ export function AppTableBulkBar<T>({ rows, actions, onClear }: Props<T>) {
     extra = [],
     onDelete,
     onDeactivate,
+    deactivateLabel = "تعطيل",
     confirmDelete = true,
     isPending,
     itemLabel = "عنصر",
@@ -77,7 +78,7 @@ export function AppTableBulkBar<T>({ rows, actions, onClear }: Props<T>) {
             className="gap-1.5 font-normal"
           >
             <IconEyeOff className="size-4" />
-            تعطيل
+            {deactivateLabel}
           </Button>
         )}
 
@@ -95,7 +96,7 @@ export function AppTableBulkBar<T>({ rows, actions, onClear }: Props<T>) {
             ) : (
               <IconTrash className="size-4" />
             )}
-            حذف
+            حذف المحدد
           </Button>
         )}
 

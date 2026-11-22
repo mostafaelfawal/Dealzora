@@ -137,12 +137,12 @@ function buildColumns({
             className="gap-1 font-normal"
           >
             <IconAdjustments className="size-3.5" />
-            تعديل
+            تعديل الكمية
           </Button>
           <Button
             size="icon-sm"
             variant="ghost"
-            aria-label={`حركة ${row.name}`}
+            aria-label={`سجل حركة الصنف: ${row.name}`}
             onClick={() => onLedger(row)}
           >
             <IconHistory />
@@ -231,7 +231,7 @@ function StockCard({
           className="flex-1 gap-1 font-normal"
         >
           <IconAdjustments className="size-3.5" />
-          تعديل الرصيد
+          تعديل الكمية
         </Button>
         <Button
           size="sm"
@@ -240,7 +240,7 @@ function StockCard({
           className="gap-1 font-normal"
         >
           <IconHistory className="size-3.5" />
-          الحركة
+          سجل الحركة
         </Button>
       </div>
     </>

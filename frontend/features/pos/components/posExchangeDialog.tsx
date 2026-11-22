@@ -47,7 +47,7 @@ export function PosExchangeDialog() {
       >
         <DialogHeader className="text-start">
           <DialogTitle>
-            تسوية الاستبدال
+            حساب فرق الاستبدال
             {exchange ? ` · فاتورة #${exchange.invoiceNumber}` : ""}
           </DialogTitle>
           <DialogDescription>

@@ -128,14 +128,14 @@ export function ProductsTable({
     },
     {
       id: "active",
-      header: "مفعّل",
+      header: "في الكاشير",
       className: "w-20",
       cell: (p) => (
         <Switch
           size="sm"
           checked={p.isActive}
           onCheckedChange={() => actions.onToggleActive(p.id)}
-          aria-label={`${p.isActive ? "تعطيل" : "تفعيل"} ${p.name}`}
+          aria-label={`${p.isActive ? "إخفاء من الكاشير" : "إظهار في الكاشير"}: ${p.name}`}
         />
       ),
     },

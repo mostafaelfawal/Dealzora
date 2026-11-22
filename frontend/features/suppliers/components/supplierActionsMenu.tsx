@@ -44,7 +44,7 @@ export function SupplierActionsMenu({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`إجراءات ${supplier.name}`}
+            aria-label={`خيارات ${supplier.name}`}
             className="size-8"
           />
         }
@@ -60,7 +60,7 @@ export function SupplierActionsMenu({
           render={<Link href={SUPPLIER_ROUTES.edit(supplier.id)} />}
         >
           <IconPencil />
-          تعديل
+          تعديل المورد
         </DropdownMenuItem>
         <DropdownMenuItem
           render={<Link href={SUPPLIER_ROUTES.statement(supplier.id)} />}
@@ -82,7 +82,7 @@ export function SupplierActionsMenu({
           onClick={() => onRemove(supplier.id)}
         >
           <IconTrash />
-          حذف
+          حذف المورد
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

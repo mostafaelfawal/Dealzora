@@ -6,8 +6,10 @@ import {
   IconBulb,
   IconCash,
   IconCoin,
+  IconDiscountOff,
   IconMinus,
   IconReceipt,
+  IconShoppingCartOff,
   IconWallet,
 } from "@tabler/icons-react";
 import { useState } from "react";
@@ -16,6 +18,7 @@ import { ChartCard, ChartEmpty } from "@/components/shared/charts/ChartCard";
 import { CHART } from "@/components/shared/charts/chartTheme";
 import { Donut } from "@/components/shared/charts/MiscCharts";
 import { TrendChart } from "@/components/shared/charts/TrendChart";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Money } from "@/components/shared/Money";
 import { Num } from "@/components/shared/Num";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
@@ -208,9 +211,11 @@ function SalesStats({ r, prev }: { r: SalesReport; prev?: SalesReport }) {
 function SalesSummary({ r, prev }: { r: SalesReport; prev?: SalesReport }) {
   if (r.count === 0 && r.returns === 0) {
     return (
-      <p className="border border-dashed bg-card p-3 text-sm text-muted-foreground">
-        لا توجد مبيعات في هذه الفترة. جرّب فترة أطول من قائمة الفترة.
-      </p>
+      <EmptyState
+        icon={IconShoppingCartOff}
+        text="لا توجد مبيعات في هذه الفترة. جرّب فترة أطول من قائمة الفترة."
+        className="bg-card"
+      />
     );
   }
   const best =
@@ -288,7 +293,11 @@ function SalesTrendCard({ r }: { r: SalesReport }) {
       className="lg:col-span-2"
     >
       {isEmpty ? (
-        <ChartEmpty text="لا توجد مبيعات في هذه الفترة" height={260} />
+        <ChartEmpty
+          text="لا توجد مبيعات في هذه الفترة"
+          height={260}
+          icon={IconShoppingCartOff}
+        />
       ) : (
         <TrendChart
           data={salesTrendSeries(r.days, metric)}
@@ -374,9 +383,10 @@ function DiscountBreakdown({ r }: { r: SalesReport }) {
   return (
     <ReportPanel title="تفصيل الخصومات">
       {total === 0 ? (
-        <p className="py-6 text-center text-xs text-muted-foreground">
-          لا توجد خصومات في هذه الفترة
-        </p>
+        <EmptyState
+          icon={IconDiscountOff}
+          text="لا توجد خصومات في هذه الفترة"
+        />
       ) : (
         <div className="space-y-3">
           <div

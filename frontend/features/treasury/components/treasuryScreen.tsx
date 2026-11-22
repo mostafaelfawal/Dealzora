@@ -5,6 +5,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
@@ -141,22 +142,22 @@ export function TreasuryScreen() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold">الخزنة</h1>
-          <p className="text-xs text-muted-foreground">
-            تابع رصيد الخزنة وكل ما دخلها وخرج منها. المبيعات والمشتريات
-            والمصروفات والتحصيل تُسجَّل هنا تلقائياً.
-          </p>
-        </div>
-        <Button size="lg" onClick={openForm} className="h-10 gap-2">
-          <IconPlus className="size-4" />
-          حركة جديدة
-          <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-            {TREASURY_SHORTCUTS.newEntry.label}
-          </ShortcutBadge>
-        </Button>
-      </header>
+      <PageHeader
+        title="الخزنة"
+        description="تابع رصيد الخزنة وكل ما دخلها وخرج منها. المبيعات والمشتريات والمصروفات والتحصيل تُسجَّل هنا تلقائياً."
+        actions={
+          <>
+            <Button size="lg" onClick={openForm} className="h-10 gap-2">
+              <IconPlus className="size-4" />
+              إيداع أو سحب
+              <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+                {TREASURY_SHORTCUTS.newEntry.label}
+              </ShortcutBadge>
+            </Button>
+      
+          </>
+        }
+      />
 
       <TreasuryStats
         summary={list.summary}

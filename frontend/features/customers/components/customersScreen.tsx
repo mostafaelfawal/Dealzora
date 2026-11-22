@@ -5,6 +5,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
@@ -195,25 +196,26 @@ export function CustomersScreen() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold">العملاء</h1>
-          <p className="text-xs text-muted-foreground">
-            تابع مديونيات عملائك وحدودهم الائتمانية وحصّل دفعاتهم من مكان واحد.
-          </p>
-        </div>
-        <Button
-          size="lg"
-          onClick={() => setDialog({ type: "form", id: null })}
-          className="h-10 gap-2"
-        >
-          <IconPlus className="size-4" />
-          عميل جديد
-          <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-            {CUSTOMERS_SHORTCUTS.newCustomer.label}
-          </ShortcutBadge>
-        </Button>
-      </header>
+      <PageHeader
+        title="العملاء"
+        description="تابع مديونيات عملائك وحدودهم الائتمانية وحصّل دفعاتهم من مكان واحد."
+        actions={
+          <>
+            <Button
+              size="lg"
+              onClick={() => setDialog({ type: "form", id: null })}
+              className="h-10 gap-2"
+            >
+              <IconPlus className="size-4" />
+              عميل جديد
+              <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+                {CUSTOMERS_SHORTCUTS.newCustomer.label}
+              </ShortcutBadge>
+            </Button>
+      
+          </>
+        }
+      />
 
       <CustomersStats
         summary={list.summary}

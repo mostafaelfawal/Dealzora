@@ -55,7 +55,7 @@ export function ProductActionsMenu({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label={`إجراءات ${product.name}`}
+              aria-label={`خيارات ${product.name}`}
               className="size-8"
             />
           }
@@ -64,14 +64,14 @@ export function ProductActionsMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="w-44"
+          className="w-52"
           onClick={(event) => event.stopPropagation()}
         >
           <DropdownMenuItem
             render={<Link href={PRODUCT_ROUTES.edit(product.id)} />}
           >
             <IconPencil />
-            تعديل
+            تعديل الصنف
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onDuplicate(product.id)}>
             <IconCopy />
@@ -88,11 +88,12 @@ export function ProductActionsMenu({
             }
           >
             {labels ? <IconPrinter /> : <IconLock />}
-            طباعة باركود
+            طباعة ملصق باركود
           </DropdownMenuItem>
+          {/* الصنف المعطّل لا يُباع في الكاشير (يرفضه الخادم)، فنسمّي الإجراء بأثره. */}
           <DropdownMenuItem onClick={() => onToggleActive(product.id)}>
             {product.isActive ? <IconEyeOff /> : <IconEye />}
-            {product.isActive ? "تعطيل" : "تفعيل"}
+            {product.isActive ? "إخفاء من الكاشير" : "إظهار في الكاشير"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -100,7 +101,7 @@ export function ProductActionsMenu({
             onClick={() => onRemove(product.id)}
           >
             <IconTrash />
-            حذف
+            حذف الصنف
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

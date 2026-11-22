@@ -5,12 +5,17 @@ import {
   IconArrowBackUp,
   IconCash,
   IconClockHour4,
+  IconChecks,
   IconDiscount,
+  IconDiscountOff,
   IconGift,
   IconPercentage,
   IconReceipt,
   IconReceiptRefund,
+  IconShoppingCartOff,
   IconTruckDelivery,
+  IconTruckOff,
+  IconUserOff,
   IconUserPlus,
   IconUsers,
 } from "@tabler/icons-react";
@@ -228,7 +233,7 @@ export function PurchasesReportTab({ range }: { range: DateRange }) {
               subtitle="من أين تأتي بضاعتك، وكم تعتمد على كل مورد"
             >
               {r.bySupplier.length === 0 ? (
-                <ChartEmpty text="لا توجد مشتريات في هذه الفترة" />
+                <ChartEmpty text="لا توجد مشتريات في هذه الفترة" icon={IconTruckOff} />
               ) : (
                 <RankBarChart
                   valueLabel="المشتريات"
@@ -256,7 +261,8 @@ export function PurchasesReportTab({ range }: { range: DateRange }) {
               rows={r.topProducts}
               columns={PURCHASED_COLUMNS}
               getKey={(x) => x.productId}
-              empty="لا توجد مشتريات"
+              empty="لا توجد مشتريات في هذه الفترة"
+              emptyIcon={IconTruckOff}
             />
             <ReportTable
               title="تغيّر أسعار الشراء في الفترة (الأكبر أولاً)"
@@ -379,7 +385,7 @@ export function PromotionsReportTab({ range }: { range: DateRange }) {
               href="/admin/promotions"
             >
               {used.length === 0 ? (
-                <ChartEmpty text="لم يُطبق أي عرض في هذه الفترة" />
+                <ChartEmpty text="لم يُطبَّق أي عرض في هذه الفترة" icon={IconDiscountOff} />
               ) : (
                 <RankBarChart
                   valueLabel="الخصم"
@@ -407,6 +413,7 @@ export function PromotionsReportTab({ range }: { range: DateRange }) {
               columns={PROMO_COLUMNS}
               getKey={(p) => p.id ?? `deleted:${p.name}`}
               empty="لا توجد عروض. أنشئ عرضاً من شاشة العروض."
+              emptyIcon={IconDiscountOff}
               minWidth="min-w-180"
             />
           </>
@@ -464,7 +471,7 @@ export function ReturnsReportTab({ range }: { range: DateRange }) {
               href="/admin/returns"
             >
               {r.byReason.length === 0 ? (
-                <ChartEmpty text="لا توجد مرتجعات في هذه الفترة" />
+                <ChartEmpty text="لا توجد مرتجعات في هذه الفترة" icon={IconReceiptRefund} />
               ) : (
                 <RankBarChart
                   valueLabel="القيمة"
@@ -500,7 +507,8 @@ export function ReturnsReportTab({ range }: { range: DateRange }) {
                 { header: "القيمة", cell: (c) => money(c.total) },
               ]}
               getKey={(c) => c.userId}
-              empty="لا توجد مرتجعات"
+              empty="لا توجد مرتجعات في هذه الفترة"
+              emptyIcon={IconReceiptRefund}
               minWidth="min-w-80"
             />
           </div>
@@ -528,6 +536,7 @@ export function ReturnsReportTab({ range }: { range: DateRange }) {
             ]}
             getKey={(x) => x.productId}
             empty="لا توجد مرتجعات في هذه الفترة"
+            emptyIcon={IconReceiptRefund}
           />
         </>
       )}
@@ -685,6 +694,7 @@ export function CustomersReportTab({ range }: { range: DateRange }) {
                   ]}
                   getKey={(c) => c.id}
                   empty="لا توجد مبيعات لعملاء مسجلين في هذه الفترة"
+                  emptyIcon={IconUserOff}
                   minWidth="min-w-150"
                 />
               </div>
@@ -720,6 +730,7 @@ export function CustomersReportTab({ range }: { range: DateRange }) {
               ]}
               getKey={(c) => c.id}
               empty="لا يوجد عميل منقطع — كل عملائك اشتروا خلال آخر 30 يوماً"
+              emptyIcon={IconChecks}
             />
           </>
         );
@@ -821,6 +832,7 @@ export function CashiersReportTab({ range }: { range: DateRange }) {
             columns={CASHIER_COLUMNS}
             getKey={(c) => c.userId || "unknown"}
             empty="لا توجد مبيعات في هذه الفترة"
+            emptyIcon={IconShoppingCartOff}
             minWidth="min-w-190"
           />
 

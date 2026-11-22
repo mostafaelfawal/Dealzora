@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useHotkey } from "@/hooks/useHotkey";
 import { extractErrorMessage } from "@/lib/errors";
@@ -32,10 +34,12 @@ export function SuppliersScreen() {
   const list = useSuppliersList();
   const { view, setView } = useSuppliersView();
   const [payTarget, setPayTarget] = useState<Supplier | null>(null);
+  // الحذف من قائمة «⋯» كان فورياً بلا تأكيد: صار يمر بنافذة تأكيد.
+  const [deleting, setDeleting] = useState<Supplier | null>(null);
 
   // الاختصارات لا تعمل والنافذة مفتوحة.
   const whenIdle = (fn: () => void) => () => {
-    if (!payTarget) fn();
+    if (!payTarget && !deleting) fn();
   };
 
   useHotkey(
@@ -60,7 +64,7 @@ export function SuppliersScreen() {
   const actions = {
     onToggleActive: list.toggleActive,
     onPay: (id: string) => setPayTarget(list.find(id) ?? null),
-    onRemove: list.remove,
+    onRemove: (id: string) => setDeleting(list.find(id) ?? null),
   };
 
   const emptyAction = (
@@ -161,26 +165,27 @@ export function SuppliersScreen() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold">الموردون</h1>
-          <p className="text-xs text-muted-foreground">
-            تابع حسابات مورديك ومستحقاتهم ودفعاتهم من مكان واحد.
-          </p>
-        </div>
-        <Button
-          size="lg"
-          nativeButton={false}
-          render={<Link href={SUPPLIER_ROUTES.new} />}
-          className="h-10 gap-2"
-        >
-          <IconPlus className="size-4" />
-          مورد جديد
-          <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
-            {SUPPLIERS_SHORTCUTS.newSupplier.label}
-          </ShortcutBadge>
-        </Button>
-      </header>
+      <PageHeader
+        title="الموردون"
+        description="تابع حسابات مورديك ومستحقاتهم ودفعاتهم من مكان واحد."
+        actions={
+          <>
+            <Button
+              size="lg"
+              nativeButton={false}
+              render={<Link href={SUPPLIER_ROUTES.new} />}
+              className="h-10 gap-2"
+            >
+              <IconPlus className="size-4" />
+              مورد جديد
+              <ShortcutBadge className="hidden border-primary-foreground/30 text-primary-foreground/80 lg:inline-flex">
+                {SUPPLIERS_SHORTCUTS.newSupplier.label}
+              </ShortcutBadge>
+            </Button>
+      
+          </>
+        }
+      />
 
       <SuppliersStats
         summary={list.summary}
@@ -241,6 +246,14 @@ export function SuppliersScreen() {
       <SupplierPaymentDialog
         supplier={payTarget}
         onClose={() => setPayTarget(null)}
+      />
+      <ConfirmDialog
+        open={deleting !== null}
+        title={`حذف المورد «${deleting?.name ?? ""}»؟`}
+        description="لن يظهر المورد في القائمة ولا عند تسجيل المشتريات. إن أردت إيقاف التعامل معه مؤقتاً فاختر «تعطيل» بدلاً من الحذف."
+        confirmLabel="حذف المورد"
+        onConfirm={() => deleting && list.remove(deleting.id)}
+        onClose={() => setDeleting(null)}
       />
     </div>
   );

@@ -162,8 +162,8 @@ export function useProductsList() {
 
   const bulkDeactivateMutation = useMutation({
     mutationFn: (rows: Product[]) => bulkDeactivateProducts(toItems(rows)),
-    onSuccess: (result) => showBulkResult(result, "تم تعطيل", "صنف"),
-    onError: (error) => toast.error(extractErrorMessage(error, "تعذّر التعطيل")),
+    onSuccess: (result) => showBulkResult(result, "تم إخفاء من الكاشير:", "صنف"),
+    onError: (error) => toast.error(extractErrorMessage(error, "تعذّر الإخفاء من الكاشير")),
     onSettled: refresh,
   });
 

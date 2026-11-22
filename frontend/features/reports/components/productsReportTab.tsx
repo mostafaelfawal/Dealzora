@@ -1,10 +1,12 @@
 "use client";
 
+import { IconPackageOff } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { AppTooltip } from "@/components/shared/AppTooltip";
 import { ChartCard } from "@/components/shared/charts/ChartCard";
 import { RankBarChart } from "@/components/shared/charts/RankBarChart";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Money } from "@/components/shared/Money";
 import { OptionSelect } from "@/components/shared/OptionSelect";
 import { SegmentedTabs } from "@/components/shared/SegmentedTabs";
@@ -169,10 +171,11 @@ export function ProductsReportTab({ range }: { range: DateRange }) {
       </div>
 
       {items.length === 0 ? (
-        <p className="border border-dashed py-12 text-center text-sm text-muted-foreground">
-          لا توجد مبيعات في هذه الفترة
-          {category !== ALL_CATEGORIES && " لهذا القسم"}
-        </p>
+        <EmptyState
+          icon={IconPackageOff}
+          text={`لا توجد مبيعات في هذه الفترة${category !== ALL_CATEGORIES ? " لهذا القسم" : ""}`}
+          className="py-12"
+        />
       ) : (
         <div
           className={cn(

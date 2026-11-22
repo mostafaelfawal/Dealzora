@@ -24,7 +24,7 @@ export const TRANSACTION_LABELS: Record<SupplierTransactionType, string> = {
   purchase: "فاتورة شراء",
   purchase_return: "مرتجع مشتريات",
   payment: "دفعة سداد",
-  adjustment: "تسوية",
+  adjustment: "تعديل يدوي",
 };
 
 export const SUPPLIERS_SEARCH_ID = "suppliers-search";

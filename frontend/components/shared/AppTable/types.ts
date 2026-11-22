@@ -54,6 +54,8 @@ export interface AppTableBulkActions<T> {
   onDelete?: (rows: T[], clear: () => void) => void;
   /** وجودها يُظهر زر التعطيل. */
   onDeactivate?: (rows: T[], clear: () => void) => void;
+  /** نص زر التعطيل بأثره الفعلي (مثل "إخفاء من الكاشير"). الافتراضي "تعطيل". */
+  deactivateLabel?: string;
   /** true = تظهر نافذة تأكيد قبل الحذف (الافتراضي). */
   confirmDelete?: boolean;
   /** يعطّل الأزرار أثناء تنفيذ العملية. */

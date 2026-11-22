@@ -1,5 +1,6 @@
 "use client";
 
+import { IconCircleCheck } from "@tabler/icons-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -21,14 +22,19 @@ type StockRow = StockReport["low"][number];
 
 function StockList({
   rows,
+  emptyText,
   renderValue,
 }: {
   rows: StockRow[];
+  /** جملة الحالة الفارغة (خبر جيد هنا: لا نواقص ولا راكد). */
+  emptyText: string;
   renderValue: (row: StockRow) => ReactNode;
 }) {
   return (
     <ul className="divide-y">
-      {rows.length === 0 && <ReportListEmpty text="لا يوجد" />}
+      {rows.length === 0 && (
+        <ReportListEmpty text={emptyText} icon={IconCircleCheck} />
+      )}
       {rows.slice(0, REPORT_LIMITS.stockList).map((row) => (
         <li
           key={row.productId}
@@ -81,6 +87,7 @@ export function StockReportTab() {
         <ReportPanel title={`قارب على النفاد (${r.counts.low})`}>
           <StockList
             rows={r.low}
+            emptyText="لا توجد أصناف قاربت على النفاد"
             renderValue={(row) => (
               <span className="font-mono text-warning">
                 {formatQty(row.stock)} / {formatQty(row.minStock)} {row.unit}
@@ -92,6 +99,7 @@ export function StockReportTab() {
         <ReportPanel title={`نفد (${r.counts.out})`}>
           <StockList
             rows={r.out}
+            emptyText="لا توجد أصناف نفدت من المخزون"
             renderValue={() => (
               <Badge
                 variant="outline"
@@ -108,6 +116,7 @@ export function StockReportTab() {
         >
           <StockList
             rows={r.stagnant}
+            emptyText="لا توجد أصناف راكدة"
             renderValue={(row) => (
               <Money amount={row.stockValue} className="text-xs" />
             )}
