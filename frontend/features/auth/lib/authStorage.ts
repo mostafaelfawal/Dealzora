@@ -37,7 +37,8 @@ export function readSession(): AuthSession | null {
     if (!raw) return null;
     const session = JSON.parse(raw) as AuthSession;
     const expired = !(Date.parse(session.expiresAt) > Date.now());
-    if (!session.token || expired) {
+    // authStore يُمسح من axios عند 401 «unauthorized»: نعتبر الجلسة منتهية حينها.
+    if (!session.token || expired || !authStore.get()) {
       clearSession();
       return null;
     }

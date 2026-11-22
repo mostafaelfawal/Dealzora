@@ -8,6 +8,7 @@ import { StoreProvider } from "./StoreProvider";
 import { QueryProvider } from "./QueryProvider";
 import { MotionProvider } from "@/components/shared/motion";
 import { FileDropGuard } from "./FileDropGuard";
+import { FullscreenHotkey } from "./FullscreenHotkey";
 import { DeviceRuntime } from "@/features/devices/components/deviceRuntime";
 import { CurrencySync } from "./CurrencySync";
 import { UpdateRuntime } from "@/features/updates/components/updateRuntime";
@@ -37,6 +38,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         {/* الجهاز الأساسي: تجديد ترخيص أجهزة الكاشير. جهاز الكاشير: حالة الاتصال. */}
         <DeviceRuntime />
         <FileDropGuard />
+        <FullscreenHotkey />
       </ThemeProvider>
     </DirectionProvider>
   );
