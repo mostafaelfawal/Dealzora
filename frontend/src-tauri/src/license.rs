@@ -472,12 +472,16 @@ pub fn lease_terms() -> R<(u64, u32)> {
     }
 }
 
+// DB_SECRET و db_password و device_id تُستخدم فقط في spawn_backend لنسخة الإصدار
+// (في التطوير الـ backend يعمل من VS Code)، فنُسكت تحذير «غير مستخدم» في وضع التطوير.
+#[cfg_attr(debug_assertions, allow(dead_code))]
 const DB_SECRET: &str = match option_env!("DEALZORA_DB_SECRET") {
     Some(s) => s,
     None => "dev-only-db-secret",
 };
 
 /// كلمة مرور SQLCipher: ثابتة لنفس الجهاز، فلا تحتاج تخزيناً.
+#[cfg_attr(debug_assertions, allow(dead_code))]
 pub fn db_password() -> R<String> {
     let mut mac = HmacSha256::new_from_slice(DB_SECRET.as_bytes()).map_err(|x| x.to_string())?;
     mac.update(b"db|");
@@ -486,12 +490,15 @@ pub fn db_password() -> R<String> {
 }
 
 /// device_id بصيغة UUID (36 حرفاً) ثابت لنفس الجهاز.
+#[cfg_attr(debug_assertions, allow(dead_code))]
 pub fn device_id() -> R<String> {
     let h = hex::encode(Sha256::digest(format!("device|{}", machine_id()?)));
     Ok(format!("{}-{}-{}-{}-{}", &h[0..8], &h[8..12], &h[12..16], &h[16..20], &h[20..32]))
 }
 
+/// أداة تطوير لمسح بيانات الترخيص يدوياً (لا تُستدعى من أي مكان حالياً).
 #[cfg(debug_assertions)]
+#[allow(dead_code)]
 pub fn reset_dev() -> R<()> {
     let _g = lock();
     for p in file_paths() {

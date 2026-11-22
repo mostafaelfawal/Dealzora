@@ -373,7 +373,7 @@ export function CheckoutView() {
           {/* حقل فخ للبرامج الآلية: مخفي عن الزوار وقارئات الشاشة. */}
           <div
             aria-hidden
-            className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+            className="absolute left-[-9999px] h-0 w-0 overflow-hidden"
           >
             <label htmlFor="c-website">الموقع</label>
             <input

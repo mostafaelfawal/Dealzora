@@ -128,6 +128,10 @@ class StockReportOut(BaseModel):
     out: list[StockRowOut]
     stagnant: list[StockRowOut]
     stagnant_value: int
+    # الأعداد الحقيقية (القوائم أعلاه مقصوصة عند limit فلا يصلح طولها عدداً).
+    low_count: int
+    out_count: int
+    stagnant_count: int
 
 
 # ---------- المديونيات ----------

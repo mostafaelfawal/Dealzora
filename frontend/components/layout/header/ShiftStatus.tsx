@@ -4,6 +4,7 @@ import {
   IconClockHour4,
   IconLockDollar,
   IconPlayerPlay,
+  IconZzz,
 } from "@tabler/icons-react";
 import { useState } from "react";
 
@@ -49,7 +50,11 @@ export function ShiftStatus({ shift, showLabels = false }: ShiftStatusProps) {
             />
           }
         >
-          <StatusDot tone={isOpen ? "success" : "warning"} pulse={isOpen} />
+          {isOpen ? (
+            <StatusDot tone="success" pulse />
+          ) : (
+            <IconZzz className="size-4 text-warning" aria-hidden />
+          )}
           <span
             className={cn(
               "text-sm",

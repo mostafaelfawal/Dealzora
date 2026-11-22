@@ -19,7 +19,7 @@ import type { InventoryList } from "../hooks/useInventoryList";
 import type { InventoryTab, StockReport } from "../types/inventory";
 
 const tabCount = (id: InventoryTab, r: StockReport | undefined) =>
-  id === "all" ? undefined : r?.[id].length;
+  id === "all" ? undefined : r?.counts[id];
 
 export function InventoryToolbar({
   list,

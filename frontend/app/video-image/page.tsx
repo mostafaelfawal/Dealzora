@@ -1,12 +1,8 @@
-
 "use client";
 
 import { useRef, useState } from "react";
 
-import {
-  IconDownload,
-  IconRocket,
-} from "@tabler/icons-react";
+import { IconDownload, IconRocket } from "@tabler/icons-react";
 
 import { toPng } from "html-to-image";
 
@@ -68,9 +64,10 @@ export default function VideoImage() {
         .replace(/[<>:"/\\|?*]/g, "")
         .replace(/\s+/g, "-");
 
-      link.download = `Dealzora-Lesson-${String(
-        VIDEO.number
-      ).padStart(2, "0")}-${safeTitle}.png`;
+      link.download = `Dealzora-Lesson-${String(VIDEO.number).padStart(
+        2,
+        "0",
+      )}-${safeTitle}.png`;
 
       link.href = dataUrl;
       link.click();
@@ -84,17 +81,13 @@ export default function VideoImage() {
 
   return (
     <main className="min-h-screen bg-[#090909] px-5 py-8">
-
       {/* ==================================
           EXPORT TOOLBAR
       ================================== */}
 
       <div className="mx-auto mb-6 flex max-w-7xl items-center justify-between">
-
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-bold text-white">
-            Thumbnail Generator
-          </h2>
+          <h2 className="text-lg font-bold text-white">Thumbnail Generator</h2>
 
           <span className="text-sm text-white/50">
             Dealzora Tutorial Series · 1280 × 720
@@ -138,26 +131,26 @@ export default function VideoImage() {
             select-none
           "
         >
-
           {/* Background Grid */}
 
-          <div className="
+          <div
+            className="
             landing-grid pointer-events-none
             absolute inset-0 -z-10 opacity-40
-          " />
+          "
+          />
 
           {/* ==================================
               BRAND HEADER
           ================================== */}
 
-          <div className="
+          <div
+            className="
             absolute right-12 top-9
             flex items-center gap-4
-          ">
-            <BrandLogo
-              variant="icon"
-              className="h-14 rounded-none"
-            />
+          "
+          >
+            <BrandLogo variant="icon" className="h-14 rounded-none" />
 
             <span className="text-4xl font-extrabold tracking-tight">
               {BRAND.name}
@@ -168,70 +161,77 @@ export default function VideoImage() {
               MAIN CONTENT
           ================================== */}
 
-          <div className="
+          <div
+            className="
             flex w-full items-center gap-8
             px-10 pt-16
-          ">
-
+          "
+          >
             {/* VIDEO ICON */}
 
-            <div className="
+            <div
+              className="
               relative flex h-105 w-105
               shrink-0 items-center justify-center
-            ">
-
+            "
+            >
               {/* Decorative Frames */}
 
-              <div className="
+              <div
+                className="
                 absolute inset-0 rotate-[-5deg]
                 border border-white/40
-              " />
+              "
+              />
 
-              <div className="
+              <div
+                className="
                 absolute inset-2 rotate-3
                 border border-white/20
-              " />
+              "
+              />
 
               {/* Main Icon */}
 
-              <div className="
+              <div
+                className="
                 relative flex h-97.5 w-97.5
                 items-center justify-center
                 border-2 border-white/90
                 bg-[#171717]
                 shadow-[0_20px_80px_rgba(255,255,255,0.05)]
-              ">
-                <VideoIcon
-                  size={240}
-                  stroke={1.35}
-                  className="text-white"
-                />
+              "
+              >
+                <VideoIcon size={240} stroke={1.35} className="text-white" />
               </div>
             </div>
 
             {/* VIDEO INFORMATION */}
 
-            <div className="
+            <div
+              className="
               flex min-w-0 flex-1
               flex-col items-start
-            ">
-
+            "
+            >
               {/* Lesson Number */}
 
-              <div className="
+              <div
+                className="
                 flex w-fit items-center gap-5
                 border border-white/15
                 bg-[#171717]
                 px-6 py-3
-              ">
-                <span className="text-3xl font-bold">
-                  الدرس
-                </span>
+              "
+              >
+                <span className="text-3xl font-bold">الدرس</span>
 
-                <span className="
+                <span
+                  className="
                   font-mono text-4xl font-bold
                   tracking-wider
-                ">
+                "
+                >
                   {String(VIDEO.number).padStart(2, "0")}
                 </span>
               </div>
@@ -239,10 +239,11 @@ export default function VideoImage() {
               {/* Category */}
 
               <div className="mt-6 flex items-center gap-3">
-
-                <div className={`
+                <div
+                  className={`
                   h-8 w-1.5 ${VIDEO.category.bg}
-                `} />
+                `}
+                />
 
                 <CategoryIcon
                   size={23}
@@ -250,17 +251,20 @@ export default function VideoImage() {
                   className={VIDEO.category.color}
                 />
 
-                <span className={`
+                <span
+                  className={`
                   text-xl font-bold
                   ${VIDEO.category.color}
-                `}>
+                `}
+                >
                   {VIDEO.category.name}
                 </span>
               </div>
 
               {/* Video Title */}
 
-              <h1 className="
+              <h1
+                className="
                 mt-7 w-full
                 text-right
                 text-[72px] font-black
@@ -269,17 +273,19 @@ export default function VideoImage() {
                 text-white
                 wrap-break-word
                 line-clamp-2
-              ">
+              "
+              >
                 {VIDEO.title}
               </h1>
 
               {/* Main Accent Line */}
 
-              <div className={`
+              <div
+                className={`
                 mt-7 h-1.25 w-[78%]
                 ${VIDEO.category.bg}
-              `} />
-
+              `}
+              />
             </div>
           </div>
 
@@ -287,18 +293,21 @@ export default function VideoImage() {
               FOOTER
           ================================== */}
 
-          <div className="
+          <div
+            className="
             absolute bottom-0 left-0
             p-10
-          ">
-            <span className="
+          "
+          >
+            <span
+              className="
               text-3xl font-extrabold
               text-white/65
-            ">
+            "
+            >
               شروحات {BRAND.name}
             </span>
           </div>
-
         </div>
       </div>
 
@@ -306,13 +315,14 @@ export default function VideoImage() {
           EXPORT INFORMATION
       ================================== */}
 
-      <p className="
+      <p
+        className="
         mx-auto mt-5 max-w-7xl
         text-center text-sm text-white/40
-      ">
+      "
+      >
         PNG · 1280 × 720 px · YouTube Ready
       </p>
-
     </main>
   );
 }

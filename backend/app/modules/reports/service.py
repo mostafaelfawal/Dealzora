@@ -212,7 +212,11 @@ class ReportService:
         stagnant.sort(key=lambda p: -(p.stock_qty * p.cost_price))
         stagnant_rows = [self._stock_row(p, last.get(p.id)) for p in stagnant]
         all_last = self.repo.last_sold({p.id for p in low + out})
+        low_count, out_count = self.repo.count_low_out()
         return StockReportOut(
+            low_count=low_count,
+            out_count=out_count,
+            stagnant_count=len(stagnant_rows),
             stock_value=self.repo.stock_value(),
             low=[self._stock_row(p, all_last.get(p.id)) for p in low],
             out=[self._stock_row(p, all_last.get(p.id)) for p in out],
@@ -412,7 +416,7 @@ class ReportService:
                 stock_value=stock.stock_value,
                 low_stock=low,
                 out_of_stock=out,
-                stagnant_count=len(stock.stagnant),
+                stagnant_count=stock.stagnant_count,
                 stagnant_value=stock.stagnant_value,
                 customers_debt=debts.customers_total,
                 overdue_customers=debts.overdue_count,

@@ -44,6 +44,8 @@ export interface StockReport {
   out: StockRow[];
   stagnant: StockRow[];
   stagnantValue: number;
+  /** الأعداد الحقيقية: القوائم مقصوصة عند حد التقرير (500) فلا يصلح طولها عدداً. */
+  counts: Record<"low" | "out" | "stagnant", number>;
 }
 
 export interface AdjustInput {

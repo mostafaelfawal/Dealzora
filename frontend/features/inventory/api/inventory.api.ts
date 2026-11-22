@@ -90,6 +90,9 @@ export async function fetchStockReport(
     out: StockRowDto[];
     stagnant: StockRowDto[];
     stagnant_value: number;
+    low_count: number;
+    out_count: number;
+    stagnant_count: number;
   }>("/reports/stock", { params: { stagnant_days: stagnantDays, limit: 500 } });
   return {
     stockValue: toPounds(data.stock_value),
@@ -97,5 +100,10 @@ export async function fetchStockReport(
     out: data.out.map(toRow),
     stagnant: data.stagnant.map(toRow),
     stagnantValue: toPounds(data.stagnant_value),
+    counts: {
+      low: data.low_count,
+      out: data.out_count,
+      stagnant: data.stagnant_count,
+    },
   };
 }

@@ -78,7 +78,7 @@ export function StockReportTab() {
   return (
     <div className="space-y-3">
       <div className="grid gap-3 lg:grid-cols-3">
-        <ReportPanel title={`قارب على النفاد (${r.low.length})`}>
+        <ReportPanel title={`قارب على النفاد (${r.counts.low})`}>
           <StockList
             rows={r.low}
             renderValue={(row) => (
@@ -89,7 +89,7 @@ export function StockReportTab() {
           />
         </ReportPanel>
 
-        <ReportPanel title={`نفد (${r.out.length})`}>
+        <ReportPanel title={`نفد (${r.counts.out})`}>
           <StockList
             rows={r.out}
             renderValue={() => (
@@ -104,7 +104,7 @@ export function StockReportTab() {
         </ReportPanel>
 
         <ReportPanel
-          title={`راكد ${REPORT_LIMITS.stagnantDays} يوماً (${r.stagnant.length})`}
+          title={`راكد ${REPORT_LIMITS.stagnantDays} يوماً (${r.counts.stagnant})`}
         >
           <StockList
             rows={r.stagnant}

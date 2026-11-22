@@ -191,7 +191,7 @@ export function OrderTracker({ token }: { token: string }) {
                     <span
                       aria-hidden
                       className={cn(
-                        "absolute top-7 bottom-0 start-[0.6875rem] w-0.5",
+                        "absolute top-7 bottom-0 inset-s-2.75 w-0.5",
                         i < reached ? "bg-success" : "bg-border",
                       )}
                     />

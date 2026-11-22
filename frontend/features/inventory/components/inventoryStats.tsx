@@ -44,7 +44,7 @@ export function InventoryStats({
         active={tab === "low"}
         onClick={() => onTabChange("low")}
       >
-        <Num>{r?.low.length ?? 0}</Num>
+        <Num>{r?.counts.low ?? 0}</Num>
       </StatTile>
       <StatTile
         index={2}
@@ -54,7 +54,7 @@ export function InventoryStats({
         active={tab === "out"}
         onClick={() => onTabChange("out")}
       >
-        <Num>{r?.out.length ?? 0}</Num>
+        <Num>{r?.counts.out ?? 0}</Num>
       </StatTile>
       <StatTile
         index={3}
@@ -71,7 +71,7 @@ export function InventoryStats({
           ) : undefined
         }
       >
-        <Num>{r?.stagnant.length ?? 0}</Num>
+        <Num>{r?.counts.stagnant ?? 0}</Num>
       </StatTile>
     </div>
   );
