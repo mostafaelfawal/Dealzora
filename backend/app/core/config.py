@@ -1,15 +1,14 @@
 """إعدادات التطبيق. القيم الحساسة يمررها Rust عند الإقلاع (متغيرات بيئة POS_*)."""
 
-import sys
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.core.paths import IS_FROZEN as _FROZEN
 from app.core.paths import default_db_path
 
 # نسخة الـ exe (PyInstaller): كل القيم من Rust فقط، ولا نقرأ أي .env من مجلد التشغيل
 # (لا يغيّر أحد مسار القاعدة أو الإعدادات بوضع ملف بجانب البرنامج). .env للتطوير فقط.
-_FROZEN = getattr(sys, "frozen", False)
 
 
 class Settings(BaseSettings):
@@ -17,7 +16,8 @@ class Settings(BaseSettings):
         env_prefix="POS_", env_file=None if _FROZEN else ".env", extra="ignore"
     )
 
-    db_path: str = default_db_path()  # ويندوز: C:\Dealzora\data\pos.db (انظر paths.py)
+    # ويندوز: إنتاج C:\Dealzora\data\pos.db، تطوير C:\Dealzora\dev-data\pos.db (انظر paths.py)
+    db_path: str = default_db_path()
     db_password: str  # SqlCihper passsword
     session_token: str  # توكن الجلسة العشوائي من Rust
     write_permit_secret: str  # سر توقيع "تصريح الكتابة" (الترخيص)

@@ -23,11 +23,20 @@ def local_dir() -> Path:
     return base / "Dealzora"
 
 
+# نسخة الـ exe (PyInstaller) = إنتاج. غير ذلك = تطوير (تشغيل من الكود المصدري).
+IS_FROZEN = getattr(sys, "frozen", False)
+
+
 def default_db_path() -> str:
-    """مسار القاعدة الافتراضي. على ويندوز لا يتغير (نسخ العملاء الحالية تعتمد عليه)."""
+    """مسار القاعدة الافتراضي. على ويندوز لا يتغير في الإنتاج (نسخ العملاء الحالية تعتمد عليه).
+
+    في التطوير نستخدم مجلد dev-data منفصلاً حتى لا نلمس قاعدة الإنتاج على نفس الجهاز
+    (النسخ الاحتياطية وملف المرساة تتبع مجلد القاعدة تلقائياً).
+    """
+    folder = "data" if IS_FROZEN else "dev-data"
     if IS_WINDOWS:
-        return r"C:\Dealzora\data\pos.db"
-    return str(local_dir() / "data" / "pos.db")
+        return rf"C:\Dealzora\{folder}\pos.db"
+    return str(local_dir() / folder / "pos.db")
 
 
 def logs_dir() -> Path:
