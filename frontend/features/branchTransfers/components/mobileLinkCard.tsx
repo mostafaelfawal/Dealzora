@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconCheck,
   IconCopy,
   IconDeviceMobile,
   IconLoader2,
@@ -17,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useNow } from "@/hooks/useNow";
 import { formatDateTime } from "@/lib/dates";
 
@@ -43,6 +45,7 @@ function CodeDialog({
   renewing: boolean;
 }) {
   const now = useNow(1000);
+  const { copied, copy } = useCopyToClipboard();
   // قبل أول تحديث للوقت (now = null) نعتبر الكود سارياً حتى لا تومض رسالة الانتهاء.
   const left = code
     ? now === null
@@ -64,14 +67,18 @@ function CodeDialog({
             dir="ltr"
             onClick={() => {
               if (!code) return;
-              void navigator.clipboard
-                ?.writeText(code.code)
-                .then(() => toast.success("نُسخ الكود"));
+              void copy(code.code).then(
+                (ok) => ok && toast.success("نُسخ الكود"),
+              );
             }}
             className="flex items-center justify-center gap-2 border-2 border-dashed border-primary/50 bg-primary/5 py-4 font-mono text-2xl font-bold tracking-widest text-primary"
           >
             {code?.code}
-            <IconCopy className="size-5" />
+            {copied ? (
+              <IconCheck className="size-5" />
+            ) : (
+              <IconCopy className="size-5" />
+            )}
           </button>
         ) : (
           <p className="border border-dashed p-4 text-center text-sm text-muted-foreground">

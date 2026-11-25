@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatWhen } from "@/lib/dates";
 import { openExternal } from "@/lib/external";
 import { cn } from "@/lib/utils";
@@ -250,15 +251,14 @@ export function OrderDetailSheet({
   const step = order ? NEXT_STEP[order.status] : undefined;
   const mutation = useSetOrderStatus();
   const [cancelling, setCancelling] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   const copyAddress = () => {
     if (!order) return;
     const text = [order.customerName, order.phone, order.city, order.address]
       .filter(Boolean)
       .join("\n");
-    void navigator.clipboard
-      ?.writeText(text)
-      .then(() => toast.success("نُسخت بيانات التوصيل"));
+    void copy(text).then((ok) => ok && toast.success("نُسخت بيانات التوصيل"));
   };
 
   return (
@@ -350,7 +350,11 @@ export function OrderDetailSheet({
                     className="gap-1.5"
                     onClick={copyAddress}
                   >
-                    <IconCopy className="size-4" />
+                    {copied ? (
+                      <IconCheck className="size-4" />
+                    ) : (
+                      <IconCopy className="size-4" />
+                    )}
                     نسخ بيانات التوصيل
                   </Button>
                 </div>

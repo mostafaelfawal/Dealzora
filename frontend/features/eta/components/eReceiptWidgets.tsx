@@ -2,6 +2,7 @@
 
 import {
   IconAlertTriangle,
+  IconCheck,
   IconCopy,
   IconFileCertificate,
   IconRefresh,
@@ -14,6 +15,7 @@ import { Money } from "@/components/shared/Money";
 import { Num } from "@/components/shared/Num";
 import { Button } from "@/components/ui/button";
 import type { Sale } from "@/features/sales/types/sale";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { toPounds } from "@/lib/apiMap";
 import type { DateRange } from "@/lib/dates";
 import { useFeature } from "@/lib/plan";
@@ -107,12 +109,12 @@ const RESENDABLE = {
 export function SaleEReceiptInfo({ sale }: { sale: Sale }) {
   const allowed = useFeature("e_receipt");
   const resend = useResendReceipts();
+  const { copied, copy: copyText } = useCopyToClipboard();
   if (!allowed || !sale.etaStatus) return null;
   const mode = RESENDABLE[sale.etaStatus as keyof typeof RESENDABLE];
   const copy = (text: string) =>
-    navigator.clipboard.writeText(text).then(
-      () => toast.success("تم نسخ الـ UUID"),
-      () => toast.error("تعذّر النسخ"),
+    copyText(text).then((ok) =>
+      ok ? toast.success("تم نسخ الـ UUID") : toast.error("تعذّر النسخ"),
     );
   return (
     <section
@@ -140,7 +142,7 @@ export function SaleEReceiptInfo({ sale }: { sale: Sale }) {
             aria-label="نسخ الـ UUID"
             onClick={() => void copy(sale.etaUuid!)}
           >
-            <IconCopy />
+            {copied ? <IconCheck /> : <IconCopy />}
           </Button>
         </div>
       )}

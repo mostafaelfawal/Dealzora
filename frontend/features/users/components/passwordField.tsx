@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconCheck,
   IconCopy,
   IconEye,
   IconEyeOff,
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 import { generatePassword } from "../lib/userPassword";
 
@@ -33,15 +35,12 @@ export function PasswordField({
   autoFocus,
 }: PasswordFieldProps) {
   const [show, setShow] = useState(false);
+  const { copied, copy: copyText } = useCopyToClipboard();
 
   async function copy() {
     if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success("تم نسخ كلمة المرور");
-    } catch {
-      toast.error("تعذّر النسخ");
-    }
+    if (await copyText(value)) toast.success("تم نسخ كلمة المرور");
+    else toast.error("تعذّر النسخ");
   }
 
   return (
@@ -79,7 +78,7 @@ export function PasswordField({
         onClick={() => void copy()}
         className="size-8 shrink-0"
       >
-        <IconCopy />
+        {copied ? <IconCheck /> : <IconCopy />}
       </Button>
       <Button
         type="button"

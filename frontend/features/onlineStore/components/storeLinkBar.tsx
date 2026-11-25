@@ -1,10 +1,16 @@
 "use client";
 
-import { IconCopy, IconExternalLink, IconWorldWww } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconCopy,
+  IconExternalLink,
+  IconWorldWww,
+} from "@tabler/icons-react";
 import { toast } from "sonner";
 
 import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Button } from "@/components/ui/button";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { openExternal } from "@/lib/external";
 import { cn } from "@/lib/utils";
 
@@ -13,11 +19,12 @@ import type { StoreSettings } from "../types/store";
 /** رابط المتجر العام: نسخ للمشاركة وفتح في المتصفح، مع حالة النشر بوضوح. */
 export function StoreLinkBar({ store }: { store: StoreSettings }) {
   const url = store.url;
+  const { copied, copy: copyText } = useCopyToClipboard();
   const copy = () => {
     if (!url) return;
-    void navigator.clipboard
-      ?.writeText(url)
-      .then(() => toast.success("نُسخ رابط المتجر", { description: url }));
+    void copyText(url).then(
+      (ok) => ok && toast.success("نُسخ رابط المتجر", { description: url }),
+    );
   };
   const open = () => {
     if (!url) return;
@@ -71,7 +78,11 @@ export function StoreLinkBar({ store }: { store: StoreSettings }) {
           onClick={copy}
           disabled={!url}
         >
-          <IconCopy className="size-4" />
+          {copied ? (
+            <IconCheck className="size-4" />
+          ) : (
+            <IconCopy className="size-4" />
+          )}
           نسخ الرابط
         </Button>
         <Button

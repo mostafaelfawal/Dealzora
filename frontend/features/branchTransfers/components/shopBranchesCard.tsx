@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconCheck,
   IconCopy,
   IconKey,
   IconLoader2,
@@ -24,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { formatDate, formatDateTime, formatWhen } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +43,7 @@ function CodeDialog({
   code: PairingCode | null;
   onClose: () => void;
 }) {
+  const { copied, copy } = useCopyToClipboard();
   return (
     <Dialog open={code !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-sm">
@@ -56,14 +59,18 @@ function CodeDialog({
           dir="ltr"
           onClick={() => {
             if (!code) return;
-            void navigator.clipboard
-              ?.writeText(code.code)
-              .then(() => toast.success("نُسخ الكود"));
+            void copy(code.code).then(
+              (ok) => ok && toast.success("نُسخ الكود"),
+            );
           }}
           className="flex items-center justify-center gap-2 border-2 border-dashed border-primary/50 bg-primary/5 py-4 font-mono text-2xl font-bold tracking-widest text-primary"
         >
           {code?.code}
-          <IconCopy className="size-5" />
+          {copied ? (
+            <IconCheck className="size-5" />
+          ) : (
+            <IconCopy className="size-5" />
+          )}
         </button>
         {code && (
           <p className="text-center text-xs text-muted-foreground">
