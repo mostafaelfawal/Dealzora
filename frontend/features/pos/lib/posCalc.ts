@@ -237,14 +237,17 @@ export function normalizeSearch(text: string) {
 }
 
 /**
- * يفهم صيغة "3*باركود": الكمية قبل النجمة.
- * "3*" لوحدها = تعديل كمية الصنف المحدد.
+ * يفهم الكمية مع النجمة قبل الباركود أو بعده:
+ * "3*باركود" أو "باركود*3" = إضافة 3 قطع.
+ * "3*" أو "*3" لوحدها = تعديل كمية الصنف المحدد (آخر صنف أُضيف).
  */
 export function parseEntry(raw: string): { qty: number | null; term: string } {
   const text = normalizeDigits(raw).trim();
-  const match = text.match(/^(\d+(?:\.\d+)?)\s*\*\s*(.*)$/);
-  if (!match) return { qty: null, term: text };
-  return { qty: Number(match[1]), term: match[2].trim() };
+  const before = text.match(/^(\d+(?:\.\d+)?)\s*\*\s*(.*)$/);
+  if (before) return { qty: Number(before[1]), term: before[2].trim() };
+  const after = text.match(/^(.*?)\s*\*\s*(\d+(?:\.\d+)?)$/);
+  if (after) return { qty: Number(after[2]), term: after[1].trim() };
+  return { qty: null, term: text };
 }
 
 export function searchProducts(

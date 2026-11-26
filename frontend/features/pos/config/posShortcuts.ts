@@ -109,8 +109,15 @@ export const POS_SEARCH_KEYS: PosKeyHint[] = [
     description: "زيادة أو تقليل كمية الصنف المحدد (والخانة فارغة)",
   },
   { keys: "Delete", description: "حذف الصنف المحدد (مع إمكانية التراجع)" },
-  { keys: "3*باركود", description: "إضافة 3 قطع دفعة واحدة" },
-  { keys: "5* ثم Enter", description: "ضبط كمية الصنف المحدد على 5" },
+  {
+    keys: "3*باركود",
+    description: "إضافة 3 قطع دفعة واحدة (أو باركود*3)",
+  },
+  {
+    keys: "*5 ثم Enter",
+    description:
+      "ضبط كمية الصنف المحدد (آخر صنف أُضيف) على 5. النجمة = Shift+8 بدون لوحة أرقام",
+  },
   { keys: "Esc", description: "مسح الخانة" },
 ];
 

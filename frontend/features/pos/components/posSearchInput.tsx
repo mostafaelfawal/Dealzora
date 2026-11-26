@@ -105,11 +105,14 @@ export function PosSearchInput() {
             <span dir="ltr" className="font-mono tabular-nums">
               {formatQty(pendingQty)}
             </span>{" "}
-            · ثم اكتب الباركود أو الاسم
+            {searching
+              ? "· Enter للإضافة"
+              : "· Enter لضبط كمية الصنف المحدد، أو اكتب الباركود"}
           </span>
         ) : (
           <span className="text-muted-foreground">
-            Enter للإضافة · Enter على خانة فارغة = دفع · 3*باركود لتحديد الكمية
+            Enter للإضافة · Enter على خانة فارغة = دفع · *3 ثم Enter = كمية
+            الصنف المحدد
           </span>
         )}
       </p>
