@@ -44,6 +44,9 @@ def get_engine() -> Engine:
     engine = create_engine(
         "sqlite+pysqlite://",
         creator=_connect,
+        # الاتصال من sqlcipher3 لا من sqlite3: بدون هذا لا تتعرّف SQLAlchemy على أخطائه فتمر خاماً
+        # (sqlcipher3.IntegrityError) ولا يلتقطها أي except IntegrityError/OperationalError في الكود.
+        module=sqlcipher3,
         poolclass=QueuePool,
         pool_size=8,
         max_overflow=8,

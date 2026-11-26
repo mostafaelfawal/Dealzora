@@ -8,6 +8,7 @@ from pathlib import Path
 import sqlcipher3
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import DatabaseError as DBAPIDatabaseError
 
 from app.api.router import api_router
 from app.core.config import get_settings
@@ -51,7 +52,7 @@ async def lifespan(_: FastAPI):
     prepare_data_dir(settings.db_path)
     try:
         init_db()
-    except sqlcipher3.DatabaseError as exc:
+    except (sqlcipher3.DatabaseError, DBAPIDatabaseError) as exc:
         # أشهر سبب: ملف قاعدة أُنشئ بكلمة سر أخرى (نسخة تطوير على نفس المسار، أو تغيّر
         # DEALZORA_DB_SECRET بين إصدارين، أو نُقلت القاعدة من جهاز آخر). رسالة صريحة في السجل.
         logging.getLogger("dealzora").critical(

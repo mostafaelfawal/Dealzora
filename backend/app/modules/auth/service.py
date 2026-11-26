@@ -57,7 +57,7 @@ class AuthService:
             user.password_hash if user else DUMMY_HASH, data.password
         )
         if locked:
-            raise _err(ForbiddenError, AuthError.ACCOUNT_LOCKED)
+            raise self._locked_error(user, now)
 
         role = parse_role(user.role) if user else None
         if not (valid and user and user.is_active and role):
@@ -68,6 +68,8 @@ class AuthService:
                     actor, user.id, AuditAction.LOGIN_FAILED, {"locked": now_locked}
                 )
                 self.session.commit()
+                if now_locked:  # المحاولة التي أقفلت الحساب تُظهر المؤقت فوراً
+                    raise self._locked_error(user, now)
             raise _err(UnauthorizedError, AuthError.INVALID_CREDENTIALS)
 
         if needs_rehash(
@@ -144,7 +146,7 @@ class AuthService:
         now = utcnow()
 
         if user.locked_until and aware(user.locked_until) > now:
-            raise _err(ForbiddenError, AuthError.ACCOUNT_LOCKED)
+            raise self._locked_error(user, now)
 
         if not verify_password(user.password_hash, data.current_password):
             # التخمين عبر جلسة مسروقة يُحسب كمحاولة فاشلة، وعند القفل نلغي كل الجلسات.
@@ -191,6 +193,16 @@ class AuthService:
             user.failed_attempts = 0
             return True
         return False
+
+    @staticmethod
+    def _locked_error(user: User, now):
+        """خطأ القفل مع الثواني المتبقية، لتعرض الواجهة عداً تنازلياً."""
+        remaining = (aware(user.locked_until) - now).total_seconds()
+        return _err(
+            ForbiddenError,
+            AuthError.ACCOUNT_LOCKED,
+            retry_after_seconds=max(1, int(remaining + 0.999)),
+        )
 
     def _audit(
         self,

@@ -1,13 +1,16 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+
+import { readSession } from "@/features/auth/lib/authStorage";
+
+const noop = () => () => {};
+const readId = () => readSession()?.user.id ?? null;
+
 /**
  * معرّف المستخدم المسجّل حالياً، لتعطيل الإجراءات الممنوعة على الحساب نفسه
- * (تعطيل/حذف/تغيير الدور/تغيير كلمة المرور من المدير).
- *
- * TODO: اربطه بالـ hook الموجود عندك في feature الـ auth، مثال:
- *   import { useAuth } from "@/features/auth/hooks/useAuth";
- *   export default function useCurrentUserId() { return useAuth().user?.id ?? null; }
- *
- * لو رجّع null: الواجهة لا تعطّل شيئاً، والـ backend يرفض العملية برسالة واضحة.
+ * (تعطيل/حذف/تغيير الدور/إعادة تعيين كلمة المرور). كلمة مرورك تتغير من «الإعدادات ← حسابي».
  */
 export default function useCurrentUserId(): string | null {
-  return null;
+  return useSyncExternalStore(noop, readId, () => null);
 }

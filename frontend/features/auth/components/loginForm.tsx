@@ -1,6 +1,6 @@
 "use client";
 
-import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react";
+import { IconAlertTriangle, IconLoader2, IconLock } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { FieldError } from "@/components/shared/form";
@@ -14,12 +14,20 @@ import {
   LOGIN_FIELD_IDS,
   useLoginFormContext,
 } from "../context/LoginFormContext";
+import { formatCountdown } from "../hooks/useLockCountdown";
 import { LoginRoleSwitch } from "./loginRoleSwitch";
 import { PasswordInput } from "./passwordInput";
 
 export function LoginForm() {
-  const { form, submit, isLoggingIn, loginError, clearError } =
-    useLoginFormContext();
+  const {
+    form,
+    submit,
+    isLoggingIn,
+    loginError,
+    clearError,
+    lockSeconds,
+    clearLock,
+  } = useLoginFormContext();
   const {
     register,
     watch,
@@ -31,9 +39,12 @@ export function LoginForm() {
 
   const role = watch("role");
   const copy = LOGIN_ROLE_COPY[role];
-  const serverMessage = loginError
-    ? extractErrorMessage(loginError, "تعذّر تسجيل الدخول. حاول مرة أخرى.")
-    : null;
+  const locked = lockSeconds > 0;
+  const serverMessage = locked
+    ? null
+    : loginError
+      ? extractErrorMessage(loginError, "تعذّر تسجيل الدخول. حاول مرة أخرى.")
+      : null;
 
   return (
     <form
@@ -55,6 +66,23 @@ export function LoginForm() {
         <p className="text-xs text-muted-foreground">{copy.description}</p>
       </header>
 
+      {locked && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-start gap-2 border border-destructive/50 bg-destructive/5 p-2.5 text-xs text-destructive"
+        >
+          <IconLock className="mt-px size-4 shrink-0" aria-hidden />
+          <span>
+            الحساب مقفل مؤقتاً بسبب محاولات دخول خاطئة متكررة. يمكنك المحاولة
+            بعد{" "}
+            <span dir="ltr" className="font-mono font-bold tabular-nums">
+              {formatCountdown(lockSeconds)}
+            </span>
+          </span>
+        </div>
+      )}
+
       {serverMessage && (
         <div
           role="alert"
@@ -69,7 +97,13 @@ export function LoginForm() {
         <Label htmlFor={LOGIN_FIELD_IDS.username}>اسم المستخدم</Label>
         <Input
           id={LOGIN_FIELD_IDS.username}
-          {...register("username", { onChange: clearError })}
+          {...register("username", {
+            // القفل خاص بهذا الحساب، فتغيير اسم المستخدم يلغي العداد
+            onChange: () => {
+              clearError();
+              clearLock();
+            },
+          })}
           dir="ltr"
           autoFocus
           autoComplete="username"
@@ -121,10 +155,15 @@ export function LoginForm() {
       <Button
         type="submit"
         size="lg"
-        disabled={isLoggingIn}
+        disabled={isLoggingIn || locked}
         className="h-10 w-full gap-2"
       >
-        {isLoggingIn ? (
+        {locked ? (
+          <>
+            <IconLock className="size-4" />
+            مقفل ({formatCountdown(lockSeconds)})
+          </>
+        ) : isLoggingIn ? (
           <>
             <IconLoader2 className="size-4 animate-spin" />
             جارٍ الدخول…

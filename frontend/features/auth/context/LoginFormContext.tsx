@@ -10,6 +10,7 @@ import { deviceSync } from "@/features/branchTransfers/api/branchTransfers.api";
 import { ApiError } from "@/lib/axios";
 
 import { AUTH_ROUTES } from "../config/authRoutes";
+import { useLockCountdown } from "../hooks/useLockCountdown";
 import useLogin from "../hooks/useLogin";
 import { readLastLogin, saveLastLogin, saveSession } from "../lib/authStorage";
 import { emptyLoginValues } from "../lib/loginForm";
@@ -26,6 +27,9 @@ type LoginFormContextType = {
   isLoggingIn: boolean;
   loginError: Error | null;
   clearError: () => void;
+  /** الثواني المتبقية على فتح الحساب المقفل (0 = غير مقفل). */
+  lockSeconds: number;
+  clearLock: () => void;
 };
 
 export const LoginFormContext = createContext<LoginFormContextType | null>(
@@ -40,6 +44,7 @@ export default function LoginFormContextProvider({
   const router = useRouter();
   const queryClient = useQueryClient();
   const loginMutation = useLogin();
+  const lock = useLockCountdown();
 
   const form = useForm<LoginSchemaType>({
     resolver: zodResolver(loginSchema),
@@ -83,6 +88,7 @@ export default function LoginFormContextProvider({
         router.replace(AUTH_ROUTES.home[session.user.role]);
       },
       onError: async (error) => {
+        lock.startFromError(error);
         const unknownAccount =
           error instanceof ApiError && error.code === "invalid_credentials";
         if (unknownAccount && !retried) {
@@ -103,6 +109,8 @@ export default function LoginFormContextProvider({
         isLoggingIn: loginMutation.isPending || loginMutation.isSuccess,
         loginError: loginMutation.error,
         clearError: loginMutation.reset,
+        lockSeconds: lock.seconds,
+        clearLock: lock.clear,
       }}
     >
       {children}

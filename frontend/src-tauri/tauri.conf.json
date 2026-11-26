@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "dealzora",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "identifier": "com.dealzora.pos",
   "build": {
     "frontendDist": "../out",
@@ -17,6 +17,7 @@
         "height": 800,
         "resizable": true,
         "fullscreen": false,
+        "maximized": true,
         "zoomHotkeysEnabled": true,
         "dragDropEnabled": false
       }
