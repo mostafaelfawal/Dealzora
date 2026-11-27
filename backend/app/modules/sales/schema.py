@@ -57,6 +57,8 @@ class SaleCreate(BaseModel):
     # رصيد العميل لدى المحل: ما يُدفع من رصيده، وما يتركه من الباقي رصيداً (كاش فقط).
     use_balance: Money = 0
     keep_change: Money = 0
+    # فاتورة استلام حجز: تُغلق الحجز في نفس المعاملة (عميلها لازم يكون عميل الحجز).
+    reservation_id: str | None = Field(None, max_length=36)
 
     @model_validator(mode="after")
     def _payment_shape(self):

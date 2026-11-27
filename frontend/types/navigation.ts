@@ -17,7 +17,7 @@ export interface NavItem {
 
 export interface NavGroup {
   id: string;
-  /** اسم المجموعة (للقارئات الصوتية فقط، مفيش عناوين ظاهرة). */
+  /** اسم المجموعة: عنوانها القابل للطي في القائمة الموسّعة. */
   label: string;
   items: NavItem[];
 }

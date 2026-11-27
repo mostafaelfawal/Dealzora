@@ -72,6 +72,9 @@ class ShiftRepository(BaseRepository[Shift]):
                 .group_by(SaleReturn.shift_id)
             ).all()
         }
+        from app.modules.reservations.service import ReservationService
+
+        deposits = ReservationService.shift_deposits(self.session, shift_ids)
         out: dict[str, ShiftTotals] = {}
         for sid in shift_ids:
             s_cnt, s_total, s_cash, s_credit, s_wallet, s_kept = sales.get(sid, (0, 0, 0, 0, 0, 0))
@@ -87,5 +90,6 @@ class ShiftRepository(BaseRepository[Shift]):
                 wallet_refunds=r_wallet,
                 electronic=tuple(sorted(electronic.get(sid, []), key=lambda e: -e[2])),
                 kept_change=s_kept,
+                reservation_deposits=deposits.get(sid, 0),
             )
         return out

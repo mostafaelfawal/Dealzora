@@ -55,6 +55,57 @@ function SectionLabel({
   );
 }
 
+const isActive = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
+
+/** عنوان مجموعة قابل للطي (القائمة الموسّعة فقط). المطوية تعرض عدد صفحاتها. */
+function GroupHeader({
+  label,
+  count,
+  open,
+  locked,
+  first,
+  onToggle,
+}: {
+  label: string;
+  count: number;
+  open: boolean;
+  /** الصفحة الحالية داخلها أو وضع التخصيص: تبقى مفتوحة. */
+  locked: boolean;
+  first: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={locked}
+      aria-expanded={open}
+      className={cn(
+        "group/header flex h-8 w-full items-center gap-2 px-3 text-xs text-muted-foreground outline-none transition-colors",
+        "hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring disabled:cursor-default disabled:hover:text-muted-foreground",
+        !first && "mt-2 border-t pt-2 h-10",
+      )}
+    >
+      <span className="font-medium">{label}</span>
+      {!open && (
+        <span className="rounded-full bg-muted px-1.5 font-mono text-[10px] tabular-nums">
+          {count}
+        </span>
+      )}
+      {!locked && (
+        <IconChevronDown
+          aria-hidden
+          className={cn(
+            "ms-auto size-3.5 shrink-0 opacity-60 transition-transform group-hover/header:opacity-100 motion-reduce:transition-none",
+            !open && "rotate-90",
+          )}
+        />
+      )}
+    </button>
+  );
+}
+
 export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
   const { user } = useShellData();
   const pathname = usePathname();
@@ -65,6 +116,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
     demote,
     restore,
     toggleDemotedOpen,
+    toggleGroup,
     reset,
   } = useSidebarLayout();
   const { groups, demoted } = applySidebarLayout(
@@ -103,32 +155,46 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
   }
 
   // الصفحة الحالية لو كانت في "أقل استخداماً" تفتح القسم حتى يراها المستخدم.
-  const activeDemoted = demoted.some(
-    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
-  );
+  const activeDemoted = demoted.some((item) => isActive(pathname, item.href));
   const demotedOpen = editing || layout.demotedOpen || activeDemoted;
   const toggleLabel = `${demotedOpen ? "إخفاء" : "إظهار"} ${DEMOTED_LABEL} (${demoted.length})`;
 
   return (
     <nav aria-label="القائمة الرئيسية" className="flex-1 overflow-y-auto p-2">
-      {groups.map((group, index) => (
-        <Fragment key={group.id}>
-          {index > 0 && (
-            <SectionLabel collapsed={collapsed}>{group.label}</SectionLabel>
-          )}
-          {editing ? (
-            <SidebarReorderList
-              label={group.label}
-              items={group.items}
-              onReorder={(hrefs) => setGroupOrder(group.id, hrefs)}
-              move="down"
-              onMove={demote}
-            />
-          ) : (
-            renderLinks(group.items, group.label)
-          )}
-        </Fragment>
-      ))}
+      {groups.map((group, index) => {
+        // المجموعة التي فيها الصفحة الحالية لا تُطوى، والقائمة الضيقة تعرض كل الأيقونات.
+        const locked =
+          editing || group.items.some((item) => isActive(pathname, item.href));
+        const open = collapsed || locked || !layout.closed.includes(group.id);
+        return (
+          <Fragment key={group.id}>
+            {collapsed ? (
+              index > 0 && <Separator className="my-2" />
+            ) : (
+              <GroupHeader
+                label={group.label}
+                count={group.items.length}
+                open={open}
+                locked={locked}
+                first={index === 0}
+                onToggle={() => toggleGroup(group.id)}
+              />
+            )}
+            {open &&
+              (editing ? (
+                <SidebarReorderList
+                  label={group.label}
+                  items={group.items}
+                  onReorder={(hrefs) => setGroupOrder(group.id, hrefs)}
+                  move="down"
+                  onMove={demote}
+                />
+              ) : (
+                renderLinks(group.items, group.label)
+              ))}
+          </Fragment>
+        );
+      })}
 
       {demoted.length > 0 && (
         <>

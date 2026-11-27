@@ -201,6 +201,8 @@ export interface SaleInput {
   /** رصيد العميل لدى المحل: ما يُدفع منه، وما يُترك من الباقي رصيداً. */
   useBalance?: number;
   keepChange?: number;
+  /** فاتورة استلام حجز: تُغلقه في نفس المعاملة. */
+  reservationId?: string | null;
 }
 
 export interface ReturnInput {

@@ -161,6 +161,7 @@ const toSalePayload = (s: SaleInput) => ({
   redeem_points: s.redeemPoints ?? 0,
   use_balance: toCents(s.useBalance ?? 0),
   keep_change: toCents(s.keepChange ?? 0),
+  reservation_id: s.reservationId ?? null,
 });
 
 const toReturnPayload = (r: ReturnInput) => ({

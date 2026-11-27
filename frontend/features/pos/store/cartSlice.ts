@@ -417,6 +417,17 @@ const cartSlice = createSlice({
       state.held = action.payload;
     },
 
+    /** فاتورة جاهزة (استلام حجز): تبدأ سجلاً جديداً مثل الاسترجاع. */
+    loadInvoice(state, action: PayloadAction<PosInvoice>) {
+      resetTo(state, action.payload);
+    },
+
+    /** فصل الفاتورة عن الحجز (تبقى الأصناف، والحجز يبقى مفتوحاً). */
+    detachReservation(state) {
+      if (!state.present.reservation) return;
+      state.present = { ...plain(state.present), reservation: null };
+    },
+
     cancelInvoice(state) {
       resetTo(state, EMPTY_INVOICE);
     },

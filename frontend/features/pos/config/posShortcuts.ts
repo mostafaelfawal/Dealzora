@@ -68,6 +68,21 @@ export const POS_SHORTCUTS = {
     description: "مرتجع أو استبدال",
     match: plainKey("F10"),
   },
+  reserve: {
+    label: "Shift+F4",
+    description: "حجز الفاتورة الحالية لعميل يستلمها لاحقاً",
+    match: (event: KeyboardEvent) =>
+      event.key === "F4" &&
+      event.shiftKey &&
+      !event.ctrlKey &&
+      !event.altKey &&
+      !event.metaKey,
+  },
+  reservations: {
+    label: "F1",
+    description: "الحجوزات: استلام حجز وإتمام بيعه",
+    match: plainKey("F1"),
+  },
   undo: {
     label: "Ctrl+Z",
     description: "التراجع عن آخر تعديل في الفاتورة",

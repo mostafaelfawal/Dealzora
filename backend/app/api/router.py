@@ -22,6 +22,7 @@ from app.modules.purchases.routes import router as purchases_router
 from app.modules.promotions.routes import router as promotions_router
 from app.modules.realtime.routes import router as realtime_router
 from app.modules.reports.routes import router as reports_router
+from app.modules.reservations.routes import router as reservations_router
 from app.modules.sales.routes import router as sales_router
 from app.modules.shifts.routes import router as shifts_router
 from app.modules.settings.routes import router as settings_router
@@ -49,6 +50,7 @@ routes = [
     shifts_router,
     sales_router,
     held_router,
+    reservations_router,
     promotions_router,
     loyalty_router,
     purchases_router,

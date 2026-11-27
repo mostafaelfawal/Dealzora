@@ -8,16 +8,23 @@ import type { NavGroup, NavItem } from "@/types/navigation";
  * ترتيب القائمة الجانبية كما خصّصه المستخدم، محفوظ على هذا الجهاز.
  * - order: ترتيب روابط كل مجموعة (الصفحات الجديدة تُضاف في آخر مجموعتها).
  * - demoted: صفحات نقلها المستخدم إلى قسم "أقل استخداماً" أسفل القائمة.
+ * - closed: المجموعات المطوية (يظهر عنوانها فقط حتى يفتحها المستخدم).
  */
 export interface SidebarLayout {
   order: Record<string, string[]>;
   demoted: string[];
   demotedOpen: boolean;
+  closed: string[];
 }
 
 const STORAGE_KEY = "dealzora:sidebar-layout";
 const CHANGE_EVENT = "dealzora:sidebar-layout-change";
-const EMPTY: SidebarLayout = { order: {}, demoted: [], demotedOpen: false };
+const EMPTY: SidebarLayout = {
+  order: {},
+  demoted: [],
+  demotedOpen: false,
+  closed: [],
+};
 
 const isStringArray = (v: unknown): v is string[] =>
   Array.isArray(v) && v.every((x) => typeof x === "string");
@@ -36,6 +43,7 @@ function parse(raw: string | null): SidebarLayout {
       order,
       demoted: isStringArray(data.demoted) ? data.demoted : [],
       demotedOpen: data.demotedOpen === true,
+      closed: isStringArray(data.closed) ? data.closed : [],
     };
   } catch {
     return EMPTY; // قيمة تالفة: نرجع للترتيب الافتراضي.
@@ -78,15 +86,6 @@ function update(change: (layout: SidebarLayout) => SidebarLayout) {
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-function reset() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // تجاهل.
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
 const sidebarLayoutActions = {
   setGroupOrder: (groupId: string, hrefs: string[]) =>
     update((l) => ({ ...l, order: { ...l.order, [groupId]: hrefs } })),
@@ -101,7 +100,15 @@ const sidebarLayoutActions = {
     update((l) => ({ ...l, demoted: l.demoted.filter((h) => h !== href) })),
   toggleDemotedOpen: () =>
     update((l) => ({ ...l, demotedOpen: !l.demotedOpen })),
-  reset,
+  toggleGroup: (groupId: string) =>
+    update((l) => ({
+      ...l,
+      closed: l.closed.includes(groupId)
+        ? l.closed.filter((id) => id !== groupId)
+        : [...l.closed, groupId],
+    })),
+  /** استعادة الترتيب لا تمس المجموعات المطوية (تفضيل عرض لا ترتيب). */
+  reset: () => update((l) => ({ ...EMPTY, closed: l.closed })),
 };
 
 export function useSidebarLayout() {

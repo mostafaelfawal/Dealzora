@@ -73,6 +73,7 @@ export type StatementEntryType =
   | "deposit"
   | "balance_use"
   | "balance_payout"
+  | "reservation_deposit"
   | "installment";
 
 export interface StatementEntry {

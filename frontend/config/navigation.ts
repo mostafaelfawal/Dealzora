@@ -4,6 +4,7 @@ import {
   IconBuildingStore,
   IconBuildingWarehouse,
   IconCalendarDollar,
+  IconCalendarEvent,
   IconCalendarTime,
   IconCash,
   IconChartBar,
@@ -43,6 +44,12 @@ export const NAVIGATION: NavGroup[] = [
       },
       { title: "الفواتير", href: "/admin/sales", icon: IconReceipt, hotkey: 2 },
       { title: "المرتجعات", href: "/admin/returns", icon: IconReceiptRefund },
+      {
+        title: "الحجوزات",
+        href: "/admin/reservations",
+        feature: "customers",
+        icon: IconCalendarEvent,
+      },
       {
         title: "الإيصالات الإلكترونية",
         href: "/admin/e-receipts",

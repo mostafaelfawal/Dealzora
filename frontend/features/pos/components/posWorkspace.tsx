@@ -26,6 +26,9 @@ import { PosReturnDialog } from "./posReturnDialog";
 import { PosExchangeDialog } from "./posExchangeDialog";
 import { PosInstallmentOffer } from "./posInstallmentOffer";
 import { usePosCatalog } from "../hooks/usePosCatalog";
+import { usePendingPickup } from "../hooks/usePendingPickup";
+import { PosReserveDialog } from "./posReserveDialog";
+import { PosReservationsDialog } from "./posReservationsDialog";
 
 /** شريط الإجمالي السفلي على الموبايل (من شاشة الأصناف إلى الفاتورة). */
 function MobileCartBar() {
@@ -60,6 +63,7 @@ export function PosWorkspace() {
   usePosCatalog();
   usePosPersistence();
   usePosHotkeys();
+  usePendingPickup();
   const handleRootClick = usePosFocus();
 
   return (
@@ -84,6 +88,8 @@ export function PosWorkspace() {
       <PosDiscountDialog />
       <PosCustomerDialog />
       <PosHeldDialog />
+      <PosReserveDialog />
+      <PosReservationsDialog />
       <PosCancelDialog />
       <PosShortcutsDialog />
       <PosReturnPickerDialog />

@@ -51,6 +51,7 @@ class ShiftOut(BaseModel):
     cash_refunds: int | None
     # باقٍ تركه العملاء رصيداً (داخل الدرج).
     kept_change: int | None = None
+    reservation_deposits: int | None = None
     wallet_sales: int | None  # كل الدفع الإلكتروني (خارج الدرج)
     electronic: list[ShiftPaymentOut] | None  # تفصيله حسب الطريقة
     wallet_refunds: int | None

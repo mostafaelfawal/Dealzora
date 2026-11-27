@@ -4,6 +4,7 @@ import { PosCartHeader } from "./posCartHeader";
 import { PosCartTable } from "./posCartTable";
 import { PosTotals } from "./posTotals";
 import { PosExchangeBanner } from "./posExchangeBanner";
+import { PosReservationBanner } from "./posReservationBanner";
 
 /** العمود الثاني: الفاتورة (جدول) + الإجمالي والدفع. */
 export function PosCartPanel({ className }: { className?: string }) {
@@ -14,6 +15,7 @@ export function PosCartPanel({ className }: { className?: string }) {
     >
       <PosCartHeader />
       <PosExchangeBanner />
+      <PosReservationBanner />
       <PosCartTable />
       <PosTotals />
     </section>

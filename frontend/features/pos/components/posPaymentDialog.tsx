@@ -128,15 +128,19 @@ function PaymentForm({ cashInputRef, onCancel }: PaymentFormProps) {
 
   // حالة الفورم (الطريقة الحالية والمبلغ المكتوب) محلية عمداً.
   const [method, setMethod] = useState<PaymentMethod>(initialMethod);
-  // رصيد العميل لدى المحل (رصيده سالب = له عندنا): الكاشير يقرر استخدامه، لا تلقائياً.
+  const reservation = useAppSelector((s) => s.cart.present.reservation);
+  // رصيد العميل لدى المحل (رصيده سالب = له عندنا): الكاشير يقرر استخدامه، لا تلقائياً،
+  // إلا في استلام حجز: العربون دُفع لهذه الفاتورة فيُخصم مباشرة.
   const storeCredit =
     customer && customer.balance < 0 ? round2(-customer.balance) : 0;
-  const [useCredit, setUseCredit] = useState(false);
+  const [useCredit, setUseCredit] = useState(
+    () => Boolean(reservation) && storeCredit > 0,
+  );
   const balanceUsed = useCredit ? round2(Math.min(storeCredit, total)) : 0;
   const due = round2(total - balanceUsed);
   const [keepMode, setKeepMode] = useState<KeepMode>("none");
   const [cashText, setCashText] = useState(() =>
-    initialCashText(initialMethod, total),
+    initialCashText(initialMethod, due),
   );
   const [paymentRef, setPaymentRef] = useState("");
   const [print, setPrint] = useState(true);

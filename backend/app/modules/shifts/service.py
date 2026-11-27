@@ -176,6 +176,7 @@ class ShiftService(EntityService):
             credit_sales=totals.credit_sales if mgr else None,
             cash_refunds=totals.cash_refunds if mgr else None,
             kept_change=totals.kept_change if mgr else None,
+            reservation_deposits=totals.reservation_deposits if mgr else None,
             wallet_sales=totals.wallet_sales if mgr else None,
             electronic=[ShiftPaymentOut(key=k, label=l, value=v) for k, l, v in totals.electronic]
             if mgr

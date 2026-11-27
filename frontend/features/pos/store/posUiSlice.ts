@@ -12,7 +12,9 @@ export type PosDialog =
   | "shortcuts"
   | "returnPicker"
   | "return"
-  | "exchange";
+  | "exchange"
+  | "reserve"
+  | "reservations";
 
 export type MobileView = "products" | "cart";
 
@@ -27,8 +29,9 @@ export interface PosUiState {
   category: string;
   dialog: PosDialog | null;
   paymentMethod: PaymentMethod;
-  /** فتحنا اختيار العميل من داخل الدفع، فنرجع للدفع بعد الإغلاق. */
+  /** فتحنا اختيار العميل من داخل الدفع أو الحجز، فنرجع إليه بعد الإغلاق. */
   reopenPayment: boolean;
+  reopenReserve: boolean;
   mobileView: MobileView;
   /** آخر بيع آجل: عرض «قسّط هذه الفاتورة» (للمدير مع ميزة التقسيط). */
   installmentOffer: InstallmentOffer | null;
@@ -51,6 +54,7 @@ const initialState: PosUiState = {
   dialog: null,
   paymentMethod: "cash",
   reopenPayment: false,
+  reopenReserve: false,
   mobileView: "products",
   installmentOffer: null,
 };
@@ -113,13 +117,22 @@ const posUiSlice = createSlice({
       state.reopenPayment = true;
       state.dialog = "customer";
     },
+    pickCustomerFromReserve(state) {
+      state.reopenReserve = true;
+      state.dialog = "customer";
+    },
     offerInstallment(state, action: PayloadAction<InstallmentOffer | null>) {
       state.installmentOffer = action.payload;
     },
     /** إغلاق اختيار العميل: نرجع للدفع لو جينا منه. */
     closeCustomerDialog(state) {
-      state.dialog = state.reopenPayment ? "payment" : null;
+      state.dialog = state.reopenPayment
+        ? "payment"
+        : state.reopenReserve
+          ? "reserve"
+          : null;
       state.reopenPayment = false;
+      state.reopenReserve = false;
     },
   },
   // الواجهة بتتفاعل مع أحداث الفاتورة هنا بدل ما كل مكوّن يفتكر يعملها.
@@ -131,6 +144,11 @@ const posUiSlice = createSlice({
         state.mobileView = "products";
       })
       .addCase(cartActions.recallHeld, (state) => {
+        state.dialog = null;
+        state.mobileView = "cart";
+      })
+      .addCase(cartActions.loadInvoice, (state) => {
+        clearEntry(state);
         state.dialog = null;
         state.mobileView = "cart";
       })

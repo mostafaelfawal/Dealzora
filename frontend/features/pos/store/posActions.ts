@@ -19,6 +19,11 @@ import {
   recallHeldRemote,
 } from "../api/held.api";
 import { fetchPosProducts, toCompletedInvoice } from "../api/posCatalog.api";
+import {
+  createReservation,
+  fetchReservation,
+} from "@/features/reservations/api/reservations.api";
+import type { Reservation } from "@/features/reservations/types/reservation";
 import { getScaleConfig, parseScaleBarcode } from "@/lib/scaleBarcode";
 import { formatQty } from "@/lib/format";
 import {
@@ -48,6 +53,7 @@ import {
   selectIsEmpty,
   selectIsSearching,
   selectLines,
+  selectCustomers,
   selectProducts,
   selectSafeIndex,
   selectSearchResults,
@@ -365,6 +371,145 @@ export const recallHeldInvoice =
     }
   };
 
+/* ---------- الحجز والاستلام ---------- */
+
+/** نافذة الحجز: تحتاج أصنافاً، ولا تعمل أثناء الاستبدال أو على فاتورة استلام حجز. */
+export const requestReserve = (): AppThunk => (dispatch, getState) => {
+  const state = getState();
+  if (selectIsEmpty(state)) return;
+  if (selectExchange(state)) {
+    toast.error("أنهِ الاستبدال أو ألغِه أولاً");
+    return;
+  }
+  if (state.cart.present.reservation) {
+    toast.info(
+      `هذه فاتورة استلام الحجز #${state.cart.present.reservation.number}. أتمّ الدفع أو افصل الحجز أولاً`,
+    );
+    return;
+  }
+  dispatch(posUiActions.openDialog("reserve"));
+};
+
+let reserving = false;
+
+/** يحفظ الفاتورة الحالية حجزاً لعميلها (بعربون اختياري) ويبدأ فاتورة جديدة. */
+export const reserveCurrentInvoice =
+  (input: {
+    pickupOn: string | null;
+    deposit: number;
+    note: string | null;
+  }): AppThunk<Promise<boolean>> =>
+  async (dispatch, getState) => {
+    const state = getState();
+    const invoice = state.cart.present;
+    if (!invoice.customer || selectIsEmpty(state) || reserving) return false;
+    reserving = true;
+    try {
+      const r = await createReservation({
+        customerId: invoice.customer.id,
+        invoice,
+        ...input,
+      });
+      dispatch(cartActions.cancelInvoice());
+      if (r.customerBalance !== null) {
+        const balance = r.customerBalance;
+        dispatch(
+          catalogActions.setCatalog({
+            customers: getState().catalog.customers.map((c) =>
+              c.id === r.customerId ? { ...c, balance } : c,
+            ),
+          }),
+        );
+      }
+      toast.success(`حُفظ الحجز #${r.number} لـ ${r.customerName}`, {
+        description:
+          r.deposit > 0
+            ? `استلمت عربوناً ${formatMoneyText(r.deposit)}، ويُخصم من الفاتورة عند الاستلام.`
+            : "عند حضور العميل افتح «الحجوزات» واختر الحجز لإتمام البيع.",
+        duration: 8000,
+      });
+      return true;
+    } catch (error) {
+      toast.error(extractErrorMessage(error, "تعذّر حفظ الحجز"));
+      return false;
+    } finally {
+      reserving = false;
+      focusSearch();
+    }
+  };
+
+/** يبني فاتورة الاستلام: أصناف الحجز + العميل بأحدث رصيد + ربط الحجز. */
+function pickupInvoice(r: Reservation, customers: PosCustomer[]) {
+  const fresh = customers.find((c) => c.id === r.customerId);
+  const saved = r.invoice.customer;
+  const customer: PosCustomer = fresh
+    ? { ...fresh, balance: r.customerBalance ?? fresh.balance }
+    : {
+        id: r.customerId,
+        name: r.customerName,
+        phone: r.customerPhone ?? "",
+        balance: r.customerBalance ?? 0,
+        creditLimit: saved?.creditLimit ?? 0,
+        isWholesale: saved?.isWholesale,
+        loyaltyPoints: saved?.loyaltyPoints,
+      };
+  return {
+    ...r.invoice,
+    customer,
+    reservation: { id: r.id, number: r.number, deposit: r.deposit },
+  };
+}
+
+/**
+ * استلام حجز: يحمّل أصنافه في الفاتورة بأسعار اليوم. لو الفاتورة الحالية فيها أصناف
+ * تُعلَّق أولاً فلا تضيع. الحجز يُغلق فقط عند حفظ الفاتورة.
+ */
+export const loadReservation =
+  (id: string): AppThunk<Promise<void>> =>
+  async (dispatch, getState) => {
+    const state = getState();
+    if (selectExchange(state)) {
+      toast.error("أنهِ الاستبدال أو ألغِه أولاً");
+      return;
+    }
+    if (state.cart.present.reservation?.id === id) {
+      dispatch(posUiActions.closeDialog());
+      return;
+    }
+    let r: Reservation;
+    try {
+      r = await fetchReservation(id);
+    } catch (error) {
+      toast.error(extractErrorMessage(error, "تعذّر تحميل الحجز"));
+      return;
+    }
+    if (r.status !== "pending" && r.status !== "ready") {
+      toast.error(
+        r.status === "picked_up"
+          ? `الحجز #${r.number} استُلم من قبل`
+          : `الحجز #${r.number} ملغى`,
+      );
+      return;
+    }
+    if (!selectIsEmpty(state)) {
+      try {
+        dispatch(
+          cartActions.holdInvoice(await holdInvoiceRemote(state.cart.present)),
+        );
+        toast.info("عُلّقت الفاتورة الحالية تلقائياً");
+      } catch (error) {
+        toast.error(extractErrorMessage(error, "تعذّر تعليق الفاتورة الحالية"));
+        return;
+      }
+    }
+    dispatch(
+      cartActions.loadInvoice(pickupInvoice(r, selectCustomers(getState()))),
+    );
+    // أسعار وأرصدة اليوم (قد تغيّرت منذ الحجز)، مع تنبيه بما تغيّر.
+    dispatch(syncCartWithCatalog(selectProducts(getState())));
+    focusSearch();
+  };
+
 export const confirmCancel = (): AppThunk => (dispatch) => {
   dispatch(cartActions.cancelInvoice());
   toast("أُلغيت الفاتورة");
@@ -398,7 +543,19 @@ export const requestLineDiscount = (): AppThunk => (dispatch, getState) => {
 
 export const selectCustomer =
   (customer: PosCustomer | null): AppThunk =>
-  (dispatch) => {
+  (dispatch, getState) => {
+    const reservation = getState().cart.present.reservation;
+    const current = getState().cart.present.customer;
+    if (reservation && (customer?.id ?? null) !== (current?.id ?? null)) {
+      // السيرفر يرفض فاتورة استلام لعميل غير عميل الحجز.
+      toast.error(
+        `فاتورة استلام الحجز #${reservation.number} لعميل الحجز فقط`,
+        {
+          description: "افصل الحجز من الشريط أعلى الفاتورة أولاً لتغيير العميل.",
+        },
+      );
+      return;
+    }
     dispatch(cartActions.setCustomer(customer));
     dispatch(posUiActions.closeCustomerDialog());
   };
@@ -443,6 +600,7 @@ function buildSaleInput(
     })),
     invoiceDiscount: selectTotals(state).discountAmount,
     redeemPoints: selectTotals(state).redeemPoints,
+    reservationId: invoice.reservation?.id ?? null,
     ...payment,
   };
 }

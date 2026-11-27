@@ -12,6 +12,7 @@ import {
   requestDialog,
   requestLineDiscount,
   requestPayment,
+  requestReserve,
   requestReturn,
   undoInvoice,
 } from "../store/posActions";
@@ -64,6 +65,14 @@ export function usePosHotkeys() {
   useHotkey(
     POS_SHORTCUTS.help.match,
     whenIdle(() => dispatch(posUiActions.openDialog("shortcuts"))),
+  );
+  useHotkey(
+    POS_SHORTCUTS.reserve.match,
+    whenIdle(() => dispatch(requestReserve())),
+  );
+  useHotkey(
+    POS_SHORTCUTS.reservations.match,
+    whenIdle(() => dispatch(posUiActions.openDialog("reservations"))),
   );
   useHotkey(
     POS_SHORTCUTS.returns.match,

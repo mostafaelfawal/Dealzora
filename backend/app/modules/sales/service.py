@@ -481,6 +481,13 @@ class SaleService(EntityService):
             },
         )
         self._enqueue_event(ENTITY_SALE, sale.id, self._sale_payload(sale))
+        if data.reservation_id:
+            from app.modules.reservations.service import ReservationService  # متأخر: تفادي الدوران
+
+            ReservationService.mark_picked_up(
+                self.session, self.actor, data.reservation_id,
+                sale_id=sale.id, sale_number=number, customer_id=sale.customer_id,
+            )  # fmt: skip
         return sale
 
     def _payment(

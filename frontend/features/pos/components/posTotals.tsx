@@ -1,7 +1,13 @@
 "use client";
 
-import { IconPlayerPause, IconPercentage, IconX } from "@tabler/icons-react";
+import {
+  IconCalendarEvent,
+  IconPlayerPause,
+  IconPercentage,
+  IconX,
+} from "@tabler/icons-react";
 
+import { AppTooltip } from "@/components/shared/AppTooltip";
 import { Money } from "@/components/shared/Money";
 import { ShortcutBadge } from "@/components/shared/ShortcutBadge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +19,7 @@ import { cartActions } from "../store/cartSlice";
 import {
   holdCurrentInvoice,
   requestDialog,
+  requestReserve,
   requestPayment,
 } from "../store/posActions";
 import {
@@ -31,6 +38,7 @@ export function PosTotals() {
   const totals = useAppSelector(selectTotals);
   const discount = useAppSelector(selectInvoiceDiscount);
   const exchange = useAppSelector(selectExchange);
+  const reservation = useAppSelector((s) => s.cart.present.reservation);
   const returnTotal = useAppSelector(selectReturnTotal);
   const { net, kind } = useAppSelector(selectSettlement);
 
@@ -143,7 +151,7 @@ export function PosTotals() {
       {/* العملة الثانية (لو مفعّلة): المقابل وسعر الصرف وزر تبديل العملة الكبيرة. */}
       <PosSecondCurrencyRow amount={exchange ? Math.abs(net) : totals.total} />
 
-      <div className="grid grid-cols-[auto_auto_1fr] gap-2 border-t p-3">
+      <div className="grid grid-cols-[auto_auto_auto_1fr] gap-2 border-t p-3">
         <Button
           type="button"
           variant="outline"
@@ -158,6 +166,26 @@ export function PosTotals() {
             {POS_SHORTCUTS.holdInvoice.label}
           </ShortcutBadge>
         </Button>
+        <AppTooltip
+          message={
+            reservation
+              ? `فاتورة استلام الحجز #${reservation.number}`
+              : `حجز لعميل يستلمه لاحقاً (${POS_SHORTCUTS.reserve.label})`
+          }
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            disabled={cartEmpty || !!exchange || !!reservation}
+            onClick={() => dispatch(requestReserve())}
+            aria-label="حجز"
+            className="h-12 gap-2 font-normal lg:h-11"
+          >
+            <IconCalendarEvent className="size-4" />
+            <span className="hidden sm:inline">حجز</span>
+          </Button>
+        </AppTooltip>
         <Button
           type="button"
           variant="outline"

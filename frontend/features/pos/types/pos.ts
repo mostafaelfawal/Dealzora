@@ -125,6 +125,15 @@ export interface PosInvoice {
   discount: InvoiceDiscount | null;
   /** نقاط ولاء يستبدلها العميل في هذه الفاتورة (تُقص للمسموح تلقائياً). */
   redeemPoints?: number;
+  /** فاتورة استلام حجز: الحفظ يُغلق الحجز، والعربون في رصيد العميل لدى المحل. */
+  reservation?: PosReservationRef | null;
+}
+
+export interface PosReservationRef {
+  id: string;
+  number: number;
+  /** العربون بالجنيه (للعرض؛ المدفوع فعلاً من رصيد العميل). */
+  deposit: number;
 }
 
 /** فاتورة معلّقة على الجهاز الأساسي (تظهر لكل الأجهزة، وتُحذف عند قفل ورديتها). */

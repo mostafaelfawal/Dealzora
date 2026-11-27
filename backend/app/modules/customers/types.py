@@ -40,6 +40,7 @@ class LedgerType(StrEnum):
     DEPOSIT = "deposit"  # باقٍ تركه العميل رصيداً لدى المحل
     BALANCE_USE = "balance_use"  # دفع فاتورة من رصيده لدى المحل
     BALANCE_PAYOUT = "balance_payout"  # صرف رصيده نقداً (المدير)
+    RESERVATION_DEPOSIT = "reservation_deposit"  # عربون حجز (يُدفع منه عند الاستلام)
     # قديم: لم يعد يُنشأ (البيع بالتقسيط صار بيعاً آجلاً من الكاشير). يبقى لعرض الحركات القديمة.
     INSTALLMENT = "installment"
 

@@ -18,6 +18,10 @@ class ShiftTotals:
     electronic: tuple[tuple[str, str, int], ...] = ()
     # باقٍ تركه العملاء رصيداً: دخل الدرج ولم يُسلَّم (ليس مبيعات).
     kept_change: int = 0
+    # عرابين الحجوزات: دخلت الدرج وليست مبيعات (تُدفع منها فاتورة الاستلام لاحقاً).
+    reservation_deposits: int = 0
 
     def expected(self, opening_float: int) -> int:
-        return opening_float + self.cash_sales + self.kept_change - self.cash_refunds
+        return (
+            opening_float + self.cash_sales + self.kept_change + self.reservation_deposits - self.cash_refunds
+        )

@@ -3,6 +3,7 @@
 import { isManagement } from "@/config/roles";
 import {
   IconArrowRight,
+  IconCalendarEvent,
   IconLogout,
   IconKeyboard,
   IconPlayerPause,
@@ -104,6 +105,24 @@ export function PosTopBar() {
             <span className="hidden sm:inline">مرتجع</span>
             <ShortcutBadge className="hidden rounded-none lg:inline-flex">
               {POS_SHORTCUTS.returns.label}
+            </ShortcutBadge>
+          </Button>
+        </AppTooltip>
+        <AppTooltip
+          message={`الحجوزات واستلامها (${POS_SHORTCUTS.reservations.label})`}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => dispatch(posUiActions.openDialog("reservations"))}
+            aria-label="الحجوزات"
+            className="gap-2 font-normal"
+          >
+            <IconCalendarEvent className="size-4" />
+            <span className="hidden sm:inline">الحجوزات</span>
+            <ShortcutBadge className="hidden rounded-none lg:inline-flex">
+              {POS_SHORTCUTS.reservations.label}
             </ShortcutBadge>
           </Button>
         </AppTooltip>
