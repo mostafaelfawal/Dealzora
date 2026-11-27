@@ -113,7 +113,7 @@ export interface DownloadConfig {
  * نسخة برنامج الكمبيوتر الحالية. عند نشر إصدار جديد (release-desktop.yml) حدّث هذا الرقم فقط:
  * روابط ويندوز ولينكس وماك تُبنى منه بأسماء الملفات التي يرفعها tauri-action.
  */
-export const DESKTOP_VERSION = "1.0.11";
+export const DESKTOP_VERSION = "1.2.11";
 
 const RELEASE_FILES = `https://github.com/mostafaelfawal/Dealzora/releases/download/v${DESKTOP_VERSION}`;
 
